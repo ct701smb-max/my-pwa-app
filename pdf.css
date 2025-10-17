@@ -1,0 +1,449 @@
+/* ------------------------------------- */
+/* === CSS 全体 (ラジオボタンとラベルは横並び、設定項目は左揃え) === */
+/* ------------------------------------- */
+
+/* カスタムプロパティ (色の定義) */
+:root {
+    --primary-color: #008080; /* ティール/青緑 */
+    --primary-hover: #006666;
+    --background-light: #f8f8f8;
+    --background-white: #ffffff;
+    --text-dark: #333333;
+    --text-medium: #666666;
+    --border-light: #e0e0e0;
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100dvh; 
+    background-color: var(--background-light);
+    margin: 0;
+}
+
+.container {
+    background-color: var(--background-white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-light);
+    text-align: center;
+    max-width: 500px;
+    width: 95%;
+    
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+
+p {
+    color: var(--text-medium);
+    margin-bottom: 20px;
+}
+
+/* フォーム要素の共通スタイル */
+#imageUpload {
+    margin: 10px 0 20px 0;
+    padding: 10px;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--border-light);
+    background-color: var(--background-white);
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+#convertBtn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+}
+
+#convertBtn:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#convertBtn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* 設定エリアの共通スタイル */
+.orientation-selector, .margin-selector, .filename-input, .image-orientation-selector {
+    margin-bottom: 10px;
+    padding: 15px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 400px;
+    box-sizing: border-box;
+    background-color: #fcfcfc;
+    /* ★修正点1: margin-selectorを左揃えにする */
+    text-align: left; 
+}
+
+/* h2タイトルは中央寄せにしたい場合 (他の設定エリアと共通で中央寄せ) */
+.orientation-selector h2, .margin-selector h2, .filename-input h2, .image-orientation-selector h2 {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: center; /* タイトルは中央寄せを維持 */
+    font-weight: 600;
+}
+
+/* ★追加: margin-selector内の各オプションを調整 (左揃えのため) */
+.margin-selector div {
+    padding-left: 5px; 
+    margin: 8px 0;
+}
+
+/* ラベルのスタイル (横並び) */
+.orientation-selector label, 
+.margin-selector label, 
+.image-orientation-selector label {
+    display: inline-block; /* 横並び (inline-blockに戻す) */
+    margin: 5px 12px;
+    padding: 5px 0;
+    cursor: pointer;
+    color: var(--text-medium);
+    transition: color 0.2s;
+}
+
+/* ラジオボタンのスタイル */
+.orientation-selector input[type="radio"], 
+.margin-selector input[type="radio"] {
+    /* display: block; の設定を削除し、デフォルトの inline に戻す */
+    margin: 0; 
+}
+
+/* ラジオボタンと連動したlabelのスタイル */
+.orientation-selector label:hover, .margin-selector label:hover, .image-orientation-selector label:hover {
+    color: var(--primary-color);
+}
+input[type="radio"]:checked + label {
+    font-weight: bold;
+    color: var(--primary-hover);
+}
+
+
+/* ファイル名入力フィールド */
+#pdfFilename {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+.filename-input small {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-medium);
+    text-align: center;
+    margin-top: 5px;
+}
+
+/* プレビューエリア (縦折り返し表示) */
+#previewArea {
+    /* プレビューエリアに高さを設定し、その中だけでスクロールを有効にする */
+    max-height: calc(100vh - 250px); 
+    overflow-y: scroll; 
+}
+.preview-area {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border: 2px dashed var(--border-light);
+    background-color: var(--background-white);
+    padding: 15px 10px;
+    min-height: 100px;
+    max-height: 40vh;
+    overflow-y: auto;
+    border-radius: 8px;
+    width: 100%;
+    
+    overflow-x: hidden;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 15px;
+    flex-wrap: wrap;
+    
+    cursor: zoom-in;
+}
+
+/* 全画面表示中のプレビューエリアのスタイル */
+.preview-area:-webkit-full-screen,
+.preview-area:-moz-full-screen,
+.preview-area:-ms-fullscreen,
+.preview-area:fullscreen {
+    width: 100vw; 
+    height: 100dvh; 
+    max-height: 100dvh; 
+    position: fixed; 
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 20px; 
+    z-index: 9999;
+    border: none; 
+}
+
+/* 長押し時のテキスト選択を抑制するためのクラス */
+.no-select {
+    -webkit-user-select: none; 
+    -moz-user-select: none;    
+    -ms-user-select: none;     
+    user-select: none;         
+}
+/* ------------------------------------- */
+/* === 画像プレビューと並び替え機能のCSS === */
+/* ------------------------------------- */
+
+.preview-image-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative; 
+    min-width: 90px;
+    cursor: grab; 
+    padding: 8px; 
+    border-radius: 6px;
+    background-color: var(--background-light);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+
+    /* 長押しによるテキスト選択・メニューを無効化 */
+    user-select: none;
+    -webkit-user-select: none; 
+    -webkit-touch-callout: none; 
+    -webkit-user-drag: none; 
+}
+
+.preview-image-wrapper:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background-color: #eaf5f5;
+    transform: scale(1.02);
+}
+
+.preview-image-wrapper:active,
+.preview-image-wrapper.dragging {
+    cursor: grabbing;
+}
+
+/* 並び順の番号を表示するためのスタイル */
+.sequence-number {
+    position: absolute;
+    top: -8px; 
+    left: 50%;
+    transform: translateX(-50%); 
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 2px 10px;
+    border-radius: 12px;
+    z-index: 10;
+    min-width: 20px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ファイル名表示用のスタイル */
+.file-name-label {
+    margin-top: 5px;
+    font-size: 0.7rem;
+    color: var(--text-dark);
+    text-align: center;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    max-width: 90px;
+    display: block;
+    padding: 0 2px;
+    
+    /* ファイル名自体のテキスト選択を無効化 */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* ドラッグ中の要素のスタイル - 座標追従のために修正 */
+.dragging {
+    opacity: 0.8; 
+    position: fixed !important; 
+    z-index: 20; 
+    transform: none !important; 
+    pointer-events: none; 
+}
+
+/* ドロップ先の候補のスタイル */
+.drag-over {
+    border: 2px dashed var(--primary-color);
+    background-color: #e6f2f2; 
+}
+
+/* ドラッグ中に元の場所を保持するためのプレースホルダ */
+.placeholder {
+    background-color: rgba(0, 128, 128, 0.2); 
+    border: 2px dashed var(--primary-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    /* サイズはJavaScriptで設定される */
+}
+
+/* プレビュー画像 */
+.preview-image {
+    width: 80px;
+    height: 80px;
+    border: 2px solid var(--border-light);
+    border-radius: 4px;
+    object-fit: cover; 
+}
+
+/* 削除ボタン */
+.delete-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #e74c3c;
+    color: white;
+    border: 2px solid white; 
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    text-align: center;
+    display: none; 
+    z-index: 11;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+}
+
+/* マウスオーバー時に削除ボタンを表示 */
+.preview-image-wrapper:hover .delete-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ソートボタンのコンテナスタイル */
+.sort-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 10px 0 20px 0;
+    width: 100%;
+    max-width: 400px;
+}
+
+.sort-controls button {
+    flex: 1;
+    background-color: #555555;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+
+.sort-controls button:hover {
+    background-color: #333333;
+}
+
+/* PDFドキュメントのプレビューアイコン */
+.pdf-icon {
+    width: 80px;
+    height: 80px;
+    background-color: #e74c3c; 
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.preview-pdf-wrapper {
+    background-color: #ffe0e0; 
+}
+
+/* ------------------------------------- */
+/* === PDF作成中のプログレスバーのCSS === */
+/* ------------------------------------- */
+
+.progress-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 15px 0;
+    padding: 15px 20px;
+    background-color: var(--background-white);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-light);
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.progress-text {
+    font-size: 1rem;
+    color: var(--text-dark);
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.progress-bar-background {
+    width: 100%;
+    height: 12px;
+    background-color: var(--border-light);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%; /* 初期値 */
+    background-color: var(--primary-color);
+    transition: width 0.3s ease; /* 滑らかなアニメーション */
+    border-radius: 6px;
+}

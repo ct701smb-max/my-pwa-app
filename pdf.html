@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="p1.png">
+    <meta name="theme-color" content="#333333">
+    <link rel="stylesheet" type="text/css" href="pdf.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+    <title>画像 to PDF 変換ツール</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.4/piexif.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>画像からPDFへの変換</h1>
+        <p>画像を選択で【ページの向き】を設定、ドラッグで並び順を調整。画像ファイルとPDFファイルの結合も可能。</p>
+        
+        <a href="cropper.html" class="sort-controls" style="text-decoration: none;"><button>画像のトリミング</button></a>
+        
+        <input type="file" id="imageUpload" accept="image/*,application/pdf" multiple>
+
+        <div class="sort-controls">
+            <button id="sortFilenameAscBtn" title="ファイル名昇順 (A→Z)">ファイル名順 (A↓)</button>
+            <button id="sortFilenameDescBtn" title="ファイル名降順 (Z→A)">ファイル名逆順 (Z↑)</button>
+        </div>
+        
+        <div id="progressContainerFile" class="progress-container" style="display: none;">
+            <p id="progressTextFile" class="progress-text">準備中...</p>
+            <div class="progress-bar-background">
+                <div id="progressBarFile" class="progress-bar"></div>
+            </div>
+        </div>
+        <div id="previewArea" class="preview-area">
+        </div>
+
+        <div class="orientation-selector">
+            <h2>全体PDF向き (全ページに適用)</h2>
+            <div style="text-align:center;">
+                <input type="radio" id="portrait" name="globalPdfOrientation" value="p" checked>
+                <label for="portrait">縦 (A4 縦)</label>
+                <input type="radio" id="landscape" name="globalPdfOrientation" value="l">
+                <label for="landscape">横 (A4 横)</label>
+            </div>
+            <p style="font-size: 0.8rem; color: #888; margin-top: 5px;">※ 個別設定で向きを変更した場合、そちらが優先されます。</p>
+        </div>
+        
+        <div class="image-orientation-selector">
+            <h2>PDFページ向き (ファイル個別)</h2>
+            <div id="imageOrientationControls">
+                <p style="font-size: 0.9rem; color: #888; margin: 5px 0;">画像を選択すると、このエリアに個別のページ向き設定が表示されます。</p>
+            </div>
+        </div>
+
+        <div class="margin-selector">
+            <h2>PDFの余白</h2>
+            <div>
+            <input type="radio" id="fill" name="imageFit" value="fill" checked>
+            <label for="fill">余白なし (アスペクト比無視で拡大)</label>
+            </div>
+            <div>
+            <input type="radio" id="fit" name="imageFit" value="fit">
+            <label for="fit">余白あり (画像全体を表示)</label>
+            </div>
+        </div>
+
+        <div class="filename-input">
+            <h2>PDFファイル名</h2>
+            <input type="text" id="pdfFilename" placeholder="例: documents_combined">
+            <small>.pdfが自動で付きます</small>
+        </div>
+<div class="sort-controls">
+        <button id="reloadBtn" onclick="location.reload()">🔄 アプリを更新</button>
+</div>
+        <div id="progressContainerPdf" class="progress-container" style="display: none;">
+            <p id="progressTextPdf" class="progress-text">準備中...</p>
+            <div class="progress-bar-background">
+                <div id="progressBarPdf" class="progress-bar"></div>
+            </div>
+        </div>
+        
+        <button id="convertBtn" disabled>PDFに変換してダウンロード</button>
+    
+    </div>
+
+    <script src="pdf.js"></script>
+    <script src="register.js"></script>
+</body>
+</html>

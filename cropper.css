@@ -1,0 +1,253 @@
+/* ===========================================
+   基本設定とスマホフレンドリーな調整
+   =========================================== */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 16px; /* フォントサイズの基準を少し上げる */
+    margin: 0;
+    padding: 10px;
+    background-color: #f4f4f4;
+}
+h1{
+text-align: center;
+    color: #008080;
+}
+h2, h3 {
+    text-align: center;
+    color: #333;
+}
+
+#editorContainer {
+    /* スマホフレンドリーな最大幅 */
+    max-width: 90%; 
+    margin: 20px auto;
+    text-align: center;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* フォーム要素とボタンの共通スタイル */
+input[type="file"], 
+button {
+    /* タッチターゲットを大きくする（最低でも48px） */
+    min-width: 150px;
+    min-height: 48px; 
+    padding: 12px 20px;
+    font-size: 1.1em;
+    margin: 10px 5px;
+    border: none;
+    border-radius: 8px; /* 角を丸くして指に優しく */
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background-color 0.2s;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* --- 画像処理エリア --- */
+#imageDisplay {
+    width: 100%;
+    /* スマホではトリミングエリアを大きく見せる */
+    height: 60vh; 
+    max-height: 500px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background-color: #f0f0f0; 
+    border: 1px solid #ddd;
+}
+
+/* --- コントロールボタン群 --- */
+#navigationControls,
+#presetControls,
+#duplicateControl {
+    display: flex;
+    flex-wrap: wrap; /* スマホで折り返す */
+    justify-content: center;
+    margin: 10px 0;
+    gap: 10px; /* ボタン間のスペース */
+}
+
+#navigationControls button,
+#presetControls button {
+    flex-grow: 1; 
+    min-width: 100px; 
+    font-size: 0.9em;
+}
+
+/* ダウンロードボタンを目立たせる */
+#saveAllButton {
+    background-color: #28a745;
+    font-weight: bold;
+}
+
+#saveAllButton:hover:not(:disabled) {
+    background-color: #1e7e34;
+}
+
+/* プリセットコントロールの装飾 */
+#presetControls {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #fcfcfc;
+}
+
+/* 複製ボタンの装飾 */
+#duplicateButton {
+    background-color: #ffc107; /* 黄色系 */
+    color: #333;
+    font-weight: bold;
+}
+
+#duplicateButton:hover:not(:disabled) {
+    background-color: #e0a800;
+}
+
+
+/* --- インデックス表示 --- */
+#imageIndexInfo {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+
+/* ===========================================
+   ファイル並び替え（ドラッグ＆ドロップ） UI
+   =========================================== */
+
+/* ファイルリストのコンテナ */
+#sortableContainer {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+    text-align: left;
+}
+
+#fileList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    /* 🎯 最大の高さを設定（例: 画面の高さの30%または固定値200px） */
+    max-height: 200px; 
+    
+    /* 🎯 高さが max-height を超えた場合にスクロールバーを表示 */
+    overflow-y: auto;
+    /* スクロール時に背景が透けないように再設定 */
+    background-color: #fff; 
+    border: 1px solid #eee; /* リスト枠を明確にする */
+    padding: 5px; /* リスト内のパディング */
+}
+
+/* 各ファイルアイテム */
+.file-item {
+    padding: 10px;
+    margin-bottom: 5px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    cursor: grab; /* ドラッグできることを示すカーソル */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.file-item:hover {
+    background-color: #eaeaea;
+}
+
+/* ドラッグ中の要素のスタイル */
+.file-item.dragging {
+    opacity: 0.5;
+    background-color: #e6f7ff;
+    border: 1px dashed #007bff;
+    transform: scale(1.02);
+}
+
+/* 削除ボタン */
+.file-item button.remove-btn {
+    background: none;
+    border: none;
+    color: #ff4d4d;
+    font-size: 1.2em;
+    cursor: pointer;
+    min-width: unset;
+    min-height: unset;
+    padding: 0 5px;
+    margin: 0;
+}
+
+
+/* ===========================================
+   Cropper.js カスタマイズ (タッチしやすさ向上)
+   =========================================== */
+
+/* トリミング枠のハンドルを大きくするスタイル（タッチしやすいように） */
+.cropper-point {
+    /* ハンドルの基本サイズを大きくする */
+    width: 24px !important;  
+    height: 24px !important; 
+    background-color: rgba(255, 255, 255, 0.9) !important; /* 背景色を見やすく */
+    border: 2px solid #007bff !important; /* メインカラーの枠線 */
+    border-radius: 50% !important; /* 丸くする */
+    opacity: 1 !important; /* 透明度をなくす */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 中央のハンドル（point-e, point-n, point-w, point-s）の位置を調整
+   拡大した分、中央に配置し直す */
+.cropper-point.point-e,
+.cropper-point.point-n,
+.cropper-point.point-w,
+.cropper-point.point-s {
+    width: 24px !important;
+    height: 24px !important;
+    margin-top: -12px !important;  /* 高さの半分 */
+    margin-left: -12px !important; /* 幅の半分 */
+}
+
+/* 角のハンドル */
+.cropper-point.point-ne,
+.cropper-point.point-nw,
+.cropper-point.point-se,
+.cropper-point.point-sw {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* トリミング領域の線を目立たせる（任意） */
+.cropper-line {
+    background-color: rgba(0, 123, 255, 0.7) !important;
+}
+
+#sortByNameButton {
+    /* 複製ボタンと同じくらいのサイズと目立つ色に */
+    background-color: #17a2b8; /* 青緑系 */
+    color: white;
+    font-weight: bold;
+    min-height: 40px; /* リストの上で邪魔にならないように少し小さく */
+    margin: 5px;
+    font-size: 0.9em;
+}
+
+#sortByNameButton:hover:not(:disabled) {
+    background-color: #138496;
+}
