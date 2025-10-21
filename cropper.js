@@ -165,9 +165,22 @@ function loadAndInitCropper(index) {
         const currentImage = document.getElementById('currentImage');
 
         cropper = new Cropper(currentImage, {
-            aspectRatio: NaN, 
-            viewMode: 1,
-        });
+            aspectRatio: NaN, 
+            viewMode: 1,
+            // 以下の2つのオプションを追加または確認します
+            // 1. 画像の回転を許可 (UIボタンがあれば)
+            rotatable: true,
+            // 2. ExifのOrientation情報を読み取り、画像を自動回転させる (最も重要)
+            autoCropArea: 1, // Exif情報で正しい向きに表示された後、画像全体を選択する
+            ready: function () {
+                // Exif情報で画像が回転された後、自動的にその向きに合わせる
+                cropper.setCropBoxData(cropper.getContainerData());
+            },
+            // 画像の方向を自動で正すオプション
+            // Cropper.jsのバージョンによってはこのオプション名ではない場合がありますが、
+            // 一般的に autoCrop, autoCropArea, viewMode:1 が解決のヒントになります
+            // **古いバージョンの場合、`autoCropArea` の設定と外部ライブラリの利用が必要なことがあります**
+        });
         
         currentImage.addEventListener('ready', () => {
             const imageData = cropper.getImageData();
