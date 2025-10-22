@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="edit.png">
+    <meta name="theme-color" content="#333333">
+    <title>Webエディタ</title>
+    <link rel="stylesheet" href="edit.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+</head>
+<body>
+
+    <div id="app-container" class="view-editor">
+        
+        <div class="panel editor-panel">
+            
+            <div class="header">
+                
+                <button id="file-menu-toggle" title="ファイルリストを表示/非表示" class="control-button file-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div id="file-tabs-container" class="file-tabs-container">
+                    <div id="file-tabs" class="tabs">
+                        </div>
+                </div>
+
+                <input id="current-filename" type="text" class="filename-input">
+
+                <button id="search-toggle-btn" title="検索">
+                    <i class="fas fa-search"></i>
+                </button>
+
+                <div id="search-bar" style="display: none; position: absolute; top: 0; right: 0; background: #3c3c3c; padding: 5px; z-index: 10;">
+                    <input type="text" id="search-input" placeholder="検索キーワード" style="padding: 5px; border: none;">
+                    <span id="search-result-count" style="color: #ccc; margin: 0 10px;"></span>
+                    <button id="search-prev-btn"><i class="fas fa-chevron-up"></i></button>
+                    <button id="search-next-btn"><i class="fas fa-chevron-down"></i></button>
+                    <button id="search-close-btn"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <button id="export-btn" title="プロジェクトをZIPファイルとしてダウンロード" class="control-button">
+                    <i class="fas fa-download"></i> Export
+                </button>
+
+                <label for="import-file-input" id="import-btn" title="ファイルからプロジェクトを読み込み（ZIP可）" class="control-button import-label">
+                    <i class="fas fa-upload"></i> Import
+                </label>
+                <input type="file" id="import-file-input" accept=".zip,application/zip" style="display: none;">
+                
+            </div>
+            
+            <div id="control-panel-right">
+                <!-- プレビューボタン -->
+                <button id="switch-to-preview" title="プレビュー全画面表示" class="toggle-button control-button">
+                    <i class="fas fa-eye"></i>
+                </button>
+                
+                <!-- Undo/Redoボタン -->
+                <button id="undo-btn" title="元に戻す (Ctrl+Z)" class="control-button">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button id="redo-btn" title="やり直し (Ctrl+Y)" class="control-button">
+                    <i class="fas fa-redo"></i>
+                </button>
+                
+                <!-- タグショートカットパネル -->
+                <div id="tag-shortcut-panel">
+                    <!-- imgタグ: <img src="画像アドレス" width="200" height="200" alt="説明文"> -->
+                    <button data-tag-type="img" title="imgタグ挿入" class="tag-button control-button">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <!-- aタグ: <a href="リンクアドレス">テキスト</a> -->
+                    <button data-tag-type="a" title="aタグ挿入" class="tag-button control-button">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <!-- pタグ: <p>段落テキスト</p> -->
+                    <button data-tag-type="p" title="pタグ挿入" class="tag-button control-button">
+                        P
+                    </button>
+                    <!-- divタグ: <div>\n\n</div> -->
+                    <button data-tag-type="div" title="divタグ挿入" class="tag-button control-button">
+                        &lt;/&gt;
+                    </button>
+                    <!-- コメント -->
+                    <button data-tag-type="comment" title="コメントタグ挿入 ()" class="tag-button control-button">
+        <i class="fas fa-comment-alt"></i> 
+                    </button>
+                    <!-- タブ: インデント -->
+                    <button data-tag-type="tab" title="タブ挿入" class="tag-button control-button">
+                        tab
+                    </button>
+                </div>
+
+            </div>
+            
+            <div id="code-content" class="tab-content active">
+                <div class="editor-container">
+                    
+                    <div id="line-numbers" class="line-numbers"></div>
+                    <textarea id="code-input" placeholder="コードを入力してください..."></textarea>
+                    <pre id="highlight-layer"></pre>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="panel preview-panel">
+            <div class="header">
+                <h2>Preview</h2>
+                   <button id="switch-to-editor" title="コード全画面表示" class="toggle-button">
+                    <i class="fas fa-file-code"></i>
+                </button>
+            </div>
+            <iframe id="preview-iframe"></iframe>
+        </div>
+    </div>
+
+    <script src="edit.js"></script>
+    <script src="register.js"></script>
+</body>
+</html>

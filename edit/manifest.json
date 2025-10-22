@@ -1,0 +1,21 @@
+{
+  "name": "Webエディタ",
+  "short_name": "Webエディタ",
+  "start_url": "edit.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#333333",
+  "description": "個人的な用途のためのWebアプリです。",
+  "icons": [
+    {
+      "src": "edit.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "edit.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
