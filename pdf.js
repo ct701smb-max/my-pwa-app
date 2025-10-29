@@ -263,7 +263,7 @@ imageUpload.addEventListener('change', (event) => {
         // ★ 1. ファイル処理開始時に【ファイル用バナー】を表示
         progressContainerFile.style.display = 'block';
         progressBarFile.style.width = '0%';
-        progressTextFile.textContent = `ファイルを読み込み中... (0 / ${files.length} ファイル)`;
+        progressTextFile.textContent = `ファイルを読み込み中... (${files.length} / ${totalFiles} ファイル)`;
         
         // PDF変換用バナーは非表示にしておく
         progressContainerPdf.style.display = 'none';
