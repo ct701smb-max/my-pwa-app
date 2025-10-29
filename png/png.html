@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="img.png">
+    <meta name="theme-color" content="#333333">
+    <title>画像透過</title>
+    <link rel="stylesheet" href="png.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.2/dist/body-pix.min.js"></script>
+    </head>
+<body>
+    <div class="container">
+        <h1>✂️ 画像の透過処理</h1>
+
+        <input type="file" id="image-loader" accept="image/*">
+        
+        <div class="controls-header">
+            <button id="reload-btn">🔄 更新</button> 
+            <button id="undo-btn" disabled>↩️ Undo</button>
+            <button id="redo-btn" disabled>↪️ Redo</button>
+            
+            <button id="menu-toggle-btn">メニュー ☰</button>
+        </div>
+
+        <div id="side-menu-panel" class="hidden">
+            <h2>ブラシと一括処理</h2>
+            
+            <hr>
+            
+            <h3>🖌️ ブラシツール</h3>
+            <div class="tool-group">
+                <button id="tool-eraser" class="active">消しゴム (透過)</button>
+                <button id="tool-restore">修復ブラシ</button>
+            </div>
+
+            <hr>
+            
+            <h3>📏 サイズ調整</h3>
+            <label for="brush-size">ブラシサイズ:</label>
+            <input type="range" id="brush-size" min="5" max="100" value="30">
+            
+            <hr>
+
+            <h3>🤖 AI自動削除</h3>
+            <div class="tool-group">
+                <button id="tool-auto-remove" style="background-color: #6495ED; color: white;">
+                    ✨ AI自動削除 (人物と背景)
+                </button>
+            </div>
+            
+            <hr>
+            
+            <h3>✨ カラー一括透過</h3>
+            <div class="tool-group">
+                <button id="tool-sampler">スポイト 💧</button>
+                
+                <label for="color-picker">対象色:</label>
+                <input type="color" id="color-picker" value="#ffffff">
+
+                <label for="color-eraser-tolerance">許容度: <span id="tolerance-value">30</span></label>
+                <input type="range" id="color-eraser-tolerance" min="0" max="100" value="30" oninput="document.getElementById('tolerance-value').innerText = this.value">
+                
+                <button id="tool-color-eraser">一括透過実行</button>
+            </div>
+        </div>
+
+        <div class="canvas-area">
+            <canvas id="main-canvas"></canvas>
+            <div id="brush-indicator"></div>
+            
+            <div id="color-sampler-indicator" class="hidden">
+                <div id="sampler-output-color"></div>
+            </div>
+        </div>
+
+        <button id="download-btn" style="margin-top: 20px;" disabled>結果をダウンロード (PNG)</button>
+    </div>
+    
+    <script src="png.js"></script> 
+    <script src="register.js"></script>
+</body>
+</html>
