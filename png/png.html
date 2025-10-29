@@ -10,7 +10,10 @@
     <meta name="theme-color" content="#333333">
     <title>画像透過</title>
     <link rel="stylesheet" href="png.css">
-</head>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.2/dist/body-pix.min.js"></script>
+    </head>
 <body>
     <div class="container">
         <h1>✂️ 画像の透過処理</h1>
@@ -44,6 +47,15 @@
             
             <hr>
 
+            <h3>🤖 AI自動削除</h3>
+            <div class="tool-group">
+                <button id="tool-auto-remove" style="background-color: #6495ED; color: white;">
+                    ✨ AI自動削除 (人物と背景)
+                </button>
+            </div>
+            
+            <hr>
+            
             <h3>✨ カラー一括透過</h3>
             <div class="tool-group">
                 <button id="tool-sampler">スポイト 💧</button>
@@ -70,7 +82,7 @@
         <button id="download-btn" style="margin-top: 20px;" disabled>結果をダウンロード (PNG)</button>
     </div>
     
-    <script src="png.js"></script>
+    <script src="png.js"></script> 
     <script src="register.js"></script>
 </body>
 </html>

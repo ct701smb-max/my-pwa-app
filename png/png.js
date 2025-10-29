@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const undoBtn = document.getElementById('undo-btn');
     const redoBtn = document.getElementById('redo-btn');
     const reloadBtn = document.getElementById('reload-btn');
+    // ✨ 新規追加: 自動背景削除ボタン (HTMLにこのIDを持つ要素が必要です)
+    const toolAutoRemoveBtn = document.getElementById('tool-auto-remove'); 
 
     if (!canvas || !imageLoader || !brushSizeInput || !ctx || !colorSamplerIndicator) {
         console.error("Critical DOM elements are missing. Check your HTML structure.");
@@ -47,13 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let edgeMap = null;
     let edgeMapWidth = 0;
     let edgeMapHeight = 0;
+    // ✨ 新規追加: BodyPixモデル格納用
+    let bodyPixNet = null; 
 
     // 定数
     const TOUCH_OFFSET_Y_DISPLAY = -80; // タッチ操作時にブラシインジケーターを指より上にずらす量
     const EDGE_THRESHOLD = 0.4;
     const EDGE_BUFFER_DISTANCE = 3;
-    
-    // 描画位置のズレを解消するため、オフセットを0に設定
     const DRAW_OFFSET_X = 0; 
     const DRAW_OFFSET_Y = 0; 
 
@@ -114,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (historyIndex < history.length - 1) {
             history = history.slice(0, historyIndex + 1);
         }
-        // Undo/Redoのパフォーマンスボトルネック（キャンバス全体をコピー）
         const currentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         if (history.length >= MAX_HISTORY) {
             history.shift();
@@ -171,11 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (event) => {
             const img = new Image();
             img.onload = () => {
-                // 1. 画像のオリジナルサイズをキャンバスの**描画解像度**に設定
+                // 1. 画像のオリジナルサイズをキャンバスの描画解像度に設定
                 canvas.width = img.width;
                 canvas.height = img.height;
                 
-                // 2. 画面に収まるようにキャンバスの**CSS表示サイズ**を調整
+                // 2. 画面に収まるようにキャンバスのCSS表示サイズを調整
                 const container = canvas.parentElement; 
                 const maxWidth = container.clientWidth;
                 const maxHeight = container.clientHeight;
@@ -227,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("先に画像を読み込んでください。");
         }
     });
-
+    
     // ----------------------------------------------------
     // 描画座標と表示座標の取得・変換 
     // ----------------------------------------------------
@@ -242,22 +243,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
 
-        // 1. **描画座標 (x, y)**: 実際に消去/修復を行うキャンバス内の座標
+        // 1. 描画座標 (x, y)
         let drawYOffset = 0;
-        // 💡 修正ポイント: タッチ操作の場合のみ、描画座標にもインジケーターのオフセットを適用
         if (isTouchEvent) {
-            // DOM座標系のオフセットをキャンバス描画座標系（ピクセル）に変換して適用
             drawYOffset = TOUCH_OFFSET_Y_DISPLAY * scaleY;
         }
 
         const x = (clientX - rect.left) * scaleX + DRAW_OFFSET_X; 
         const y = (clientY - rect.top) * scaleY + DRAW_OFFSET_Y + drawYOffset; // オフセットを加算
 
-        // 2. **DOM上の正確な位置**: 
+        // 2. DOM上の正確な位置
         const rawDisplayX = clientX - rect.left;
         const rawDisplayY = clientY - rect.top;
 
-        // 3. **ブラシの表示位置**: マウス/タッチで表示位置を切り替える 
+        // 3. ブラシの表示位置
         let brushDisplayY = rawDisplayY;
         
         if (isTouchEvent) {
@@ -274,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
-    // 💡 インジケーターのDOM表示位置を更新する関数
+    // インジケーターのDOM表示位置を更新する関数
     const updateBrushIndicatorForDisplay = (pos) => {
         const size = brushSize;
         if(brushIndicator) {
@@ -594,6 +593,77 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // ----------------------------------------------------
+    // ✨ AI/機械学習ロジックの新規追加
+    // ----------------------------------------------------
+
+    // BodyPixモデルのロード
+    const loadBodyPix = async () => {
+        try {
+            // モデルの設定（速度と精度のバランスを取る）
+            bodyPixNet = await bodyPix.load({
+                architecture: 'MobileNetV1', 
+                outputStride: 16, 
+                multiplier: 0.75, 
+                quantBytes: 2 
+            });
+            console.log("BodyPix model loaded successfully.");
+        } catch (error) {
+            console.error("BodyPix model failed to load:", error);
+            alert("AIモデルの読み込みに失敗しました。ネットワーク接続を確認してください。");
+        }
+    };
+    
+    // 自動背景削除の実行関数
+    const applyAutoBackgroundRemoval = async () => {
+        if (!originalImageData) {
+            alert("先に画像を読み込んでください。");
+            return;
+        }
+        if (!bodyPixNet) {
+            alert("AIモデルがまだ読み込み中です。しばらくお待ちください。");
+            return;
+        }
+
+        // 描画開始前に履歴を保存
+        saveState(); 
+
+        try {
+            // BodyPixで人物のセグメンテーションを実行
+            const segmentation = await bodyPixNet.segmentPerson(canvas, {
+                flipHorizontal: false, 
+                internalResolution: 'high', 
+                segmentationThreshold: 0.7 // 閾値: 0.7以上を人物と判断
+            });
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const segmentationData = segmentation.data; // マスクデータ (1=人物, 0=背景)
+            const pixelCount = segmentationData.length;
+
+            // マスクデータを使って背景を一括透明化
+            for (let i = 0; i < pixelCount; i++) {
+                // segmentationDataが0（背景）の場合
+                if (segmentationData[i] === 0) { 
+                    // ImageDataのインデックスを計算 (R, G, B, A の A)
+                    const alphaIndex = i * 4 + 3; 
+                    data[alphaIndex] = 0; // アルファ値を0に設定（透明化）
+                }
+            }
+
+            // 変更をキャンバスに反映
+            ctx.putImageData(imageData, 0, 0);
+            edgeMap = createEdgeMap(imageData); // エッジマップも更新
+            
+            updateUndoRedoButtons();
+            
+
+        } catch (error) {
+            console.error("Automatic background removal failed:", error);
+            alert("自動背景削除中にエラーが発生しました。");
+        }
+    };
+    
+    // ----------------------------------------------------
     // 描画イベント制御
     // ----------------------------------------------------
     const stopDrawing = () => {
@@ -649,6 +719,18 @@ document.addEventListener('DOMContentLoaded', () => {
             location.reload(); 
         });
     }
+    
+    // ✨ 新規追加: 自動背景削除ボタンのイベントリスナー
+    if (toolAutoRemoveBtn) {
+        toolAutoRemoveBtn.addEventListener('click', () => {
+             // ボタンを押したら自動削除を実行し、その後イレイサーモードに戻る
+            deactivateSamplerMode();
+            applyAutoBackgroundRemoval();
+            setActiveTool('eraser');
+            closeMenu();
+        });
+    }
+
 
     // マウスイベント (キャンバス専用)
     canvas.addEventListener('mousedown', handleDrawStart);
@@ -702,4 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // 起動時にAIモデルのロードを開始
+    loadBodyPix();
 });

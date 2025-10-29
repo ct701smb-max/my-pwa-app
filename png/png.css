@@ -1,69 +1,193 @@
 /* ベーススタイル */
+:root {
+    --primary-color: #1E90FF; /* 明るい青 */
+    --restore-color: #FFD700; /* ゴールド */
+    --background-light: #f9f9f9;
+    --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f7f9;
+    font-family: 'Inter', 'Arial', sans-serif;
+    background-color: var(--background-light);
     padding: 10px;
     display: flex;
     justify-content: center;
+    min-height: 100vh;
+    margin: 0;
 }
 
 .container {
     background-color: #fff;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: var(--shadow-base);
     width: 100%;
     max-width: 800px;
+    display: flex;
+    flex-direction: column;
 }
 
 h1 {
     text-align: center;
-    color: #007bff;
-    margin-bottom: 15px;
-    font-size: 1.5em;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    font-weight: 700;
 }
 
-/* ツールコントロールのレイアウト調整 */
-.controls {
-    margin: 15px 0;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
+/* 汎用ボタンのスタイル */
 button {
-    padding: 8px 12px;
+    padding: 10px 15px;
     cursor: pointer;
-    border: 1px solid #007bff;
+    border: 1px solid var(--primary-color);
     background-color: white;
-    color: #007bff;
-    border-radius: 4px;
+    color: var(--primary-color);
+    border-radius: 6px;
     font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 button.active {
-    background-color: #007bff;
+    background-color: var(--primary-color);
     color: white;
+    border-color: var(--primary-color);
 }
 
+/* ツールボタンの個別スタイル */
 #tool-restore {
-    border: 1px solid #ffc107;
-    color: #ffc107;
+    border: 1px solid var(--restore-color);
+    color: var(--restore-color);
     background-color: white;
 }
 
 #tool-restore.active {
-    background-color: #ffc107;
+    background-color: var(--restore-color);
     color: #333;
+    border-color: var(--restore-color);
 }
+
+/* AI自動削除ボタン (新規追加) */
+#tool-auto-remove {
+    background-color: #4CAF50; /* 緑系で特別感を出す */
+    color: white;
+    border: none;
+    font-weight: bold;
+    box-shadow: 0 3px 8px rgba(76, 175, 80, 0.5);
+}
+
+#tool-auto-remove:hover:not(:disabled) {
+    background-color: #45a049;
+    transform: translateY(-1px);
+}
+
+/* ヘッダーコントロール (Undo/Redo/メニュー) */
+.controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    position: relative; /* メニューパネルの基準位置 */
+}
+
+/* ダウンロードボタン */
+#download-btn {
+    width: 100%;
+    background-color: #dc3545; /* 強調色（ダウンロード） */
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    font-size: 16px;
+    margin-top: 20px;
+    box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4);
+}
+
+#download-btn:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+/* =======================================
+    サイドメニューパネル (#side-menu-panel)
+   ======================================= */
+#side-menu-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 280px; /* PC/タブレット用幅 */
+    height: 100%;
+    background-color: #f7f7f7;
+    border-left: 1px solid #ddd;
+    padding: 20px;
+    box-shadow: -4px 0 10px rgba(0,0,0,0.15);
+    z-index: 100;
+    overflow-y: auto;
+    transition: transform 0.3s ease-out;
+    transform: translateX(100%); /* 初期状態は画面外に隠す */
+}
+
+/* .hidden クラスの代わりに JavaScript で transform: translateX(0) を使う方がスムーズですが、
+   既存の .hidden クラスを尊重して display: none; を使用します。 */
+.hidden {
+    display: none;
+}
+
+#side-menu-panel:not(.hidden) {
+    display: block;
+    transform: translateX(0);
+}
+
+#side-menu-panel h2, #side-menu-panel h3 {
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#side-menu-panel hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 15px 0;
+}
+
+.tool-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* フォーム要素 */
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #555;
+}
+input[type="color"], input[type="range"] {
+    width: 100%;
+    margin-top: 5px;
+}
+
+/* =======================================
+    キャンバスエリアとインジケーター
+   ======================================= */
 
 /* 透過部分を見やすくするための市松模様 */
 .canvas-area {
     position: relative;
     border: 1px solid #ccc;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+    /* 市松模様のパターン */
     background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
                       linear-gradient(-45deg, #ccc 25%, transparent 25%),
                       linear-gradient(45deg, transparent 75%, #ccc 75%),
@@ -71,160 +195,71 @@ button.active {
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
     overflow: hidden;
-}
-
-/* 💡 ブラシインジケーターのスタイル（赤い円と十字） */
-#brush-indicator {
-    position: absolute;
-    /* 既存の円のスタイル */
-    border: 2px solid rgba(255, 0, 0, 0.7); /* 円の赤い枠 */
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0;
-    z-index: 50;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
-    transition: opacity 0.1s;
-    transform: translate(-50%, -50%); /* 中心を座標の中心に合わせる */
-
-    /* ⭐️ 新規追加: 十字ラインの作成 ⭐️ */
-    /* 縦線と横線の共通設定 */
-    &::before,
-    &::after {
-        content: '';
-        position: absolute;
-        background-color: rgba(0, 0, 0, 1.0); /* 赤色の線 */
-        z-index: 51; /* 円より手前に表示 */
-    }
-
-    /* 縦線 */
-    &::before {
-        top: 0;
-        left: 50%;
-        width: 1px; /* 線の太さ */
-        height: 100%;
-        transform: translateX(-50%);
-    }
-
-    /* 横線 */
-    &::after {
-        top: 50%;
-        left: 0;
-        width: 100%;
-        height: 1px; /* 線の太さ */
-        transform: translateY(-50%);
-    }
+    margin-top: 10px;
 }
 
 #main-canvas {
     display: block;
-    cursor: crosshair; /* マウスで十字カーソルを表示 */
+    cursor: crosshair;
+    /* キャンバスの表示サイズはJSで動的に設定されます */
 }
 
-#download-btn {
-    width: 100%;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-}
-
-
-/* =======================================
-    レスポンシブ対応 (スマートフォン向け)
-    ======================================= */
-@media (max-width: 600px) {
-    
-    .container {
-        padding: 15px;
-    }
-
-    /* ツールコントロールを縦並びにする */
-    .controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-    
-    /* ツールボタンを全幅にする */
-    .controls button {
-        width: 100%;
-        margin-bottom: 5px;
-    }
-
-    /* ブラシサイズ調整部分を独立させる */
-    .controls input[type="range"], 
-    .controls label[for="brush-size"] {
-        width: 100%;
-        text-align: center;
-    }
-}
-
-/* controls-header: Undo/Redo/メニューボタンが並ぶエリア */
-.controls-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-/* side-menu-panel: ハンバーガーメニューの中身 */
-#side-menu-panel {
+/* 💡 ブラシインジケーターのスタイル */
+#brush-indicator {
     position: absolute;
+    /* 円のスタイル */
+    border: 2px solid rgba(255, 0, 0, 0.8); 
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 50;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+    transition: opacity 0.1s;
+    transform: translate(-50%, -50%); 
+}
+
+/* 十字ラインの共通設定 (標準CSSに修正) */
+#brush-indicator::before,
+#brush-indicator::after {
+    content: '';
+    position: absolute;
+    background-color: rgba(0, 0, 0, 1.0); 
+    z-index: 51;
+}
+
+/* 縦線 */
+#brush-indicator::before {
     top: 0;
-    right: 0;
-    width: 250px;
+    left: 50%;
+    width: 1px; 
     height: 100%;
-    background-color: #f0f0f0;
-    border-left: 1px solid #ccc;
-    padding: 20px;
-    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-    z-index: 100;
-    overflow-y: auto;
+    transform: translateX(-50%);
 }
 
-/* 💡 初期状態では非表示にするためのクラス */
-.hidden {
-    display: none !important; /* !importantを追加し、確実に非表示にする */
-}
-
-/* ツールグループ内のボタンのレイアウトを調整 */
-.tool-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* その他のスタイル */
-label {
-    display: block;
-    margin-top: 10px;
-}
-input[type="color"], input[type="range"] {
+/* 横線 */
+#brush-indicator::after {
+    top: 50%;
+    left: 0;
     width: 100%;
+    height: 1px; 
+    transform: translateY(-50%);
 }
 
-/* キャンバスエリアの基本設定 */
-.canvas-area {
-    position: relative;
-}
 
 /* スポイトインジケーターのスタイル */
 #color-sampler-indicator {
     position: absolute;
-    width: 50px; 
-    height: 50px;
+    width: 40px; /* サイズを少し小さく */
+    height: 40px;
     
-    /* 見た目の調整 */
     border: 3px solid white;
-    outline: 2px solid black;
+    outline: 2px solid #555;
     border-radius: 50%;
     pointer-events: none;
     z-index: 100;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
     transform: translate(-50%, -50%);
     
-    /* 取得した色を真ん中に表示 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -232,15 +267,54 @@ input[type="color"], input[type="range"] {
 
 /* 取得した色を表示する部分 */
 #sampler-output-color {
-    width: 80%;
-    height: 80%;
+    width: 70%;
+    height: 70%;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, 0.3);
 }
 
-/* メニューパネル (操作しやすいようにスタイリング) */
-#side-menu-panel {
-    padding: 15px;
-    border: 1px solid #ccc;
-    margin-top: 10px;
+/* =======================================
+    レスポンシブ対応 (モバイル向け)
+   ======================================= */
+@media (max-width: 650px) {
+    
+    body {
+        padding: 0; /* モバイルでは余白を詰める */
+    }
+
+    .container {
+        padding: 10px;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 100vh;
+    }
+    
+    .controls-header {
+        margin-bottom: 10px;
+    }
+    
+    .controls-header button {
+        flex-grow: 1;
+        margin: 0 3px;
+    }
+    
+    /* モバイルでのメニューパネル */
+    #side-menu-panel {
+        width: 100%; /* 全幅に広げる */
+        height: calc(100% - 60px); /* ヘッダー分を引く */
+        max-width: none;
+        top: 60px; /* ヘッダーの下から開始 */
+        padding-bottom: 80px;
+    }
+    
+    /* モバイルでのダウンロードボタン */
+    #download-btn {
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        border-radius: 0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 90;
+        margin-top: 10px;
+    }
 }
