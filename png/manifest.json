@@ -1,0 +1,21 @@
+{
+  "name": "透過画像",
+  "short_name": "透過画像",
+  "start_url": "png.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#333333",
+  "description": "個人的な用途のためのWebアプリです。",
+  "icons": [
+    {
+      "src": "img.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
