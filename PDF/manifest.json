@@ -1,0 +1,21 @@
+{
+  "name": "画像PDF",
+  "short_name": "画像PDF",
+  "start_url": "pdf.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#333333",
+  "description": "個人的な用途のためのWebアプリです。",
+  "icons": [
+    {
+      "src": "p1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "p1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
