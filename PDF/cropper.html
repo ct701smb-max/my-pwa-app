@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マルチ画像トリミングツール</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <link rel="stylesheet" href="cropper.css">
+</head>
+<body>
+
+    <div id="editorContainer">
+        <h1>マルチ画像トリミングツール</h1>
+
+        <input type="file" id="imageInput" accept="image/*" multiple>
+
+        <hr>
+
+        <div id="sortableContainer">
+            <h3>ファイル並び替え・削除 (ドラッグ＆ドロップ)</h3>
+            <ul id="fileList" class="sortable-list">
+                </ul>
+        </div>
+<div id="sortableContainer">
+    <button id="sortByNameButton">ファイル名順でソート ⬆️</button> 
+    <button id="duplicateButton" disabled>現在の画像を複製してリストに追加</button>
+    <ul id="fileList" class="sortable-list">
+        
+        </ul>
+</div>
+        
+        
+        <hr>
+
+        <div id="presetControls">
+            <button id="presetFull">画像の全体</button>
+            <button id="cropButton" disabled>✅トリミング完了</button>
+            <button id="presetLeftHalf">画像の左半分</button>
+            <button id="presetRightHalf">画像の右半分</button>
+        </div>
+
+        <hr>
+
+        <div id="imageDisplay">
+            画像をアップロードしてください。
+        </div>
+
+        <div id="navigationControls">
+            <button id="prevButton" disabled>← 前の画像</button>
+            
+            
+            
+            <button id="nextButton" disabled>次の画像 →</button>
+        </div>
+
+        <div id="imageIndexInfo">
+            画像 <span id="currentImageIndex">0</span> / <span id="totalImages">0</span>
+        </div>
+        
+        <hr>
+
+        <button id="saveAllButton" disabled>全ファイルを一括ダウンロード</button>
+        <hr>
+ <button id="reloadBtn" onclick="location.reload()">🔄 アプリを更新</button>
+        <a href="pdf.html"><button>PDFへの変換</button></a>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="cropper.js"></script>
+</body>
+</html>
