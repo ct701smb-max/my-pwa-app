@@ -1069,8 +1069,9 @@ a.btn-coupon:hover .right {
   transition: .5s;
 }
 #avatar:hover {
-  --f: 5; /* hover scale */
+  --f: 1.5; /* hover scale */
 }
+
 
 
 
