@@ -44,7 +44,7 @@
         var points = [
            [34.687337892506655, 135.52576861539666],　//大阪城
            [34.70206616122484, 135.53642562412736],　//桜宮中学校
-           
+           [34.64870697378868, 135.49820095040198],　//いまみや小中一貫校
            
             
         ];
@@ -58,6 +58,9 @@
         marker.addTo(map);
         var marker = L.marker(points[1]);
         marker.bindPopup("桜宮中学校<br><img src='https://upload.wikimedia.org/wikipedia/commons/d/d3/%E5%A4%A7%E9%98%AA%E5%B8%82%E7%AB%8B%E6%A1%9C%E5%AE%AE%E4%B8%AD%E5%AD%A6%E6%A0%A1.jpg' width='100' height='100'>");
+        marker.addTo(map);
+		var marker = L.marker(points[2]);
+        marker.bindPopup("いまみや小中一貫校<br><img src='https://s.resemom.jp/imgs/sp/thumb/85130.jpg' width='100' height='100'>");
         marker.addTo(map);
         
         
