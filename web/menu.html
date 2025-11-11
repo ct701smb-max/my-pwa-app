@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+
+    .menu {
+      width: 100%;
+      max-width: none;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 15px 20px;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+
+    .menu h3 {
+      margin-top: 0;
+      font-size: 1.6em;
+      border-bottom: 2px solid #4a90e2;
+      padding-bottom: 8px;
+      color: #4a90e2;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    li {
+      margin-bottom: 12px;
+      user-select: none;
+    }
+
+    li > a {
+      text-decoration: none;
+      color: #333;
+      display: block;
+      padding: 10px 12px;
+      border-radius: 6px;
+      transition: background-color 0.3s, color 0.3s;
+      font-weight: 600;
+      white-space: nowrap;        
+      text-overflow: clip;   
+    }
+
+    li > a:hover {
+      background-color: #4a90e2;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    li > a.toggle {
+      position: relative;
+    }
+
+    li > a.toggle::after {
+      content: "▼";
+      position: absolute;
+      right: 12px;
+      font-size: 0.8em;
+      transition: transform 0.3s ease;
+    }
+
+    li > a.toggle.active::after {
+      transform: rotate(-180deg);
+    }
+
+    .submenu {
+      margin-top: 8px;
+      margin-left: 15px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+      padding-left: 10px;
+      border-left: 2px solid #4a90e2;
+    }
+
+    .submenu.open {
+      max-height: 1000px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
+    .submenu a {
+      font-weight: normal;
+      padding: 6px 10px;
+      border-radius: 4px;
+      display: block;
+      color: #555;
+      text-decoration: none;
+      transition: background-color 0.3s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .submenu a:hover {
+      background-color: #e1e9ff;
+      color: #4a90e2;
+    }
+  </style>
+ <script>
+    function toggleMenu(id, link) {
+      const submenu = document.getElementById(id);
+      submenu.classList.toggle('open');
+    }
+
+    // リンククリック時、親にメニューを閉じるよう伝える
+    document.addEventListener('DOMContentLoaded', function () {
+      const links = document.querySelectorAll('a[target="main-frame"]');
+      links.forEach(link => {
+        link.addEventListener('click', function () {
+          if (window.innerWidth <= 600) {
+            parent.postMessage({ action: 'closeMenu' }, '*');
+          }
+        });
+      });
+    });
+  </script>
+</head>
+<body>
+  <div class="menu">
+    <h3>メニュー</h3>
+    <ul>
+      <li><a href="top.html" target="main-frame">トップページ</a></li>
+
+      <li>
+        <a href="javascript:void(0);" class="toggle" onclick="toggleMenu('menu1', this)">基本ページ</a>
+        <div id="menu1" class="submenu">
+          <a href="web.html" target="main-frame">Web.html</a>
+          <a href="index.html" target="main-frame">index.html</a>
+          <a href="#" target="main-frame">sample4</a>
+          <a href="#" target="main-frame">sample5</a>
+          <a href="#" target="main-frame">sample6</a>
+        </div>
+      </li>
+
+      <li>
+        <a href="javascript:void(0);" class="toggle" onclick="toggleMenu('menu2', this)">会社ページ</a>
+        <div id="menu2" class="submenu">
+          <a href="company.html" target="main-frame">company.html</a>
+          <a href="recruit.html" target="main-frame">recruit.html</a>
+          <a href="#" target="main-frame">sample3</a>
+          <a href="#" target="main-frame">sample4</a>
+          <a href="#" target="main-frame">sample5</a>
+          <a href="#" target="main-frame">sample6</a>
+        </div>
+      </li>
+
+      <li>
+        <a href="javascript:void(0);" class="toggle" onclick="toggleMenu('menu3', this)">その他</a>
+        <div id="menu3" class="submenu">
+          <a href="login1.html" target="main-frame">login1.html</a>
+          <a href="login2.html" target="main-frame">login2.html</a>
+          <a href="shot.html" target="main-frame">shot.html</a>
+          <a href="iPhone.html" target="main-frame">iPhone.html</a>
+          <a href="Android.html" target="main-frame">Android.html</a>
+          <a href="#" target="main-frame">sample7</a>
+          <a href="#" target="main-frame">sample7</a>
+          <a href="#" target="main-frame">sample8</a>
+          <a href="#" target="main-frame">sample9</a>
+          <a href="#" target="main-frame">sample10</a>
+        </div>
+      </li>
+
+      <li><a href="#" target="main-frame">まとめ</a></li>
+      <li><a href="#" target="main-frame">時系列</a></li>
+      <li><a href="#" target="main-frame">呼称対応表</a></li>
+    </ul>
+  </div>
+
+
+
+</body>
+</html>

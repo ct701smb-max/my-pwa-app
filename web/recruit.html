@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="./system/font-face.css" type="text/css" />
+<link rel="stylesheet" href="company.css" />
+<link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+<!-- jquery の読み込み -->
+<script type="text/javascript" src="./system/jquery-1.9.0.min.js"></script>
+<!-- javascript の読み込み -->
+<script type="text/javascript" src="./system/slideshow_new.js" charset="utf-8"></script>
+
+<title>採用情報</title>
+
+
+</head>
+
+
+<body>
+
+<!-- 全体を囲む箱 開始 -->
+<div id="inbox">
+
+
+
+
+<!-- ヘッダー部分 ２段目 開始 -->
+<div id="banner2">
+
+
+<!-- ヘッダー部分 ２段目の左部分　開始 -->
+<div id="banner2-left">
+株式会社〇〇は、□□□□□□□□□□□なサービスを提案する、△△を専門とした会社です。<br />
+あなたの会社の成功実現のお手伝い致します。<br />
+お気軽にお問い合わせください。
+</div>
+<!-- ヘッダー部分 ２段目の左部分　終了 -->
+
+
+
+<!-- ヘッダー部分 ２段目の右部分　開始 -->
+<div id="banner2-right">
+株式会社〇〇<br />
+〒111-1111　〇〇県○○市〇〇〇〇<br />
+代表取締役社長：〇〇　〇〇<br />
+専務取締役：〇〇　〇〇
+</div>
+<!-- ヘッダー部分 ２段目の右部分　終了 -->
+
+
+</div><!-- banner2 End -->
+<!-- ヘッダー部分 ２段目 終了 -->
+
+
+
+
+<!--　メニュー部分　 開始 -->
+<!--　ハンバーガーメニュー -->
+<div class="menu-toggle" id="menu-toggle">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+<!--　メニュー本体 -->
+
+<div id="menu">
+<ul>
+<li><a href="index.html">HOME</a></li>
+
+<li><a href="company.html">業務案内</a></li>
+
+<li><a href="company.html">新着情報</a></li>
+
+<li><a href="javascript:void(0)">採用情報</a></li>
+
+<li><a href="javascript:void(0)">お問い合わせ</a></li>
+
+<li><a href="login1.html">ログイン</a></li>
+
+</ul>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById("menu-toggle");
+    const menu = document.getElementById("menu");
+    const menuLists = document.querySelectorAll("#menu ul");
+
+    // メニュー開閉
+    toggle.addEventListener("click", function (e) {
+      e.stopPropagation(); // イベントのバブリングを防止
+      toggle.classList.toggle("active");
+      menuLists.forEach(function (ul) {
+        ul.classList.toggle("active");
+      });
+    });
+
+    // メニューの外をクリックしたら閉じる
+    document.addEventListener("click", function (event) {
+      if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+        toggle.classList.remove("active");
+        menuLists.forEach(function (ul) {
+          ul.classList.remove("active");
+        });
+      }
+    });
+  });
+</script>
+<!-- メニュー部分 End -->
+
+
+
+<!-- ヘッダー　一段目　開始 -->
+<!-- ヘッダー　一段目　終了 -->
+
+
+
+
+
+
+<!-- 右サイドバー　開始 -->
+<div id="links-right">
+
+
+
+<!-- カテゴリーリスト開始 -->
+
+
+
+<div class="side">
+会社情報</div>
+
+
+<div class="side2">
+<a href="company.html">・会社情報</a>
+</div>
+
+
+
+
+<div class="side">
+業務案内</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・業務１</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・業務２</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・業務３</a>
+</div>
+
+
+
+
+<div class="side">
+新着情報</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・ニュース03</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・ニュース02</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・ニュース01</a>
+</div>
+
+
+
+<div class="side">
+採用情報</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・採用情報</a>
+</div>
+
+
+
+
+<div class="side">
+お問い合わせ</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・お問い合わせ</a>
+</div>
+
+
+
+
+<!-- カテゴリーリスト終了 -->
+
+
+<br />
+
+
+
+<!-- コンテンツ１　開始 -->
+<div class="sidetitle">
+新商品情報
+</div>
+
+<div class="side5" id="avatar">
+<a href="javascript:void(0)">
+<img src="./img/sakupi.png" width="160" height="100">
+</a>
+</div>
+<!-- コンテンツ１　終了 -->
+
+
+<!-- コンテンツ２　開始 -->
+<div class="sidetitle">
+期間限定情報
+</div>
+
+<div class="side5">
+<div class="btn-wrap">
+  <a href="javascript:void(0)" class="btn btn-coupon" style="text-decoration:none;">
+    <div class="left"><span class="txt1">特別割引クーポン券</span><br><em>20%OFF</em><span class="txt2">有効期限:2030年12月31日</span></div>
+    <div class="right"><span>Coupon</span></div>
+  </a>
+</div>
+
+</div>
+    
+<!-- コンテンツ２　終了 -->
+
+<!-- コンテンツ３　開始 -->
+<div class="sidetitle">
+関連リンク
+</div>
+
+<div class="side5">
+◆  <a href="index.html">トップページ</a>
+<br>    
+◆  <a href="https://www.google.co.jp/maps/@33.5001886,137.1538646,5z?hl=ja&entry=ttu" target="_blank">Googleマップ</a>
+<br>    
+◆  <a href="https://saruwakakun.com/html-css/page/2" target="_blank">CSSサンプル</a> 
+<br>    
+◆  <a href="http://www.netyasun.com/home/color.html" target="_blank">カラーコード</a> 
+</div>
+<!-- コンテンツ３　終了 -->
+
+
+</div><!-- links-right End -->
+<!-- 右サイドバー　終了 -->
+
+
+
+
+
+
+
+<!-- 中央部分 開始 -->
+<div id="container">
+
+
+
+
+<!-- 記事タイトル・本文 開始 -->
+
+
+<div class="blog">
+  <h3 class="title">採用情報 </h3>
+
+  <div class="blogbody">
+    <div class="f1">募集要項（2026年度新卒採用） </div>
+
+   <div class="responsive-table">
+      <div class="row">
+        <div class="cell heading">募集職種 </div>
+        <div class="cell">営業職：セールスエンジニア <br技>術職：システムエンジニア </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">応募資格 </div>
+        <div class="cell">2026年3月卒業予定者（全学部、全学科） </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">応募書類 </div>
+        <div class="cell">履歴書（写真貼付）・成績証明書・卒業見込証明書・健康診断書 </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">応募方法 </div>
+        <div class="cell">自由応募・学校推薦 </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">選考方法 </div>
+        <div class="cell">筆記（適性・常識） <br技>↓ <br技>グループ面接 <br技>↓ <br技>1次面接（人事担当） <br技>↓ <br技>2次面接（役員） </div>
+      </div>
+    </div>
+
+    <div class="f1">勤務・待遇 </div>
+
+   <div class="responsive-table">
+      <div class="row">
+        <div class="cell heading">給与 </div>
+        <div class="cell">月収 大学卒：300,000円（2025年度実績） </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">諸手当 </div>
+        <div class="cell">時間外勤務手当、家族手当、通勤手当など </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">昇給 </div>
+        <div class="cell">年1回（4月） </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">賞与 </div>
+        <div class="cell">年2回（6月、12月） </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">休日休暇 </div>
+        <div class="cell">完全週休2日制（土曜・日曜）、祝日、有給休暇、年末年始、夏期休暇、結婚・忌引など </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">勤務時間 </div>
+        <div class="cell">9時00分～18時00分 </div>
+     </div>
+      <div class="row">
+        <div class="cell heading">勤務地 </div>
+        <div class="cell">全国 </div>
+      </div>
+      <div class="row">
+        <div class="cell heading">福利厚生 </div>
+        <div class="cell">社会保険、定期健康診断、育児・介護休業制度、社員旅行、球技大会など </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- blog End -->
+
+<!-- 記事タイトル・記事本文 終了 -->
+
+
+
+</div><!-- container End -->
+<!-- 中央部分 終了 -->
+
+
+
+<!-- フッター 開始　-->
+
+<div id="footer">
+ＨＯＭＥ | 会社情報 | 採用情報 |  お問い合わせ 
+</div>
+<!-- フッター 終了　-->
+
+
+</div><!-- inbox End -->
+<!-- 全体を囲む箱 終了 -->
+
+</body>
+</html>

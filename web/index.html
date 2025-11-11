@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<!--ヘッダーの開始-->
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css"> 
+<!--端末対応-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<!--ページのタイトルを設定-->
+  <title>
+   ページのタイトル
+  </title>
+
+<!--CSS・Javascriptなどのリンクの開始-->
+
+<!--Font Awesome5へのリンク-->
+<link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+<!--Lobsterフォントの指定-->
+<link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+
+<!--style.cssへのリンク-->
+<link rel="stylesheet" href="style.css" type="text/css" media="all">
+
+<!--地図の作成-->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script>
+    window.onload = function( ){
+        var map = L.map("h_map");
+        
+        //国土地理院レイヤー
+        var tileLayer_gsi = L.tileLayer(
+        "http://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
+        {attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院</a>"}
+        );
+        tileLayer_gsi.addTo(map);
+        
+        //表示する地点
+        var points = [
+           [34.687337892506655, 135.52576861539666],　//大阪城
+           [34.70206616122484, 135.53642562412736],　//桜宮中学校
+           
+           
+            
+        ];
+        
+        //　　　　緯度　経度　表示倍率
+        map.setView(points[0], 13);
+        
+        //　マーカーの追加　　緯度　経度
+        var marker = L.marker(points[0]);
+        marker.bindPopup("大阪城<br><img src='https://osaka-bunkazainavi.org/wp-content/uploads/2022/08/gaikan_002.jpg' width='100' height='100'>");
+        marker.addTo(map);
+        var marker = L.marker(points[1]);
+        marker.bindPopup("桜宮中学校<br><img src='https://upload.wikimedia.org/wikipedia/commons/d/d3/%E5%A4%A7%E9%98%AA%E5%B8%82%E7%AB%8B%E6%A1%9C%E5%AE%AE%E4%B8%AD%E5%AD%A6%E6%A0%A1.jpg' width='100' height='100'>");
+        marker.addTo(map);
+        
+        
+
+        //　表示する地点を線で結ぶ
+        var polyline = L.polyline(points, {color: "blue"});
+        polyline.addTo(map);
+    }
+    </script>
+
+    <script>/*javascript　更新ボタン*/
+function koshin(){
+  location.reload();
+}
+</script>
+    
+<!--リンクの終了-->
+</head>
+<!--ヘッダーの終了-->
+
+<!--ページ本体の開始-->
+<body>
+  <header>
+    <h1>Webサイトの作成</h1>
+  </header>
+  
+  <h2>R7年度　中学校　技術科Web作品</h2>
+<!--　メニュー部分　 開始 -->
+<!--　ハンバーガーメニュー -->
+<div class="menu-toggle" id="menu-toggle">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+<!--　メニュー本体 -->
+
+<div id="menu">
+	<ul>
+		<li><a href="web.html">Web作成</a></li>
+		<li><a href="login1.html">ログイン</a></li>
+		<li><a href="company.html">会社情報</a></li>
+		<li><a href="https://www.colordic.org/">カラーコード</a></li>
+		<li><a href="https://saruwakakun.com/html-css/page/2">CSSサンプル</a></li>
+		<li><a href="iPhone.html">iPhone 4</a></li>
+		<li><a href="Android.html">Android</a></li>
+	</ul>
+  </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById("menu-toggle");
+    const menu = document.getElementById("menu");
+    const menuLists = document.querySelectorAll("#menu ul");
+
+    // メニュー開閉
+    toggle.addEventListener("click", function (e) {
+      e.stopPropagation(); // イベントのバブリングを防止
+      toggle.classList.toggle("active");
+      menuLists.forEach(function (ul) {
+        ul.classList.toggle("active");
+      });
+    });
+
+    // メニューの外をクリックしたら閉じる
+    document.addEventListener("click", function (event) {
+      if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+        toggle.classList.remove("active");
+        menuLists.forEach(function (ul) {
+          ul.classList.remove("active");
+        });
+      }
+    });
+  });
+</script>
+<!-- メニュー部分 終了 -->
+
+
+
+<!--画像の設定-->
+  <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap"> 
+	<img src="./img/Logo1.png" width="300" height="300" alt="桜宮中学校　技術科">
+    <img src="./img/Logo2.png" width="300" height="300" alt="いまみや小中一貫校　技術科">  
+  </div>
+
+
+
+
+
+  
+
+
+    
+<!--表の作成-->
+<div class="t1">
+  <table>    
+	<tr>  
+		<th><input type="button" value="もとに戻す" onclick="koshin()"></th>    
+		<th><i class="fa-solid fa-globe"></i></th>
+		<th>春</th>
+		<th>夏</th>
+		<th>秋</th>
+		<th>冬</th>
+
+	</tr>
+
+	<tr>    
+		<td>背景<i class="fa-solid fa-arrow-right-long"></i></td>    
+		<td><img src="./img/bg-web.jpg" width="50" height="50" onclick="document.body.style.backgroundImage='url(./img/bg-web.jpg)'"></td>
+        
+		<td><img src="./img/bg-sakura.jpg" width="50" height="50" onclick="document.body.style.backgroundImage='url(./img/bg-sakura.jpg)'"></td>
+        
+		<td><img src="./img/bg-sea.jpg" width="50" height="50" onclick="document.body.style.backgroundImage='url(./img/bg-sea.jpg'"></td>
+        
+		<td><img src="./img/bg-icho.jpg" width="50" height="50" onclick="document.body.style.backgroundImage='url(./img/bg-icho.jpg'"></td>
+        
+		<td><img src="./img/bg-snow.jpg" width="50" height="50" onclick="document.body.style.backgroundImage='url(./img/bg-snow.jpg'"></td>
+        
+	</tr>
+
+	<tr>  
+        <td colspan="6">
+            <div id="h_map" style='width: 400px; height: 400px; border: solid 2px #808080; margin: 10px auto;'></div>
+		</td>
+	</tr>
+	
+
+  </table>
+</div>
+<!--表の終了-->
+
+
+
+
+
+
+</body>
+<!--ページ本体の終了-->
+</html>

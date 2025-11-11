@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+ログインシステム１
+</title>
+
+<!-- このシステムはすべての情報がHTMLソース内に含まれています。
+     誰でも「ソースを表示」でユーザー情報が見えてしまうので、
+     実際のサービスでは絶対に使ってはいけません！ -->
+
+<!-- 開発者ツールやソースコードを見てみよう -->
+
+
+<style>
+body {
+  background-color: #808080;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 入力フォームのデザイン */
+form {
+  max-width: 90%;
+  width: 100%;
+  padding: 10px 10px;
+  margin: 0 auto;
+  background-color: #000;
+  text-align: center;
+  position: relative;
+  top: 50%;
+  transform: translateY(10%);
+  box-sizing: border-box;
+}
+
+form h1, form p {
+  color: #fff;
+  font-weight: 500;
+}
+
+form input[type="text"], form input[type="password"] {
+  border: 0;
+  background: none;
+  display: block;
+  margin: 20px auto;
+  border: 2px solid #ff69b4;
+  padding: 15px 10px;
+  width: 80%;
+  max-width: 300px;
+  outline: none;
+  border-radius: 24px;
+  transition: 0.25s;
+  text-align: center;
+  font-size: 18px;
+  color: #fff;
+}
+
+form input[type="text"]:focus, form input[type="password"]:focus {
+  background-color: #353535;
+}
+
+form input[type="submit"] {
+  border: 0;
+  background: none;
+  display: block;
+  margin: 20px auto;
+  border: 2px solid #f0f8ff;
+  padding: 15px 10px;
+  width: 80%;
+  max-width: 300px;
+  outline: none;
+  color: #fff;
+  border-radius: 25px;
+  transition: 0.25s;
+  text-align: center;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+form input[type="submit"]:hover {
+  background-color: #ff69b4;
+  border: 2px solid #ff69b4;
+}
+</style>
+
+
+</head>
+<body>
+<!--入力フォーム-->
+<form id="login-form">
+<div class="login_form_top">
+<h1>LOGIN</h1>
+<p>UserID、Passwordをご入力の上、「LOGIN」ボタンをクリックしてください。</p>
+</div>
+<div class="login_form_btm">
+<input id="search-id" type="text" name="user_id" placeholder="UserID" autocomplete="off">
+<input id="search-password" type="password" name="password" placeholder="Password" autocomplete="off">
+<div class="button">
+<input type="submit" name="button" value="LOGIN">
+</div>
+<p id="search-result"></p>
+</div>
+</form>
+    
+<!--ログインシステム-->
+<script>
+document.getElementById('login-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const id = document.getElementById('search-id').value;
+  const pw = document.getElementById('search-password').value;
+  findUser(id, pw);
+});
+
+// idキーとnameキーを持つユーザーデータの配列
+const userDataList = [
+  { id: 'sakuranomiya', password: '6934', name: '桜宮さん' },
+  { id: 'imamiya', password: '2711', name: '今宮さん' },
+  { id: 'baika', password: '2171', name: '梅香さん' }
+];
+
+/** 検索IDを入力するinput要素 */
+const searchIdInput = document.querySelector('#search-id');
+
+//ログインユーザー名を表示する要素
+const searchResult = document.querySelector('#search-result');
+
+const button = document.querySelector('.button')
+
+//ログインボタン押下で作動
+button.addEventListener('click', () =>{
+  const searchId = document.querySelector('#search-id').value;
+  const searchPassword = document.querySelector('#search-password').value;
+  findUser(searchId,searchPassword);
+});
+
+
+/*** 登録しているユーザーを検索する */
+function findUser(searchId,searchPassword) {
+  // 該当データを取得する
+  const targetData = userDataList.find(
+  (data) => data.id === searchId && data.password === searchPassword
+);
+  // 該当データが存在しなかったら、「該当者なし」と表示して終了
+  if (targetData == null) {
+    searchResult.textContent = 'IDまたはパスワードが違います';
+    return;
+  }
+  
+  // 該当データの名前を表示する
+  searchResult.textContent = targetData.name + 'がログインしました。';
+
+  //遷移先ページのアドレス
+  window.open('company.html', '');
+}
+</script>
+
+</body>
+</html>

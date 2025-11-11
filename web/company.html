@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="./system/font-face.css" type="text/css" />
+<link rel="stylesheet" href="company.css" />
+<link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+<!-- jquery の読み込み -->
+<script type="text/javascript" src="https://www.osaka-c.ed.jp/common/jquery-1.9.0.min.js"></script>
+<!-- javascript の読み込み -->
+<script type="text/javascript" src="https://www.osaka-c.ed.jp/toppage/slideshow_new.js" charset="utf-8"></script>
+<!-- 地図 の読み込み -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    
+
+<title>株式会社〇〇</title>
+
+</head>
+
+    
+<!-- ホームページの本体部分 -->    
+<body>
+
+
+<!-- 全体を囲む箱 開始 -->
+<div id="inbox">
+
+
+
+<!-- ヘッダー部分 ２段目 開始 -->
+<div id="banner2">
+
+
+<!-- ヘッダー部分 ２段目の左部分　開始 -->
+<div id="banner2-left">
+株式会社〇〇は、□□□□□□□□□□□なサービスを提案する、△△を専門とした会社です。<br />
+あなたの会社の成功実現のお手伝い致します。<br />
+お気軽にお問い合わせください。
+</div>
+<!-- ヘッダー部分 ２段目の左部分　終了 -->
+
+
+
+<!-- ヘッダー部分 ２段目の右部分　開始 -->
+<div id="banner2-right">
+株式会社〇〇<br />
+〒111-1111　〇〇県○○市〇〇〇〇<br />
+代表取締役社長：〇〇　〇〇<br />
+専務取締役：〇〇　〇〇
+</div>
+<!-- ヘッダー部分 ２段目の右部分　終了 -->
+
+
+
+</div><!-- banner2 End -->
+<!-- ヘッダー部分 ２段目 終了 -->
+
+
+
+<!--　メニュー部分　 開始 -->
+<!--　ハンバーガーメニュー -->
+<div class="menu-toggle" id="menu-toggle">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+<!--　メニュー本体 -->
+
+<div id="menu">
+<ul>
+<li><a href="index.html">HOME</a></li>
+
+<li><a href="#gyomu">業務案内</a></li>
+
+<li><a href="#news">新着情報</a></li>
+
+<li><a href="recruit.html">採用情報</a></li>
+
+<li><a href="javascript:void(0)">お問い合わせ</a></li>
+
+<li><a href="login1.html">ログイン</a></li>
+
+</ul>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById("menu-toggle");
+    const menu = document.getElementById("menu");
+    const menuLists = document.querySelectorAll("#menu ul");
+
+    // メニュー開閉
+    toggle.addEventListener("click", function (e) {
+      e.stopPropagation(); // イベントのバブリングを防止
+      toggle.classList.toggle("active");
+      menuLists.forEach(function (ul) {
+        ul.classList.toggle("active");
+      });
+    });
+
+    // メニューの外をクリックしたら閉じる
+    document.addEventListener("click", function (event) {
+      if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+        toggle.classList.remove("active");
+        menuLists.forEach(function (ul) {
+          ul.classList.remove("active");
+        });
+      }
+    });
+  });
+</script>
+<!-- メニュー部分 End -->
+
+
+<!-- ヘッダー部分 １段目　開始 -->
+
+<!-- 画像のスライドショー-->
+<div class="slide-container">
+
+<!-- 左側スライド（slide）ここから-->
+
+  <div class="viewer">
+
+<!-- 左側画像設定ここから-->
+	<ul>
+	<li><a href="javascript:void(0)">
+		<img src="./img/Logo1.png" alt="左1枚目説明文" width="400" height="300" title="" /></a>
+	</li>
+
+	<li><a href="javascript:void(0)">
+		<img src="./img/Logo2.png" alt="左2枚目説明文" width="400"  height="300" title="" /></a>
+	</li>
+	</ul>	
+  </div>
+
+<!-- 右側スライド（slide）ここから-->
+
+  <div class="viewer">
+
+<!-- 右側画像設定ここから-->
+	<ul>
+	<li><a href="javascript:void(0)">
+		<img src="./img/Logo2.png" alt="右1枚目説明文" width="400"  height="300" title="" /></a>
+	</li>
+
+	<li><a href="javascript:void(0)">
+		<img src="./img/Logo1.png" alt="右2枚目説明文" width="400"  height="300" title="" /></a>
+	</li>
+	</ul>	
+  </div>
+</div>
+<!-- スライド（slide）ここまで-->
+
+<!-- ヘッダー部分　１段目　終了 -->
+
+
+
+
+
+
+
+<!-- 右サイドバー　開始 -->
+<div id="links-right">
+
+
+
+<!-- カテゴリーリスト開始 -->
+
+
+<div class="side">
+会社情報</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・会社情報</a>
+</div>
+
+
+
+<div class="side">
+業務案内</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・業務１</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・業務２</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・業務３</a>
+</div>
+
+
+
+<div class="side">
+新着情報</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・ニュース03</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・ニュース02</a>
+</div>
+
+<div class="side2">
+<a href="javascript:void(0)">・ニュース01</a>
+</div>
+
+
+
+<div class="side">
+採用情報</div>
+
+
+<div class="side2">
+<a href="recruit.html">・採用情報</a>
+</div>
+
+
+
+<div class="side">
+お問い合わせ</div>
+
+
+<div class="side2">
+<a href="javascript:void(0)">・お問い合わせ</a>
+</div>
+
+
+
+
+<!-- カテゴリーリスト終了 -->
+
+<br />
+
+
+<!-- コンテンツ１　開始 -->
+<div class="sidetitle">
+新商品情報
+</div>
+
+<div class="side5" id="avatar">
+<a href="javascript:void(0)">
+<img src="./img/sakupi.png" width="160" height="100">
+</a>
+</div>
+<!-- コンテンツ１　終了 -->
+
+
+<!-- コンテンツ２　開始 -->
+<div class="sidetitle">
+期間限定情報
+</div>
+
+<div class="side5">
+<div class="btn-wrap">
+  <a href="javascript:void(0)" class="btn btn-coupon" style="text-decoration:none;">
+    <div class="left"><span class="txt1">特別割引クーポン券</span><br><em>20%OFF</em><span class="txt2">有効期限:2030年12月31日</span></div>
+    <div class="right"><span>Coupon</span></div>
+  </a>
+</div>
+
+</div>
+    
+<!-- コンテンツ２　終了 -->
+<!-- コンテンツ３　開始 -->
+<div class="sidetitle">
+関連リンク
+</div>
+
+<div class="side5">
+◆  <a href="index.html">トップページ</a>
+<br>    
+◆  <a href="https://www.google.co.jp/maps/@33.5001886,137.1538646,5z?hl=ja&entry=ttu" target="_blank">Googleマップ</a>
+<br>    
+◆  <a href="https://saruwakakun.com/html-css/page/2" target="_blank">CSSサンプル</a> 
+<br>    
+◆  <a href="http://www.netyasun.com/home/color.html" target="_blank">カラーコード</a> 
+</div>
+<!-- コンテンツ３　終了 -->
+    
+
+
+</div>
+<!-- links-right End -->
+<!-- 右サイドバー　終了 -->
+
+
+
+
+
+
+
+<!-- 中央部分 開始 -->
+<div id="content">
+
+
+<!-- １段目　記事タイトル・文 開始 -->
+<div class="blog">
+
+
+
+
+<h1 class="title">挨拶</h1>
+
+
+<div class="blogbody">
+<p>テキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキストテキスト<br />
+</p>
+
+
+<span class="extended"><a href="javascript:void(0)">[詳しくはこちらへ]</a></span><br />
+
+</div>
+
+
+</div>
+<!-- １段目　記事タイトル・文 終了 -->
+
+
+
+<!-- ２段目　記事タイトル・記事概要 開始 -->
+<div class="blog">
+
+<h2 class="title" id="gyomu">業務案内</h2>
+
+<div class="blogbody">
+
+
+<div class="kiji-title">
+<span class="kiji-title02">◆</span>  <a href="javascript:void(0)">業務１</a>
+</div>
+
+<div class="blogbody2">
+<p>具体的な業務内容を記入１</p>
+</div>
+
+
+
+<div class="kiji-title">
+<span class="kiji-title02">◆</span>  <a href="javascript:void(0)">業務２</a>
+</div>
+
+<div class="blogbody2">
+<p>具体的な業務内容を記入２</p>
+</div>
+
+
+
+<div class="kiji-title">
+<span class="kiji-title02">◆</span>  <a href="javascript:void(0)">業務３</a>
+</div>
+
+<div class="blogbody2">
+<p>具体的な業務内容を記入３</p>
+</div>
+
+
+</div>
+
+</div>
+<!-- ２段目　記事タイトル・記事詳細 終了 -->
+
+
+
+<!-- ３段目　日付・記事タイトル 開始 -->
+<div class="blog">
+
+<h2 class="title" id="news">新着情報</h2>
+
+<div class="blogbody">
+
+
+
+<div class="kiji-title">
+<span class="kiji-title02">◆</span>  2024/6/1 
+</div>
+
+
+<div class="blogbody2">
+<a href="javascript:void(0)">ニュース03</a>
+</div>
+
+
+
+
+<div class="kiji-title">
+<span class="kiji-title02">◆</span>  2024/5/1 
+</div>
+
+
+<div class="blogbody2">
+<a href="javascript:void(0)">ニュース02</a>
+</div>
+
+
+
+
+<div class="kiji-title">
+<span class="kiji-title02">◆</span>  2024/4/1 
+</div>
+
+
+<div class="blogbody2">
+<a href="javascript:void(0)">ニュース01</a>
+</div>
+
+
+</div>
+<!-- ３段目　日付・記事タイトル 終了 -->
+
+<!-- ４段目　日付・記事タイトル 開始 -->
+<h2 class="title" id="information">会社情報</h2>
+
+<div class="company-info">
+  <div class="company-image">
+    <img src="https://osaka-bunkazainavi.org/wp-content/uploads/2022/08/gaikan_002.jpg" alt="会社の外観などの説明">
+  </div>
+  <div class="company-map" id="h_map"></div>
+</div>
+<!--地図の座標などを指定-->
+<script>
+    window.onload = function () {
+  var map = L.map("h_map");
+
+  var tileLayer_gsi = L.tileLayer(
+    "http://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
+    { attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院</a>" }
+  );
+  tileLayer_gsi.addTo(map);
+
+  var points = [
+    [34.687337892506655, 135.52576861539666]
+  ];
+
+  map.setView(points[0], 14);
+
+  var marker = L.marker(points[0]);
+  marker.bindPopup("会社名").openPopup();
+  marker.bindPopup("大阪城<br><img src='https://osaka-bunkazainavi.org/wp-content/uploads/2022/08/gaikan_002.jpg' width='100' height='100'>");
+  marker.addTo(map);
+
+  var polyline = L.polyline(points, { color: "blue" });
+  polyline.addTo(map);
+}
+
+    </script>
+
+
+<!-- ４段目　日付・記事タイトル 終了 -->
+
+</div><!-- content End -->
+<!-- 中央部分 終了 -->
+
+
+
+
+<!-- フッター 開始　-->
+
+<div id="footer">
+ＨＯＭＥ | 会社情報 | 採用情報 |  お問い合わせ 
+</div>
+<!-- フッター 終了　-->
+
+
+
+
+</div><!-- inbox End -->
+<!-- 全体を囲む箱 終了 -->
+
+
+</body>
+</html>

@@ -1,0 +1,310 @@
+<html>
+<head>
+<title>
+Android Pre
+</title>
+<link href="Android.css" rel="stylesheet" type="text/css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+
+
+<!--動作確認　試してみよう-->
+<!--
+
+１．PINコードを[1234]と入力したらロック解除
+２．左上のロックボタンをタップしたら画面ロック
+３．時計や日付がリアルタイムとリンク
+４．バッテリーを1秒間に１％ずつ消費およびアイコンの連動
+５．画面上部の検索バーで別枠でのGoogle検索
+６．インスタグラムのアイコンタップで[iPhone.html]に切り替え
+７．左下のカメラアイコンタップで背面のフラッシュが点灯
+８．画面下中央部のGoogleChromeアイコンでGoogleサイトの閲覧
+
+-->
+
+
+
+</head>
+<body>
+<div id="duo">
+
+<table><tr><td>
+
+<div id="phone">
+
+<div id="screen"></div>
+
+<div id="lock-screen">
+  <div class="lock-box">
+    <p>Enter PIN</p>
+    <input type="password" id="pin-input" maxlength="4" inputmode="numeric" placeholder="1234" />
+    <div class="pin-buttons">
+      <button onclick="pressNum(1)">1</button>
+      <button onclick="pressNum(2)">2</button>
+      <button onclick="pressNum(3)">3</button>
+      <button onclick="pressNum(4)">4</button>
+      <button onclick="pressNum(5)">5</button>
+      <button onclick="pressNum(6)">6</button>
+      <button onclick="pressNum(7)">7</button>
+      <button onclick="pressNum(8)">8</button>
+      <button onclick="pressNum(9)">9</button>
+      <button onclick="clearPin()">←</button>
+      <button onclick="pressNum(0)">0</button>
+      <button onclick="checkPin()">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="icons">
+		<div class="icon-back"></div>
+		<div class="icon-home"></div>
+		<div class="icon-recent"></div>
+
+</div>
+<div class="top-bar"></div>
+<div id="lock" class="lock"></div>
+<div class="battery">
+   <span id="battery-text">80%</span>
+   <div class="battery-fill" id="battery-fill"></div>
+   <span id="status-time">11:30</span>
+</div>
+<div class="signal"></div>
+<div class="search-bar">
+  <form id="searchForm" autocomplete="off">
+    <input type="text" id="searchInput" placeholder="Search anything" />
+  </form>
+</div><div id="search-results"></div>
+<div class="magnifying-glass"></div>
+<div class="time-and-date">
+  <p id="clock-time">11:30 <span id="clock-date">Mon. 9, 2025</span></p>
+</div>
+
+<div class="weather-widget">
+	<div class="cloud"></div>
+	<div class="moon"></div>
+	<span>23°C</span>
+</div>
+
+<div class="icons">
+	<li><a href="iPhone.html" class="insta_btn"><span class="insta"><i class="fab fa-instagram"></i></span></a><p>Instagram</p></li>
+	<li><span class="gallery"></span><span class="circle"></span><p>Gallery</p></li>
+	<li><span class="messaging">LINE</span><p>LINE</p></li>
+	<li><span class="music"></span><p>Music</p></li>
+	<li><span class="contacts"></span><p>Contacts</p></li>
+	<li><span class="clock"></span><span class="clock-hands"></span><p>Clock</p></li>
+	<li><span class="phone"></span><p>Phone</p></li>
+	<li><span class="voice"></span><p>Voice</p></li>
+</div>
+<div class="icons-bottom">
+	<li><span class="camera"></span> <span class="camera-lens"></span></li>
+	<li><i class="bi bi-youtube"></i><span class="youtube"></span></li>
+	<li>
+		<a href="https://www.google.com" class="chrome-link">
+		<span class="chrome-icon">
+  		<span class="center-circle"></span>
+		</span></a>
+	</li>
+	<li><span class="mail"></span></li>
+	<li><span class="file"></span><span class="file-button"></span></li>
+</div>
+</div>
+
+
+<script>
+// 画面内の調整
+function scalePhone() {
+    const phone = document.getElementById('duo');
+    const scaleX = window.innerWidth / 330;
+    const scaleY = window.innerHeight / 900;
+    const scale = Math.min(scaleX, scaleY); // 画面に収まるようにスケール調整
+    phone.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener('resize', scalePhone);
+window.addEventListener('load', scalePhone);
+
+
+// 時計のリアルタイム処理
+function updateClock() {
+	const now = new Date();
+	const hours = now.getHours().toString().padStart(2, '0');
+	const minutes = now.getMinutes().toString().padStart(2, '0');
+	const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+	const month = now.getMonth() + 1;
+	const date = now.getDate();
+	const day = dayNames[now.getDay()];
+	const year = now.getFullYear();
+
+	// 下の大きな時計
+	document.getElementById('clock-time').innerHTML = `${hours}:${minutes} <span id="clock-date">${year}. ${month}. ${date} , ${day}  </span>`;
+
+	// 上のステータスバーの時計
+	document.getElementById('status-time').textContent = `${hours}:${minutes}`;
+}
+
+setInterval(updateClock, 1000); // 毎秒更新
+updateClock(); // 初回実行
+
+
+// 検索フォーム
+document.getElementById('searchForm').addEventListener('submit', function(e) {
+  e.preventDefault(); // デフォルトのフォーム送信を止める
+  const query = document.getElementById('searchInput').value.trim();
+  if (query !== '') {
+    const googleSearchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(query);
+    window.open(googleSearchUrl, '_blank'); // 新しいタブで開く
+  }
+});
+
+// Enterキーで検索
+document.getElementById('searchInput').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    performSearch();
+  }
+});
+
+
+
+const lockBtn = document.getElementById('lock');
+
+// ロック画面表示関数（逆の動き）
+function lock() {
+	lockScreen.style.display = 'flex';
+	setTimeout(() => {
+		lockScreen.style.opacity = 1;
+	}, 10);
+}
+
+// ロックボタンのイベント
+lockBtn.addEventListener('click', lock);
+
+
+const CORRECT_PIN = "1234"; // ← ここで PIN を設定
+const lockScreen = document.getElementById('lock-screen');
+const pinInput = document.getElementById('pin-input');
+
+function pressNum(num) {
+  if (pinInput.value.length < 4) {
+    pinInput.value += num;
+  }
+}
+
+function clearPin() {
+  pinInput.value = pinInput.value.slice(0, -1);
+  pinInput.classList.remove("error");
+}
+
+function checkPin() {
+  if (pinInput.value === CORRECT_PIN) {
+    lockScreen.style.display = 'none'; // ロック解除
+    pinInput.value = "";
+    pinInput.classList.remove("error");
+  } else {
+    pinInput.classList.add("error");
+    pinInput.value = "";
+  }
+}
+
+
+// EnterキーでPINチェック
+pinInput.addEventListener("keydown", function (e) {
+  if (e.key === "Enter") {
+    checkPin();
+  }
+});
+
+// 初期状態はロック画面を表示
+lockScreen.style.display = 'flex';
+
+
+// カメラアイコンのタップで背面フラッシュを点灯
+   document.addEventListener("DOMContentLoaded", () => {
+    const flash = document.querySelector('.flash');
+
+    // フラッシュさせる関数
+    function triggerFlash() {
+      if (!flash) return;
+      flash.classList.add('flash-effect');
+      setTimeout(() => {
+        flash.classList.remove('flash-effect');
+      }, 750);
+    }
+
+    // .camera と .camera-lens の両方にイベントを設定
+    const cameraElements = document.querySelectorAll('.icons-bottom .camera, .icons-bottom .camera-lens');
+    cameraElements.forEach(el => {
+      el.addEventListener('click', triggerFlash);
+    });
+  });
+
+// バッテリー表示の要素を取得
+const batteryText = document.getElementById('battery-text');
+const batteryFill = document.getElementById('battery-fill');
+let batteryLevel = 80;
+const maxHeight = 16;  // .batteryの高さ16pxと合わせる
+
+function updateBatteryDisplay() {
+  batteryText.textContent = batteryLevel + '%';
+
+  // バーの高さを batteryLevel に合わせて変化（上から減る）
+  const newHeight = (batteryLevel / 100) * maxHeight;
+  batteryFill.style.height = `${newHeight}px`;
+
+  // 上にピッタリ合わせるため、top を (maxHeight - newHeight) に調整
+  batteryFill.style.top = `${maxHeight - newHeight}px`;
+
+  // 色変化（必要なら）
+  if (batteryLevel > 50) {
+    batteryFill.style.backgroundColor = '#0f0'; // 緑
+  } else if (batteryLevel > 20) {
+    batteryFill.style.backgroundColor = '#ff0'; // 黄
+  } else {
+    batteryFill.style.backgroundColor = '#f00'; // 赤
+  }
+}
+
+function drainBattery() {
+  if (batteryLevel > 1) {
+    batteryLevel--;
+    updateBatteryDisplay();
+  } else {
+    clearInterval(drainTimer);
+  }
+}
+
+updateBatteryDisplay();
+const drainTimer = setInterval(drainBattery, 1000); //1秒ずつ減少
+
+</script>
+
+</td>
+<td>
+　　　
+</td>
+<td>
+<div class="xperia-back">
+<div class="android-logo">Android</div>
+
+  <div class="bcamera-module">
+    <div class="bcamera-lens lens1"></div>
+<!-- 横並びにしたい要素をラップ -->
+  <div class="side-by-side">
+    <div class="flash"></div>
+    <div class="sensor"></div>
+  </div>
+    <div class="bcamera-lens lens2"></div>
+<div class="zeiss-label">
+  <span class="zeiss">ZEISS</span> <span class="t-star">T*</span>
+</div>
+    <div class="bcamera-lens lens3"></div>
+  </div>
+</div>
+</td>
+</tr>
+</table>
+
+</div>
+</body>
+</html>

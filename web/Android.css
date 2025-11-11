@@ -1,0 +1,1136 @@
+body{
+  margin: 0;
+  padding: 0;
+  background: #EEE;
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow: hidden;
+}
+/* 画面内に収める */
+#duo{
+  transform: scale(1);
+}
+#phone{
+  position: relative;
+  width: 330px;
+  height: 700px;
+  margin: 20px auto;
+  background: #000;
+  border: solid 1px #CCC;
+  border-radius: 30px;
+  z-index: 1;
+  background: linear-gradient(145deg, #2c2c2c, #1a1a1a); /* ダークメタリック風 */
+  box-shadow:
+    inset 0 0 20px rgba(255, 255, 255, 0.1),  /* 光沢 */
+    0 10px 30px rgba(0, 0, 0, 0.5),           /* 外枠シャドウ */
+    0 0 0 10px #111,                          /* ベゼル風の外枠 */
+    0 0 0 15px rgba(50, 50, 50, 0.8);         /* 本体の厚み感 */
+  overflow: hidden;
+  cursor: grab;
+}
+#phone:before{
+  position: absolute;
+  content: '';
+  background: #666;
+  border-radius: 40px;
+  width: 55px;
+  height: 10px;
+  left:130px;
+  top:20px;
+}
+  #phone:after{
+  position: absolute;
+  content: '';
+  background: #666;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  top:14px;
+  left:190px;
+}
+#screen{
+  background: linear-gradient(to bottom,  #B0B8CF 20%,#7d7d7d 58%,#3d3d3d 94%);
+  position: absolute;
+  height: 620px;
+  width: 300px;
+  top:55px;
+  left:15px;
+}
+
+#lock-screen {
+  position: absolute;
+  top: 55px;
+  left: 15px;
+  width: 300px;
+  height: 620px;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+  transition: opacity 0.3s ease;
+  flex-direction: column;
+}
+
+.lock-message {
+	font-size: 18px;
+	opacity: 0.85;
+}
+
+
+.lock-box {
+  text-align: center;
+  color: white;
+}
+
+.lock-box input {
+  font-size: 24px;
+  padding: 10px;
+  margin: 15px 0;
+  width: 120px;
+  text-align: center;
+  background: #222;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 5px;
+}
+
+.lock-box input.error {
+  border-color: red;
+}
+
+/* PINコード入力 */
+.pin-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  grid-gap: 10px;
+  justify-content: center;
+}
+
+.pin-buttons button {
+   background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 18px;
+  margin: 5px;
+  width: 60px;
+  height: 60px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.pin-buttons button:hover {
+  background: #666;
+}
+.pin-buttons button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* アイコンデザイン */
+		.icon-back{
+			position: absolute;
+			top: 640px;       /* 位置を調整（必要に応じて変更） */
+			left: 255px;      /* 必要に応じて調整 */
+			width: 20px;
+			height: 20px;
+			background: #FFF;
+			border: 2px solid #FFF;
+			box-sizing: border-box;
+		}
+		
+		.icon-home{
+			position: absolute; /* relative から absolute に変更で位置固定しやすく */
+  			top: 640px;          /* 必要に応じて調整 */
+  			left: 153px;         /* 中央に近づけるなら調整 */
+  			width: 20px;
+  			height: 20px;
+  			background: #FFF;
+  			border-radius: 50%;
+  			z-index: 10;
+		}
+		
+		.icon-recent{
+			position: absolute;
+  			top: 638px;       /* 位置を調整 */
+  			left: 50px;       /* 必要に応じて調整 */
+  			width: 0;
+  			height: 0;
+  			border-top: 12px solid transparent;
+  			border-bottom: 12px solid transparent;
+  			border-right: 15px solid #FFF; /* 白い三角形 */
+		}
+		.top-bar{
+			position: absolute;
+			background: #666;
+			width: 300px;
+			height: 30px;
+			left:15px;
+			top:55px;
+		}
+		.lock{
+			background: #FAFAFA;
+			position: absolute;
+			width: 15px;
+			height: 10px;
+			top:69px;
+			left:25px;
+			z-index: 10;
+			cursor: pointer;
+		}
+		.lock:after{
+			position: absolute;
+			content: '';
+			background: transparent;
+			width: 5px;
+			height: 10px;
+			top:-8px;
+			left:2px;
+			border-radius: 40px;
+			border: solid 3px #FFF;
+			z-index: -1;
+		}
+		.battery {
+  			position: absolute;
+  			width: 14px;
+  			height: 16px;
+  			background: #CCC;
+  			left: 250px;
+  			top: 63px;
+  			box-sizing: border-box;
+		}
+
+		.battery:before {
+  			position: absolute;
+  			content: '';
+  			width: 8px;
+  			height: 5px;
+  			background: #CCC;
+  			left: 3px;
+  			top: -3px;
+		}
+
+		/* 充電バー（緑部分） */
+		.battery-fill {
+  			position: absolute;
+  			width: 100%;
+  			height: 100%;  /* 常に満タンの高さを確保 */
+  			top: 0;        /* 上にピッタリ合わせる */
+  			left: 0;
+  			background: #0f0;  /* 緑 */
+  			transform-origin: top;  /* 上端を基準に縮む */
+  			transition: height 0.3s ease; /* 動きを滑らかに */
+		}
+		/* 数字と時間 */
+		.battery span:first-of-type {
+  			position: absolute;
+  			left: -35px;
+  			color: #FFF;
+  			font-size: 14px;
+		}
+
+		.battery span:nth-of-type(2) {
+  			position: absolute;
+  			left: 22px;
+  			color: #FFF;
+  			font-size: 14px;
+		}
+
+		.signal{
+			position: absolute;
+			width: 0;
+			height: 0;
+			top:63px;
+			left:187px;
+			border-top: solid 7px transparent;
+			border-right: solid 12px #FFF;
+			border-bottom: solid 7px #FFF;
+			border-left: solid 12px transparent; 
+		}
+		.signal:after{
+			position: absolute;
+			content: '';
+			width: 0;
+			height: 0;
+			top:-12px;
+			left:-12px;
+			border-top: solid 7px transparent;
+			border-right: solid 0 transparent;
+			border-bottom: solid 12px orange;
+			border-left: solid 20px transparent; 
+		}
+		.search-bar{
+			position: absolute;
+			width: 280px;
+			height: 30px;
+			top:96px;
+			left:25px;
+			background: rgba(255, 255, 255, .5);
+			border-radius: 20px;
+			cursor: pointer;
+
+		}
+		.magnifying-glass{
+			position: absolute;
+			width: 12px;
+			height: 12px;
+			border-radius: 50%;
+			background: transparent;
+			border: solid 2px #FFF;
+			top:100px;
+			left:275px;
+		}
+		.magnifying-glass:after{
+			position: absolute;
+			content: '';
+			width: 3px;
+			height: 8px;
+			background: #FFF;
+			transform: rotate(-35deg);
+			left:10px;
+			top:11px;
+		}
+		.search-bar span{
+			line-height: 30px;
+			padding-left: 15px;
+			color: rgba(255, 255, 255, .7);
+		}
+
+		.search-bar input {
+  			background: transparent;
+  			border: none;
+  			color: #000;
+  			padding-left: 15px;
+  			width: 230px;
+  			height: 30px;
+  			font-size: 14px;
+  			outline: none;
+		}
+
+		#search-results {
+  			top: 130px;
+  			left: 25px;
+  			width: 280px;
+  			font-size: 14px;
+  			color: white;
+  			background: rgba(0, 0, 0, 0.4);
+  			padding: 10px;
+  			border-radius: 10px;
+		}
+
+
+		.time-and-date p{
+			position: absolute;
+			top:120px;
+			left: 30px;
+			font-size: 30px;
+			color: #FFF;
+			text-shadow: 13px  0px 5px rgba(75, 75, 75, .5);
+		}
+		.time-and-date span{
+			position: absolute;
+			top:39px;
+			font-size: 11px;
+			width: 90px;
+			left:7px;
+			text-shadow: none;
+		}
+		.weather-widget{
+			z-index: 1;
+		}
+		.cloud{
+			position: absolute;
+			top:155px;
+			left:130px;
+			background: #FFF;
+			width: 25px;
+			height: 25px;
+			border-radius: 40px;
+		}
+		.cloud:before{
+			position: absolute;
+			content: '';
+			top: 12px;
+			left: 10px;
+			background: #FFF;
+			width: 20px;
+			height: 13px;
+			border-radius: 40px;
+			z-index: 1;
+		}
+		.cloud:after{
+			position: absolute;
+			content: '';
+			top: 8px;
+			left: 15px;
+			background: #DDD;
+			width: 15px;
+			height: 13px;
+			border-radius: 40px;
+		}
+		.moon{
+			position: absolute;
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			top:146px;
+			left: 135px;
+			box-shadow: 5px 5px 0 0 #F8F400;
+			transform: rotate(10deg);
+		}
+		.weather-widget span{
+			color: #FFF;
+			position: absolute;
+			top:188px;
+			left: 130px;
+			font-size: 12px;
+		}
+		.icons li{
+			position: relative;
+			display: inline-block;
+			color: #FFF;
+			top:350px;
+			left:32px;
+			width: 50px;
+			height: 50px;
+			margin-right: 20px;
+			margin-bottom: 30px;
+		}
+		.icons li:first-child{
+			background: #C6357F;
+			border-radius: 15px;
+		}
+		.icons li:nth-child(2){
+			background: #FFA300;
+			border-radius: 10px;
+		}
+		.icons li:nth-child(3){
+			background: #00bd00;
+			border-radius: 30px;
+		}
+		.icons li:nth-child(4){
+			background: #5B73FF;
+			border-radius: 30px;
+		}
+		.icons li:nth-child(5){
+			background: #DB9A4D;
+			border-radius: 30px;
+		}
+		.icons li:nth-child(6){
+			background: #FFFFFF;
+			border-radius: 30px;
+		}
+		.icons li:nth-child(7){
+			background: #ffffff;
+			border-radius: 30px;
+		}
+		.icons li:last-child{
+			background: #EEE;
+			border-radius: 30px;
+		}
+		.instagram{
+			position: absolute;
+			background: transparent;
+			border: solid 3px #FFF;
+			border-radius: 50px;
+			display: block;
+			width: 30px;
+			height: 30px;
+			display: block;
+			top:7px;
+			left:7px;
+		}
+		
+
+
+
+		.icons p{
+			position: relative;
+			display: block;
+			font-size: 12px;
+			color: #FAFAFA;
+			text-align: center;
+			margin-top: 13px;
+		}
+		.icons p:first-of-type,
+		.icons p:nth-of-type(2),
+		.icons p:nth-of-type(3),
+		.icons p:nth-of-type(4)
+		{
+			top:40px;
+		}
+		.icons p:nth-of-type(5){
+			top:40px;
+		}
+		.insta_btn {
+			display: inline-block;
+			text-align: center;/*中央揃え*/
+			color: #2e6ca5;/*文字色*/
+			font-size: 20px;/*文字サイズ*/
+			text-decoration: none;/*下線消す*/
+			position: absolute;
+		}
+
+		.insta_btn:hover {/*ホバー時*/
+			color:#668ad8;/*文字色*/
+			transition: .5s;/*ゆっくり変化*/
+		}
+
+		.insta_btn .insta{/*アイコンの背景*/
+			position: relative;/*相対配置*/
+			display: inline-block;
+			width: 50px;/*幅*/
+			height: 50px;/*高さ*/
+			background: -webkit-linear-gradient(135deg, #427eff 0%, #f13f79 70%) no-repeat;
+			background: linear-gradient(135deg, #427eff 0%, #f13f79 70%) no-repeat;/*グラデーション①*/
+			overflow: hidden;/*はみ出た部分を隠す*/
+			border-radius: 13px;/*角丸に*/
+
+		}
+
+		.insta_btn .insta:before{/*グラデーションを重ねるため*/
+			content: '';
+			position: absolute;/*絶対配置*/
+			top: 23px;/*ずらす*/
+			left: -18px;/*ずらす*/
+			width: 60px;/*グラデーションカバーの幅*/
+			height: 60px;/*グラデーションカバーの高さ*/
+			background: -webkit-radial-gradient(#ffdb2c 10%, rgba(255, 105, 34, 0.65) 55%, rgba(255, 88, 96, 0) 70%);
+			background: radial-gradient(#ffdb2c 10%, rgba(255, 105, 34, 0.65) 55%, rgba(255, 88, 96, 0) 70%);/*グラデーション②*/
+		}
+
+		.insta_btn .fa-instagram {/*アイコン*/
+			color: #FFF;/*白に*/
+			position: relative;/*z-indexを使うため*/
+			z-index: 2;/*グラデーションより前に*/
+			font-size: 35px;/*アイコンサイズ*/
+			line-height: 50px;/*高さと合わせる*/
+		}		
+
+		.gallery{
+			position: absolute;
+			background: #00A8FF;
+			width: 51px;
+			height: 15px;
+			top:35px;
+			left:0;
+			display: block;
+			border-bottom-left-radius: 8px;
+			border-bottom-right-radius: 8px;
+			z-index: 3;
+		}
+		.circle{
+			position: absolute;
+			top:25px;
+			left:15px;
+			background: #FAFAFA;
+			width: 20px;
+			height: 20px;
+			border-top-left-radius: 50px;
+			border-top-right-radius: 50px;
+			z-index: 1;
+		}
+		.circle:before{
+			position: absolute;
+			content: '';
+			background: #FFF;
+			width: 35px;
+			height: 30px;
+			border-top-left-radius: 50px;
+			border-top-right-radius: 50px;
+			z-index: 1;
+			top:-8px;
+			left:-8px;
+			opacity: 0.7;
+		}
+		.circle:after{
+			position: absolute;
+			content: '';
+			background: #EEE;
+			width: 45px;
+			height: 40px;
+			border-top-left-radius: 50px;
+			border-top-right-radius: 50px;
+			z-index: 1;
+			top:-16px;
+			left:-13px;
+			opacity: 0.5;
+		}
+		.messaging{
+			position: absolute;
+			top:10px;
+			left: 8px;
+			background: #FFF;
+			width: 35px;
+			height:28px;
+			border-radius: 50%;
+			color:#00bd00;
+			font-size:13px;
+			display: flex;                /* 追加 */
+			align-items: center;          /* 縦方向中央揃え */
+			justify-content: center;      /* 横方向中央揃え */
+		}
+		.messaging:after{
+			position: absolute;
+			content: '';
+			width: 0;
+			height: 0;
+			top:22px;
+			left: 13px;
+			border-left: solid 8px transparent;
+			border-right: solid 8px transparent;
+			border-top: solid 12px #FFF;	
+		}
+		.music{
+			position: absolute;
+			background: transparent;
+			border: solid 5px #FFF;
+			width: 30px;
+			height: 30px;
+			border-radius: 50%;
+			-webkit-border-radius: 50%;
+			-moz-border-radius: 50%;
+			-ms-border-radius: 50%;
+			top:5px;
+			left:5px;
+		}
+		.music:after{
+			position: absolute;
+			content: '';
+			width: 0;
+			height: 0;
+			top:5px;
+			left:8px;
+			border-top: solid 10px transparent;
+			border-left: solid 20px #FAFAFA;
+			border-bottom: solid 10px transparent;
+		}
+		.contacts{
+			position: absolute;
+			background: #FFF;
+			width: 15px;
+			height: 15px;
+			border-radius: 20px;
+			top:10px;
+			left:17px;
+		}
+		.contacts:after{
+			position: absolute;
+			content: '';
+			width: 0;
+			height: 0;
+			border-top: solid 10px #FFF;
+			border-left: solid 15px #FFF;
+			border-right: solid 10px #FFF;
+			border-top-right-radius: 50px;
+			border-top-left-radius: 50px;
+			top:18px;
+			left:-5px;
+		}
+		.clock{
+			position: absolute;
+			background: #888;
+			width: 35px;
+			height: 35px;
+			border-radius: 30px;
+			top:8px;
+			left:7px;
+		}
+		.clock:before{
+			position: absolute;
+			content: '';
+			width: 2px;
+			height: 12px;
+			background: #FFF;
+			top:5px;
+			left:17px;
+		}
+		.clock:after{
+			position: absolute;
+			content: '';
+			width: 14px;
+			height: 2px;
+			background: #FFF;
+			top:15px;
+			left:18px;
+		}
+		.clock-hands{
+			position: absolute;
+			width: 1px;
+			height: 15px;
+			background: #222;
+			top:21px;
+			left: 20px;
+			transform: rotate(40deg);
+		}
+		.clock-hands:after{
+			position: absolute;
+			content: '';
+			width: 3px;
+			height: 3px;
+			border-radius: 2px;
+			background: #222;
+			top:0px;
+			left: -1px;
+		}
+		.phone{
+			position: absolute;
+			background: #4874f9;
+			width: 10px;
+			height: 35px;
+			top: 12px;
+			left: 15px;
+			border-top-left-radius: 20px;
+			border-bottom-left-radius: 20px;
+			transform: rotate(-50deg);
+		}
+		.phone:before{
+			position: absolute;
+			content: '';
+			background: #4874f9;
+			width: 15px;
+			height: 13px;
+			top: -1px;
+			left: 3px;
+			border-radius: 5px;
+		}
+		.phone:after{
+			position: absolute;
+			content: '';
+			background: #4874f9;
+			width: 15px;
+			height: 13px;
+			top: 22px;
+			left: 3px;
+			border-radius: 5px;
+		}
+		.voice{
+			position: absolute;
+			background: #E8641B;
+			width: 10px;
+			height: 23px;
+			left: 20px;
+			top:8px;
+			border-radius: 20px;
+		}
+		.voice:before{
+			position: absolute;
+			content: '';
+			width: 22px;
+			height: 12px;
+			top:14px;
+			left:-8px;
+			background: transparent;
+			border-bottom-right-radius: 30px;
+			border-bottom-left-radius: 30px;
+			border: solid 2px #E8641B;
+			border-top:0;
+		}
+		.voice:after{
+			position: absolute;
+			content: '';
+			width: 3px;
+			height: 9px;
+			top:28px;
+			left:4px;
+			background: #E8641B;
+		}
+		.icons-bottom li{
+			position: relative;
+			display: inline-block;
+			top:400px;
+			left:30px;
+			width: 45px;
+			height: 45px;
+			margin-right: 8px; 
+			z-index: 1;
+		}
+		.camera{
+			position: absolute;
+			background: #787;
+			display: block;
+			width: 45px;
+			height: 32px;
+			z-index: 1;
+			border-radius: 2px;
+			cursor: pointer;
+		}
+		.camera:before{
+			position: absolute;
+			background: transparent;
+			content: '';
+			width: 20px;
+			height: 0;
+			top:-7px;
+			left:11px;
+			border-bottom: solid 10px #787;
+			border-left: solid 2px transparent;
+			border-right: solid 2px transparent;
+			z-index: -1;
+		}
+		.camera:after{
+			position: absolute;
+			background: #FFF;
+			content: '';
+			width: 4px;
+			height: 4px;
+			border-radius: 10px;
+			left:36px;
+			top:6px;
+		}
+		.camera-lens{
+			position: absolute;
+			top: 6px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 17px;
+			height: 17px;
+			background: radial-gradient(circle at center, #888 0%, #444 100%);
+			border-radius: 50%;
+			border: 3px solid #fff;
+			box-shadow: inset 0 0 4px #000;
+			z-index: 2;
+			cursor: pointer;
+		}
+		.camera-lens:after {
+			content: '';
+			position: absolute;
+			top: 5px;
+			left: 5px;
+			width: 10px;
+			height: 10px;
+			background: #999;
+			border-radius: 50%;
+			box-shadow: inset 0 0 2px #333;
+		
+		}
+		.youtube{
+			position: absolute;
+			background: #ff0000;
+			top:-3px;
+			width: 45px;
+			height: 35px;
+			border-radius: 5px;
+		}
+		.youtube:after{
+			position: absolute;
+			content: '';
+			width: 0;
+			height: 0;
+			top: 9px;
+			left:17px;
+			border-top: solid 8px transparent;
+			border-left: solid 15px #FFF;
+			border-bottom: solid 8px transparent;
+		}
+		.chrome-icon {
+  			position: absolute;
+  			width: 40px;
+  			height: 40px;
+  			border-radius: 50%;
+  			background: conic-gradient(
+    				#db4437 0deg 120deg,     /* 赤 */
+    				#f4b400 120deg 240deg,   /* 黄 */
+    				#0f9d58 240deg 360deg    /* 緑 */
+  			);
+  			display: flex;
+  			align-items: center;
+  			justify-content: center;
+  			box-shadow: 0 0 4px rgba(0,0,0,0.2);
+			top:-5px;
+			cursor: pointer;
+		}
+
+		.center-circle {
+  			width: 15px;
+  			height: 15px;
+  			background: #4285f4; /* 青色 */
+  			border: 3px solid #ffffff; /* 白いふち */
+  			border-radius: 50%;
+  			box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+		}
+		.chrome-link {
+  			display: flex;
+  			text-decoration: none;
+		}
+		.chrome-link:active .chrome-icon {
+  			transform: scale(0.95); /* タップ時の縮小効果 */
+  			transition: transform 0.1s;
+		}
+
+		.mail{
+			position: absolute;
+			width: 47px;
+			height: 35px;
+			background: #DD76A0;
+			border-radius: 2px;
+			top:-2px;
+			left:-3px;
+			z-index: 1;
+		}
+		.mail:before{
+			position: absolute;
+			content: '';
+			width: 0;
+			height: 0;
+			border-left: solid 23px transparent;
+			border-right: solid 24px transparent;
+			border-top: solid 18px #FAFAFA;
+			border-radius: 2px 2px 2px 0;
+			z-index: 1;
+		}
+		.mail:after{
+			position: absolute;
+			content: '';
+			width: 0;
+			height: 0;
+			border-top: solid 15px transparent;
+			border-right: solid 30px rgba(0,0,0,0.1);
+			border-bottom: solid 21px transparent;
+			border-radius: 2px 2px 2px 0;
+			left:18px;
+			z-index: -1;
+		}
+		.file{
+			position: absolute;
+			background: #72AFFD;
+			width: 45px;
+			height: 35px;
+			border-radius: 2px;
+			top:-2px;
+		}
+		.file-button{
+			position: absolute;
+			border: solid 2px #FFF;
+			width: 5px;
+			height: 5px;
+			border-radius: 10px;
+			left:17px;
+			top:6px;
+		}
+		.file-button:before{
+			position: absolute;
+			content: '';
+			background: #FFF;
+			width: 1px;
+			height: 13px;
+			top:-10px;
+			left:-2px;
+		}
+		.file-button:after{
+			position: absolute;
+			content: '';
+			background: #FFF;
+			width: 1px;
+			height: 13px;
+			top:-10px;
+			left:6px;
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Xperia本体の背面 */
+.xperia-back {
+  position: relative;
+  width: 342px;
+  height: 728px;
+  background: linear-gradient(145deg, #1a1a1a, #2b2b2b);
+  border-radius: 32px;
+  box-shadow:
+    inset 0 0 8px rgba(0, 0, 0, 0.6),
+    0 10px 20px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+
+}
+/* 擬似ハイライト（上から差し込む光） */
+.xperia-back::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
+  transform: rotate(15deg);
+}
+
+/* 擬似ノイズでザラつき・マット感を再現 */
+.xperia-back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-radial-gradient(
+    rgba(255, 255, 255, 0.015) 0,
+    transparent 1px
+  );
+  background-size: 2px 2px;
+  pointer-events: none;
+}
+/* カメラユニット（台座） */
+.bcamera-module {
+  position: absolute;
+  top: 40px;
+  left: 20px; /* ← 中央ではなく左上へ */
+  width: 68.64px;
+  height: 240.24px;
+  background: #111;
+  border-radius: 20px;
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 0;
+}
+
+/* カメラレンズ */
+.bcamera-lens {
+  position: relative;
+  width: 44.616px;
+  height: 44.616px;
+  background: radial-gradient(circle at 30% 30%, #555, #000);
+  border-radius: 50%;
+  border: 2px solid #aaa;
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+    inset -2px -2px 6px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.6);
+}
+/* 擬似光の反射（ガラス感） */
+.bcamera-lens::after {
+ content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  filter: blur(1.5px);
+  pointer-events: none;
+}
+
+.inner-lens {
+ position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+
+  /* 外側の光沢あるリング */
+  background: radial-gradient(circle at 30% 30%, #555, #222);
+
+  /* 外枠 */
+  border: 3px solid #aaa;
+
+  /* 内側の影とハイライト */
+  box-shadow:
+    inset 0 3px 4px rgba(255, 255, 255, 0.4), /* 上からのハイライト */
+    inset 0 -3px 6px rgba(0, 0, 0, 0.7),      /* 下の影 */
+    0 2px 5px rgba(0, 0, 0, 0.6);             /* 全体の影 */
+}
+}
+
+/* 各レンズに微妙な違いをつけたいなら個別クラスを使う（例） */
+.lens1 {
+  background: radial-gradient(circle at center, #555, #111);
+}
+.lens2 {
+  background: radial-gradient(circle at center, #333, #000);
+}
+.lens3 {
+  background: radial-gradient(circle at center, #444, #111);
+}
+
+/* フラッシュ＋センサーを横並びに */
+.side-by-side {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+}
+
+/* フラッシュ */
+.flash {
+  width: 13px;
+  height: 13px;
+  background: #888;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255,255,255,0.8);
+}
+
+.flash-effect {
+  background: #fff;
+  box-shadow: 0 0 40px 20px rgba(255, 255, 255, 0.9);
+  transition: all 0.1s ease-out;
+}
+
+
+
+/* センサー */
+.sensor {
+  width: 10px;
+  height: 10px;
+  background: #222;
+  border-radius: 50%;
+  box-shadow: inset 0 0 2px #000;
+}
+
+.zeiss-label {
+  font-family: sans-serif;
+  font-size: 8px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 2px;
+  color: #fff;
+  line-height: 1;
+}
+
+.zeiss {
+  color: #fff; /* ZEISSは白 */
+  font-size:10px;
+}
+
+.t-star {
+  color: #d00; /* T*は赤 */
+  font-size:10px;
+}
+
+.android-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Arial Black", sans-serif;
+  font-size: 20px;
+  color: #aaa;
+  letter-spacing: 2px;
+
+  /* 光沢感を出すグラデーション */
+  background: linear-gradient(145deg, #ffffff, #d0d0d0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* 立体感のための影 */
+  text-shadow:
+    1px 1px 0 rgba(255,255,255,0.1),
+    -1px -1px 0 rgba(0,0,0,0.4),
+    0 0 3px rgba(0,0,0,0.5);
+}

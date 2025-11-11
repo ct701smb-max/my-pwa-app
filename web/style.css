@@ -1,0 +1,291 @@
+/* ==========================
+   bodyタグに適用
+========================== */
+body {
+    margin: 0px;
+    padding: 0px;
+    border: none;
+    outline: none;
+    box-sizing: border-box;
+    background-color: #f1cdd6;   /* 背景の色 */
+    background-image: url('画像アドレス');   /* 実際の画像アドレスを指定 */
+    background-size: cover;           /* 画面にフィットさせる */
+    background-repeat: no-repeat;     /* 繰り返さない */
+    background-attachment: fixed;     /* 背景を固定（※スマホでは後述で解除） */
+}
+
+/* ==========================
+   headerタグに適用
+========================== */
+header {
+  background-image: url('画像アドレス');   /* 実際の画像アドレスを指定 */
+  height: 100px;                  /* 画像の高さ */
+  width: 100%;                   /* 画像の幅 */
+  padding: 10px 10px 100px;      /* 上:10px、左右:10px、下:100px の余白 */
+  margin: 20px 0px 0px;          /* 上:20pxの余白 */
+  background-size: cover;        /* 背景画像を全体に広げる */
+  background-position: center;   /* 画像を中央に表示 */
+}
+
+/* ==========================
+   h1タグに適用
+========================== */
+h1 {
+  color: #000000;               /* 文字の色 */
+  background-color: #e9d8b9;    /* 背景の色 */
+  font-size: 90px;              /* 文字のサイズ */
+  border-style: solid;          /* 枠線の形 */
+  border-color: orange;         /* 枠線の色 */
+  border-width: 10px;           /* 枠線の太さ */
+  border-bottom: 10px solid #3388dd;   /* 下線の太さと色 */
+  text-align: center;           /* 文字の位置（中央） */
+  border-radius: 90px;          /* 枠線のカーブ */
+  padding: 10px 10px 10px;      /* 余白（上下左右） */
+  margin: 20px 0px 0px;         /* 上:20pxの余白 */
+  font-family: 'Lobster', cursive; /* フォント指定（Google Fontsで読み込み必要） */
+  word-break: break-word;       /* 長い単語で折り返す */
+}
+
+/* ==========================
+   h2タグに適用
+========================== */
+h2 {
+  padding: 0.4em 0.5em;         /* 文字の上下・左右の余白 */
+  color: #000000;               /* 文字色 */
+  background: #f4f4f4;          /* 背景色 */
+  border-left: solid 5px #7db4e6;   /* 左線 */
+  border-bottom: solid 3px #d7d7d7; /* 下線 */
+  font-size: 25px;              /* 文字サイズ */
+}
+
+/* ==========================
+   スマホ画面（600px以下）対応
+========================== */
+@media screen and (max-width: 600px) {
+  
+  /* headerの高さや余白を調整 */
+  header {
+    height: auto;               /* 高さを内容に合わせる */
+    padding: 20px 10px;         /* 上下20px, 左右10pxの余白 */
+    margin: 10px 0 0;           /* 上マージン調整 */
+  }
+
+  /* h1の文字サイズ・余白を縮小 */
+  h1 {
+    font-size: 36px;            /* 小さくする */
+    border-width: 5px;          /* 枠線を細く */
+    border-bottom: 5px solid #3388dd;  /* 下線も細く */
+    border-radius: 30px;        /* 丸みを小さく */
+    padding: 10px;              /* 余白調整 */
+    margin: 10px 10px;          /* 上下左右のマージン調整 */
+  }
+
+  /* h2の文字サイズを縮小 */
+  h2 {
+    font-size: 20px;            /* 少し小さめに */
+    padding: 0.3em 0.5em;       /* 余白微調整 */
+  }
+
+  /* 背景画像の固定を解除 */
+  body {
+    background-attachment: scroll;  /* 背景が一緒にスクロールするように */
+  }
+}
+
+/* 表のデザイン　PC用スタイル */
+.t1 {
+  color: blue;                 /* 文字色 */
+  background-color: #ccccff; /* 背景色 */
+  font-size: 25px;             /* 文字の大きさ */
+  border-style: ridge;         /* 枠線の形 */
+  border-color: red;           /* 枠線の色 */
+  border-width: 10px;          /* 枠線の太さ */
+  text-align: center;          /* 文字位置 */
+  margin: 10px auto;           /* 表の位置（上下10px、左右中央） */
+  overflow-x: auto;
+  width: 37%;
+　border-collapse: collapse;
+}
+
+.t1 td, .t1 th {
+  border: solid 1px #595959;   /* 枠線の形・色 */
+  padding: 2px;                /* セルの余白 */
+  width: 45%;                 /* セルの幅 */
+}
+
+/* 表のデザイン　スマホ画面用 */
+@media screen and (max-width: 600px) {
+  .t1 {
+    font-size: 18px;           /* 小さめの文字に */
+    border-width: 5px;         /* 枠線を細めに */
+    margin: 5px auto;          /* マージンを少なめに */
+    width: 100%;               /* 横幅いっぱいに */
+  }
+  .t1 td, .t1 th {
+    width: auto;               /* 幅指定解除して内容に合わせる */
+    padding: 8px 5px;          /* 余白を少し増やしてタップしやすく */
+    font-size: 16px;           /* セル内の文字サイズも調整 */
+  }
+  .t1 img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* メニューバー */
+/*========= PC表示 ==========*/
+#menu {
+  border-top: 3px solid #cccccc;
+  border-bottom: 3px solid #cccccc;
+  background: #ffffff;
+  height: 47px;
+  width: 100%;
+  color: #ffffff;
+}
+
+#menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+
+#menu ul li {
+  flex: 1; /* 均等に分ける */
+  height: 47px;
+  border-right: 1px solid #ffffff;
+}
+
+#menu ul li:last-child {
+  border-right: none;
+}
+
+#menu ul li a {
+  display: block;
+  color: #ffffff;
+  background-image: url('./img/bar1.jpg');   /* 実際の画像アドレスを指定 */
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 2px;
+  line-height: 47px;
+  text-decoration: none;
+}
+
+#menu ul li a:hover {
+  color: #000000;
+  background-image: url('./img/bar2.jpg');   /* 実際の画像アドレスを指定 */
+  text-decoration: underline;
+}
+
+/*========= ハンバーガーボタン ==========*/
+.menu-toggle {
+  display: none;
+  cursor: pointer;
+  width: 30px;
+  height: 25px;
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.menu-toggle span {
+  display: block;
+  height: 3px;
+  background: #fff;
+  margin: 4px 0;
+  transition: 0.4s;
+  border-radius: 2px;
+}
+
+.menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/*========= スマホ表示 ==========*/
+@media screen and (max-width: 600px) {
+  #menu {
+    height: auto; /* 高さ固定しない */
+    border: none;
+    background: transparent;
+  }
+
+  #menu ul {
+    position: fixed;
+    top: 60px;
+    right: 15px;
+    width: 50vw;
+    max-height: 80vh;
+    background: #fff;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+
+  #menu ul.active {
+    display: flex;
+  }
+
+  #menu ul li {
+    border-bottom: 1px solid #ddd;
+    width: 100%;
+  }
+
+  #menu ul li:last-child {
+    border-bottom: none;
+  }
+
+  #menu ul li a {
+    display: block;
+    padding: 15px;
+    color: #000;
+    background: transparent;
+    font-size: 16px;
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  #menu ul li a:hover {
+    background: #eee;
+    color: #000;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+}
+
+
+img{
+  cursor: pointer;
+}
+
+input[type="button"] {
+  padding: 10px 20px;
+  border: 2px solid #333; /* 枠線を細く残す */
+  background-color: transparent; /* 背景を透明に */
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+input[type="button"]:hover {
+  background-color: #333; /* ホバーで背景色を反転 */
+  color: white;
+}

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimal-ui">
+  <title>シューティングゲーム</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: black;
+      color: white;
+      font-family: sans-serif;
+      /* body全体でタッチアクションを無効化 */
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      background-color: black;
+    }
+
+    .controller {
+      position: fixed;
+      bottom: 20px;
+      width: 100%;
+      pointer-events: none;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+
+    .joystick-base {
+      pointer-events: auto;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 2px solid white;
+      position: relative;
+    }
+
+    .joystick-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.6);
+      transition: transform 0.2s ease-out;
+    }
+    
+    .zpad {
+      pointer-events: auto;
+    }
+
+    .btn {
+      width: 80px;
+      height: 80px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 2px solid white;
+      border-radius: 50%;
+      color: white;
+      font-size: 30px;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:active {
+      background-color: rgba(255, 255, 255, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div class="controller">
+  <div class="joystick-base" id="joystick-base">
+    <div class="joystick-handle" id="joystick-handle"></div>
+  </div>
+  <div class="zpad">
+    <button class="btn" id="btn-z">Z</button>
+  </div>
+</div>
+
+<script>
+  let canvas, ctx;
+  let x, y;
+  const playerSize = 100;
+  const moveSpeed = 5;
+  let shots = [];
+  let shootSpeed = 7;
+  let shootDelay = 0;
+  let shootInterval = 8;
+  let powerLevel = 1;
+  const MAX_POWER_LEVEL = 3;
+
+  let dxKeyboard = 0;
+  let dyKeyboard = 0;
+  let dxTouch = 0;
+  let dyTouch = 0;
+
+  const playerImage = new Image();
+  playerImage.src = "player.png";
+
+  const flags = { z: false };
+
+  let joystickBase, joystickHandle, zBtn;
+  const activePointers = new Map();
+  const maxDistance = 30;
+
+  // アイテム関連の定数と変数
+  const items = [];
+  const itemSize = 40;
+  const itemSpeed = 2;
+  let itemSpawnTimer = 0;
+  const itemSpawnInterval = 60 * 5;
+
+  // ★ 強化レベルに応じた弾の色を定義
+  const bulletColors = {
+    1: "red",    // レベル1
+    2: "blue",   // レベル2
+    3: "lime"   // レベル3以上
+  };
+
+  /* --- コンストラクタ的なクラス（アイテム） --- */
+  function createItem(itemX, itemY) {
+    return {
+      x: itemX,
+      y: itemY,
+      width: itemSize,
+      height: itemSize,
+      type: 'powerup',
+      color: 'gold'
+    };
+  }
+  /* --------------------------------------------- */
+
+
+  window.onload = () => {
+    canvas = document.getElementById("c");
+    ctx = canvas.getContext("2d");
+    joystickBase = document.getElementById("joystick-base");
+    joystickHandle = document.getElementById("joystick-handle");
+    zBtn = document.getElementById("btn-z");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      x = (canvas.width / 2) - (playerSize / 2);
+      y = (canvas.height / 2) - (playerSize / 2);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+    
+    document.onkeydown = (e) => {
+      const key = e.keyCode || e.which;
+      if (key === 37) dxKeyboard = -moveSpeed;
+      if (key === 38) dyKeyboard = -moveSpeed;
+      if (key === 39) dxKeyboard = moveSpeed;
+      if (key === 40) dyKeyboard = moveSpeed;
+      if (key === 90) flags.z = true;
+    };
+
+    document.onkeyup = (e) => {
+      const key = e.keyCode || e.which;
+      if (key === 37 || key === 39) dxKeyboard = 0;
+      if (key === 38 || key === 40) dyKeyboard = 0;
+      if (key === 90) flags.z = false;
+    };
+    
+    document.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      
+      if (e.target === joystickBase || joystickBase.contains(e.target)) {
+        activePointers.set(e.pointerId, 'joystick');
+        joystickBase.setPointerCapture(e.pointerId);
+        joystickHandle.style.transition = 'none';
+        updateJoystickPosition(e);
+      } else if (e.target === zBtn) {
+        activePointers.set(e.pointerId, 'z_button');
+        flags.z = true;
+        zBtn.setPointerCapture(e.pointerId);
+      }
+    });
+
+    document.addEventListener("pointermove", (e) => {
+      e.preventDefault();
+      if (activePointers.get(e.pointerId) === 'joystick') {
+        updateJoystickPosition(e);
+      }
+    });
+
+    document.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      const type = activePointers.get(e.pointerId);
+      if (type === 'joystick') {
+        activePointers.delete(e.pointerId);
+        if (!isJoystickActive()) {
+            resetJoystick();
+        }
+      } else if (type === 'z_button') {
+        flags.z = false;
+        activePointers.delete(e.pointerId);
+      }
+    });
+
+    document.addEventListener("pointercancel", (e) => {
+      e.preventDefault();
+      const type = activePointers.get(e.pointerId);
+      if (type === 'joystick') {
+        activePointers.delete(e.pointerId);
+        if (!isJoystickActive()) {
+            resetJoystick();
+        }
+      } else if (type === 'z_button') {
+        flags.z = false;
+        activePointers.delete(e.pointerId);
+      }
+    });
+
+    function isJoystickActive() {
+        for (let pointerType of activePointers.values()) {
+            if (pointerType === 'joystick') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function updateJoystickPosition(e) {
+      const rect = joystickBase.getBoundingClientRect();
+      const baseCenterX = rect.left + rect.width / 2;
+      const baseCenterY = rect.top + rect.height / 2;
+      
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+      let deltaX = currentX - baseCenterX;
+      let deltaY = currentY - baseCenterY;
+      
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      if (distance > maxDistance) {
+        const angle = Math.atan2(deltaY, deltaX);
+        deltaX = Math.cos(angle) * maxDistance;
+        deltaY = Math.sin(angle) * maxDistance;
+      }
+      
+      joystickHandle.style.transform = `translate(-50%, -50%) translate(${deltaX}px, ${deltaY}px)`;
+      dxTouch = (deltaX / maxDistance) * moveSpeed;
+      dyTouch = (deltaY / maxDistance) * moveSpeed;
+    }
+
+    function resetJoystick() {
+      dxTouch = 0;
+      dyTouch = 0;
+      joystickHandle.style.transform = `translate(-50%, -50%)`;
+      joystickHandle.style.transition = 'transform 0.2s ease-out';
+    }
+
+    loop();
+  };
+
+  function loop() {
+    // 1. プレイヤーの移動
+    const dx = dxKeyboard + dxTouch;
+    const dy = dyKeyboard + dyTouch;
+    
+    x += dx;
+    y += dy;
+    
+    x = Math.max(0, Math.min(x, canvas.width - playerSize));
+    y = Math.max(0, Math.min(y, canvas.height - playerSize));
+
+    // 2. ショットの発射 (強化レベルに応じてショットの数を増やせるように修正)
+    if (flags.z && shootDelay <= 0) {
+      // ★ 現在の強化レベルに応じた弾の色を取得
+      const currentBulletColor = bulletColors[powerLevel] || bulletColors[MAX_POWER_LEVEL];
+
+      // ★ 強化レベル1: 中央から1発
+      if (powerLevel === 1) {
+        shots.push({ x: x + playerSize / 2, y: y, color: currentBulletColor });
+      } 
+      // ★ 強化レベル2: 左右から2発
+      else if (powerLevel === 2) {
+        shots.push({ x: x + playerSize / 4, y: y, color: currentBulletColor });
+        shots.push({ x: x + playerSize * 3 / 4, y: y, color: currentBulletColor });
+      } 
+      // ★ 強化レベル3以上: 3発
+      else if (powerLevel >= 3) {
+        shots.push({ x: x + playerSize / 2, y: y, color: currentBulletColor }); // 中央
+        shots.push({ x: x + playerSize / 4, y: y, color: currentBulletColor }); // 左
+        shots.push({ x: x + playerSize * 3 / 4, y: y, color: currentBulletColor }); // 右
+      }
+      shootDelay = shootInterval;
+    }
+    if (shootDelay > 0) shootDelay--;
+
+    // 3. ショットの移動と画面外判定
+    for (let i = 0; i < shots.length; i++) {
+      shots[i].y -= shootSpeed;
+      if (shots[i].y < -10) {
+        shots.splice(i, 1);
+        i--;
+      }
+    }
+
+    // 4. アイテムの生成
+    itemSpawnTimer++;
+    if (itemSpawnTimer >= itemSpawnInterval) {
+      // 画面上のランダムな位置にアイテムを生成
+      const randomX = Math.random() * (canvas.width - itemSize);
+      items.push(createItem(randomX, -itemSize));
+      itemSpawnTimer = 0;
+    }
+
+    // 5. アイテムの移動とプレイヤーとの当たり判定
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      item.y += itemSpeed;
+      
+      // プレイヤーとアイテムの当たり判定 (AABB)
+      if (
+        x < item.x + item.width &&
+        x + playerSize > item.x &&
+        y < item.y + item.height &&
+        y + playerSize > item.y
+      ) {
+        // 強化処理
+        if (item.type === 'powerup') {
+          powerLevel = Math.min(powerLevel + 1, MAX_POWER_LEVEL); // レベルアップ
+          // おまけ: レベルが上がったら弾速も少し上げる
+          shootSpeed = 7 + (powerLevel - 1) * 2;
+        }
+        // アイテムを削除
+        items.splice(i, 1);
+        i--;
+        continue;
+      }
+
+      // 画面外判定
+      if (item.y > canvas.height) {
+        items.splice(i, 1);
+        i--;
+      }
+    }
+
+    // 6. 描画
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // プレイヤーの描画
+    if (playerImage.complete) {
+      ctx.drawImage(playerImage, x, y, playerSize, playerSize);
+    } else {
+      ctx.fillStyle = "white";
+      ctx.fillRect(x, y, playerSize, playerSize);
+    }
+
+    // アイテムの描画
+    for (const item of items) {
+      ctx.fillStyle = item.color;
+      ctx.fillRect(item.x, item.y, item.width, item.height);
+      // アイテムの上にPと描画して分かりやすくする
+      ctx.fillStyle = "black";
+      ctx.font = "20px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("P", item.x + item.width / 2, item.y + item.height / 2);
+    }
+
+    // 弾の描画
+    for (const s of shots) {
+      // ★ 弾の色をその弾の持つ`color`プロパティから取得
+      ctx.fillStyle = s.color;
+      const bulletWidth = 20 + (powerLevel - 1) * 5;
+      const bulletHeight = 10;
+      ctx.fillRect(s.x - bulletWidth / 2, s.y, bulletWidth, bulletHeight);
+    }
+
+    // 強化レベルの表示（デバッグ用）
+    ctx.fillStyle = "lime";
+    ctx.font = "24px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`Power: ${powerLevel}`, 10, 30);
+    
+    requestAnimationFrame(loop);
+  }
+</script>
+
+</body>
+</html>

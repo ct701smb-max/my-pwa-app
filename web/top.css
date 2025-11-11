@@ -1,0 +1,528 @@
+@charset "utf-8";
+
+/* ====================================
+   1. 基本設定（グローバルスタイル）
+   ==================================== */
+
+body, td {
+  font-size: 16px;
+  font-family: "メイリオ", Meiryo, sans-serif;
+  color: #000;
+  line-height: 1.6;
+  margin: 0;
+}
+
+img {
+  width: 250px;
+  height: 330px;
+  object-fit: cover;
+  border: none;
+  vertical-align: middle;
+}
+
+/* ====================================
+   2. リンク（a要素）
+   ==================================== */
+
+a {
+  font-weight: bold;
+  text-decoration: none; /* 下線をデフォルトで消す */
+}
+
+a:link {
+  color: blue;
+}
+
+a:visited {
+  color: #000;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: red;
+}
+
+a:active {
+  color: red;
+}
+
+a.noexistpage {
+  background-color: #cfc;
+  color: white;
+}
+
+/* ====================================
+   3. ヘッダーとメニュー
+   ==================================== */
+
+header.top,
+.top {
+  background-color: #eee;
+  padding: 10px;
+}
+
+.topmenu {
+  border-right: solid black 1px;
+  padding: 0 5px;
+}
+
+.loginout {
+  border: solid #000 1px;
+  padding: 1px 5px;
+  background-color: #eee;
+}
+
+td.menu, .menu {
+  vertical-align: top;
+  padding-right: 3px;
+  border: double #ddd 3px;
+  background-color: #eee;
+  margin-right: 25px;
+  width: 200px;
+}
+
+td.menu ul,
+td.menu ol,
+.menu ul,
+.menu ol {
+  width: auto;
+  line-height: 2.0em;
+  padding-left: 20px;
+  padding-right: 2px;
+  margin: 1px;
+  list-style-type: none;
+}
+
+.menu li {
+  margin: 5px 0;
+}
+
+.submenu {
+  margin-left: 15px;
+  padding: 5px 0;
+}
+
+.editthispage,
+.topmenudayo {
+  border: solid black 1px;
+  padding: 3px;
+  background-color: #efe;
+}
+
+/* ====================================
+   4. 見出し（h1?h6）
+   ==================================== */
+
+h1 {
+  font-size: 26px;
+  background: #eee;
+  letter-spacing: 0.2em;
+  padding: 5px;
+  margin: 5px 0 8px;
+  border-bottom: solid 3px #aaa;
+  border-right: solid 3px #aaa;
+}
+
+h2 {
+  background: #eee;
+  font-size: 110%;
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  padding: 5px;
+  margin: 5px 0 8px;
+  border-bottom: solid 3px #aaa;
+  border-right: solid 3px #aaa;
+}
+
+h3 {
+  background: #eee;
+  font-size: 100%;
+  font-weight: bold;
+  letter-spacing: 0.3em;
+  margin: 0 0 0 1em;
+  padding: 0;
+  border-bottom: solid 1px #aaa;
+}
+
+h4 {
+  background: #eee;
+  font-size: 100%;
+  font-weight: normal;
+  line-height: 100%;
+  letter-spacing: 0.1em;
+  margin: 3em 0 0 1em;
+  padding-left: 0.5em;
+  border-left: solid 10px #aaa;
+}
+
+h5, h6 {
+  background: #eee;
+  padding: 1px;
+  border-bottom: dotted 1px #aaa;
+}
+
+/* ====================================
+   5. リストとブロック要素
+   ==================================== */
+
+ul {
+  list-style-type: disc;
+  margin: 5px;
+  padding-left: 20px;
+  line-height: 2em;
+}
+
+ol {
+  list-style-type: decimal;
+  margin: 5px;
+  padding-left: 20px;
+  line-height: 2em;
+}
+
+pre {
+  border: 1px solid #DDDDEE;
+  border-bottom: 1px solid #888899;
+  border-right: 1px solid #888899;
+  padding: 0.5em;
+  margin: 0 2em 0 1em;
+  white-space: pre;
+  background-color: #f0f0f0;
+  color: black;
+}
+
+em {
+  font-style: italic;
+}
+
+strong {
+  font-weight: bold;
+}
+
+address {
+  font-style: normal;
+  font-size: 8px;
+}
+
+dt {
+  margin: 0.5em 0 0;
+  padding: 0;
+  border-bottom: 1px dashed #666;
+}
+
+section {
+  letter-spacing: 0.05em;
+  margin: 10px;
+}
+
+div#main {
+  border: solid black 1px;
+  margin: 0;
+  padding: 5px 10px;
+}
+
+#main {
+  padding: 20px;
+}
+
+/* 重複を統合 */
+div#main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 10px;
+  border: solid black 1px; /* 上記からの追加 */
+}
+
+div#ad {
+  margin: 0 0 10px 0;
+}
+
+div#header {
+  text-align: left;
+  margin: 0;
+  padding: 0;
+}
+
+#header h2 {
+  background: none;
+}
+
+div#footer {
+  background-color: #eee;
+  text-align: center;
+}
+
+div.referer_attach,
+div.referer_page {
+  text-align: right;
+}
+
+div#editmenu {
+  text-align: right;
+  margin-bottom: 0.5em;
+}
+
+/* ====================================
+   6. テーブル
+   ==================================== */
+
+.t1 {
+  color: #000;
+  background-color: #fff;
+  font-size: 15px;
+  border: 1px solid #000;
+  text-align: center;
+  margin: 10px auto;
+  border-collapse: collapse;
+}
+
+.t1 td {
+  border: solid 1px #595959;
+  padding: 5px;
+  width: 300px;
+}
+
+table.layout {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td.menu-column {
+  vertical-align: top;
+  width: 220px;
+}
+
+td.content-column {
+  vertical-align: top;
+}
+
+/* ====================================
+   7. ユーティリティクラス
+   ==================================== */
+
+.hidden {
+  display: none;
+}
+
+p.warning,
+span.warning {
+  color: #FF99BE;
+}
+
+span.search {
+  color: black;
+  background-color: yellow;
+}
+
+span.diff_add {
+  color: red;
+}
+
+span.diff_del {
+  color: blue;
+}
+
+.gafc_on {
+  background-color: #ECECEC;
+}
+
+a.gafc_domain {
+  color: green;
+}
+
+/* 検索結果のハイライト */
+span.word1 { background: #ffff66; }
+span.word2 { background: #a0ffff; }
+span.word3 { background: #99ff99; }
+span.word4 { background: #ff9999; }
+span.word5 { background: #ff66ff; }
+span.word6 { background: #880000; color: white; }
+span.word7 { background: #00aa00; color: white; }
+span.word8 { background: #886800; color: white; }
+span.word9 { background: #004699; color: white; }
+span.word10 { background: #990099; color: white; }
+
+/* ====================================
+   8. ハンバーガーメニュー
+   ==================================== */
+
+.hamburger-menu {
+  display: none; /* デフォルトは非表示 */
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 10px;
+}
+
+.hamburger-menu .bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  margin: 5px 0;
+  background-color: #333;
+  transition: all 0.3s ease-in-out;
+}
+
+/* ====================================
+   9. プロフィールセクション
+   ==================================== */
+
+.profile-container {
+  display: flex;
+  flex-direction: column; /* スマホでは縦並び */
+  align-items: center; /* 中央寄せ */
+  gap: 20px;
+}
+
+.profile-image img {
+  max-width: 150%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-description {
+  text-align: left;
+}
+
+/* ====================================
+   10. スキル・技セクション
+   ==================================== */
+
+.skill-section {
+  margin-bottom: 10px;
+}
+
+.skill-heading {
+  background-color: #ccc;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+  color: #444;
+}
+
+.skill-group {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.skill-item {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.skill-type {
+  font-weight: bold;
+  text-align: center;
+}
+
+.skill-group-type {
+  margin-top: 15px;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+}
+
+.skill-group-name {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #0066cc;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.skill-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-items .skill-item {
+  background-color: #f0f0f0;
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+/* ====================================
+   11. レスポンシブデザイン
+   ==================================== */
+
+/* スマホ対応 (600px以下) */
+@media screen and (max-width: 600px) {
+  /* ハンバーガーメニューを表示 */
+  .hamburger-menu {
+    display: block;
+  }
+
+  /* テーブルレイアウトを縦並びに */
+  table.layout,
+  table.layout tr,
+  table.layout td.content-column {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* メニューのtdは初期状態では非表示 */
+  td.menu-column {
+    display: none;
+  }
+
+  /* JavaScriptで表示/非表示を切り替えるクラス */
+  td.menu-column.is-open {
+    display: block;
+    width: 100%;
+  }
+
+  /* iframeの幅を100%に調整 */
+  #menu-frame {
+    width: 100%;
+    height: auto;
+    min-height: 400px;
+  }
+
+  /* メインコンテンツのiframeを調整 */
+  #main-frame {
+    width: 100%;
+    min-height: 80vh;
+  }
+
+  /* プロフィールセクション */
+  .profile-container {
+    flex-direction: column; /* 縦並び */
+    align-items: center; /* 中央寄せ */
+  }
+}
+
+/* デスクトップ用 (768px以上) */
+@media screen and (min-width: 768px) {
+  .profile-container {
+    flex-direction: row; /* 横並び */
+    align-items: flex-start; /* 上端に揃える */
+  }
+
+  .profile-image {
+    flex: 0 0 250px;
+  }
+
+  .profile-description {
+    flex: 1;
+  }
+
+  .skill-group-type {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .skill-group-name {
+    flex: 0 0 100px;
+  }
+
+  .skill-items {
+    flex: 1;
+    gap: 15px;
+  }
+}

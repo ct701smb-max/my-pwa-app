@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+  <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+  <title>まとめページ</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "メイリオ", Meiryo, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+a {
+    text-decoration: none; /* 下線を消す */
+  }
+
+a:link {
+ color: #000000;
+ text-decoration: none;
+}
+
+a:visited {
+ color: #000000;
+ text-decoration: none;
+}
+
+a:hover {}
+
+a:active {
+ color: #000000;
+ text-decoration: none;
+}
+
+.f1{
+font-family: 'Lobster', cursive;
+font-size: 30px;
+}
+    header.top {
+      background-color: #eee;
+      padding: 10px;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 50px;
+      box-sizing: border-box;
+    }
+
+    .hamburger-menu {
+      display: none;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      padding: 10px;
+    }
+
+    .hamburger-menu .bar {
+      display: block;
+      width: 25px;
+      height: 3px;
+      margin: 5px 0;
+      background-color: #333;
+    }
+
+    #page-container {
+      display: flex;
+      height: calc(100vh - 50px);
+      overflow: hidden;
+    }
+
+    nav.menu-column {
+      width: 220px;
+      flex-shrink: 0;
+      height: 100%;
+    }
+
+    nav.menu-column iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    main.content-column {
+      flex-grow: 1;
+      height: 100%;
+    }
+
+    main.content-column iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* モバイル表示 */
+    @media screen and (max-width: 600px) {
+      .hamburger-menu {
+        display: block;
+      }
+
+      #page-container {
+        flex-direction: column;
+      }
+
+      nav.menu-column {
+        display: none;
+        width: 100%;
+        height: calc(100vh - 50px);
+        position: absolute;
+        top: 50px;
+        left: 0;
+        background: white;
+        z-index: 1000;
+      }
+
+      nav.menu-column.is-open {
+        display: block;
+      }
+
+      main.content-column {
+        height: calc(100vh - 50px);
+      }
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const menuToggle = document.getElementById('menu-toggle');
+      const menuContainer = document.getElementById('menu-container');
+
+      menuToggle.addEventListener('click', function (event) {
+        event.stopPropagation();
+        menuContainer.classList.toggle('is-open');
+      });
+
+      menuContainer.addEventListener('click', function (event) {
+        event.stopPropagation();
+      });
+
+      document.addEventListener('click', function (event) {
+        if (
+          menuContainer.classList.contains('is-open') &&
+          !menuContainer.contains(event.target) &&
+          !menuToggle.contains(event.target)
+        ) {
+          menuContainer.classList.remove('is-open');
+        }
+      });
+
+      // iframeからのメッセージ受信
+      window.addEventListener('message', function (event) {
+        if (event.data && event.data.action === 'closeMenu') {
+          menuContainer.classList.remove('is-open');
+        }
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <header class="top">
+    <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true" style="font-size:25px;"></i> <span class="f1">SS Wiki</span></a>
+    <button id="menu-toggle" class="hamburger-menu" aria-label="メニュー切替">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </header>
+
+  <div id="page-container">
+    <nav class="menu-column" id="menu-container">
+      <iframe id="menu-frame" name="menu-frame" src="menu.html"></iframe>
+    </nav>
+    <main class="content-column">
+      <iframe id="main-frame" name="main-frame" src="top.html"></iframe>
+    </main>
+  </div>
+<script src="register.js"></script>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+
+<!--動作確認　試してみよう-->
+<!--
+
+１．右上電源ボタンでON／OFFの切り替え
+２．ホームボタンを押したら画面ON
+３．スライドでログイン
+４．時計や日付がリアルタイムとリンク
+５．WiFiアイコンクリックで【Android.html】に切り替わる（要データ作成後）
+-->
+
+<title>iPhone 4 to iPhone 15</title>
+	<link href="iPhone.css" rel="stylesheet" type="text/css">
+	<script src="jquery.js"></script>
+	<script src="iPhone.js"></script>
+<style type="text/css" media="screen">
+<!--
+ body,html {  margin  : 0 !important;  padding : 0 !important; }
+-->
+</style>
+            
+<body data-twttr-rendered="true" style="background: -webkit-gradient(linear, left top, left bottom, from(#3f3f3f), to(#7f7f7f))">
+
+
+
+
+
+
+
+
+<!-- /Head Bar --><!-- google_ad_section_end -->
+<div class="container">
+  <div class="box">
+<div class="center-text">
+iPhone 4(2010年発売)
+</div>
+<center>
+<div id="container"><div class="main">
+
+	<header>
+		<div class="site">
+			
+			<br class="clear">
+		</div>
+	</header>
+
+	<div class="project"><div class="site">
+				
+		<div class="iphone_container"><div class="iphone">
+
+	<div class="iphone_light_gradient"></div>
+	
+	<div class="iphone_power_button" id="iphone_power_button"></div>
+	
+	<div class="iphone_voice_toogle"></div>
+	
+	<div class="iphone_voice_plus"></div>
+	<div class="iphone_voice_minus"></div>
+
+	<div class="iphone_camera"></div>
+
+	<div class="iphone_dynamic"></div>
+	
+	<div class="iphone_black_bg"></div>
+
+
+	<div class="iphone_display">
+
+		
+		
+		<div class="iphone_headline" id="iphone_headline" style="top: 0px; ">
+			<div class="iphone_net"></div>
+			<div class="iphone_net_title">3g</div>
+			<a href="Android.html"><div class="iphone_wi-fi"><div class="hack"></div></div></a>
+			<div class="iphone_clock" id="iphone_headline_clock" style="display: none; ">18:17</div>
+			<div class="iphone_lock" style="display: block; "></div>
+			<div class="iphone_battery"></div>
+		</div>
+		
+		<div class="iphone_header" id="iphone_lock_header" style="top: 20px; ">
+			<div class="iphone_time" id="iphone_lock_time">18<span>:</span>17</div>
+			<div class="iphone_date" id="iphone_lock_date">Wednesday, May 2</div>
+		</div>
+		
+		<div class="iphone_footer" id="iphone_lock_footer" style="bottom: -97px; ">
+			<div class="iphone_unlock" id="iphone_unlock">
+				<div class="iphone_slider" id="iphone_slider" style="left: 201px; "></div>
+				<div class="iphone_slide2unlock" id="iphone_slide2unlock" style="opacity: -1.1927272727272726; ">slide to unlock</div>
+			</div>
+		</div>
+		
+		
+		<div class="iphone_icons_containter" id="iphone_icons_containter">
+		
+			<div class="icon" style="left: 17px; top: 0px; ">
+				<div class="i_message">
+					<div class="bg_angled"></div>
+					<div class="bulb"></div>
+					<div class="tail"></div>
+					<div class="hack"></div>
+				</div>
+				<span>Message</span>
+			</div>
+
+
+			<div class="icon" style="left: 92px; top: 0px; ">
+				<div class="i_calendar">
+					<div class="day" id="iphone_icon_day">Wednesday</div>
+					<div class="day_num" id="iphone_icon_day_num">2</div>
+				</div>
+				<span>Calendar</span>
+			</div>
+			
+			<div class="icon" style="left: 168px; top: 0px; ">
+				<div class="i_clock">
+					<div class="gray_blick"></div>
+					<div class="center_dot"></div>
+					<div class="minute"></div>
+					<div class="second"></div>
+					<div class="hour"></div>
+					<ul><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li><li>6</li><li>7</li><li>8</li><li>9</li><li>10</li><li>11</li><li>12</li></ul>
+				</div>
+				<span>Clock</span>
+			</div>
+			
+			<div class="icon" style="left: 243px; top: 0px; ">
+				<div class="i_notes"></div>
+				<span>Notes</span>
+			</div>
+			
+			<div class="icon" style="left: 17px; top: 86px; ">
+				<div class="i_reminders"><div>?</div><div>?</div><div>?</div></div>
+				<span>Reminders</span>
+			</div>
+			
+			<div class="icon" style="left: 92px; top: 86px; ">
+				<div class="i_mail">
+					<div class="mail"><div class="mail_top"></div><div class="mail_bottom"></div></div>
+					<div class="clouds"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+					<div class="clouds2"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+				</div>
+				<span>Mail</span>
+			</div>
+			
+			<div class="icon" style="left: 168px; top: 86px; ">
+				<div class="i_app_store">
+					<div class="kirpich"><div class="pen1"></div><div class="pen2"></div></div>
+					<div class="glow"><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr></div>
+				</div>
+				<span>App Store</span>
+			</div>
+			
+			<div class="icon" style="left: 243px; top: 86px; ">
+				<div class="i_videos">
+					<div class="top"><hr class="hr1"><hr class="hr2"><hr class="hr3"><hr class="hr4"><hr class="hr5"><hr class="hack"></div>
+					<div class="bottom"><b class="c1"></b><b class="c2"></b><b class="c3"></b><b class="c4"></b></div>
+				</div>
+				<span>Videos</span>
+			</div>
+			
+			<div class="icon" style="left: 17px; top: 172px; ">
+				<div class="i_youtube">
+					<div class="screen"></div>
+					<sub></sub><sup></sup>
+					<hr>
+				</div>
+				<span>YouTube</span>
+			</div>
+			
+<!--
+			<div class="icon">
+				<div class="i_maps">
+				</div>
+				<span>Maps</span>
+			</div>
+-->
+			
+			<div class="icon" style="left: 92px; top: 172px; ">
+				<div class="i_calculator">
+					<div class="plus"><b></b></div>
+					<div class="minus"><b></b></div>
+					<div class="multiply"><b></b></div>
+					<div class="result"><b></b></div>
+				</div>
+				<span>Calculator</span>
+			</div>
+			
+			<div class="icon" style="left: 168px; top: 172px; ">
+				<div class="i_itunes">
+					<div class="nota"></div>
+					<div class="nota2"></div>
+					<div class="glow"><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr></div>
+				</div>
+				<span>iTunes</span>
+			</div>
+			
+			<div class="icon" style="left: 243px; top: 172px; ">
+				<div class="i_stocks">
+					<ul><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ul>
+					<div><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr></div>
+				</div>
+				<span>Stocks</span>
+			</div>
+			
+			<div class="icon" style="left: 17px; top: 258px; ">
+				<div class="i_voice_memos">
+					<div class="mic"></div>
+					<sub></sub>
+					<sup></sup>
+				</div>
+				<span>Voice Memos</span>
+			</div>
+			
+			<div class="icon" style="left: 92px; top: 258px; ">
+				<div class="i_weather">
+					<div class="light"><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr></div>
+					<div class="sun"></div>
+					<div class="num">23<sup>o</sup></div>
+				</div>
+				<span>Weather</span>
+			</div>
+
+		</div>
+		
+		
+		<div class="iphone_dock" id="iphone_dock" style="bottom: 4px; ">
+		
+			<div class="icon">
+				<div class="i_phone">
+					<div class="bg_angled"></div>
+					<div class="truba"><b></b></div>
+				</div>
+				<span>Phone</span>
+			</div>
+			
+			<div class="icon">
+				<div class="i_contacts">
+					<div class="left_side"><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr><hr></div>
+					<div class="right_side">a<br>b<br>c<br>d<br>e<br>f</div>
+					<div class="profile"><div class="head"></div><div class="neck"></div></div>
+				</div>
+				<span>Contacts</span>
+			</div>
+
+			<div class="icon">
+				<div class="i_camera">
+					<div class="eye"><div class="blick"><b></b></div></div>
+				</div>
+				<span>Camera</span>
+			</div>
+			
+			<div class="icon">
+				<div class="i_music">
+					<div class="nota"></div>
+					<div class="nota2"></div>
+					<div class="glow"></div>
+				</div>
+				<span>Music</span>
+			</div>
+			
+		</div>
+		
+	</div>
+
+
+	<div class="iphone_home" id="iphone_home_button"></div>
+
+</div>
+
+
+
+<div style="display:none;">
+	<audio id="soundLock" controls="true">
+		<source src="./iPhone-m/lock.ogg" type="audio/ogg">
+		<source src="./iPhone-m/lock.mp3" type="audio/mpeg">
+	</audio>
+
+	<audio id="soundUnlock" controls="true">
+		<source src="./iPhone-m/unlock.ogg" type="audio/ogg">
+		<source src="./iPhone-m/unlock.mp3" type="audio/mpeg">
+	</audio>
+</div>
+</div>
+</div></div></div></div>
+
+</center>
+</div>
+
+<div class="box">
+
+<div class="center-text">
+iPhone 15 Pro Max(2023年発売)
+</div>
+<br>
+
+<td>
+<table border="1">
+<tr>
+<td align="center">本体価格</td>
+<td align="center">189,800円（税込）　-　249,800円（税込）<br>または5,272円/月（税込）の36回払い　-　6,938円月（税込）の36回払い </td>
+</tr>   
+<tr>
+<td align="center">端末サイズ</td>
+<td align="center">76.7 x 159.9 x 8.25</td>
+</tr>
+<tr>
+<td align="center">端末重量</td>
+<td align="center">221g</td>
+</tr>
+<tr>
+<td align="center">ディスプレイ</td>
+<td align="center">
+<table><tr><td>
+6.7インチ（対角）オールスクリーンOLEDディスプレイ<br>
+2,796 x 1,290ピクセル解像度、460ppi<br>
+最大120Hzのアダプティブリフレッシュレート
+</td><td>
+<img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcQgkhl_WZ2xpcyUqIWqAYHLuTc4Ebxluv-tWilQZgcsg_TxfO2E-cEFFsWN7JojQ8K3_W0otA" width="200" height="120">
+</td>
+</tr>
+</table>
+</td> 
+<tr>
+<td align="center">UI・UX</td>
+<td align="center">Dynamic Island採用</td>
+</tr>
+<tr>
+<td align="center">IPX</td>
+<td align="center">IEC規格60529にもとづくIP68等級（最大水深6メートルで最大30分間）</td>
+</tr>
+<tr>
+<td align="center">ROM</td>
+<td align="center">256GB-1TB</td>
+</tr>
+<tr>
+<td align="center">RAM</td>
+<td align="center">8GB</td>
+</tr>
+<tr>
+<td align="center">CPU</td>
+<td align="center">6コアCPU 最大クロック数3.8GHz</td>
+</tr>
+<tr>
+<td align="center">GPU</td>
+<td align="center">6コアGPU</td>
+</tr>
+<tr>
+<td align="center">カメラ</td>
+<td align="center">48MPメイン、12MP超広角、12MP望遠<br>
+光学ズームオプション
+</td>
+</tr>
+<tr>
+<td align="center">コネクタ</td>
+<td align="center">USB-C<br>
+USB 3対応
+</td>
+</tr>
+<tr>
+<td align="center">アクセサリ対応</td>
+<td align="center">MagSafe対応のケース、カード入れ、ワイヤレス充電器などに対応
+</td>
+</tr>
+<tr>
+<td align="center">セキュア認証</td>
+<td align="center">Face ID
+</td>
+</tr>
+<tr>
+<td align="center">バッテリー容量</td>
+<td align="center"> 4,441mAh<br>
+ビデオ再生（ストリーミング）：
+最大25時間
+</td>
+</tr> 
+</table>
+</td>
+</tr></table>
+</div></div>
+<hr>
+
+<div class="center-text">
+2024年7月30日調査
+</div>
+
+
+
+</center>
+</body>
+</html>
