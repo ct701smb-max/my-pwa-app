@@ -117,7 +117,7 @@ Android Pre
 function scalePhone() {
     const phone = document.getElementById('duo');
     const scaleX = window.innerWidth / 330;
-    const scaleY = window.innerHeight / 900;
+    const scaleY = window.innerHeight / 1100;
     const scale = Math.min(scaleX, scaleY); // 画面に収まるようにスケール調整
     phone.style.transform = `scale(${scale})`;
 }
@@ -308,3 +308,4 @@ const drainTimer = setInterval(drainBattery, 1000); //1秒ずつ減少
 </div>
 </body>
 </html>
+
