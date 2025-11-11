@@ -4,7 +4,11 @@ const CACHE_NAME = 'my-pwa-cache-v1';
 const urlsToCache = [
   './',
   '../index.html',
-  '../list.html',
+  '../web/web.html',
+  '../web/web.css',
+  '../web/font-face.css',
+  '../web/function.js',
+  '../web/jquery.min.js',
   '../PDF/pdf.html',
   '../PDF/pdf.css',
   '../PDF/pdf.js',
