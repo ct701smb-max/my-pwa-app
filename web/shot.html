@@ -92,306 +92,364 @@
 
 <script>
   let canvas, ctx;
-  let x, y;
-  const playerSize = 100;
-  const moveSpeed = 5;
-  let shots = [];
-  let shootSpeed = 7;
-  let shootDelay = 0;
-  let shootInterval = 8;
-  let powerLevel = 1;
-  const MAX_POWER_LEVEL = 3;
+  let x, y;
+  const playerSize = 100;
+  const moveSpeed = 5;
+  let shots = [];
+  let shootSpeed = 7;
+  let shootDelay = 0;
+  let shootInterval = 8;
+  let powerLevel = 1;
+  const MAX_POWER_LEVEL = 5;
 
-  let dxKeyboard = 0;
-  let dyKeyboard = 0;
-  let dxTouch = 0;
-  let dyTouch = 0;
+  let dxKeyboard = 0;
+  let dyKeyboard = 0;
+  let dxTouch = 0;
+  let dyTouch = 0;
 
-  const playerImage = new Image();
-  playerImage.src = "player.png";
+  const playerImage = new Image();
+  playerImage.src = "player.png";
 
-  const flags = { z: false };
+  const flags = { z: false };
 
-  let joystickBase, joystickHandle, zBtn;
-  const activePointers = new Map();
-  const maxDistance = 30;
+  let joystickBase, joystickHandle, zBtn;
+  const activePointers = new Map();
+  const maxDistance = 30;
 
-  // アイテム関連の定数と変数
-  const items = [];
-  const itemSize = 40;
-  const itemSpeed = 2;
-  let itemSpawnTimer = 0;
-  const itemSpawnInterval = 60 * 5;
+  // アイテム関連の定数と変数
+  const items = [];
+  const itemSize = 40;
+  const itemSpeed = 2;
+  let itemSpawnTimer = 0;
+  const itemSpawnInterval = 60 * 5;
 
-  // ★ 強化レベルに応じた弾の色を定義
-  const bulletColors = {
-    1: "red",    // レベル1
-    2: "blue",   // レベル2
-    3: "lime"   // レベル3以上
-  };
+  // ★ 強化レベルに応じた弾の色を定義
+  const bulletColors = {
+    1: "red",    // レベル1
+    2: "blue",   // レベル2
+    3: "lime",   // レベル3
+    4: "yellow", // レベル4
+  　5: "cyan"    // レベル5 (MAX)
+  };
 
-  /* --- コンストラクタ的なクラス（アイテム） --- */
-  function createItem(itemX, itemY) {
-    return {
-      x: itemX,
-      y: itemY,
-      width: itemSize,
-      height: itemSize,
-      type: 'powerup',
-      color: 'gold'
-    };
-  }
-  /* --------------------------------------------- */
+  /* --- コンストラクタ的なクラス（アイテム） --- */
+  function createItem(itemX, itemY) {
+    return {
+      x: itemX,
+      y: itemY,
+      width: itemSize,
+      height: itemSize,
+      type: 'powerup',
+      color: 'gold'
+    };
+  }
+  /* --------------------------------------------- */
 
 
-  window.onload = () => {
-    canvas = document.getElementById("c");
-    ctx = canvas.getContext("2d");
-    joystickBase = document.getElementById("joystick-base");
-    joystickHandle = document.getElementById("joystick-handle");
-    zBtn = document.getElementById("btn-z");
+  window.onload = () => {
+    canvas = document.getElementById("c");
+    ctx = canvas.getContext("2d");
+    joystickBase = document.getElementById("joystick-base");
+    joystickHandle = document.getElementById("joystick-handle");
+    zBtn = document.getElementById("btn-z");
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      x = (canvas.width / 2) - (playerSize / 2);
-      y = (canvas.height / 2) - (playerSize / 2);
-    }
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      x = (canvas.width / 2) - (playerSize / 2);
+      y = (canvas.height / 2) - (playerSize / 2);
+    }
 
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-    
-    document.onkeydown = (e) => {
-      const key = e.keyCode || e.which;
-      if (key === 37) dxKeyboard = -moveSpeed;
-      if (key === 38) dyKeyboard = -moveSpeed;
-      if (key === 39) dxKeyboard = moveSpeed;
-      if (key === 40) dyKeyboard = moveSpeed;
-      if (key === 90) flags.z = true;
-    };
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+    
+    document.onkeydown = (e) => {
+      const key = e.keyCode || e.which;
+      if (key === 37) dxKeyboard = -moveSpeed;
+      if (key === 38) dyKeyboard = -moveSpeed;
+      if (key === 39) dxKeyboard = moveSpeed;
+      if (key === 40) dyKeyboard = moveSpeed;
+      if (key === 90) flags.z = true;
+    };
 
-    document.onkeyup = (e) => {
-      const key = e.keyCode || e.which;
-      if (key === 37 || key === 39) dxKeyboard = 0;
-      if (key === 38 || key === 40) dyKeyboard = 0;
-      if (key === 90) flags.z = false;
-    };
-    
-    document.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      
-      if (e.target === joystickBase || joystickBase.contains(e.target)) {
-        activePointers.set(e.pointerId, 'joystick');
-        joystickBase.setPointerCapture(e.pointerId);
-        joystickHandle.style.transition = 'none';
-        updateJoystickPosition(e);
-      } else if (e.target === zBtn) {
-        activePointers.set(e.pointerId, 'z_button');
-        flags.z = true;
-        zBtn.setPointerCapture(e.pointerId);
-      }
-    });
+    document.onkeyup = (e) => {
+      const key = e.keyCode || e.which;
+      if (key === 37 || key === 39) dxKeyboard = 0;
+      if (key === 38 || key === 40) dyKeyboard = 0;
+      if (key === 90) flags.z = false;
+    };
+    
+    document.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      
+      if (e.target === joystickBase || joystickBase.contains(e.target)) {
+        activePointers.set(e.pointerId, 'joystick');
+        joystickBase.setPointerCapture(e.pointerId);
+        joystickHandle.style.transition = 'none';
+        updateJoystickPosition(e);
+      } else if (e.target === zBtn) {
+        activePointers.set(e.pointerId, 'z_button');
+        flags.z = true;
+        zBtn.setPointerCapture(e.pointerId);
+      }
+    });
 
-    document.addEventListener("pointermove", (e) => {
-      e.preventDefault();
-      if (activePointers.get(e.pointerId) === 'joystick') {
-        updateJoystickPosition(e);
-      }
-    });
+    document.addEventListener("pointermove", (e) => {
+      e.preventDefault();
+      if (activePointers.get(e.pointerId) === 'joystick') {
+        updateJoystickPosition(e);
+      }
+    });
 
-    document.addEventListener("pointerup", (e) => {
-      e.preventDefault();
-      const type = activePointers.get(e.pointerId);
-      if (type === 'joystick') {
-        activePointers.delete(e.pointerId);
-        if (!isJoystickActive()) {
-            resetJoystick();
-        }
-      } else if (type === 'z_button') {
-        flags.z = false;
-        activePointers.delete(e.pointerId);
-      }
-    });
+    document.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      const type = activePointers.get(e.pointerId);
+      if (type === 'joystick') {
+        activePointers.delete(e.pointerId);
+        if (!isJoystickActive()) {
+            resetJoystick();
+        }
+      } else if (type === 'z_button') {
+        flags.z = false;
+        activePointers.delete(e.pointerId);
+      }
+    });
 
-    document.addEventListener("pointercancel", (e) => {
-      e.preventDefault();
-      const type = activePointers.get(e.pointerId);
-      if (type === 'joystick') {
-        activePointers.delete(e.pointerId);
-        if (!isJoystickActive()) {
-            resetJoystick();
-        }
-      } else if (type === 'z_button') {
-        flags.z = false;
-        activePointers.delete(e.pointerId);
-      }
-    });
+    document.addEventListener("pointercancel", (e) => {
+      e.preventDefault();
+      const type = activePointers.get(e.pointerId);
+      if (type === 'joystick') {
+        activePointers.delete(e.pointerId);
+        if (!isJoystickActive()) {
+            resetJoystick();
+        }
+      } else if (type === 'z_button') {
+        flags.z = false;
+        activePointers.delete(e.pointerId);
+      }
+    });
 
-    function isJoystickActive() {
-        for (let pointerType of activePointers.values()) {
-            if (pointerType === 'joystick') {
-                return true;
-            }
-        }
-        return false;
-    }
+    function isJoystickActive() {
+        for (let pointerType of activePointers.values()) {
+            if (pointerType === 'joystick') {
+                return true;
+            }
+        }
+        return false;
+    }
 
-    function updateJoystickPosition(e) {
-      const rect = joystickBase.getBoundingClientRect();
-      const baseCenterX = rect.left + rect.width / 2;
-      const baseCenterY = rect.top + rect.height / 2;
-      
-      const currentX = e.clientX;
-      const currentY = e.clientY;
-      let deltaX = currentX - baseCenterX;
-      let deltaY = currentY - baseCenterY;
-      
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      if (distance > maxDistance) {
-        const angle = Math.atan2(deltaY, deltaX);
-        deltaX = Math.cos(angle) * maxDistance;
-        deltaY = Math.sin(angle) * maxDistance;
-      }
-      
-      joystickHandle.style.transform = `translate(-50%, -50%) translate(${deltaX}px, ${deltaY}px)`;
-      dxTouch = (deltaX / maxDistance) * moveSpeed;
-      dyTouch = (deltaY / maxDistance) * moveSpeed;
-    }
+    function updateJoystickPosition(e) {
+      const rect = joystickBase.getBoundingClientRect();
+      const baseCenterX = rect.left + rect.width / 2;
+      const baseCenterY = rect.top + rect.height / 2;
+      
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+      let deltaX = currentX - baseCenterX;
+      let deltaY = currentY - baseCenterY;
+      
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      if (distance > maxDistance) {
+        const angle = Math.atan2(deltaY, deltaX);
+        deltaX = Math.cos(angle) * maxDistance;
+        deltaY = Math.sin(angle) * maxDistance;
+      }
+      
+      joystickHandle.style.transform = `translate(-50%, -50%) translate(${deltaX}px, ${deltaY}px)`;
+      dxTouch = (deltaX / maxDistance) * moveSpeed;
+      dyTouch = (deltaY / maxDistance) * moveSpeed;
+    }
 
-    function resetJoystick() {
-      dxTouch = 0;
-      dyTouch = 0;
-      joystickHandle.style.transform = `translate(-50%, -50%)`;
-      joystickHandle.style.transition = 'transform 0.2s ease-out';
-    }
+    function resetJoystick() {
+      dxTouch = 0;
+      dyTouch = 0;
+      joystickHandle.style.transform = `translate(-50%, -50%)`;
+      joystickHandle.style.transition = 'transform 0.2s ease-out';
+    }
 
-    loop();
-  };
+    loop();
+  };
 
-  function loop() {
-    // 1. プレイヤーの移動
-    const dx = dxKeyboard + dxTouch;
-    const dy = dyKeyboard + dyTouch;
-    
-    x += dx;
-    y += dy;
-    
-    x = Math.max(0, Math.min(x, canvas.width - playerSize));
-    y = Math.max(0, Math.min(y, canvas.height - playerSize));
+  function loop() {
+    // 1. プレイヤーの移動
+    const dx = dxKeyboard + dxTouch;
+    const dy = dyKeyboard + dyTouch;
+    
+    x += dx;
+    y += dy;
+    
+    x = Math.max(0, Math.min(x, canvas.width - playerSize));
+    y = Math.max(0, Math.min(y, canvas.height - playerSize));
 
-    // 2. ショットの発射 (強化レベルに応じてショットの数を増やせるように修正)
-    if (flags.z && shootDelay <= 0) {
-      // ★ 現在の強化レベルに応じた弾の色を取得
-      const currentBulletColor = bulletColors[powerLevel] || bulletColors[MAX_POWER_LEVEL];
+    // 2. ショットの発射 (強化レベルに応じてショットの数を増やせるように修正)
+    // L300付近のショット発射ロジック全体
+if (flags.z && shootDelay <= 0) {
+  const currentBulletColor = bulletColors[Math.min(powerLevel, MAX_POWER_LEVEL)];
 
-      // ★ 強化レベル1: 中央から1発
-      if (powerLevel === 1) {
-        shots.push({ x: x + playerSize / 2, y: y, color: currentBulletColor });
-      } 
-      // ★ 強化レベル2: 左右から2発
-      else if (powerLevel === 2) {
-        shots.push({ x: x + playerSize / 4, y: y, color: currentBulletColor });
-        shots.push({ x: x + playerSize * 3 / 4, y: y, color: currentBulletColor });
-      } 
-      // ★ 強化レベル3以上: 3発
-      else if (powerLevel >= 3) {
-        shots.push({ x: x + playerSize / 2, y: y, color: currentBulletColor }); // 中央
-        shots.push({ x: x + playerSize / 4, y: y, color: currentBulletColor }); // 左
-        shots.push({ x: x + playerSize * 3 / 4, y: y, color: currentBulletColor }); // 右
-      }
-      shootDelay = shootInterval;
-    }
-    if (shootDelay > 0) shootDelay--;
+  const shotY = y;
+  const pSize = playerSize;
 
-    // 3. ショットの移動と画面外判定
-    for (let i = 0; i < shots.length; i++) {
-      shots[i].y -= shootSpeed;
-      if (shots[i].y < -10) {
-        shots.splice(i, 1);
-        i--;
-      }
-    }
+  let newShots = [];
 
-    // 4. アイテムの生成
-    itemSpawnTimer++;
-    if (itemSpawnTimer >= itemSpawnInterval) {
-      // 画面上のランダムな位置にアイテムを生成
-      const randomX = Math.random() * (canvas.width - itemSize);
-      items.push(createItem(randomX, -itemSize));
-      itemSpawnTimer = 0;
-    }
+  // レベルに応じた弾の基本速度とサイズ
+  const baseSpeedY = shootSpeed; // shootSpeedを垂直方向の基本速度とする
+  let bulletWidth = 20;
+  let bulletHeight = 10;
 
-    // 5. アイテムの移動とプレイヤーとの当たり判定
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      item.y += itemSpeed;
-      
-      // プレイヤーとアイテムの当たり判定 (AABB)
-      if (
-        x < item.x + item.width &&
-        x + playerSize > item.x &&
-        y < item.y + item.height &&
-        y + playerSize > item.y
-      ) {
-        // 強化処理
-        if (item.type === 'powerup') {
-          powerLevel = Math.min(powerLevel + 1, MAX_POWER_LEVEL); // レベルアップ
-          // おまけ: レベルが上がったら弾速も少し上げる
-          shootSpeed = 7 + (powerLevel - 1) * 2;
-        }
-        // アイテムを削除
-        items.splice(i, 1);
-        i--;
-        continue;
-      }
+  if (powerLevel === 1) {
+    // ★ 強化レベル1: 中央から1発 (直進)
+    newShots.push({ x: x + pSize / 2, y: shotY, dx: 0, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight });
+  } else if (powerLevel === 2) {
+    // ★ 強化レベル2: 左右から2発 (直進)
+    newShots.push({ x: x + pSize / 4, y: shotY, dx: 0, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight });
+    newShots.push({ x: x + pSize * 3 / 4, y: shotY, dx: 0, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight });
+  } else if (powerLevel === 3) {
+    // ★ 強化レベル3: 中央と左右から3発 (直進)
+    newShots.push({ x: x + pSize / 2, y: shotY, dx: 0, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 中央
+    newShots.push({ x: x + pSize / 4, y: shotY, dx: 0, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 左
+    newShots.push({ x: x + pSize * 3 / 4, y: shotY, dx: 0, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 右
+  } else if (powerLevel === 4) {
+    // ★ 強化レベル4: 4発を少し扇状に (弾速を調整し、幅も少し大きく)
+    bulletWidth = 25; // 少し大きく
+    bulletHeight = 12;
+    const spreadFactor4 = 1.0; // 拡散の度合い
 
-      // 画面外判定
-      if (item.y > canvas.height) {
-        items.splice(i, 1);
-        i--;
-      }
-    }
+    newShots.push({ x: x + pSize * 1 / 8, y: shotY, dx: -spreadFactor4, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 左端 (少し左へ)
+    newShots.push({ x: x + pSize * 3 / 8, y: shotY, dx: -spreadFactor4 * 0.3, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 左内側 (少し左へ)
+    newShots.push({ x: x + pSize * 5 / 8, y: shotY, dx: spreadFactor4 * 0.3, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 右内側 (少し右へ)
+    newShots.push({ x: x + pSize * 7 / 8, y: shotY, dx: spreadFactor4, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 右端 (少し右へ)
+  } else if (powerLevel >= 5) {
+    // ★ 強化レベル5以上 (最大): 5発を大きく扇状に (弾速をさらに調整し、幅もさらに大きく)
+    bulletWidth = 30; // さらに大きく
+    bulletHeight = 15;
+    const spreadFactor5 = 2.0; // 拡散の度合い (レベル4より広範囲に)
 
-    // 6. 描画
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    newShots.push({ x: x + pSize / 2, y: shotY, dx: 0, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 中央 (直進)
+    newShots.push({ x: x + pSize / 4, y: shotY, dx: -spreadFactor5 * 0.5, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 左内側 (斜め左)
+    newShots.push({ x: x + pSize * 3 / 4, y: shotY, dx: spreadFactor5 * 0.5, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 右内側 (斜め右)
+    newShots.push({ x: x + pSize * 1 / 8, y: shotY, dx: -spreadFactor5, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 極左 (大きく斜め左)
+    newShots.push({ x: x + pSize * 7 / 8, y: shotY, dx: spreadFactor5, dy: -baseSpeedY, color: currentBulletColor, width: bulletWidth, height: bulletHeight }); // 極右 (大きく斜め右)
+  }
 
-    // プレイヤーの描画
-    if (playerImage.complete) {
-      ctx.drawImage(playerImage, x, y, playerSize, playerSize);
-    } else {
-      ctx.fillStyle = "white";
-      ctx.fillRect(x, y, playerSize, playerSize);
-    }
+  shots.push(...newShots);
+  shootDelay = shootInterval;
+}
+if (shootDelay > 0) shootDelay--;
 
-    // アイテムの描画
-    for (const item of items) {
-      ctx.fillStyle = item.color;
-      ctx.fillRect(item.x, item.y, item.width, item.height);
-      // アイテムの上にPと描画して分かりやすくする
-      ctx.fillStyle = "black";
-      ctx.font = "20px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("P", item.x + item.width / 2, item.y + item.height / 2);
-    }
+    // 3. ショットの移動と画面外判定
+    for (let i = 0; i < shots.length; i++) {
+  shots[i].x += shots[i].dx; // ★ 追加: 水平方向の移動
+  shots[i].y += shots[i].dy; // ★ 修正: 垂直方向の移動 (dyを使う)
+  if (shots[i].y < -10 || shots[i].x < -shots[i].width || shots[i].x > canvas.width) { // ★ 修正: 画面外判定に水平方向も追加
+    shots.splice(i, 1);
+    i--;
+  }
+}
 
-    // 弾の描画
-    for (const s of shots) {
-      // ★ 弾の色をその弾の持つ`color`プロパティから取得
-      ctx.fillStyle = s.color;
-      const bulletWidth = 20 + (powerLevel - 1) * 5;
-      const bulletHeight = 10;
-      ctx.fillRect(s.x - bulletWidth / 2, s.y, bulletWidth, bulletHeight);
-    }
+    // 4. アイテムの生成
+    itemSpawnTimer++;
+    if (itemSpawnTimer >= itemSpawnInterval) {
+      // 画面上のランダムな位置にアイテムを生成
+      const randomX = Math.random() * (canvas.width - itemSize);
+      items.push(createItem(randomX, -itemSize));
+      itemSpawnTimer = 0;
+    }
 
-    // 強化レベルの表示（デバッグ用）
-    ctx.fillStyle = "lime";
-    ctx.font = "24px sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText(`Power: ${powerLevel}`, 10, 30);
-    
-    requestAnimationFrame(loop);
-  }
+    // 5. アイテムの移動とプレイヤーとの当たり判定
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      item.y += itemSpeed;
+      
+      // プレイヤーとアイテムの当たり判定 (AABB)
+      if (
+        x < item.x + item.width &&
+        x + playerSize > item.x &&
+        y < item.y + item.height &&
+        y + playerSize > item.y
+      ) {
+        // 強化処理
+        if (item.type === 'powerup') {
+          powerLevel = Math.min(powerLevel + 1, MAX_POWER_LEVEL); // レベルアップ
+          // おまけ: レベルが上がったら弾速も少し上げる
+          shootSpeed = 7 + (powerLevel - 1) * 2;
+        }
+        // アイテムを削除
+        items.splice(i, 1);
+        i--;
+        continue;
+      }
+
+      // 画面外判定
+      if (item.y > canvas.height) {
+        items.splice(i, 1);
+        i--;
+      }
+    }
+
+    // 6. 描画
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // プレイヤーの描画
+    if (playerImage.complete) {
+      ctx.drawImage(playerImage, x, y, playerSize, playerSize);
+    } else {
+      ctx.fillStyle = "white";
+      ctx.fillRect(x, y, playerSize, playerSize);
+    }
+
+    // アイテムの描画
+    // アイテムの描画
+for (const item of items) {
+  // 1. 描画スタイルを設定
+  ctx.fillStyle = item.color;
+
+  // 2. パスを開始
+  ctx.beginPath();
+  
+  // 3. 円のパラメータ: (中心X, 中心Y, 半径, 開始角度, 終了角度)
+  //   - 中心X: item.x + item.width / 2 (長方形の左上隅から中心へ)
+  //   - 中心Y: item.y + item.height / 2 (長方形の左上隅から中心へ)
+  //   - 半径: item.width / 2 (長方形の幅の半分)
+  //   - 開始角度: 0
+  //   - 終了角度: 2 * Math.PI (360度)
+  const radius = item.width / 2;
+  const centerX = item.x + radius;
+  const centerY = item.y + item.height / 2; // item.heightはitem.widthと同じと仮定
+
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+  
+  // 4. 円を塗りつぶす
+  ctx.fill();
+  
+  // 5. パスを閉じる（オプションですが、習慣として行う）
+  ctx.closePath();
+
+
+  // アイテムの上にPと描画して分かりやすくする
+  ctx.fillStyle = "black";
+  ctx.font = "20px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  // Pの描画位置も円の中心(centerX, centerY)に合わせる
+  ctx.fillText("P", centerX, centerY);
+}
+
+    // 弾の描画
+    for (const s of shots) {
+  ctx.fillStyle = s.color;
+  // ★ 修正: 弾のサイズをショットオブジェクトのプロパティから取得
+  ctx.fillRect(s.x - s.width / 2, s.y, s.width, s.height);
+}
+
+    // 強化レベルの表示（デバッグ用）
+    ctx.fillStyle = "lime";
+    ctx.font = "24px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`Power: ${powerLevel}`, 10, 30);
+    
+    requestAnimationFrame(loop);
+  }
 </script>
 
 </body>
