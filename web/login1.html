@@ -97,8 +97,8 @@ form input[type="submit"]:hover {
 <p>UserID、Passwordをご入力の上、「LOGIN」ボタンをクリックしてください。</p>
 </div>
 <div class="login_form_btm">
-<input id="search-id" type="text" name="user_id" placeholder="UserID" autocomplete="off">
-<input id="search-password" type="password" name="password" placeholder="Password" autocomplete="off">
+<input id="search-id" type="text" name="user_id" placeholder="ユーザーID：sakura" autocomplete="off">
+<input id="search-password" type="password" name="password" placeholder="パスワード：6934" autocomplete="off">
 <div class="button">
 <input type="submit" name="button" value="LOGIN">
 </div>
@@ -117,7 +117,7 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
 
 // idキーとnameキーを持つユーザーデータの配列
 const userDataList = [
-  { id: 'sakuranomiya', password: '6934', name: '桜宮さん' },
+  { id: 'sakura', password: '6934', name: '桜宮さん' },
   { id: 'imamiya', password: '2711', name: '今宮さん' },
   { id: 'baika', password: '2171', name: '梅香さん' }
 ];
@@ -160,3 +160,4 @@ function findUser(searchId,searchPassword) {
 
 </body>
 </html>
+
