@@ -102,7 +102,7 @@ function renderFileList() {
 if (isCropped) {
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'download-single-btn';
-            downloadBtn.textContent = '↓'; // ダウンロードのアイコンやテキスト
+            downloadBtn.textContent = 'ダウンロード'; // ダウンロードのアイコンやテキスト
             downloadBtn.title = 'トリミング画像をダウンロード';
             downloadBtn.onclick = (e) => {
                 e.stopPropagation(); // liへのクリックイベントを停止
