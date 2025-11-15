@@ -14,6 +14,7 @@ const duplicateButton = document.getElementById('duplicateButton');
 const sortByNameButton = document.getElementById('sortByNameButton');
 const fileList = document.getElementById('fileList');
 const saveCurrentImageButton = document.getElementById('saveCurrentImageButton');
+const cropAlert = document.getElementById('cropAlert');
 
 let imageFiles = [];    // 選択された全ファイル
 let croppedImages = []; // トリミング後のデータURLを格納
@@ -23,7 +24,20 @@ let cropper = null;
 // ===========================================
 // ユーティリティ関数
 // ===========================================
+/**
+ * 一時的なポップアップメッセージを表示する
+ */
+function showTemporaryAlert(message, duration = 1500) {
+    if (!cropAlert) return; // 要素が存在しない場合は何もしない
 
+    cropAlert.textContent = message;
+    cropAlert.classList.add('show'); // 表示クラスを追加 (CSSでフェードイン)
+
+    // 指定された時間（ミリ秒）後に非表示にする
+    setTimeout(() => {
+        cropAlert.classList.remove('show'); // 表示クラスを削除 (CSSでフェードアウト)
+    }, duration);
+}
 /**
  * Cropper.jsにトリミング範囲のデータ（x, y, width, height）を設定する
  */
@@ -316,9 +330,9 @@ imageInput.addEventListener('change', (e) => {
 cropButton.addEventListener('click', () => {
     if (cropper) {
         const croppedCanvas = cropper.getCroppedCanvas();
-        const dataURL = croppedCanvas.toDataURL('image/png', 0.9); 
+        const dataURL = croppedCanvas.toDataURL('image/png', 0.9);
         
-        // トリミング時の Cropper.js の設定を保存したい場合は、ここに保存ロジックを追加可能
+        // ... 既存のcroppedImagesへの保存ロジック ...
         croppedImages[currentIndex] = { 
             dataURL: dataURL,
             originalFileName: imageFiles[currentIndex].name,
@@ -326,11 +340,17 @@ cropButton.addEventListener('click', () => {
         };
 
         if (currentIndex < imageFiles.length - 1) {
+            // 次の画像へ移動する場合
             currentIndex++;
             loadAndInitCropper(currentIndex);
+            // 💡 トリミング完了のポップアップ
+            showTemporaryAlert("✅ トリミング完了！ 次の画像へ"); // 👈 **この行を追加**
         } else {
-             updateUI();
-             alert("全画像のトリミングが完了しました！一括ダウンロードボタンを押してください。");
+            // 全てのトリミングが完了した場合
+            updateUI();
+            // 💡 アラートをポップアップに置き換える
+            // alert("全画像のトリミングが完了しました！一括ダウンロードボタンを押してください。"); // 削除またはコメントアウト
+            showTemporaryAlert("🎉 全画像のトリミング完了！", 3000); // 👈 **この行に置き換え**
         }
     }
 });

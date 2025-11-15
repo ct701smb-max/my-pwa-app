@@ -266,3 +266,26 @@ button:disabled {
 #sortByNameButton:hover:not(:disabled) {
     background-color: #138496;
 }
+
+/* ポップアップの基本スタイル */
+.alert-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #4CAF50; /* 緑系の背景 */
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    z-index: 1000;
+    opacity: 0; /* 初期状態は非表示 */
+    transition: opacity 0.3s ease-in-out; /* フェードイン・アウト用 */
+    pointer-events: none; /* クリック操作を妨げないようにする */
+    font-size: 1.2em;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 表示時のスタイル */
+.alert-popup.show {
+    opacity: 1;
+}
