@@ -13,6 +13,7 @@ const presetLeftHalfButton = document.getElementById('presetLeftHalf');
 const duplicateButton = document.getElementById('duplicateButton');
 const sortByNameButton = document.getElementById('sortByNameButton');
 const fileList = document.getElementById('fileList');
+const saveCurrentImageButton = document.getElementById('saveCurrentImageButton');
 
 let imageFiles = [];    // 選択された全ファイル
 let croppedImages = []; // トリミング後のデータURLを格納
@@ -83,6 +84,18 @@ function renderFileList() {
         
         li.appendChild(nameSpan);
         li.appendChild(removeBtn);
+
+if (isCropped) {
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download-single-btn';
+            downloadBtn.textContent = '↓'; // ダウンロードのアイコンやテキスト
+            downloadBtn.title = 'トリミング画像をダウンロード';
+            downloadBtn.onclick = (e) => {
+                e.stopPropagation(); // liへのクリックイベントを停止
+                downloadSingleImage(index);
+            };
+            li.appendChild(downloadBtn);
+        }
         
         li.addEventListener('click', () => {
             currentIndex = index;
@@ -143,6 +156,9 @@ function updateUI() {
     duplicateButton.disabled = controlDisabled;
     sortByNameButton.disabled = controlDisabled;
 
+const isCurrentCropped = croppedImages[currentIndex] !== null;
+    saveCurrentImageButton.disabled = !isCurrentCropped;
+    
     renderFileList();
 }
 
@@ -489,6 +505,8 @@ saveAllButton.addEventListener('click', () => {
         }
     });
 
+
+    
     zip.generateAsync({type: "blob"})
        .then(function(content) {
            const url = URL.createObjectURL(content);
@@ -510,6 +528,44 @@ saveAllButton.addEventListener('click', () => {
            updateUI();
        });
 });
+
+saveCurrentImageButton.addEventListener('click', () => {
+    // 現在表示されている画像のインデックスを渡して、ダウンロードを実行する
+    downloadSingleImage(currentIndex);
+});
+
+/**
+ * 指定されたインデックスのトリミング済み画像をダウンロードする
+ */
+function downloadSingleImage(index) {
+    const imgData = croppedImages[index];
+
+    if (!imgData) {
+        alert("この画像はまだトリミングされていません。");
+        return;
+    }
+
+    const blob = dataURLtoBlob(imgData.dataURL);
+    const originalFileName = imgData.originalFileName;
+    const newExtension = imgData.dataURL.includes('image/png') ? '.png' : '.jpeg';
+
+    // 既存のファイル名から拡張子を取り除く
+    const lastDotIndex = originalFileName.lastIndexOf('.');
+    const nameWithoutExt = lastDotIndex !== -1 ? originalFileName.substring(0, lastDotIndex) : originalFileName;
+
+    // ダウンロードするファイル名を決定
+    const downloadFileName = nameWithoutExt + "_cropped" + newExtension; // 例: original_cropped.jpeg
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    
+    a.href = url;
+    a.download = downloadFileName;
+    document.body.appendChild(a);
+    a.click(); // ダウンロードを実行
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
 
 // 初期UI更新
 updateUI();

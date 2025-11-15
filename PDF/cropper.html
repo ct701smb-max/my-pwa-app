@@ -7,6 +7,51 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
     <link rel="stylesheet" href="cropper.css">
+    <style>
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .file-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .file-item span {
+            flex-grow: 1; /* ファイル名が領域を占有するように */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 10px;
+        }
+
+        .file-item button {
+            margin-left: 5px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            padding: 3px 6px;
+            line-height: 1;
+            flex-shrink: 0; /* ボタンのサイズが変わらないように */
+        }
+
+        /* 削除ボタン */
+        .remove-btn {
+            color: #ff4d4f; 
+            border-color: #ffccc7;
+        }
+
+        /* 個別ダウンロードボタン */
+        .download-single-btn {
+            color: #1890ff; 
+            border-color: #91d5ff;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
@@ -17,19 +62,14 @@
 
         <hr>
 
-        <div id="sortableContainer">
+        <div id="fileControls">
             <h3>ファイル並び替え・削除 (ドラッグ＆ドロップ)</h3>
-            <ul id="fileList" class="sortable-list">
-                </ul>
-        </div>
-<div id="sortableContainer">
-    <button id="sortByNameButton">ファイル名順でソート ⬆️</button> 
-    <button id="duplicateButton" disabled>現在の画像を複製してリストに追加</button>
-    <ul id="fileList" class="sortable-list">
-        
-        </ul>
-</div>
-        
+            <button id="sortByNameButton">ファイル名順でソート ⬆️</button> 
+            <button id="duplicateButton" disabled>現在の画像を複製してリストに追加</button>
+            </div>
+
+        <ul id="fileList" class="sortable-list">
+            </ul>
         
         <hr>
 
@@ -48,21 +88,17 @@
 
         <div id="navigationControls">
             <button id="prevButton" disabled>← 前の画像</button>
-            
-            
-            
+            <div id="imageIndexInfo">
+                画像 <span id="currentImageIndex">0</span> / <span id="totalImages">0</span>
+            </div>
             <button id="nextButton" disabled>次の画像 →</button>
-        </div>
-
-        <div id="imageIndexInfo">
-            画像 <span id="currentImageIndex">0</span> / <span id="totalImages">0</span>
         </div>
         
         <hr>
-
+<button id="saveCurrentImageButton" disabled>現在の画像を個別に保存</button>
         <button id="saveAllButton" disabled>全ファイルを一括ダウンロード</button>
         <hr>
- <button id="reloadBtn" onclick="location.reload()">🔄 アプリを更新</button>
+        <button id="reloadBtn" onclick="location.reload()">🔄 アプリを更新</button>
         <a href="pdf.html"><button>PDFへの変換</button></a>
     </div>
 
