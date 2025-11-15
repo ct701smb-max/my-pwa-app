@@ -316,7 +316,7 @@ imageInput.addEventListener('change', (e) => {
 cropButton.addEventListener('click', () => {
     if (cropper) {
         const croppedCanvas = cropper.getCroppedCanvas();
-        const dataURL = croppedCanvas.toDataURL('image/jpeg', 0.9); 
+        const dataURL = croppedCanvas.toDataURL('image/png', 0.9); 
         
         // トリミング時の Cropper.js の設定を保存したい場合は、ここに保存ロジックを追加可能
         croppedImages[currentIndex] = { 
