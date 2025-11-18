@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ubongoパズル</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-wrap: wrap;
+      padding: 10px;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    #left-panel {
+      flex: 1 1 100%;
+      max-width: 600px;
+    }
+    #right-panel {
+      width: 100%;
+      max-width: 200px;
+      margin-top: 20px;
+    }
+    canvas {
+      border: 1px solid #333;
+      background-color: #f9f9f9;
+      height: auto; /* 縦横比を保つ */
+      display: block;
+    }
+    .piece-button {
+      display: block;
+      margin: 8px 0;
+      padding: 12px 8px;
+      width: 100%;
+      font-size: 1rem;
+      touch-action: manipulation;
+      user-select: none;
+      cursor: pointer;
+      border-radius: 4px;
+      border: 1px solid #3498db;
+      background-color: #fff;
+      transition: background-color 0.3s ease;
+    }
+    .piece-button:active {
+      background-color: #3498db;
+      color: white;
+    }
+    button {
+      font-size: 1rem;
+      padding: 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+    }
+    #right-panel > button {
+      width: 100%;
+      margin-bottom: 20px;
+      background-color: #e74c3c;
+      color: white;
+    }
+    @media (min-width: 600px) {
+      body {
+        flex-wrap: nowrap;
+      }
+      #left-panel {
+        flex: 1;
+        max-width: none;
+      }
+      #right-panel {
+        width: 200px;
+        margin-top: 0;
+        margin-left: 10px;
+      }
+    }
+
+#piece-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.piece-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: #ecf0f1;
+  border: 2px solid #3498db;
+  color: #2c3e50;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.piece-button:hover {
+  background-color: #3498db;
+  color: white;
+}
+
+.piece-button:active {
+  transform: scale(0.96);
+  background-color: #2980b9;
+  color: white;
+}
+
+.piece-button:focus {
+  outline: 2px solid #2980b9;
+}
+
+  </style>
+</head>
+<body>
+<table><tr><td>
+<div id="grid-settings" style="margin-bottom: 20px;">
+  <h3>グリッドサイズ</h3>
+  <label>
+    列: <input type="number" id="input-cols" value="10" min="1" max="50" style="width: 60px;" />
+  </label>
+  <label>
+    行: <input type="number" id="input-rows" value="6" min="1" max="50" style="width: 60px;" />
+  </label>
+  <button id="update-grid" style="margin-top: 5px; display: block;">グリッド更新</button>
+</div>
+</td>
+<td>
+<div id="right-panel">
+  <h3>
+    <button id="toggle-piece-list" aria-expanded="true" 
+            style="font-size:16px; background:none; border:none; cursor:pointer;">
+      ▼ ピース選択
+   </button>
+  </h3>
+  <div id="piece-list" style="max-height: 200px; overflow-y: auto;">
+    <!-- ピースボタンがここに入る -->
+  </div>
+
+  
+</div>
+</td></tr></table>
+<br>
+<div id="left-panel">
+  <button onclick="deleteSelectedPiece()" style="margin-bottom: 10px; background-color: #e74c3c; color: white; width: 30%;">
+    削除(Del)
+  </button>
+  <button id="rotate-btn" style="margin-bottom: 10px; width: 30%;">回転 (r)</button>
+  <button id="flip-btn" style="margin-bottom: 20px; width: 30%;">反転 (f)</button>
+
+  <canvas id="ubongo-canvas" style="margin: 5px auto;"></canvas>
+</div>
+
+
+
+
+<script>
+const canvas = document.getElementById("ubongo-canvas");
+const ctx = canvas.getContext("2d");
+
+// 元のグリッドサイズと列数、行数
+const baseGridSize = 40;
+let cols = 10;
+let rows = 6;
+
+document.getElementById("update-grid").addEventListener("click", () => {
+  const newCols = parseInt(document.getElementById("input-cols").value);
+  const newRows = parseInt(document.getElementById("input-rows").value);
+
+  if (newCols > 0 && newRows > 0) {
+    cols = newCols;
+    rows = newRows;
+    gridSize = resizeCanvas();
+    render();
+  } else {
+    alert("行数と列数は1以上の数値を入力してください。");
+  }
+});
+
+// 動的にcanvasサイズを決める関数（横幅に合わせて調整）
+function resizeCanvas() {
+  const parentWidth = canvas.parentElement.clientWidth;
+  const maxWidth = cols * baseGridSize;
+  const canvasWidth = Math.min(parentWidth, maxWidth);
+  const gridSize = canvasWidth / cols;
+  canvas.width = canvasWidth;
+  canvas.height = gridSize * rows;
+  return gridSize;
+}
+let gridSize = resizeCanvas();
+
+const pieceShapes = [
+  { id: 1, label: "L", shape: [[1,0],[1,0],[1,0],[1,1]] },
+  { id: 2, label: "I", shape: [[1],[1],[1],[1],[1]] },
+  { id: 3, label: "Y", shape: [[1,0],[1,1],[1,0],[1,0]] },
+  { id: 4, label: "P", shape: [[1,1],[1,1],[1,0]] },
+  { id: 5, label: "U", shape: [[1,1],[1,0],[1,1]] },
+  { id: 6, label: "W", shape: [[1,0],[1,1],[0,1,1]] },
+  { id: 7, label: "N", shape: [[0,1],[1,1],[1,0],[1,0]] },
+  { id: 8, label: "X", shape: [[0,1],[1,1,1],[0,1]] },
+  { id: 9, label: "T", shape: [[1,1,1],[0,1],[0,1]] },
+  { id:10, label: "F", shape: [[1,1],[0,1,1],[0,1]] },
+  { id:11, label: "Z", shape: [[1,1],[0,1],[0,1,1]] },
+  { id:12, label: "V", shape: [[1],[1],[1,1,1]] }
+];
+
+const pieceColors = {
+  L: "#e74c3c", // 赤
+  I: "#3498db", // 青
+  Y: "#2ecc71", // 緑
+  P: "#f1c40f", // 黄
+  U: "#9b59b6", // 紫
+  W: "#e67e22", // オレンジ
+  N: "#1afc9c", // エメラルド
+  X: "#34495e", // ネイビー
+  T: "#fd79a8", // ピンク
+  F: "#16a085", // 深緑
+  Z: "#d35400", // ダークオレンジ
+  V: "#3e44ad"  // ダークパープル
+};
+
+const pieces = [];
+let selectedPiece = null;
+let draggingPiece = null;
+let originalPosition = { x: 0, y: 0 }; // ピースを元に戻すための位置を保存
+
+function createPiece(shape, label) {
+  return {
+    id: Date.now() + Math.random(),
+    x: 10,
+    y: 10,
+    shape: JSON.parse(JSON.stringify(shape)), // deep copy
+    label,
+    dragging: false,
+    offsetX: 0,
+    offsetY: 0,
+    color: pieceColors[label] || "#95a5a6"
+  };
+}
+
+function drawGrid() {
+  ctx.strokeStyle = "#ccc";
+  for (let x = 0; x <= canvas.width; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= canvas.height; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+}
+
+function drawPiece(p) {
+  for (let r = 0; r < p.shape.length; r++) {
+    for (let c = 0; c < p.shape[r].length; c++) {
+      if (p.shape[r][c]) {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x + c * gridSize, p.y + r * gridSize, gridSize, gridSize);
+        ctx.strokeStyle = (p === selectedPiece) ? "red" : "#000";
+        ctx.lineWidth = (p === selectedPiece) ? 3 : 1;
+        ctx.strokeRect(p.x + c * gridSize, p.y + r * gridSize, gridSize, gridSize);
+      }
+    }
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  pieces.forEach(drawPiece);
+}
+
+// マウス・タッチイベント
+function getEventPosition(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function getPieceDimensions(p) {
+  const shapeWidth = Math.max(...p.shape.map(row => row.length));
+  const shapeHeight = p.shape.length;
+  return {
+    width: shapeWidth,
+    height: shapeHeight
+  };
+}
+
+function onStart(e) {
+  const { x, y } = getEventPosition(e);
+  let clicked = false;
+  for (let i = pieces.length - 1; i >= 0; i--) {
+    const p = pieces[i];
+    const { width, height } = getPieceDimensions(p);
+    if (
+      x >= p.x && x <= p.x + width * gridSize &&
+      y >= p.y && y <= p.y + height * gridSize
+    ) {
+      draggingPiece = p;
+      selectedPiece = p;
+      originalPosition = { x: p.x, y: p.y }; // 元の位置を保存
+      p.dragging = true;
+      p.offsetX = x - p.x;
+      p.offsetY = y - p.y;
+      pieces.splice(i, 1);
+      pieces.push(p); // bring to front
+      render();
+      clicked = true;
+      break;
+    }
+  }
+  if (!clicked) {
+    selectedPiece = null;
+    draggingPiece = null;
+    render();
+  }
+  e.preventDefault();
+}
+
+function onMove(e) {
+  if (draggingPiece && draggingPiece.dragging) {
+    const { x, y } = getEventPosition(e);
+    draggingPiece.x = x - draggingPiece.offsetX;
+    draggingPiece.y = y - draggingPiece.offsetY;
+    render();
+  }
+  e.preventDefault();
+}
+
+// 衝突判定ロジック
+function isOverlapping(piece1, piece2) {
+  const p1_grid_x = Math.round(piece1.x / gridSize);
+  const p1_grid_y = Math.round(piece1.y / gridSize);
+  const p2_grid_x = Math.round(piece2.x / gridSize);
+  const p2_grid_y = Math.round(piece2.y / gridSize);
+
+  for (let r1 = 0; r1 < piece1.shape.length; r1++) {
+    for (let c1 = 0; c1 < piece1.shape[r1].length; c1++) {
+      if (piece1.shape[r1][c1]) {
+        const x1 = p1_grid_x + c1;
+        const y1 = p1_grid_y + r1;
+
+        for (let r2 = 0; r2 < piece2.shape.length; r2++) {
+          for (let c2 = 0; c2 < piece2.shape[r2].length; c2++) {
+            if (piece2.shape[r2][c2]) {
+              const x2 = p2_grid_x + c2;
+              const y2 = p2_grid_y + r2;
+
+              if (x1 === x2 && y1 === y2) {
+                return true; // 重なりあり
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return false; // 重なりなし
+}
+
+// ⭐ ここに枠外判定ロジックを追加 ⭐
+function isOutOfBound(piece) {
+  const gridX = Math.round(piece.x / gridSize);
+  const gridY = Math.round(piece.y / gridSize);
+  const { width, height } = getPieceDimensions(piece);
+
+  // ピースの各ブロックがグリッド内に収まっているかチェック
+  for (let r = 0; r < piece.shape.length; r++) {
+    for (let c = 0; c < piece.shape[r].length; c++) {
+      if (piece.shape[r][c]) {
+        const x = gridX + c;
+        const y = gridY + r;
+
+        if (x < 0 || x >= cols || y < 0 || y >= rows) {
+          return true; // 枠からはみ出している
+        }
+      }
+    }
+  }
+  return false; // 枠内に収まっている
+}
+
+
+function onEnd() {
+  if (draggingPiece) {
+    const newX = Math.round(draggingPiece.x / gridSize) * gridSize;
+    const newY = Math.round(draggingPiece.y / gridSize) * gridSize;
+
+    // 一時的に新しい位置に移動
+    const tempX = draggingPiece.x;
+    const tempY = draggingPiece.y;
+    draggingPiece.x = newX;
+    draggingPiece.y = newY;
+
+    // 重なっているか、または枠外にはみ出しているかチェック
+    let invalidPosition = false;
+    // 1. 他のピースと重なっているかチェック
+    for (let i = 0; i < pieces.length; i++) {
+      const otherPiece = pieces[i];
+      if (otherPiece !== draggingPiece && isOverlapping(draggingPiece, otherPiece)) {
+        invalidPosition = true;
+        break;
+      }
+    }
+    // 2. 枠外にはみ出しているかチェック
+    if (!invalidPosition) {
+      invalidPosition = isOutOfBound(draggingPiece);
+    }
+
+
+    if (invalidPosition) {
+      // 重なっていたらまたは枠外なら元の位置に戻す
+      draggingPiece.x = originalPosition.x;
+      draggingPiece.y = originalPosition.y;
+    }
+
+    draggingPiece.dragging = false;
+    render();
+  }
+}
+
+function rotate(matrix) {
+  const max = Math.max(...matrix.map(r => r.length));
+  const padded = matrix.map(r => [...r, ...Array(max - r.length).fill(0)]);
+  return padded[0].map((_, i) => padded.map(row => row[i]).reverse());
+}
+
+function flip(matrix) {
+  const max = Math.max(...matrix.map(r => r.length));
+  const padded = matrix.map(r => [...r, ...Array(max - r.length).fill(0)]);
+  return padded.map(row => [...row].reverse());
+}
+
+// イベントバインド
+canvas.addEventListener("mousedown", onStart);
+canvas.addEventListener("mousemove", onMove);
+canvas.addEventListener("mouseup", onEnd);
+canvas.addEventListener("touchstart", onStart);
+canvas.addEventListener("touchmove", onMove);
+canvas.addEventListener("touchend", onEnd);
+
+// キーボード：選択中ピースを回転 or 反転
+window.addEventListener("keydown", (e) => {
+  if (!selectedPiece) return;
+  if (e.key === "r") {
+    selectedPiece.shape = rotate(selectedPiece.shape);
+    render();
+  } else if (e.key === "f") {
+    selectedPiece.shape = flip(selectedPiece.shape);
+    render();
+  }
+});
+
+// 選択中ピースを削除する関数
+window.deleteSelectedPiece = function() {
+  if (!selectedPiece) return;
+  const index = pieces.indexOf(selectedPiece);
+  if (index !== -1) {
+    pieces.splice(index, 1);
+    selectedPiece = null;
+    render();
+  }
+};
+
+// キーボード Delete or Backspace で削除
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Delete" || e.key === "Backspace") {
+    deleteSelectedPiece();
+    e.preventDefault();
+  }
+});
+
+// ピースリストを作成
+const listEl = document.getElementById("piece-list");
+function renderPieceButtons() {
+  listEl.innerHTML = "";
+  pieceShapes.forEach(({ shape, label }) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    btn.className = "piece-button";
+    btn.title = `ピース ${label}`;
+    btn.setAttribute("aria-label", `ピース ${label}`);
+
+    btn.addEventListener("click", () => {
+      const newPiece = createPiece(shape, label);
+      pieces.push(newPiece);
+      selectedPiece = newPiece;
+      render();
+    });
+
+    listEl.appendChild(btn);
+  });
+}
+
+// 画面リサイズ時にcanvasサイズとgridSizeを調整
+window.addEventListener("resize", () => {
+  gridSize = resizeCanvas();
+  render();
+});
+
+document.getElementById("rotate-btn").addEventListener("click", () => {
+  if (selectedPiece) {
+    selectedPiece.shape = rotate(selectedPiece.shape);
+    render();
+  }
+});
+
+document.getElementById("flip-btn").addEventListener("click", () => {
+  if (selectedPiece) {
+    selectedPiece.shape = flip(selectedPiece.shape);
+    render();
+  }
+});
+
+const toggleBtn = document.getElementById("toggle-piece-list");
+const pieceList = document.getElementById("piece-list");
+
+toggleBtn.addEventListener("click", () => {
+  if (pieceList.style.display === "none") {
+    pieceList.style.display = "grid";
+    toggleBtn.textContent = "× 閉じる";
+    toggleBtn.setAttribute("aria-expanded", "true");
+  } else {
+    pieceList.style.display = "none";
+    toggleBtn.textContent = "▼ ピース選択";
+    toggleBtn.setAttribute("aria-expanded", "false");
+  }
+});
+
+pieceShapes.forEach(({ shape, label }) => {
+  const btn = document.createElement("button");
+  btn.textContent = label;
+  btn.className = "piece-button";
+  btn.title = `ピース ${label}`;
+  btn.setAttribute("aria-label", `ピース ${label}`);
+
+  btn.addEventListener("click", () => {
+    const newPiece = createPiece(shape, label);
+    pieces.push(newPiece);
+    selectedPiece = newPiece;
+    render();
+  });
+
+  listEl.appendChild(btn);
+});
+
+// 初期表示
+render();
+</script>
+
+</body>
+</html>
