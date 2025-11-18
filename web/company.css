@@ -1041,13 +1041,18 @@ a.btn-coupon:hover .right {
 -->
 
 /*マウスオーバーで画像拡大*/
+/* デフォルト設定 */
+.side-container { 
+    text-align: center; /* 子要素を中央に配置 */
+}
+
 #avatar {
-  --s: 30vw; /* image size */
-  --b: 2px; /* border thickness */
-  --c: #C02942; /* border color */
-  --f: 1; /* initial scale */
+  --s: 160px; /* PCでの画像の基本サイズ */
+  --b: 2px;
+  --c: #C02942;
+  --f: 1;
   
-  width: var(--s*2);
+  width: var(--s*2); /* コンテナ幅は画像の2倍 (320px) */
   aspect-ratio: 1;
   padding-top: calc(var(--s)/5);
   cursor: pointer;
@@ -1060,16 +1065,32 @@ a.btn-coupon:hover .right {
     radial-gradient(
       circle closest-side,
       #ECD078 calc(80% - var(--b)),var(--c) calc(100% - var(--b)) 99%,#0000
-     ) var(--_g);
+      ) var(--_g);
   -webkit-mask:
     linear-gradient(#000 0 0) no-repeat
-     50% calc(1px - var(--_o)) / calc(100%/var(--f) - 20*var(--b) - 2px) 50%,
+      50% calc(1px - var(--_o)) / calc(100%/var(--f) - 20*var(--b) - 2px) 50%,
     radial-gradient(circle closest-side,#000 99%,#0000) var(--_g);
   transform: scale(var(--f));
   transition: .5s;
+  display: inline-block;
+  margin: 0 auto;
+  display: flex; /* Flexコンテナにする */
+  justify-content: center; /* 水平方向の中央揃え */
+  align-items: center; /* 垂直方向は上端に寄せる（padding-topを活かすため） */
+  
 }
+
 #avatar:hover {
-  --f: 1.5; /* hover scale */
+  --f: 1.25;
+}
+
+/* --- モバイル対応のためのメディアクエリ --- */
+/* 画面幅が480px以下の場合に適用 */
+@media (max-width: 768px) {
+  #avatar {
+    --s: 80px !important;/* モバイルでの基本サイズを100pxに縮小 */
+    /* width: 200px; になり、円のサイズも縮小される */
+  }
 }
 
 
