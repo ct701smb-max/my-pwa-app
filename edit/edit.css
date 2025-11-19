@@ -323,7 +323,7 @@ body {
 }
 .view-editor .preview-panel {
     height: 100%; 
-    flex: 0; /* 非表示 */
+    flex: 1; /* 非表示 */
 }
 
 /* プレビュー全画面表示モード (.view-preview) */
