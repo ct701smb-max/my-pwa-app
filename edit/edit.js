@@ -88,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html: 'index.html',
         css: 'style.css',
         js: 'script.js',
-        js: 'register.js',
         json: 'manifest.json'
     };
     
@@ -446,20 +445,6 @@ h2 {
             return `/* ${name} */
 /*コードを入力してください*/
 
-`;
-    } else if (type === 'js') {
-            return `/* ${name} */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
-        console.log('ServiceWorker 登録成功:', registration.scope);
-      })
-      .catch(error => {
-        console.log('ServiceWorker 登録失敗:', error);
-      });
-  });
-}
 `;
         } else if (type === 'json') {
             return `{
