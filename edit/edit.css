@@ -44,10 +44,6 @@ body {
     height: 40px; /* ヘッダーの高さを固定 */
     gap: 10px; /* 要素間の間隔を追加 */
     position: relative; /* 子要素 (ハンバーガーメニュー) の absolute 配置の基点 */
-    position: fixed; /*  */
-    top: 0;          /*  (画面の一番上に配置) */
-    width: 100%;     /*  (固定した要素は幅を指定する必要がある) */
-    z-index: 100;    /*  (他の要素の上に表示させるため) */
 }
 
 .toggle-button {
