@@ -443,6 +443,11 @@ h2 {
 `;
         } else if (type === 'js') {
             return `/* ${name} */
+/*コードを入力してください*/
+
+
+
+
 /*register.js*/
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
