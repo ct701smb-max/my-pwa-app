@@ -1037,206 +1037,107 @@ function renameFile(oldName, newName) {
     // 【新規追加関数】カスタムダイアログの実装
     // -------------------------------------------------------------
 
-    // ====================================================================
-// 1. ファイルの種類を選択するためのカスタムダイアログを表示する関数 (提供コード)
-// ====================================================================
-function getFileTypeFromDialog(availableTypes) {
-    return new Promise((resolve) => {
-        // プルダウンのオプションHTMLを生成
-        const optionsHtml = availableTypes.map(type =>
-            `<option value="${type}">${type.toUpperCase()} (.${type})</option>`
-        ).join('');
+    function getFileTypeFromDialog(availableTypes) {
 
-        // ダイアログのHTML構造
-        const dialogHtml = `
-            <div id="fileTypeModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;">
-                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px;">
-                    <h3>ファイル種類の選択</h3>
-                    <label for="fileTypeSelect">追加するファイルの**種類**を選択してください:</label>
-                    <select id="fileTypeSelect" style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px;">
-                        <option value="" disabled selected>-- 選択してください --</option>
-                        ${optionsHtml}
-                    </select>
-                    <div style="text-align: right; margin-top: 15px;">
-                        <button id="cancelBtn" style="padding: 8px 15px; margin-right: 10px; border: none; background: #ccc; border-radius: 4px; cursor: pointer;">キャンセル</button>
-                        <button id="okBtn" style="padding: 8px 15px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;" disabled>OK</button>
+        return new Promise((resolve) => {
+
+            // プルダウンのオプションHTMLを生成
+
+            const optionsHtml = availableTypes.map(type => 
+
+                `<option value="${type}">${type.toUpperCase()} (.${type})</option>`
+
+            ).join('');
+
+
+
+            // ダイアログのHTML構造
+
+            const dialogHtml = `
+
+                <div id="fileTypeModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+
+                    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px;">
+
+                        <h3>ファイル種類の選択</h3>
+
+                        <label for="fileTypeSelect">追加するファイルの**種類**を選択してください:</label>
+
+                        <select id="fileTypeSelect" style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px;">
+
+                            <option value="" disabled selected>-- 選択してください --</option>
+
+                            ${optionsHtml}
+
+                        </select>
+
+                        <div style="text-align: right; margin-top: 15px;">
+
+                            <button id="cancelBtn" style="padding: 8px 15px; margin-right: 10px; border: none; background: #ccc; border-radius: 4px; cursor: pointer;">キャンセル</button>
+
+                            <button id="okBtn" style="padding: 8px 15px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;" disabled>OK</button>
+
+                        </div>
+
                     </div>
+
                 </div>
-            </div>
-        `;
 
-        // DOMにダイアログを追加
-        document.body.insertAdjacentHTML('beforeend', dialogHtml);
-        const modal = document.getElementById('fileTypeModal');
-        const select = document.getElementById('fileTypeSelect');
-        const okBtn = document.getElementById('okBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
+            `;
 
-        // 選択値の変更イベント
-        select.addEventListener('change', () => {
-            okBtn.disabled = select.value === "";
+
+
+            // DOMにダイアログを追加
+
+            document.body.insertAdjacentHTML('beforeend', dialogHtml);
+
+            const modal = document.getElementById('fileTypeModal');
+
+            const select = document.getElementById('fileTypeSelect');
+
+            const okBtn = document.getElementById('okBtn');
+
+            const cancelBtn = document.getElementById('cancelBtn');
+
+
+
+            // 選択値の変更イベント
+
+            select.addEventListener('change', () => {
+
+                okBtn.disabled = select.value === "";
+
+            });
+
+
+
+            // OKボタンのクリック処理
+
+            okBtn.addEventListener('click', () => {
+
+                const selectedType = select.value;
+
+                modal.remove(); // ダイアログを閉じる
+
+                resolve(selectedType);
+
+            });
+
+
+
+            // キャンセルボタンのクリック処理
+
+            cancelBtn.addEventListener('click', () => {
+
+                modal.remove(); // ダイアログを閉じる
+
+                resolve(null); // キャンセルとしてnullを返す
+
+            });
+
         });
 
-        // OKボタンのクリック処理
-        okBtn.addEventListener('click', () => {
-            const selectedType = select.value;
-            modal.remove(); // ダイアログを閉じる
-            resolve(selectedType);
-        });
-
-        // キャンセルボタンのクリック処理
-        cancelBtn.addEventListener('click', () => {
-            modal.remove(); // ダイアログを閉じる
-            resolve(null); // キャンセルとしてnullを返す
-        });
-    });
-}
-
-// ====================================================================
-// 2. 選択されたファイルの種類に基づいてローカルファイルを選択する関数 (追加コード)
-// ====================================================================
-
-/**
- * 拡張子から代表的なMIMEタイプを取得するヘルパー関数
- */
-function getMimeType(ext) {
-    switch (ext.toLowerCase()) {
-        case 'json':
-            return 'application/json';
-        case 'csv':
-            return 'text/csv';
-        case 'txt':
-            return 'text/plain';
-        case 'xml':
-            return 'application/xml';
-        default:
-            return '';
     }
-}
-
-/**
- * 選択されたファイルの種類（拡張子）に基づいてローカルファイルを選択し、
- * Fileオブジェクトを返すプロミスを返す
- */
-function selectAndReadFile(fileType) {
-    return new Promise((resolve) => {
-        // 許容するファイル形式のMIMEタイプ/拡張子を作成 (例: '.csv,text/csv')
-        const accept = `.${fileType},${getMimeType(fileType)}`;
-
-        // ローカルファイル選択用のinput要素を作成
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = accept; // 選択されたファイル種類のみをフィルタ
-        fileInput.style.display = 'none';
-
-        // 変更イベントリスナー: ユーザーがファイルを選択したとき
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            resolve(file || null); // Fileオブジェクトまたはnullを解決
-            fileInput.remove(); // クリーンアップ
-        });
-
-        // input要素をクリックしてファイル選択ダイアログを表示
-        document.body.appendChild(fileInput);
-        fileInput.click();
-
-        // NOTE: ブラウザのダイアログ自体をキャンセルした場合も 'change' イベントで files[0] が undefined/null になり、resolve(null) となる
-    });
-}
-
-
-// ====================================================================
-// 3. Fileオブジェクトを読み込むためのヘルパー関数 (追加コード)
-// ====================================================================
-
-/**
- * Fileオブジェクトをテキストとして読み込むヘルパー関数
- */
-function readFileAsText(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            resolve(event.target.result);
-        };
-
-        reader.onerror = (error) => {
-            reject(error);
-        };
-
-        reader.readAsText(file);
-    });
-}
-
-
-// ====================================================================
-// 4. メインの処理フローを統合する関数 (追加コード)
-// ====================================================================
-
-/**
- * ファイルの種類選択ダイアログとファイル選択処理を統合するメイン関数
- * @param {string[]} availableTypes - 選択可能なファイル種類の配列 (例: ['json', 'csv'])
- */
-async function loadLocalData(availableTypes) {
-    try {
-        console.log("--- ファイルロード処理開始 ---");
-
-        // 1. ファイルの種類を選択するダイアログを表示
-        const selectedType = await getFileTypeFromDialog(availableTypes);
-
-        if (!selectedType) {
-            console.log("✅ ファイル種類の選択がキャンセルされました。");
-            return;
-        }
-
-        console.log(`ステップ1完了: 選択されたファイルの種類: **${selectedType.toUpperCase()}**`);
-
-        // 2. 選択された種類に基づいてローカルファイルを選択
-        const selectedFile = await selectAndReadFile(selectedType);
-
-        if (!selectedFile) {
-            console.log("✅ ローカルファイルの選択がキャンセルされました。");
-            return;
-        }
-
-        console.log(`ステップ2完了: 選択されたファイル名: **${selectedFile.name}**`);
-        console.log(`ファイルサイズ: ${selectedFile.size} バイト`);
-
-        // 3. 選択されたファイルを実際に読み込む
-        const fileContent = await readFileAsText(selectedFile);
-
-        // ここで、fileContent (ファイルの内容) と selectedType (種類) を使って
-        // 既存のデータに統合する処理を実装します。
-
-        console.log("ステップ3完了: ファイル内容の読み込みに成功しました。");
-        console.log("--- ファイルロード処理終了 ---");
-        
-        // 読み込んだデータと種類を返す
-        return {
-            type: selectedType,
-            content: fileContent
-        };
-
-    } catch (error) {
-        console.error("❌ ファイルロード処理中に致命的なエラーが発生しました:", error);
-    }
-}
-
-
-// ====================================================================
-// 5. 実行例 (HTML内のボタンクリックなどで実行されることを想定)
-// ====================================================================
-
-// 選択肢のファイル種類
-const availableFileTypes = ['json', 'csv', 'txt', 'xml'];
-
-// 呼び出し例：
-// loadLocalData(availableFileTypes).then(result => {
-//     if (result) {
-//         console.log(`最終結果: 種類=${result.type}, 内容の長さ=${result.content.length}`);
-//         // 例えば、この result.content をパースして既存データに結合する
-//     }
-// });
 
     /**
      * ファイルの切り替え処理 (データとUIの更新)
