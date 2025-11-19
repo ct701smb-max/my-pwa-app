@@ -322,13 +322,13 @@ body {
     flex: 1;
 }
 .view-editor .preview-panel {
-    height: 0; 
+    height: 100%; 
     flex: 0; /* 非表示 */
 }
 
 /* プレビュー全画面表示モード (.view-preview) */
 .view-preview .editor-panel {
-    height: 0; 
+    height: 100%; 
     flex: 0; /* 非表示 */
 }
 .view-preview .preview-panel {
