@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         html: 'index.html',
         css: 'style.css',
         js: 'script.js',
+        js: 'register.js',
         json: 'manifest.json'
     };
     
@@ -445,10 +446,9 @@ h2 {
             return `/* ${name} */
 /*コードを入力してください*/
 
-
-
-
-/*register.js*/
+`;
+    } else if (type === 'js') {
+            return `/* ${name} */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
