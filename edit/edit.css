@@ -93,7 +93,7 @@ body {
 
 /* 🍔 ハンバーガーボタン (デスクトップでは非表示) */
 .file-menu-toggle {
-    display: none; 
+    display: flex; 
     order: -1;      /* header内の要素の左端に配置 */
     margin-right: 10px;
 }
