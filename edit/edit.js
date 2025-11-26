@@ -406,8 +406,8 @@ h1 {
   border-bottom: 10px solid #3388dd;   /* 下線の太さと色 */
   text-align: center;           /* 文字の位置（中央） */
   border-radius: 90px;          /* 枠線のカーブ */
-  padding: 20px 10px 10px;      /* 余白（上下左右） */
-  margin: 20px 0px 0px;         /* 上:20pxの余白 */
+  padding: 10px 10px 10px;      /* 余白（上下左右） */
+  margin: 30px 0px 0px;         /* 上:20pxの余白 */
   font-family: 'Lobster', cursive; /* フォント指定（Google Fontsで読み込み必要） */
   word-break: break-word;       /* 長い単語で折り返す */
 }
