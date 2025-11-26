@@ -339,11 +339,10 @@ body {
 /* 1. エディター側のヘッダー（ファイル名、Import/Exportなど）を画面上部に固定 */
 .view-preview .editor-panel .header {
     display: flex !important;
-    position: fixed; 
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000; /* 最前面に表示 */
+    position: fixed !important; 
+    top: 0 !important;
+    width: auto !important;
+    z-index: 1000 !important; /* 最前面に表示 */
     border-bottom: 2px solid #000;
 }
 
@@ -360,8 +359,8 @@ body {
 /* 3. プレビュー iframe の表示開始位置を、2つのヘッダーの合計の高さ分だけずらす */
 .view-preview #preview-iframe {
     /* 2つのヘッダーの合計高さ: 40px + 40px = 80px */
-    height: calc(100% - 80px); 
-    margin-top: 80px; 
+    height: calc(100% - 120px); 
+    margin-top: 120px; 
 }
 
 /* 4. 右側のコントロールパネルはエディタ非表示時は不要なので非表示を維持 */
