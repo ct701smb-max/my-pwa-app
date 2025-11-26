@@ -399,36 +399,48 @@ body {
 }
 
 /* ================================== */
-/* 8. レスポンシブデザイン（モバイル対応） */
+/* 7. レスポンシブデザイン（モバイル対応） */
 /* ================================== */
 
-/* ---------------------------------- */
-/* モバイル向けメディアクエリ (768px以下) */
-/* ---------------------------------- */
 @media (max-width: 768px) {
-    /* 🍔 ハンバーガーボタンを表示 */
+    /* 1. 全ボタンの調整を緩和し、テキストを一部維持 */
+    .control-button, .toggle-button {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+    /* モバイルでもアイコンとテキストを少し表示するために、幅の強制指定を削除 */
+    /* width: 32px; や overflow: hidden; は削除 */
+    .control-button {
+        min-width: 0; 
+        width: auto; /* 幅の固定を解除 */
+    }
+    /* Import/Exportのアイコン横にマージンを復活させる */
+    .control-button i {
+        margin-right: 3px;
+    }
+    
+    /* 2. ハンバーガーボタンを表示 (変更なし) */
     .file-menu-toggle {
         display: block; 
     }
-
-    /* ファイル名入力欄のスペースを調整 */
+    
+    /* 3. ファイル名入力欄のスペースを確保 (変更なし) */
     .filename-input {
         flex-grow: 1; 
         margin-left: 10px;
+        min-width: 50px; 
     }
     
-    /* ファイルタブコンテナを絶対配置にし、デフォルトで非表示 */
+    /* 4. ファイルタブコンテナをデフォルトで非表示 (変更なし) */
     .file-tabs-container {
-        display: none; /* デフォルトで非表示 */
+        display: none; 
         position: absolute; 
-        top: 40px; /* ヘッダーの高さ(40px)のすぐ下に配置 */
+        top: 40px; 
         left: 0;
         width: 100%;
         background-color: #333; 
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         z-index: 100; 
-        flex-direction: column; /* タブを縦に並べる */
-        padding: 0;
+        flex-direction: column; 
     }
 
     /* JavaScriptでメニューが開いたときに適用されるクラス */
