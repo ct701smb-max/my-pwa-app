@@ -351,7 +351,7 @@ body {
     display: flex !important; /* 非表示設定を上書き */
     position: fixed !important;
     top: 40px; /* エディターヘッダーの高さ（40px）のすぐ下に配置 */
-    width: 90% !important;
+    width: 100% !important;
     z-index: 999; /* エディターヘッダーより一つ下 */
     /* プレビュー側のヘッダー色を維持 */
 }
