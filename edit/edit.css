@@ -327,28 +327,48 @@ body {
 }
 
 /* プレビュー全画面表示モード (.view-preview) */
+/* プレビュー全画面表示モード (.view-preview) */
 .view-preview .editor-panel {
-    height: 100%; 
-    flex: 0; /* 非表示 */
+    height: 0;  
+    flex: 0; 
 }
 .view-preview .preview-panel {
-    height: 100%; 
+    height: 100%;  
     flex: 1;
 }
-/* プレビュー全画面時、エディタ側のヘッダーを画面上部に固定して表示  */
+
+/* 1. エディター側のヘッダー（ファイル名、Import/Exportなど）を画面上部に固定 */
 .view-preview .editor-panel .header {
-    display: flex !important; /* 非表示指示を打ち消し、表示を維持 */
-    position: fixed !important; /* 画面の最上部に固定 */
-    top: auto !important;
+    display: flex !important;
+    position: fixed; 
+    top: 0;
     left: 0;
     width: 100%;
-    z-index: 999; /* 他の要素の上に重ねて表示 */
+    z-index: 1000; /* 最前面に表示 */
     border-bottom: 2px solid #000;
 }
-/* ヘッダーがfixedになった分、プレビュー iframe の表示開始位置を下にずらす */
+
+/* 2. プレビュー側のヘッダー（エディターに戻るボタン）も表示を維持し、エディターヘッダーのすぐ下に固定 */
+.view-preview .preview-panel .header {
+    display: flex !important; /* 非表示設定を上書き */
+    position: fixed;
+    top: 40px; /* エディターヘッダーの高さ（40px）のすぐ下に配置 */
+    left: 0;
+    width: 100%;
+    z-index: 999; /* エディターヘッダーより一つ下 */
+    /* プレビュー側のヘッダー色を維持 */
+}
+
+/* 3. プレビュー iframe の表示開始位置を、2つのヘッダーの合計の高さ分だけずらす */
 .view-preview #preview-iframe {
-    height: calc(100% - 40px); /* 画面全体からヘッダーの高さ(40px)を引く */
-    margin-top: 40px; /* 画面上部からヘッダーの高さ分を空ける */
+    /* 2つのヘッダーの合計高さ: 40px + 40px = 80px */
+    height: calc(100% - 80px); 
+    margin-top: 80px; 
+}
+
+/* 4. 右側のコントロールパネルはエディタ非表示時は不要なので非表示を維持 */
+#app-container.view-preview #control-panel-right {
+    display: none;
 }
 /* ================================== */
 /* 7. 検索ハイライトと全画面表示の機能CSS */
