@@ -337,9 +337,9 @@ body {
 }
 /* プレビュー全画面時、エディタ側のヘッダーを画面上部に固定して表示  */
 .view-preview .editor-panel .header {
-    display: flex; /* 非表示指示を打ち消し、表示を維持 */
-    position: fixed; /* 画面の最上部に固定 */
-    top: 0;
+    display: flex !important; /* 非表示指示を打ち消し、表示を維持 */
+    position: fixed !important; /* 画面の最上部に固定 */
+    top: auto !important;
     left: 0;
     width: 100%;
     z-index: 999; /* 他の要素の上に重ねて表示 */
