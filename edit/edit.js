@@ -1981,7 +1981,7 @@ document.addEventListener('keydown', (event) => {
                 break;
             case 'div':// divタグの処理
                 tagToInsert = '<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">\n\n</div>';
-                cursorOffset = '<div>\n'.length;
+                cursorOffset = '<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">'.length;
                 break;
             case 'comment': // コメントタグの処理
                 tagToInsert = '<!--コメント-->';
