@@ -18,10 +18,6 @@ body {
     height: 100%;
     box-sizing: border-box;
     transition: all 0.3s ease; /* スムーズな切り替え */
-    position: fixed; /*  */
-    top: 0;          /*  (画面の一番上に配置) */
-    width: 100%;     /*  (固定した要素は幅を指定する必要がある) */
-    z-index: 100;    /*  (他の要素の上に表示させるため) */
 }
 
 .panel {

@@ -336,7 +336,25 @@ document.addEventListener('DOMContentLoaded', () => {
 <body>
     <h1>Webサイトをつくろう！</h1>
 
+<!--　ハンバーガーメニュー -->
+<div class="menu-toggle" id="menu-toggle">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+<!--　メニュー本体 -->
 
+<div id="menu">
+	<ul>
+		<li><a href="#" target="_blank">リンク１</a></li>
+		<li><a href="#" target="_blank">リンク２</a></li>
+		<li><a href="#" target="_blank">リンク３</a></li>
+		<li><a href="#" target="_blank">リンク４</a></li>
+		<li><a href="#" target="_blank">リンク５</a></li>
+		<li><a href="#" target="_blank">リンク６</a></li>
+		<li><a href="#" target="_blank">リンク７</a></li>
+	</ul>
+  </div>
 
     <script src="${jsFileName}"></script>
     <!--PWA用処理-->
@@ -440,11 +458,169 @@ h2 {
   }
 }
 
+/* メニューバー */
+/*========= PC表示 ==========*/
+#menu {
+  border-top: 3px solid #cccccc;
+  border-bottom: 3px solid #cccccc;
+  background: #ffffff;
+  height: 47px;
+  width: 100%;
+  color: #ffffff;
+}
+
+#menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+
+#menu ul li {
+  flex: 1; /* 均等に分ける */
+  height: 47px;
+  border-right: 1px solid #ffffff;
+}
+
+#menu ul li:last-child {
+  border-right: none;
+}
+
+#menu ul li a {
+  display: block;
+  color: #ffffff;
+  background: #000000;
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 2px;
+  line-height: 47px;
+  text-decoration: none;
+}
+
+#menu ul li a:hover {
+  color: #000000;
+  background: #cccccc;
+  text-decoration: underline;
+}
+
+/*========= ハンバーガーボタン ==========*/
+.menu-toggle {
+  display: none;
+  cursor: pointer;
+  width: 30px;
+  height: 25px;
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.menu-toggle span {
+  display: block;
+  height: 3px;
+  background: #fff;
+  margin: 4px 0;
+  transition: 0.4s;
+  border-radius: 2px;
+}
+
+.menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/*========= スマホ表示 ==========*/
+@media screen and (max-width: 600px) {
+  #menu {
+    height: auto; /* 高さ固定しない */
+    border: none;
+    background: transparent;
+  }
+
+  #menu ul {
+    position: fixed;
+    top: 60px;
+    right: 15px;
+    width: 50vw;
+    max-height: 80vh;
+    background: #fff;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+
+  #menu ul.active {
+    display: flex;
+  }
+
+  #menu ul li {
+    border-bottom: 1px solid #ddd;
+    width: 100%;
+  }
+
+  #menu ul li:last-child {
+    border-bottom: none;
+  }
+
+  #menu ul li a {
+    display: block;
+    padding: 15px;
+    color: #000;
+    background: transparent;
+    font-size: 16px;
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  #menu ul li a:hover {
+    background: #eee;
+    color: #000;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+}
 `;
         } else if (type === 'js') {
             return `/* ${name} */
-/*コードを入力してください*/
+/*ハンバーガーメニュー*/
+document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById("menu-toggle");
+    const menu = document.getElementById("menu");
+    const menuLists = document.querySelectorAll("#menu ul");
 
+    // メニュー開閉
+    toggle.addEventListener("click", function (e) {
+      e.stopPropagation(); // イベントのバブリングを防止
+      toggle.classList.toggle("active");
+      menuLists.forEach(function (ul) {
+        ul.classList.toggle("active");
+      });
+    });
+
+    // メニューの外をクリックしたら閉じる
+    document.addEventListener("click", function (event) {
+      if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+        toggle.classList.remove("active");
+        menuLists.forEach(function (ul) {
+          ul.classList.remove("active");
+        });
+      }
+    });
+  });
 `;
         } else if (type === 'json') {
             return `{
@@ -1039,105 +1215,55 @@ function renameFile(oldName, newName) {
     // -------------------------------------------------------------
 
     function getFileTypeFromDialog(availableTypes) {
-
         return new Promise((resolve) => {
-
             // プルダウンのオプションHTMLを生成
-
             const optionsHtml = availableTypes.map(type => 
-
                 `<option value="${type}">${type.toUpperCase()} (.${type})</option>`
-
             ).join('');
 
-
-
             // ダイアログのHTML構造
-
             const dialogHtml = `
-
                 <div id="fileTypeModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;">
-
                     <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px;">
-
                         <h3>ファイル種類の選択</h3>
-
                         <label for="fileTypeSelect">追加するファイルの**種類**を選択してください:</label>
-
                         <select id="fileTypeSelect" style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px;">
-
                             <option value="" disabled selected>-- 選択してください --</option>
-
                             ${optionsHtml}
-
                         </select>
-
                         <div style="text-align: right; margin-top: 15px;">
-
                             <button id="cancelBtn" style="padding: 8px 15px; margin-right: 10px; border: none; background: #ccc; border-radius: 4px; cursor: pointer;">キャンセル</button>
-
                             <button id="okBtn" style="padding: 8px 15px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;" disabled>OK</button>
-
                         </div>
-
                     </div>
-
                 </div>
-
             `;
 
-
-
             // DOMにダイアログを追加
-
             document.body.insertAdjacentHTML('beforeend', dialogHtml);
-
             const modal = document.getElementById('fileTypeModal');
-
             const select = document.getElementById('fileTypeSelect');
-
             const okBtn = document.getElementById('okBtn');
-
             const cancelBtn = document.getElementById('cancelBtn');
 
-
-
             // 選択値の変更イベント
-
             select.addEventListener('change', () => {
-
                 okBtn.disabled = select.value === "";
-
             });
-
-
 
             // OKボタンのクリック処理
-
             okBtn.addEventListener('click', () => {
-
                 const selectedType = select.value;
-
                 modal.remove(); // ダイアログを閉じる
-
                 resolve(selectedType);
-
             });
-
-
 
             // キャンセルボタンのクリック処理
-
             cancelBtn.addEventListener('click', () => {
-
                 modal.remove(); // ダイアログを閉じる
-
                 resolve(null); // キャンセルとしてnullを返す
-
             });
-
         });
-
     }
 
     /**
