@@ -188,7 +188,9 @@ body {
     border: 1px solid #555;
     background-color: #444;
     outline: none;
-    flex-grow: 1; /* 利用可能なスペースを占有 */
+    width: 250px; /* 例: 250px に固定 */
+    /* max-width: 300px; /* あるいは最大幅を制限 */
+    flex-shrink: 0; /* 縮小されないようにする */
     box-sizing: border-box;
     min-width: 100px;
 }
@@ -294,11 +296,11 @@ body {
     padding: 10px 0;
     font-size: 1.1em;
     color: #333;
-    flex-grow: 1;
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; /* ... で省略表示 */
-    max-width: calc(100% - 60px); /* ボタンの幅を考慮 */
+    width: 250px; /* 例: 250px に固定 */
+    flex-shrink: 0; /* 縮小されないようにする */
 }
 /* プレビューパネル内の切り替えボタンの色調整 */
 .preview-panel .toggle-button {
