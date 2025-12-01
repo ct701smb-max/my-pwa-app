@@ -190,7 +190,7 @@ body {
     outline: none;
     flex-grow: 1; /* 利用可能なスペースを占有 */
     box-sizing: border-box;
-    min-width: 200px;
+    min-width: 100px;
 }
 .filename-input:disabled {
     opacity: 0.6;
