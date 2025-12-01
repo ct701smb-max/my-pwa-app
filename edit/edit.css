@@ -189,7 +189,7 @@ body {
     background-color: #444;
     outline: none;
     width: 100px; /* 例: 100px に固定 */
-    flex-grow: 1; 
+    flex-grow: 0.5; 
     flex-shrink: 0; /* 縮小されないようにする */
     box-sizing: border-box;
     min-width: 100px;
@@ -297,7 +297,7 @@ body {
     font-size: 1.1em;
     color: #333;
     white-space: nowrap; 
-    flex-grow: 1;
+    flex-grow: 0.5;
     overflow: hidden; 
     text-overflow: ellipsis; /* ... で省略表示 */
     width: 350px; /* 例: 250px に固定 */
