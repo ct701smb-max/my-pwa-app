@@ -188,7 +188,7 @@ body {
     border: 1px solid #555;
     background-color: #444;
     outline: none;
-    width: 100px; /* 例: 250px に固定 */
+    width: 100px; /* 例: 100px に固定 */
     /* flex-grow: 1; /* <- これを削除またはコメントアウト */
     flex-shrink: 0; /* 縮小されないようにする */
     box-sizing: border-box;
@@ -293,7 +293,7 @@ body {
 
 .preview-panel h2 {
     margin: 0;
-    padding: 10px 0;
+    padding: 5px 10px;
     font-size: 1.1em;
     color: #333;
     white-space: nowrap; 
