@@ -188,7 +188,8 @@ body {
     border: 1px solid #555;
     background-color: #444;
     outline: none;
-    flex-grow: 0;
+    width: 250px; /* 例: 250px に固定 */
+    /* flex-grow: 1; /* <- これを削除またはコメントアウト */
     flex-shrink: 0; /* 縮小されないようにする */
     box-sizing: border-box;
     min-width: 100px;
@@ -296,9 +297,10 @@ body {
     font-size: 1.1em;
     color: #333;
     white-space: nowrap; 
+    /* flex-grow: 1; /* <- これを削除またはコメントアウト */
     overflow: hidden; 
     text-overflow: ellipsis; /* ... で省略表示 */
-    flex-grow: 0;
+    width: 250px; /* 例: 250px に固定 */
     flex-shrink: 0; /* 縮小されないようにする */
 }
 /* プレビューパネル内の切り替えボタンの色調整 */
