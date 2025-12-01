@@ -181,16 +181,14 @@ body {
 
 /* ファイル名入力フィールド */
 .filename-input {
-    color: #00ffaa;
+     color: #00ffaa;
     font-weight: bold;
     font-size: 1.1em;
     padding: 5px 10px;
     border: 1px solid #555;
     background-color: #444;
     outline: none;
-    width: 100px; /* 例: 100px に固定 */
-    flex-grow: 0.5; 
-    flex-shrink: 0; /* 縮小されないようにする */
+    flex-grow: 0.5; /* 利用可能なスペースを占有 */
     box-sizing: border-box;
     min-width: 100px;
 }
@@ -293,15 +291,14 @@ body {
 
 .preview-panel h2 {
     margin: 0;
-    padding: 5px 10px;
+    padding: 10px 0;
     font-size: 1.1em;
     color: #333;
-    white-space: nowrap; 
     flex-grow: 0.5;
+    white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; /* ... で省略表示 */
-    width: 350px; /* 例: 250px に固定 */
-    flex-shrink: 0; /* 縮小されないようにする */
+    max-width: calc(100% - 60px); /* ボタンの幅を考慮 */
 }
 /* プレビューパネル内の切り替えボタンの色調整 */
 .preview-panel .toggle-button {
