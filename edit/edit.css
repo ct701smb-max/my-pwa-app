@@ -212,8 +212,8 @@ body {
 /* 共通コード入力エリア (エディタ本体) */
 #code-content {
     flex-grow: 1;
-    height: calc(100% - 40px); /* ヘッダー高さを引いた残りの高さ */
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
 /* 行番号とコード入力を保持するコンテナ */
@@ -223,7 +223,6 @@ body {
     width: 100%;
     padding: 10px 0 10px 10px; /* コードと行番号の両方にかかるパディング */
     box-sizing: border-box;
-    overflow: hidden; 
     background-color: #222; /* HTMLのデフォルト背景色 */
     position: relative;
 }
@@ -245,10 +244,7 @@ body {
 
 /* 実際のコード入力エリア */
 #code-input {
-    position: absolute;
-    top: 10px;
-    right: 0;
-    width: calc(100% - 48px);
+    width: calc(100% - 30px - 10px);
     height: calc(100% - 20px);
     padding: 0 10px 0 0; 
     border: none;
@@ -262,7 +258,6 @@ body {
     z-index: 1;
     outline: none;
     line-height: 1.5; 
-    overflow-y: scroll; /* 縦スクロールを担当 */
     margin-left: 0px; /* 行番号との隙間を詰める */
 }
 
