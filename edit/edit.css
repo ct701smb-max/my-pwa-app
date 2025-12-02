@@ -294,11 +294,11 @@ body {
     padding: 10px 0;
     font-size: 1.1em;
     color: #333;
-    flex-grow: 0.2;
+    width: 350px; /* 幅を固定 (エディター側と統一) */
+    flex-shrink: 0; /* 縮小を禁止 */
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; /* ... で省略表示 */
-    max-width: 250px; /* ボタンの幅を考慮 */
 }
 /* プレビューパネル内の切り替えボタンの色調整 */
 .preview-panel .toggle-button {
