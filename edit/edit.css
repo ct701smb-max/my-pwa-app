@@ -55,6 +55,8 @@ body {
     padding: 5px;
     margin-left: 5px; 
     flex-shrink: 0;
+    position: absolute; 
+    right: 0;
 }
 
 /* ★ 操作ボタンの共通スタイル (エクスポート/インポートなど) */
