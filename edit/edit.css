@@ -301,7 +301,7 @@ body {
     font-size: 1.1em;
     color: #333;
     /* flex-grow: 1; /* 利用可能なスペースを占有 -> 削除 */
-    width: 250px; /* 幅を固定 (エディター側と統一) */
+    width: 150px; /* 幅を固定 (エディター側と統一) */
     flex-shrink: 0; /* 縮小を禁止 */
     white-space: nowrap; 
     overflow: hidden; 
