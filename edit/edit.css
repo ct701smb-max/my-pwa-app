@@ -190,7 +190,7 @@ body {
     background-color: #444;
     outline: none;
     /* flex-grow: 1; /* 利用可能なスペースを占有 -> 削除 */
-    width: 250px; /* 幅を固定 */
+    width: 150px; /* 幅を固定 */
     flex-shrink: 0; /* 縮小を禁止 */
     box-sizing: border-box;
     min-width: 100px;
