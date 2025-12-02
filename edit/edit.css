@@ -55,10 +55,19 @@ body {
     padding: 5px;
     margin-left: 5px; 
     flex-shrink: 0;
+}
+.toggle-button2 {
+    background: none;
+    border: none;
+    color: #000; /* エディタ側デフォルト色 */
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: 5px; 
+    flex-shrink: 0;
     position: absolute; 
     right: 0;
 }
-
 /* ★ 操作ボタンの共通スタイル (エクスポート/インポートなど) */
 .control-button {
     background-color: #555;
@@ -183,7 +192,6 @@ body {
 
 /* ファイル名入力フィールド */
 .filename-input {
-    /* 🌟 ここを修正しました 🌟 */
     color: #00ffaa;
     font-weight: bold;
     font-size: 1.1em;
@@ -191,8 +199,8 @@ body {
     border: 1px solid #555;
     background-color: #444;
     outline: none;
-    /* flex-grow: 1; /* 利用可能なスペースを占有 -> 削除 */
-    width: 150px; /* 幅を固定 */
+    flex-grow: 1;  利用可能なスペースを占有 -> 削除 */
+    
     flex-shrink: 0; /* 縮小を禁止 */
     box-sizing: border-box;
     min-width: 100px;
@@ -349,7 +357,7 @@ body {
     display: flex !important;
     position: fixed !important; 
     top: 0 !important;
-    width: auto !important;
+    width: 96% !important;
     z-index: 1000 !important; /* 最前面に表示 */
     border-bottom: 2px solid #000;
 }
@@ -439,52 +447,36 @@ body {
 }
 
 /* ================================== */
-/* 7. レスポンシブデザイン（モバイル対応） */
+/* 8. レスポンシブデザイン（モバイル対応） */
 /* ================================== */
 
+/* ---------------------------------- */
+/* モバイル向けメディアクエリ (768px以下) */
+/* ---------------------------------- */
 @media (max-width: 768px) {
-    /* 1. 全ボタンの調整を緩和し、テキストを一部維持 */
-    .control-button, .toggle-button {
-        padding: 5px 8px;
-        font-size: 12px;
-    }
-    /* モバイルでもアイコンとテキストを少し表示するために、幅の強制指定を削除 */
-    /* width: 32px; や overflow: hidden; は削除 */
-    .control-button {
-        min-width: 0; 
-        width: auto; /* 幅の固定を解除 */
-    }
-    /* Import/Exportのアイコン横にマージンを復活させる */
-    .control-button i {
-        margin-right: 3px;
-    }
-    
-    /* 2. ハンバーガーボタンを表示 (変更なし) */
+    /* 🍔 ハンバーガーボタンを表示 */
     .file-menu-toggle {
         display: block; 
     }
-    
-    /* 3. ファイル名入力欄のスペースを確保 (変更なし) */
+
+    /* ファイル名入力欄のスペースを調整 */
     .filename-input {
-        /* モバイル表示時も PC と同様に 250px の幅を維持するか、
-           あるいは flex-grow: 1; に戻して残りのスペースを占有させるか検討が必要です。
-           ここでは PC と同じ幅を維持します。 */
-        flex-grow: 0;
-        width: 250px; 
+        flex-grow: 1; 
         margin-left: 10px;
-        min-width: 50px; 
     }
     
-    /* 4. ファイルタブコンテナをデフォルトで非表示 (変更なし) */
+    /* ファイルタブコンテナを絶対配置にし、デフォルトで非表示 */
     .file-tabs-container {
-        display: none; 
+        display: none; /* デフォルトで非表示 */
         position: absolute; 
-        top: 40px; 
+        top: 40px; /* ヘッダーの高さ(40px)のすぐ下に配置 */
         left: 0;
         width: 100%;
         background-color: #333; 
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         z-index: 100; 
-        flex-direction: column; 
+        flex-direction: column; /* タブを縦に並べる */
+        padding: 0;
     }
 
     /* JavaScriptでメニューが開いたときに適用されるクラス */
@@ -548,7 +540,7 @@ body {
         display: none;
     }
 }
-      
+     
         
         /* 🌟 [新規追加] タグショートカットパネルのスタイル */
         #tag-shortcut-panel {
@@ -589,7 +581,7 @@ body {
         }
 
 /* ====================================
-    プレビュー切り替え機能のスタイル
+   プレビュー切り替え機能のスタイル
 ==================================== */
 
 /* 通常時: エディタとプレビューが横並び */
