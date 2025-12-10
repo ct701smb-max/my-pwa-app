@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>カプラ曲線対応 リンク機構シミュレータ (モバイル対応 - Y軸反転修正)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0; 
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.5em; 
+        }
+
+        /* ★ メインコンテナ: デスクトップでは横並び、モバイルでは縦並び ★ */
+        #main-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 0 auto;
+            max-width: 1200px;
+            flex-direction: row; 
+        }
+        
+        #canvas-container {
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            margin-right: 20px;
+            width: 600px; 
+        }
+
+        #mechanismCanvas {
+            border: 2px solid #555;
+            background-color: #ffffff;
+            display: block;
+            margin-bottom: 10px; 
+            cursor: pointer; 
+            touch-action: none; 
+        }
+
+        #controls {
+            margin-top: 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            width: 350px; 
+            text-align: left;
+            background-color: #fff;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+        
+        .input-group label {
+            width: 180px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .input-group input:not([type="range"]) {
+            width: 80px; 
+            padding: 5px;
+            text-align: right;
+            border: 1px solid #ccc;
+        }
+        
+        .input-group input[type="range"] {
+            width: 80px; 
+            height: 5px;
+            margin-right: 5px;
+        }
+        
+        /* リンク色の設定 */
+        .link-a { color: blue; }    
+        .link-b { color: red; }      
+        .link-c { color: green; }   
+        .link-d, .link-e { color: black; } 
+        .link-extra { color: #CC00AA; } 
+
+        #startStop {
+            width: 100%;
+            max-width: 600px; 
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #extraPinControls div {
+            border: 1px dashed #aaa;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        
+        #path-controls {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        
+        #clearPath {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: orange;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* ======================================================= */
+        /* ★ モバイル対応: 画面幅 768px以下の場合に適用されるCSS ★ */
+        /* ======================================================= */
+        @media (max-width: 768px) {
+            #main-container {
+                flex-direction: column; 
+                align-items: center;
+            }
+
+            #canvas-container {
+                width: 95%; 
+                margin-right: 0;
+            }
+
+            #mechanismCanvas {
+                width: 100%;
+                max-width: 600px; 
+            }
+            
+            #controls {
+                width: 95%; 
+                max-width: 400px; 
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            
+            #startStop {
+                max-width: 100%; 
+            }
+            
+            .input-group label {
+                width: 60%; 
+                font-size: 1em;
+            }
+            
+            .input-group input:not([type="range"]),
+            .input-group input[type="range"] {
+                width: 35%; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>?? リンク機構シミュレータ (モバイル対応 - Y軸反転修正)</h1>
+    
+    <div id="main-container">
+        
+        <div id="canvas-container">
+            <canvas id="mechanismCanvas" width="600" height="400"></canvas>
+            
+            <button id="startStop">アニメーション開始</button>
+            
+            <div id="path-controls">
+                <label>
+                    <input type="checkbox" id="showPath" checked> 軌跡を表示
+                </label>
+                <button id="clearPath">軌跡をリセット</button>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <h2>リンク長設定 (4節リンク)</h2>
+
+            <div class="input-group">
+                <label for="inputA" class="link-a">リンク A (駆動節):</label>
+                <input type="number" id="inputA" class="link-a" value="30" min="10" step="1">
+            </div>
+
+            <div class="input-group">
+                <label for="inputB" class="link-b">リンク B (結合節):</label>
+                <input type="number" id="inputB" class="link-b" value="125" min="10" step="1" disabled style="background-color: #eee;">
+            </div>
+            
+            <div class="input-group">
+                <label for="inputC" class="link-c">リンク C (従動節):</label>
+                <input type="number" id="inputC" class="link-c" value="110" min="10" step="1">
+            </div>
+
+            <hr style="margin: 10px 0;">
+            <h3>固定節 $D$ / $E$ 設定</h3>
+            
+            <div class="input-group">
+                <label for="linkD" class="link-d">固定節 D (長さ):</label>
+                <input type="number" id="linkD" class="link-d" value="120" min="10" step="1">
+            </div>
+            
+            <div class="input-group">
+                <label for="offsetE" class="link-e">オフセット E (Y軸):</label>
+                <input type="number" id="offsetE" class="link-e" value="0" min="-100" max="100" step="5">
+            </div>
+
+            <hr style="margin: 10px 0;">
+            <h3>追加ピン $P_D$ 設定 (カプラ曲線)</h3>
+            
+            <div id="extraPinControls">
+            </div>
+
+            <button id="addPinButton" style="width: 100%; padding: 5px; background-color: #4CAF50; color: white; border: none; margin-top: 10px;">
+                + 結合節にピンを追加
+            </button>
+            
+            </div>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('mechanismCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // ★修正1: Y軸の原点をキャンバスの中央に戻す★
+        let centerX = canvas.width / 2;
+        let centerY = canvas.height / 2; 
+        let canvasWidth = 600;
+        let canvasHeight = 400;
+        let O2_OFFSET_X = -canvasWidth / 4; 
+
+        const PIN_RADIUS = 8;
+        const SNAP_TOLERANCE = 15;
+        // ワイパー用に推奨値を初期値に設定
+        const INITIAL_L_D = 120; 
+        
+        let pinPositions = {
+            O2: { x: O2_OFFSET_X, y: 0 },
+            O4: { x: O2_OFFSET_X + INITIAL_L_D, y: 0 },
+            // ★修正2: 初期ピンのY座標を負に戻す（Y軸上向きの動作を期待）★
+            P2: { x: O2_OFFSET_X, y: -30 }, 
+            P4: { x: O2_OFFSET_X + INITIAL_L_D, y: -110 }
+        };
+
+        let L_A, L_B, L_C;
+        let L_D, offset_E;
+        
+        let extraPins = []; 
+        let nextPinId = 0;
+        
+        let P2Path = []; 
+        let P4Path = []; 
+        let extraPinPaths = {}; 
+        let maxPathLength = 4000; 
+
+        let crankAngle = 0;
+        let isRunning = false;
+        let animationFrameId;
+        let draggedPin = null; 
+        
+        // --- モバイル対応: キャンバスサイズ調整 ---
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            const newWidth = Math.min(600, container.clientWidth); 
+            const newHeight = newWidth * (400 / 600); 
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2; // ★修正3: Y軸原点を中央に再設定★
+            canvasWidth = canvas.width;
+            
+            updatePinPositionsFromLengths(); 
+        }
+
+        // --- ヘルパー関数 ---
+
+        function toRelative(x, y) {
+            return {
+                x: x - centerX,
+                y: y - centerY
+            };
+        }
+        
+        function resetPath() {
+            P2Path = []; 
+            P4Path = [];
+            extraPinPaths = {};
+            extraPins.forEach(pin => {
+                extraPinPaths[pin.id] = [];
+            });
+            drawMechanism(pinPositions); 
+        }
+
+        // --------------------------------------------------------
+        // --- UIとデータ操作 (動的リンク) ---
+        // --------------------------------------------------------
+
+        function renderExtraPinControls() {
+            const container = document.getElementById('extraPinControls');
+            container.innerHTML = ''; 
+
+            extraPins.forEach(pin => {
+                const pinDiv = document.createElement('div');
+                pinDiv.id = `pin-${pin.id}`;
+                pinDiv.innerHTML = `
+                    <p style="margin: 0; font-weight: bold; color: #CC00AA;">カプラピン P$_{D${pin.id}} (紫) </p>
+                    <div class="input-group">
+                        <label class="link-extra">結合節上の比率 ($r$):</label>
+                        <input type="range" id="ratio-${pin.id}" class="link-extra" value="${pin.ratio.toFixed(2)}" min="0.0" max="1.0" step="0.01" data-pin-id="${pin.id}">
+                        <span id="ratio-value-${pin.id}" style="width: 30px; text-align: right;">${pin.ratio.toFixed(2)}</span>
+                    </div>
+                    <button class="remove-pin-btn" data-pin-id="${pin.id}" style="background-color: #dc3545; color: white; border: none; padding: 3px 8px; float: right;">削除</button>
+                    <div style="clear: both;"></div>
+                `;
+                container.appendChild(pinDiv);
+            });
+            
+            // イベントリスナーを再設定
+            container.querySelectorAll('.remove-pin-btn').forEach(button => {
+                button.addEventListener('click', removePin);
+            });
+            container.querySelectorAll('input[type="range"]').forEach(input => {
+                input.addEventListener('input', updatePinRatio);
+            });
+        }
+
+        function addPin() {
+            const newPin = {
+                id: nextPinId++,
+                ratio: 0.5, 
+            };
+            extraPins.push(newPin);
+            extraPinPaths[newPin.id] = []; 
+            renderExtraPinControls();
+            if (!isRunning) updatePinPositionsFromLengths(); 
+        }
+
+        function removePin(event) {
+            const pinId = parseInt(event.target.dataset.pinId);
+            extraPins = extraPins.filter(pin => pin.id !== pinId);
+            delete extraPinPaths[pinId]; 
+            renderExtraPinControls();
+            if (!isRunning) updatePinPositionsFromLengths();
+        }
+
+        function updatePinRatio(event) {
+            const pinId = parseInt(event.target.dataset.pinId);
+            const newRatio = parseFloat(event.target.value);
+            const pin = extraPins.find(p => p.id === pinId);
+            if (pin) {
+                pin.ratio = newRatio;
+            }
+            document.getElementById(`ratio-value-${pinId}`).textContent = newRatio.toFixed(2);
+            if (!isRunning) updatePinPositionsFromLengths();
+        }
+
+        // --------------------------------------------------------
+        // --- リンク長の更新とピン位置の再計算 ---
+        // --------------------------------------------------------
+
+        function getLinkLengthsFromUI() {
+            L_A = parseFloat(document.getElementById('inputA').value);
+            L_C = parseFloat(document.getElementById('inputC').value); 
+            L_D = parseFloat(document.getElementById('linkD').value);
+            offset_E = parseFloat(document.getElementById('offsetE').value);
+        }
+
+        function updatePinPositionsFromLengths() {
+            getLinkLengthsFromUI();
+            
+            // 1. O2, O4の位置をUI値に基づいて計算
+            pinPositions.O2.x = -canvasWidth / 4; 
+            pinPositions.O4.x = pinPositions.O2.x + L_D;
+            pinPositions.O4.y = -offset_E; // ★修正4: Y軸上向きのオフセットを負で表現★
+            
+            const O2 = pinPositions.O2;
+            const O4 = pinPositions.O4;
+
+            // 2. 4節リンクの初期位置設定
+            // ★修正5: リンクA, Cの初期配置をO2/O4から上方向 (Y-方向) に設定★
+            pinPositions.P2.x = O2.x;
+            pinPositions.P2.y = O2.y - L_A; 
+            
+            pinPositions.P4.x = O4.x;
+            pinPositions.P4.y = O4.y - L_C; 
+            
+            // 3. L_BをP2, P4の新しい位置から再計算し、UIに反映
+            const new_L_B = Math.sqrt(
+                Math.pow(pinPositions.P4.x - pinPositions.P2.x, 2) + 
+                Math.pow(pinPositions.P4.y - pinPositions.P2.y, 2)
+            );
+            
+            document.getElementById('inputB').value = new_L_B.toFixed(1);
+            L_B = new_L_B; 
+            
+            drawMechanism(pinPositions);
+        }
+
+        /**
+         * ドラッグ操作後、ピン位置に基づいてリンク長とオフセットを計算し、UIを更新する。
+         */
+        function updateLengthsFromPinPositions(dragged = null) {
+            const O2 = pinPositions.O2;
+            const P2 = pinPositions.P2;
+            const P4 = pinPositions.P4;
+            const O4 = pinPositions.O4;
+
+            // リンク長を計算 (絶対値)
+            L_A = Math.sqrt(Math.pow(P2.x - O2.x, 2) + Math.pow(P2.y - O2.y, 2));
+            L_B = Math.sqrt(Math.pow(P4.x - P2.x, 2) + Math.pow(P4.y - P2.y, 2));
+            L_C = Math.sqrt(Math.pow(O4.x - P4.x, 2) + Math.pow(O4.y - P4.y, 2));
+
+            // 固定節 D, E
+            L_D = O4.x - O2.x;
+            offset_E = -O4.y; // ★Y軸が上向き正であるというUI上の定義に合わせるため反転★
+            
+            // UIを更新
+            document.getElementById('inputA').value = L_A.toFixed(1);
+            document.getElementById('inputB').value = L_B.toFixed(1); 
+            document.getElementById('inputC').value = L_C.toFixed(1);
+            
+            if (dragged === 'O4') {
+                    document.getElementById('linkD').value = L_D.toFixed(1);
+                    document.getElementById('offsetE').value = offset_E.toFixed(1);
+            }
+            
+            drawMechanism(pinPositions);
+        }
+
+        // --------------------------------------------------------
+        // --- 4節リンク機構の位置解析 (アニメーション用) ---
+        // --------------------------------------------------------
+
+        function solveMechanism(theta2) {
+            const { O2, O4 } = pinPositions;
+
+            if (L_A <= 0 || L_B <= 0 || L_C <= 0 || L_D <= 0) {
+                return null;
+            }
+            
+            const P2_initial_x = pinPositions.P2.x;
+            const P2_initial_y = pinPositions.P2.y;
+            
+            const initialAngle = Math.atan2(P2_initial_y - O2.y, P2_initial_x - O2.x);
+
+            const P2_new = {
+                x: O2.x + L_A * Math.cos(initialAngle + theta2),
+                y: O2.y + L_A * Math.sin(initialAngle + theta2)
+            };
+
+            const K1 = P2_new.x - O4.x;
+            const K2 = P2_new.y - O4.y;
+            const K3 = K1 * K1 + K2 * K2; 
+
+            const Epsilon = 0.01;
+            if (Math.sqrt(K3) > L_B + L_C + Epsilon || Math.sqrt(K3) < Math.abs(L_B - L_C) - Epsilon) {
+                return null;
+            }
+
+            const K4 = K3 + L_C * L_C - L_B * L_B;
+            const K5 = 2 * K1 * L_C;
+            const K6 = 2 * K2 * L_C;
+            
+            const A_coeff = K4 + K5;
+            const B_coeff = -K6;
+            const C_coeff = K4 - K5;
+            
+            const discriminant = B_coeff * B_coeff - 4 * A_coeff * C_coeff;
+
+            let theta4 = NaN;
+            if (discriminant >= 0) {
+                const tan_half_theta4 = (-B_coeff - Math.sqrt(discriminant)) / (2 * A_coeff);
+                theta4 = 2 * Math.atan(tan_half_theta4);
+            } else {
+                return null;
+            }
+
+            const P4_new = {
+                x: O4.x + L_C * Math.cos(theta4),
+                y: O4.y + L_C * Math.sin(theta4)
+            };
+            
+            return { O2, P2: P2_new, P4: P4_new, O4 };
+        }
+
+        // --- 描画関数 ---
+        
+        function drawPath(path, color, isCoupler = false) {
+            if (path.length < 2) return;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = isCoupler ? 2 : 1; 
+            if (isCoupler) {
+                ctx.setLineDash([5, 5]); 
+            } else {
+                ctx.setLineDash([]); 
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(path[0].x, path[0].y);
+            
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i].x, path[i].y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]); 
+        }
+
+
+        function drawMechanism(points) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const showPath = document.getElementById('showPath').checked; 
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.scale(1, -1); // ★修正6: Y軸を反転させる (上向きが正になるように描画)★
+
+            let P2_to_draw, P4_to_draw;
+            let calculatedPoints = null;
+
+            if (isRunning && animationFrameId) {
+                calculatedPoints = solveMechanism(crankAngle);
+                
+                if (calculatedPoints) {
+                    P2_to_draw = calculatedPoints.P2;
+                    P4_to_draw = calculatedPoints.P4;
+                } else {
+                    P2_to_draw = points.P2;
+                    P4_to_draw = points.P4;
+                    stopAnimation();
+                }
+
+            } else {
+                P2_to_draw = points.P2;
+                P4_to_draw = points.P4;
+            }
+            
+            // --- 追加ピン (PD) の動的位置を計算 ---
+            const PD_points = [];
+            extraPins.forEach(pin => {
+                const Px = P2_to_draw.x + (P4_to_draw.x - P2_to_draw.x) * pin.ratio;
+                const Py = P2_to_draw.y + (P4_to_draw.y - P2_to_draw.y) * pin.ratio;
+                PD_points.push({ id: pin.id, x: Px, y: Py, ratio: pin.ratio });
+                
+                // 軌跡の保存
+                if (isRunning && calculatedPoints && showPath) {
+                    extraPinPaths[pin.id].push({ x: Px, y: Py });
+                    if (extraPinPaths[pin.id].length > maxPathLength) extraPinPaths[pin.id].shift();
+                }
+            });
+
+
+            // --- 軌跡の描画 (機構本体より先に描画) ---
+            if (showPath) {
+                drawPath(P2Path, 'rgba(0, 0, 255, 0.4)');
+                drawPath(P4Path, 'rgba(0, 128, 0, 0.4)');
+                
+                PD_points.forEach(p => {
+                    drawPath(extraPinPaths[p.id], 'rgba(204, 0, 170, 0.7)', true);
+                });
+            }
+            
+            // 軌跡の更新 (P2, P4)
+            if (isRunning && calculatedPoints && showPath) {
+                P2Path.push({ x: P2_to_draw.x, y: P2_to_draw.y });
+                if (P2Path.length > maxPathLength) P2Path.shift();
+                
+                P4Path.push({ x: P4_to_draw.x, y: P4_to_draw.y });
+                if (P4Path.length > maxPathLength) P4Path.shift();
+            }
+
+            ctx.lineWidth = 7;
+            
+            // 駆動節 A (O2 -> P2) - BLUE
+            ctx.strokeStyle = 'blue';
+            ctx.beginPath();
+            ctx.moveTo(points.O2.x, points.O2.y);
+            ctx.lineTo(P2_to_draw.x, P2_to_draw.y);
+            ctx.stroke();
+
+            // 結合節 B (P2 -> P4) - RED
+            ctx.strokeStyle = 'red';
+            ctx.beginPath();
+            ctx.moveTo(P2_to_draw.x, P2_to_draw.y);
+            ctx.lineTo(P4_to_draw.x, P4_to_draw.y);
+            ctx.stroke();
+            
+            // 従動節 C (P4 -> O4) - GREEN
+            ctx.strokeStyle = 'green';
+            ctx.beginPath();
+            ctx.moveTo(P4_to_draw.x, P4_to_draw.y);
+            ctx.lineTo(points.O4.x, points.O4.y);
+            ctx.stroke();
+
+            // カプラピンPDからP4へのバーを描画
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#CC00AA'; 
+            PD_points.forEach(p => {
+                if (p.ratio > 0.05 && p.ratio < 0.95) { 
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y); 
+                    ctx.lineTo(P4_to_draw.x, P4_to_draw.y);
+                    ctx.stroke();
+                }
+            });
+            ctx.lineWidth = 7; 
+
+            // 固定節 D (O2 -> O4) - BLACK
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 10;
+            ctx.beginPath();
+            ctx.moveTo(points.O2.x, points.O2.y);
+            ctx.lineTo(points.O4.x, points.O4.y);
+            ctx.stroke();
+            
+            // ジョイント（円）の描画
+            const drawJoint = (x, y, color, isFixed = false) => {
+                const jointRadius = PIN_RADIUS * (canvas.width < 768 ? 1.2 : 1.0); 
+                
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, jointRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = isFixed ? 3 : 1; 
+                ctx.stroke();
+            };
+
+            // --- 動的ピン (PD) の描画 ---
+            PD_points.forEach(p => {
+                if (p.ratio > 0.01 && p.ratio < 0.99) {
+                    drawJoint(p.x, p.y, '#CC00AA'); 
+                }
+            });
+
+
+            drawJoint(points.O2.x, points.O2.y, 'gray', true);  
+            drawJoint(P2_to_draw.x, P2_to_draw.y, 'blue');      
+            drawJoint(P4_to_draw.x, P4_to_draw.y, 'green');       
+            drawJoint(points.O4.x, points.O4.y, 'gray', true);  
+
+            ctx.restore(); // Y軸反転を元に戻す
+        }
+
+        // --- アニメーション制御関数 ---
+        
+        function animate() {
+            if (!isRunning) return;
+
+            crankAngle += 0.05; 
+            if (crankAngle > 2 * Math.PI) {
+                crankAngle -= 2 * Math.PI;
+            }
+
+            const points = solveMechanism(crankAngle);
+            
+            if (points) {
+                drawMechanism(pinPositions); 
+            } else {
+                stopAnimation();
+                alert('このリンク長では全回転できませんでした。');
+                return;
+            }
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+        
+        function startAnimation() {
+            if (isRunning) return; 
+            
+            isRunning = true;
+            document.getElementById('startStop').textContent = 'アニメーション停止';
+            document.getElementById('startStop').style.backgroundColor = '#dc3545';
+            
+            updatePinPositionsFromLengths(); 
+            crankAngle = 0; 
+            resetPath(); 
+            animate();
+        }
+
+        function stopAnimation() {
+            if (!isRunning) return; 
+            
+            isRunning = false;
+            document.getElementById('startStop').textContent = 'アニメーション開始';
+            document.getElementById('startStop').style.backgroundColor = '#007bff';
+            cancelAnimationFrame(animationFrameId);
+            
+            updatePinPositionsFromLengths(); 
+        }
+
+        // --- マウス/タッチイベント処理 (ドラッグ & 停止) ---
+        
+        // 座標取得ヘルパー (マウス/タッチ対応)
+        function getEventPos(e) {
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width; 
+            const scaleY = canvas.height / rect.height; 
+            
+            const offsetX = (clientX - rect.left) * scaleX;
+            const offsetY = (clientY - rect.top) * scaleY;
+            
+            const relativePos = toRelative(offsetX, offsetY);
+            
+            // Y軸のドラッグ操作も見た目と一致させるため、Y座標を反転させて返す
+            return {
+                x: relativePos.x,
+                y: -relativePos.y 
+            };
+        }
+        
+        function handleStart(e) {
+            if (isRunning) return; 
+            
+            const pos = getEventPos(e);
+            let targetFound = false; 
+
+            // O4 (固定点、灰色) のチェック (D/E調整)
+            const distSq_O4 = Math.pow(pos.x - pinPositions.O4.x, 2) + Math.pow(pos.y - pinPositions.O4.y, 2);
+            if (distSq_O4 < SNAP_TOLERANCE * SNAP_TOLERANCE) {
+                draggedPin = 'O4';
+                canvas.style.cursor = 'move'; 
+                targetFound = true;
+            }
+            
+            // P2 (青) がクリックされたかチェック
+            const distSq_P2 = Math.pow(pos.x - pinPositions.P2.x, 2) + Math.pow(pos.y - pinPositions.P2.y, 2);
+            if (!targetFound && distSq_P2 < SNAP_TOLERANCE * SNAP_TOLERANCE) {
+                draggedPin = 'P2';
+                canvas.style.cursor = 'grabbing';
+                targetFound = true;
+            }
+
+            // P4 (緑) がクリックされたかチェック
+            const distSq_P4 = Math.pow(pos.x - pinPositions.P4.x, 2) + Math.pow(pos.y - pinPositions.P4.y, 2);
+            if (!targetFound && distSq_P4 < SNAP_TOLERANCE * SNAP_TOLERANCE) {
+                draggedPin = 'P4';
+                canvas.style.cursor = 'grabbing';
+                targetFound = true;
+            }
+            
+            if (targetFound) {
+                 e.preventDefault(); 
+            } else {
+                draggedPin = null;
+            }
+        }
+
+        function handleMove(e) {
+            if (!draggedPin) return;
+            e.preventDefault(); 
+            
+            const pos = getEventPos(e);
+            
+            const O2 = pinPositions.O2;
+            const O4 = pinPositions.O4;
+            const MIN_LENGTH = 10;
+            
+            if (draggedPin === 'O4') {
+                pinPositions.O4.x = pos.x;
+                pinPositions.O4.y = pos.y;
+                updateLengthsFromPinPositions('O4'); 
+
+            } else if (draggedPin === 'P2') {
+                const dist = Math.sqrt(Math.pow(pos.x - O2.x, 2) + Math.pow(pos.y - O2.y, 2));
+                if (dist < MIN_LENGTH) {
+                    const angle = Math.atan2(pos.y - O2.y, pos.x - O2.x);
+                    pinPositions.P2.x = O2.x + MIN_LENGTH * Math.cos(angle);
+                    pinPositions.P2.y = O2.y + MIN_LENGTH * Math.sin(angle);
+                } else {
+                    pinPositions.P2.x = pos.x;
+                    pinPositions.P2.y = pos.y;
+                }
+                updateLengthsFromPinPositions('P2');
+
+            } else if (draggedPin === 'P4') {
+                const dist = Math.sqrt(Math.pow(O4.x - pos.x, 2) + Math.pow(O4.y - pos.y, 2));
+                if (dist < MIN_LENGTH) {
+                    const angle = Math.atan2(O4.y - pos.y, O4.x - pos.x);
+                    pinPositions.P4.x = O4.x - MIN_LENGTH * Math.cos(angle);
+                    pinPositions.P4.y = O4.y - MIN_LENGTH * Math.sin(angle);
+                } else {
+                    pinPositions.P4.x = pos.x;
+                    pinPositions.P4.y = pos.y;
+                }
+                updateLengthsFromPinPositions('P4');
+            }
+        }
+
+        function handleEnd() {
+            // アニメーション実行中に、ピンをドラッグせずにタップ/クリックが完了した場合、アニメーションを停止
+            if (isRunning && !draggedPin) {
+                stopAnimation();
+                draggedPin = null; 
+                canvas.style.cursor = 'pointer';
+                return;
+            }
+            
+            if (draggedPin) {
+                draggedPin = null;
+                canvas.style.cursor = 'pointer'; 
+            }
+        }
+        
+        // イベントリスナー設定
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        canvas.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('mouseleave', handleEnd);
+
+        canvas.addEventListener('touchstart', handleStart);
+        canvas.addEventListener('touchmove', handleMove);
+        canvas.addEventListener('touchend', handleEnd);
+        canvas.addEventListener('touchcancel', handleEnd);
+
+
+        // --- UI イベントハンドラ ---
+
+        document.getElementById('startStop').addEventListener('click', () => {
+            if (isRunning) {
+                stopAnimation();
+            } else {
+                startAnimation();
+            }
+        });
+
+        document.getElementById('addPinButton').addEventListener('click', addPin);
+        
+        document.getElementById('controls').addEventListener('input', (e) => {
+            if (!isRunning) {
+                if (e.target.dataset.pinId && e.target.type === 'range') {
+                    updatePinRatio(e);
+                }
+            }
+        });
+
+        document.getElementById('clearPath').addEventListener('click', resetPath);
+        
+        document.getElementById('showPath').addEventListener('change', () => {
+             drawMechanism(pinPositions);
+        });
+
+        document.getElementById('controls').addEventListener('change', (e) => {
+            if (!isRunning) {
+                if (e.target.id === 'inputA' || e.target.id === 'inputC' || e.target.id === 'linkD' || e.target.id === 'offsetE') {
+                    updatePinPositionsFromLengths();
+                }
+            }
+        });
+        
+        // 画面サイズ変更時のイベント
+        window.addEventListener('resize', resizeCanvas);
+
+
+        // --- 初期化 ---
+        resizeCanvas(); 
+        renderExtraPinControls();
+        extraPins.forEach(pin => {
+            extraPinPaths[pin.id] = [];
+        });
+        updatePinPositionsFromLengths(); 
+    </script>
+</body>
+</html>
