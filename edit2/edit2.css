@@ -312,12 +312,6 @@ html, body {
     }
 
     /* ファイル名入力フィールドのスタイル */
-.file-name-input {
-    width: 70%;  
-}
-    .tab-button {
-    width: 70%; 
-}
     /* プレビューボタンの調整 (ファイル名入力欄がないため) */
 .tab-menu > .tab-button[data-tab="preview-panel"] {
     flex-basis: 50px;   
