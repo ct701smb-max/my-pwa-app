@@ -1,0 +1,327 @@
+/* リセットと基本設定 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* 画面の高さ全体を使う */
+}
+
+/* ------------------------------------------------ */
+/* メニューバーとタブのスタイル */
+/* ------------------------------------------------ */
+
+.tab-menu {
+    display: flex;
+    background-color: #333;
+    padding: 5px;
+    flex-shrink: 0; 
+    gap: 5px; /* タブグループ間のスペース */
+}
+
+/* タブボタンとファイル名入力フィールドを囲むグループ */
+.tab-group {
+    display: flex;
+    flex-direction: column; /* ファイル名の上にボタンを配置 */
+    flex: 1; 
+    min-width: 0; 
+}
+
+/* ファイル名入力フィールドのスタイル */
+.file-name-input {
+    width: 100%;
+    padding: 2px 5px;
+    margin-bottom: 2px;
+    border: 1px solid #666;
+    background-color: #1e2127; /* コードエリアと近い色 */
+    color: #f8f8f2; /* 明るい白 */
+    font-size: 12px;
+    text-align: center;
+    border-radius: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    white-space: nowrap;
+}
+
+.tab-button {
+    width: 100%; 
+    padding: 6px 0; 
+    margin: 0; 
+    border: none;
+    cursor: pointer;
+    background-color: #555;
+    color: white;
+    font-size: 14px; 
+    transition: background-color 0.3s;
+    border-radius: 4px;
+}
+
+/* プレビューボタンの調整 (ファイル名入力欄がないため) */
+.tab-menu > .tab-button[data-tab="preview-panel"] {
+    flex-basis: 150px; 
+    flex-grow: 0; 
+    padding: 20px 0; 
+    align-self: flex-end; 
+}
+
+.tab-button:hover:not(.active) {
+    background-color: #666;
+}
+
+/* 選択中のタブのスタイル */
+.tab-button.active {
+    background-color: #007bff; 
+    font-weight: bold;
+}
+
+/* ------------------------------------------------ */
+/* エディタコンテンツエリアのスタイル */
+/* ------------------------------------------------ */
+
+.content-wrapper {
+    flex: 1; /* 残りの高さをすべて使う */
+    position: relative;
+    overflow: hidden;
+}
+
+.tab-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    display: none; 
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ⭐ 行番号とテキストエリアのラッパー */
+.code-editor-wrapper {
+    display: flex; 
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ⭐ 行番号表示エリア */
+.line-numbers {
+    padding: 10px 8px;
+    background-color: #282c34; /* 行番号の背景色 */
+    color: #636d83; /* 行番号の色 */
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5; /* テキストエリアと行の高さを合わせる */
+    text-align: right;
+    user-select: none; 
+    flex-shrink: 0; 
+    overflow: hidden;
+    white-space: pre; 
+}
+
+/* ⭐ コード入力エリアのスタイル */
+.code-input {
+    flex-grow: 1; /* 残りのスペースを占める */
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    border: none;
+    resize: none;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5; /* 行番号と高さを合わせる */
+    background-color: #1e2127; /* ダークテーマ */
+    color: #f8f8f2; /* 明るい白 */
+    caret-color: #f8f8f2; 
+}
+
+/* プレビュー iframe のスタイル */
+#preview-panel {
+    background-color: white; 
+}
+
+#preview {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: white;
+}
+
+/* ------------------------------------------------ */
+/* ⭐ 画像リスト表示エリアのスタイル */
+/* ------------------------------------------------ */
+.imported-images-list {
+    background-color: #f8f8f8;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    display: flex;
+    overflow-x: auto; 
+    flex-shrink: 0; 
+    max-height: 100px; 
+    align-items: center;
+    gap: 15px; 
+}
+
+/* 画像リストを非表示にするクラス */
+.imported-images-list.hidden {
+    display: none;
+}
+
+/* 画像アイテムのコンテナ */
+.image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: border 0.2s;
+}
+
+.image-item:hover {
+    border-color: #007bff;
+}
+
+/* サムネイル画像 */
+.image-item img {
+    width: 60px; 
+    height: 60px; 
+    object-fit: contain; 
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    background-color: white;
+}
+
+/* ファイル名表示 */
+.image-item span {
+    font-size: 10px;
+    color: #555;
+    max-width: 60px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis; 
+}
+
+/* ------------------------------------------------ */
+/* ファイル操作エリアのスタイル */
+/* ------------------------------------------------ */
+
+.file-operations {
+    display: flex;
+    align-items: center; 
+    justify-content: space-around;
+    padding: 10px;
+    background-color: #f0f0f0; 
+    border-top: 1px solid #ccc; 
+    flex-shrink: 0;
+    gap: 10px; 
+}
+
+/* ZIPファイル名入力欄のグループ */
+.file-name-input-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.file-name-input-group label {
+    font-size: 16px;
+    color: #333;
+    white-space: nowrap;
+}
+
+/* ZIPファイル名入力欄 */
+#fileNameInput {
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 150px; 
+}
+
+.file-button {
+    padding: 8px 15px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.import-button {
+    background-color: #28a745; 
+    color: white;
+}
+
+.export-button {
+    background-color: #007bff; 
+    color: white;
+}
+
+.image-import-button {
+    background-color: #ffc107; /* 黄色っぽい色 */
+    color: #333;
+}
+
+/* ⭐ トグルボタンのスタイル */
+.toggle-button {
+    background-color: #6c757d; 
+    color: white;
+}
+
+.file-button:hover {
+    opacity: 0.8;
+}
+
+/* (オプション) モバイルでの調整 */
+@media (max-width: 768px) {
+    .file-operations {
+        flex-wrap: wrap; 
+        justify-content: center;
+        gap: 8px;
+    }
+    .file-name-input-group, 
+    #fileNameInput {
+        width: 100%; 
+        justify-content: center;
+    }
+    #fileNameInput {
+        max-width: 200px;
+    }
+    .file-button {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    .tab-menu {
+        flex-wrap: nowrap; 
+        overflow-x: auto; 
+    }
+
+    /* ファイル名入力フィールドのスタイル */
+.file-name-input {
+    width: 70%;  
+}
+    .tab-button {
+    width: 70%; 
+}
+    /* プレビューボタンの調整 (ファイル名入力欄がないため) */
+.tab-menu > .tab-button[data-tab="preview-panel"] {
+    flex-basis: 50px;   
+}
+}
+
+
