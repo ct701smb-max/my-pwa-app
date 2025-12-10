@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>カプラ曲線対応 リンク機構シミュレータ (モバイル対応 - Y軸反転修正)</title>
+    <title>リンク機構シミュレータ</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -169,7 +169,7 @@
     </style>
 </head>
 <body>
-    <h1>?? リンク機構シミュレータ (モバイル対応 - Y軸反転修正)</h1>
+    <h1>リンク機構シミュレータ</h1>
     
     <div id="main-container">
         
@@ -188,7 +188,7 @@
         
         <div id="controls">
             <h2>リンク長設定 (4節リンク)</h2>
-
+※ピンをドラッグで調整ができます
             <div class="input-group">
                 <label for="inputA" class="link-a">リンク A (駆動節):</label>
                 <input type="number" id="inputA" class="link-a" value="30" min="10" step="1">
@@ -205,7 +205,7 @@
             </div>
 
             <hr style="margin: 10px 0;">
-            <h3>固定節 $D$ / $E$ 設定</h3>
+            <h3>固定節 設定</h3>
             
             <div class="input-group">
                 <label for="linkD" class="link-d">固定節 D (長さ):</label>
@@ -218,7 +218,7 @@
             </div>
 
             <hr style="margin: 10px 0;">
-            <h3>追加ピン $P_D$ 設定 (カプラ曲線)</h3>
+            <h3>追加ピン 設定 (カプラ曲線)</h3>
             
             <div id="extraPinControls">
             </div>
@@ -688,7 +688,7 @@
             document.getElementById('startStop').style.backgroundColor = '#dc3545';
             
             updatePinPositionsFromLengths(); 
-            crankAngle = 0; 
+            crankAngle = 0.01; 
             resetPath(); 
             animate();
         }
