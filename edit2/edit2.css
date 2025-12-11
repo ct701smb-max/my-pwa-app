@@ -363,14 +363,10 @@ body {
     font-size: 14px !important; 
     line-height: 21px !important; /* ズレを防ぐための絶対値 */
     /* ⭐ 追記: tab-size をすべてのエディタで強制し、レンダリングを統一 ⭐ */
-     -moz-tab-size: 4 !important;
-    -o-tab-size: 4 !important;
-    tab-size: 4 !important;
-    /* ⭐ 修正: 複数の一般的な等幅フォントを明示的に指定し、レンダリングを一貫させる ⭐ */
-    font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace !important; 
-    
-    /* フォントの継承がモバイルで崩れないよう、念のため重要度を上げる */
-    font-weight: normal !important;
+     -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+   
 }
 
 /* ------------------------------------------------ */
