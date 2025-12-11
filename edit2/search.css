@@ -75,12 +75,16 @@
 /* ★ 検索ハイライトのスタイル (NEW) ★ */
 /* ------------------------------------------------ */
 
-/* 詳細度を最大限に上げ、ハイライト内部の文字色を強制的に黒にする */
+/* ズレ防止のため、行の高さとフォントサイズを絶対値で固定 */
 .highlight-container .highlighted-match,
-.highlight-container .highlighted-match * { /* ハイライト要素とその全ての子孫に適用 */
+.highlight-container .highlighted-match * {
     background-color: #007acc;
     color: black !important;
     border-radius: 2px;
+    
+    /* ⭐ 修正: edit2.css と完全に同期させるため、line-heightをpxで固定 ⭐ */
+    font-size: 14px !important;
+    line-height: 21px !important; 
 }
 
 
@@ -112,4 +116,5 @@
     #searchInput {
         width: 100px; 
     }
+    
 }

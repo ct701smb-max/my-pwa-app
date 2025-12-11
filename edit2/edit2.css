@@ -121,6 +121,8 @@ body {
     flex-grow: 1;
     position: relative;
     overflow: hidden;
+    /* ⭐ 新規追加: ラッパー全体に背景色を設定し、透けを防ぐ ⭐ */
+    background-color: #1e1e1e;
 }
 
 /* 行番号エリア */
@@ -131,7 +133,7 @@ body {
     color: #888; /* ダークテーマ */
     text-align: center;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 21px;
     white-space: pre;
     overflow-y: hidden;
     height: 100%;
@@ -146,7 +148,7 @@ body {
     outline: none;
     font-family: 'Consolas', 'Courier New', monospace;
     font-size: 14px !important; /* !important を追加 */
-    line-height: 1.5 !important; /* !important を追加 */
+    line-height: 21px !important; /* !important を追加 */
     overflow: auto;
     white-space: pre-wrap;
     
@@ -154,6 +156,15 @@ body {
     background-color: transparent;
     color: #f8f8f2; /* ダークテーマ */
     caret-color: white; /* ダークテーマ */
+    /* Webkit (Chrome, Safari) */
+    &::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+    /* IE, Edge */
+    -ms-overflow-style: none;
+    /* Firefox */
+    scrollbar-width: none;
 }
 
 /* ================================================= */
@@ -178,8 +189,8 @@ body {
     white-space: pre-wrap;
     overflow: hidden;
     
-    background-color: #1e1e1e; /* ダークテーマ */
-    color: black !important;
+    background-color: #1e1e1e !important; /* ダークテーマ */
+    color: #f8f8f2;
 }
 
 
@@ -374,12 +385,14 @@ body {
         /* フォントファミリーも強制的に一致させる */
         font-family: 'Consolas', 'Courier New', monospace !important; 
         font-size: 14px !important; 
-        line-height: 1.5 !important; /* 行の高さを固定（1.5は元のコードの値を採用） */
+        line-height: 21px !important; /* 行の高さを固定（1.5は元のコードの値を採用） */
     }
     
     /* ハイライトコンテナの位置と幅の再確認 (40pxが正しい前提) */
     .highlight-container {
-        left: 40px; 
-        width: calc(100% - 40px);
+        left: 40px !important; 
+        width: calc(100% - 40px) !important;
+        background-color: #1e1e1e !important; /* ⭐ 強化: 背景色もモバイルで固定 ⭐ */
+        overflow: hidden !important;
     }
 }
