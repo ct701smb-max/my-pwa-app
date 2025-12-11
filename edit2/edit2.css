@@ -339,7 +339,7 @@ body {
     
     /* 水平方向のパディングは、文字位置のズレに直結するため、既存の値を再適用または統一 */
     padding-left: 5px !important; 
-    padding-right: 5px !important; 
+    padding-right: 25px !important; 
 
     /* ボーダーを統一 (もし border が存在する場合、その太さを統一) */
     border: none !important;
@@ -353,7 +353,9 @@ body {
 .code-input {
     overflow-y: scroll !important;
 }
-
+.highlight-container{
+    overflow: hidden !important;
+    overflow-x: auto !important;
 /* ------------------------------------------------ */
 /* ⭐ 既存の line-height の再確認 (前回の修正が適用されていることを前提) ⭐ */
 /* ------------------------------------------------ */
