@@ -79,7 +79,7 @@
 .highlight-container .highlighted-match,
 .highlight-container .highlighted-match * {
     background-color: #007acc;
-    color: black !important;
+    color: white;
     border-radius: 2px;
     
     /* ⭐ 修正: edit2.css と完全に同期させるため、line-heightをpxで固定 ⭐ */

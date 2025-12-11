@@ -1,5 +1,5 @@
 // ------------------------------------
-// 検索機能ロジック (search.js)
+// 検索機能ロジック (search.js) - 最終修正版
 // ------------------------------------
 
 // edit2.jsで定義されているグローバル関数/変数に依存
@@ -11,17 +11,34 @@ const searchInput = document.getElementById('searchInput');
 const searchExecuteButton = document.getElementById('searchExecuteButton'); 
 
 /**
- * すべてのエディターのハイライトをクリアする。
+ * すべてのエディターのハイライトをクリアし、元のコードをハイライトコンテナに反映させる。
+ * (HTMLエスケープとタブ文字変換により、ズレを防ぎながら同期する)
  */
 function clearHighlights() {
-    const containers = [
-        document.getElementById('htmlHighlightContainer'),
-        document.getElementById('cssHighlightContainer'),
-        document.getElementById('jsHighlightContainer')
+    const editorMap = [
+        { editor: htmlInput, containerId: 'htmlHighlightContainer' },
+        { editor: cssInput, containerId: 'cssHighlightContainer' },
+        { editor: jsInput, containerId: 'jsHighlightContainer' }
     ];
-    containers.forEach(container => {
-        if (container) {
-            container.innerHTML = '';
+
+    editorMap.forEach(({ editor, containerId }) => {
+        const container = document.getElementById(containerId);
+        if (container && editor) {
+            // 1. HTMLエスケープ処理
+            let safeHtml = editor.value.replace(/[&<>"']/g, function(match) {
+                if (match === '&') return '&amp;';
+                if (match === '<') return '&lt;';
+                if (match === '>') return '&gt;';
+                if (match === '"') return '&quot;';
+                if (match === "'") return '&#39;';
+                return match;
+            });
+            
+            // 2. タブ文字を4つのスペースに変換 (横方向ズレ防止)
+            safeHtml = safeHtml.replace(/\t/g, '    ');
+            
+            // ハイライトコンテナにエスケープされたコードを挿入
+            container.innerHTML = safeHtml;
         }
     });
 }
@@ -32,7 +49,7 @@ function clearHighlights() {
 function executeSearch() {
     const keyword = searchInput.value.trim();
     
-    // 既存のハイライトをクリア
+    // 既存のハイライトをクリア (元のテキストに戻す)
     clearHighlights();
 
     if (keyword === '') {
@@ -51,7 +68,7 @@ function executeSearch() {
     let currentEditor = null;
     let highlightContainer = null;
     let editorName = '';
-
+    
     // グローバル変数が定義されていることを前提とする
     if (activePanelId === 'html-panel') {
         currentEditor = htmlInput;
@@ -66,20 +83,23 @@ function executeSearch() {
         highlightContainer = document.getElementById('jsHighlightContainer');
         editorName = 'JavaScript';
     } else {
-        // プレビュータブなどがアクティブな場合
         showToastNotification("コードエディタータブがアクティブではありません。", 2000);
         return;
     }
 
+    if (!highlightContainer) return; 
+
     const content = currentEditor.value;
-    const regex = new RegExp(keyword, 'gi'); // 大文字・小文字を区別しないグローバル検索
+    
+    // 検索キーワード内の特殊文字をエスケープして、正規表現として安全に扱う
+    const safeKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+    const regex = new RegExp(safeKeyword, 'gi'); 
     const matches = content.match(regex);
     
     if (matches && matches.length > 0) {
         showToastNotification(`${editorName}内で "${keyword}" が ${matches.length} 件見つかりました。`, 3000);
         
-        // 1. HTMLエスケープ処理
-        // < や & などの文字をハイライト処理前にエスケープし、HTMLとして解釈されないようにする
+        // 1. 元のテキストを HTML エスケープ
         let highlightedHtml = content.replace(/[&<>"']/g, function(match) {
             if (match === '&') return '&amp;';
             if (match === '<') return '&lt;';
@@ -88,12 +108,14 @@ function executeSearch() {
             if (match === "'") return '&#39;';
             return match;
         });
-        
-        // 2. 検索キーワードをハイライト用の span で囲む
-        // $& は正規表現にマッチした文字列全体を表す
-        // ★修正: インラインスタイルで color: black を強制適用する ★
-        const highlightReplace = `<span class="highlighted-match" style="color: black !important;">$&</span>`; 
-        highlightedHtml = highlightedHtml.replace(regex, highlightReplace);
+
+        // ⭐ 修正: タブ文字を4つのスペースに変換 (横方向ズレ防止) ⭐
+        highlightedHtml = highlightedHtml.replace(/\t/g, '    ');
+
+        // 2. エスケープされた文字列内で検索キーワードをハイライト用の span で囲む
+        // ⭐ CSSで black に変更済みのため、インラインスタイルを削除 (クリーンアップ) ⭐
+        const highlightReplace = `<span class="highlighted-match">$&</span>`; 
+        highlightedHtml = highlightedHtml.replace(new RegExp(safeKeyword, 'gi'), highlightReplace);
 
         // 3. ハイライトコンテナにHTMLを挿入して表示
         highlightContainer.innerHTML = highlightedHtml;
@@ -103,8 +125,7 @@ function executeSearch() {
         
     } else {
         showToastNotification(`${editorName}内で "${keyword}" は見つかりませんでした。`, 2000);
-        // 見つからなかった場合、ハイライトコンテナにコンテンツを反映
-        // ここでは clearHighlights() の直後にテキストコンテンツを反映するロジックに任せるため、innerHTML操作は不要
+        // clearHighlights() が既に実行されているため、ハイライトコンテナはリセットされている
     }
 }
 
@@ -118,10 +139,10 @@ function scrollToFirstMatch(textArea, content, keyword) {
         const textBefore = content.substring(0, firstIndex);
         const lineNumber = textBefore.split('\n').length;
         
-        const computedStyle = getComputedStyle(textArea);
-        const lineHeight = parseInt(computedStyle.lineHeight) || 21; 
+        // CSSで line-height: 21px が保証されている前提
+        const lineHeight = parseInt(getComputedStyle(textArea).lineHeight) || 21; 
         
-        // スクロール位置を設定
+        // スクロール位置を設定 
         textArea.scrollTop = (lineNumber - 1) * lineHeight;
     }
 }
@@ -135,9 +156,9 @@ function syncScroll(textAreaId, highlightContainerId, lineNumberDivId) {
     const lineNumberDiv = document.getElementById(lineNumberDivId);
     
     if (textArea && highlightContainer) {
-        // スクロール位置を同期
+        // 垂直スクロールと水平スクロールの両方を同期
         highlightContainer.scrollTop = textArea.scrollTop;
-        highlightContainer.scrollLeft = textArea.scrollLeft;
+        highlightContainer.scrollLeft = textArea.scrollLeft; 
     }
     
     if (textArea && lineNumberDiv) {
@@ -164,6 +185,9 @@ function hideSearchForm() {
         else if (activePanelId === 'css-panel' && cssInput) cssInput.focus();
         else if (activePanelId === 'js-panel' && jsInput) jsInput.focus();
     }
+    
+    // ⭐ 追記: フォームを非表示にしたときにハイライトをクリア (元のテキストに戻す) ⭐
+    clearHighlights();
 }
 
 /**
@@ -189,7 +213,6 @@ function toggleSearchForm() {
 toggleSearchButton.addEventListener('click', toggleSearchForm);
 searchExecuteButton.addEventListener('click', () => {
     executeSearch();
-    // 検索実行後もフォームは開いたままにする (連続検索を可能にするため)
 });
 
 // 2. Enterキーでの検索実行
@@ -201,38 +224,30 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // 3. コードエリアの操作イベント (スクロール同期、ハイライトクリア)
+// ⭐ edit2.js との連携を保証するため、HTML, CSS, JS のすべてで定義 ⭐
+
 if (htmlInput) {
-    // スクロール時の同期
     htmlInput.addEventListener('scroll', () => syncScroll('htmlCode', 'htmlHighlightContainer', 'htmlLineNumbers'));
-    // 入力時はハイライトをクリアし、即座に同期 (入力されたテキストをハイライトコンテナに反映)
-    htmlInput.addEventListener('input', () => { 
-        clearHighlights();
-        document.getElementById('htmlHighlightContainer').textContent = htmlInput.value;
-    });
-    // クリックでフォームを閉じる
+    htmlInput.addEventListener('input', clearHighlights); // ⭐ 修正: clearHighlights() に一本化 ⭐
     htmlInput.addEventListener('click', hideSearchForm);
 }
 
 if (cssInput) {
     cssInput.addEventListener('scroll', () => syncScroll('cssCode', 'cssHighlightContainer', 'cssLineNumbers'));
-    cssInput.addEventListener('input', () => {
-        clearHighlights();
-        document.getElementById('cssHighlightContainer').textContent = cssInput.value;
-    });
+    cssInput.addEventListener('input', clearHighlights); // ⭐ 修正: clearHighlights() に一本化 ⭐
     cssInput.addEventListener('click', hideSearchForm);
 }
 
 if (jsInput) {
     jsInput.addEventListener('scroll', () => syncScroll('jsCode', 'jsHighlightContainer', 'jsLineNumbers'));
-    jsInput.addEventListener('input', () => {
-        clearHighlights();
-        document.getElementById('jsHighlightContainer').textContent = jsInput.value;
-    });
+    jsInput.addEventListener('input', clearHighlights); // ⭐ 修正: clearHighlights() に一本化 ⭐
     jsInput.addEventListener('click', hideSearchForm);
 }
 
 // 4. タブ切り替え時にもハイライトをクリア
 document.querySelectorAll('.tab-button').forEach(button => {
-    // 検索ボタンはタブ切り替えロジックから除外されている前提
     button.addEventListener('click', clearHighlights);
 });
+
+// 5. 初期ロード時にハイライトコンテナをクリア (元のコードを反映)
+window.addEventListener('load', clearHighlights);

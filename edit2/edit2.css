@@ -127,7 +127,7 @@ body {
 
 /* 行番号エリア */
 .line-numbers {
-    width: 40px; /* ★修正: 幅を 60px に拡張 ★ */
+    width: 40px; 
     padding: 10px 0; /* ★修正: 右パディングを 8px に設定し、隠れるのを防ぐ ★ */
     background-color: #333; /* ダークテーマ */
     color: #888; /* ダークテーマ */
@@ -174,10 +174,10 @@ body {
 .highlight-container {
     position: absolute;
     top: 0;
-    left: 40px; /* ★修正: 行番号の幅 60px に合わせる ★ */
+    left: 40px; 
     
     padding: 10px; 
-    width: calc(100% - 40px); /* ★修正: 行番号の幅 60px に合わせて幅を再計算 ★ */
+    width: calc(100% - 40px); 
     height: 100%;
     
     z-index: 1;
@@ -185,7 +185,7 @@ body {
     
     font-family: 'Consolas', 'Courier New', monospace;
     font-size: 14px !important; /* !important を追加 */
-    line-height: 1.5 !important; /* !important を追加 */
+    line-height: 21px !important; /* !important を追加 */
     white-space: pre-wrap;
     overflow: hidden;
     
@@ -323,7 +323,70 @@ body {
     text-align: center;
 }
 
+/* ------------------------------------------------ */
+/* ⭐ 最終修正: スクロール時の垂直ズレ解消のためのリセット ⭐ */
+/* ------------------------------------------------ */
 
+/* .code-input は textarea、.highlight-container は div です */
+.code-input, 
+.highlight-container {
+    /* box-sizing を統一して padding/border が width/height に影響を与える方法を統一 */
+    box-sizing: border-box;
+    
+    /* 垂直方向のパディングを強制的に統一 */
+    padding-top: 10px !important; 
+    padding-bottom: 10px !important; 
+    
+    /* 水平方向のパディングは、文字位置のズレに直結するため、既存の値を再適用または統一 */
+    padding-left: 5px !important; 
+    padding-right: 5px !important; 
+
+    /* ボーダーを統一 (もし border が存在する場合、その太さを統一) */
+    border: none !important;
+    
+    /* 行番号との同期に必要な要素として、overflow-y の挙動を統一 */
+    overflow-x: auto;
+    overflow-y: scroll; /* テキストエリアのデフォルト動作 */
+}
+
+/* 垂直方向のスクロールバーの幅が異なることによるズレを防ぐため、常に表示 */
+.code-input {
+    overflow-y: scroll !important;
+}
+
+/* ------------------------------------------------ */
+/* ⭐ 既存の line-height の再確認 (前回の修正が適用されていることを前提) ⭐ */
+/* ------------------------------------------------ */
+.code-input, 
+.highlight-container, 
+.highlight-container * {
+    font-size: 14px !important; 
+    line-height: 21px !important; /* ズレを防ぐための絶対値 */
+    /* ⭐ 追記: tab-size をすべてのエディタで強制し、レンダリングを統一 ⭐ */
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+}
+
+/* ------------------------------------------------ */
+/* ⭐ 最終チェック: JavaScriptエリアの垂直ズレ対策 ⭐ */
+/* ------------------------------------------------ */
+
+/* JavaScriptエリア専用の強制ルール */
+#jsCode, 
+#jsHighlightContainer {
+    /* line-heightを確実に21pxに固定 */
+    line-height: 21px !important; 
+    font-size: 14px !important; 
+    
+    /* tab-sizeを強制的に4スペースに合わせる (search.jsのロジックと同期) */
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+    
+    /* フォントも確実に monospaced に統一 (ズレの主な原因の一つ) */
+    font-family: monospace !important;
+}
 /* ================================================= */
 /* 8. モバイル対応 (Media Queries) */
 /* ================================================= */

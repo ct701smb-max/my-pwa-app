@@ -14,6 +14,11 @@ const htmlLineNumbers = document.getElementById('htmlLineNumbers');
 const cssLineNumbers = document.getElementById('cssLineNumbers');
 const jsLineNumbers = document.getElementById('jsLineNumbers');
 
+// ⭐ 修正追加: search.js連携のためにハイライトコンテナのDOM要素を再定義 ⭐
+const htmlHighlightContainer = document.getElementById('htmlHighlightContainer');
+const cssHighlightContainer = document.getElementById('cssHighlightContainer');
+const jsHighlightContainer = document.getElementById('jsHighlightContainer');
+
 // ファイル操作要素
 const importFile = document.getElementById('importFile');
 const exportZipButton = document.getElementById('exportZipButton');
@@ -25,8 +30,7 @@ const importedImageList = document.getElementById('importedImageList');
 const toggleImageListButton = document.getElementById('toggleImageListButton'); 
 
 // 画像ファイルを格納するオブジェクト (ファイル名: Object URL)
-const importedImages = {}; // Blob URL (例: blob:http://...) が格納されている状態
-
+const importedImages = {};
 
 // ------------------------------------
 // ⭐ トースト通知表示ヘルパー関数
@@ -71,7 +75,8 @@ function showToastNotification(message, duration = 2000) {
 }
 
 
-// ⭐【行番号機能】行番号を生成・更新し、スクロールを同期する関数
+// ⭐【行番号機能】行番号を生成・更新する関数
+// ⭐ 修正: スクロール同期処理を完全に削除し、search.jsに一本化 ⭐
 function updateLineNumbers(textArea, lineNumberDiv) {
     if (!textArea || !lineNumberDiv) return;
 
@@ -84,7 +89,9 @@ function updateLineNumbers(textArea, lineNumberDiv) {
     }
     
     lineNumberDiv.innerText = lineNumbers.trimEnd();
-    lineNumberDiv.scrollTop = textArea.scrollTop;
+    
+    // ⭐ 削除: 行番号のスクロール同期は search.js の syncScroll に移譲 ⭐
+    // lineNumberDiv.scrollTop = textArea.scrollTop; 
 }
 
 
@@ -164,32 +171,31 @@ function loadCodeFromLocalStorage() {
     if (savedJsName !== null) { jsFileNameInput.value = savedJsName; }
 }
 
-// ⭐ ハイライトコンテナのスクロールを同期する関数 ⭐
-function syncScroll(textAreaId, highlightContainerId) {
-    const textArea = document.getElementById(textAreaId);
-    const highlightContainer = document.getElementById(highlightContainerId);
-    
-    if (textArea && highlightContainer) {
-        highlightContainer.scrollTop = textArea.scrollTop;
-    }
-}
+
 // ------------------------------------
 // 8. イベントリスナーと初期実行
 // ------------------------------------
 
 function handleCodeEditorInput(textArea, lineNumberDiv) {
     updatePreview(); 
-    updateLineNumbers(textArea, lineNumberDiv); 
+    updateLineNumbers(textArea, lineNumberDiv);
+    
+    // ⭐ 追記: search.js の clearHighlights() を呼び出して、入力時にハイライトコンテナに元のコードを反映させる
+    if (typeof clearHighlights === 'function') {
+        clearHighlights();
+    }
 }
 
-// コード入力/スクロール同期
+// コード入力
 htmlInput.addEventListener('input', () => handleCodeEditorInput(htmlInput, htmlLineNumbers));
 cssInput.addEventListener('input', () => handleCodeEditorInput(cssInput, cssLineNumbers));
 jsInput.addEventListener('input', () => handleCodeEditorInput(jsInput, jsLineNumbers));
 
-htmlInput.addEventListener('scroll', () => updateLineNumbers(htmlInput, htmlLineNumbers));
-cssInput.addEventListener('scroll', () => updateLineNumbers(cssInput, cssLineNumbers));
-jsInput.addEventListener('scroll', () => updateLineNumbers(jsInput, jsLineNumbers));
+// ⭐ 削除: scrollイベントリスナーを削除 (search.jsに一本化するため) ⭐
+// htmlInput.addEventListener('scroll', () => updateLineNumbers(htmlInput, htmlLineNumbers));
+// cssInput.addEventListener('scroll', () => updateLineNumbers(cssInput, cssLineNumbers));
+// jsInput.addEventListener('scroll', () => updateLineNumbers(jsInput, jsLineNumbers));
+
 
 // ファイル名入力
 htmlFileNameInput.addEventListener('input', saveCodeToLocalStorage);
@@ -216,8 +222,12 @@ loadCodeFromLocalStorage();
 updateLineNumbers(htmlInput, htmlLineNumbers);
 updateLineNumbers(cssInput, cssLineNumbers);
 updateLineNumbers(jsInput, jsLineNumbers);
-updatePreview();            
+updatePreview(); 
 
+// ⭐ 追記: search.js がロードされていれば、初期ロード時にハイライトをクリア（元のコードを反映）
+if (typeof clearHighlights === 'function') {
+    clearHighlights();
+}
 
 // ------------------------------------
 // ⭐ 画像リスト表示ヘルパー関数
@@ -319,6 +329,11 @@ function handleSingleFileImport(file, extension) {
             textArea.value = content;
             fileNameInput.value = file.name; 
             updateLineNumbers(textArea, lineNumberDiv);
+            
+            // ⭐ 追記: インポート時もハイライトをクリアし、表示をリセット ⭐
+            if (typeof clearHighlights === 'function') {
+                clearHighlights();
+            }
         }
         
         updatePreview();
@@ -334,7 +349,8 @@ function handleZipImport(file) {
     const reader = new FileReader();
     reader.onload = async (e) => {
         try {
-            const zip = await JSZip.loadAsync(e.target.result);
+            // JSZip.loadAsync はグローバルに定義されていることを想定
+            const zip = await JSZip.loadAsync(e.target.result); 
             let importedCount = 0;
 
             const filesToImport = [
@@ -361,6 +377,11 @@ function handleZipImport(file) {
             if (importedCount > 0) {
                 updatePreview();
                 alert(`ZIPファイルから ${importedCount} 個のファイルを正常にインポートしました。`);
+                
+                // ⭐ 追記: インポート時もハイライトをクリアし、表示をリセット ⭐
+                if (typeof clearHighlights === 'function') {
+                    clearHighlights();
+                }
             } else {
                 alert('ZIPファイル内にインポート可能な .html, .css, .js ファイルが見つかりませんでした。');
             }
@@ -391,7 +412,7 @@ importFile.addEventListener('change', (event) => {
 
 
 // ------------------------------------
-// ⭐【修正】エクスポート機能 (ボタンクリック後にファイル名プロンプトを表示)
+// ⭐【最終修正 ver.3】エクスポート機能 (プロンプト使用)
 // ------------------------------------
 exportZipButton.addEventListener('click', () => {
     // 1. プロンプトでファイル名を入力させる
@@ -414,7 +435,7 @@ exportZipButton.addEventListener('click', () => {
 
     const zip = new JSZip();
 
-    // 3. コードファイルを追加 (既存ロジックをそのまま使用)
+    // 3. コードファイルを追加 
     const htmlName = htmlFileNameInput.value.trim() || 'index.html';
     const cssName = cssFileNameInput.value.trim() || 'style.css';
     const jsName = jsFileNameInput.value.trim() || 'script.js';
@@ -423,7 +444,7 @@ exportZipButton.addEventListener('click', () => {
     zip.file(cssName, cssInput.value);
     zip.file(jsName, jsInput.value);
 
-    // 4. インポートされた画像ファイル (Blob URL) を fetch で取得しZIPに追加 (既存ロジックをそのまま使用)
+    // 4. インポートされた画像ファイル (Blob URL) を fetch で取得しZIPに追加
     const imagePromises = Object.entries(importedImages).map(([imgFileName, url]) => {
         return new Promise((resolve, reject) => {
             if (!url) return resolve(); 
@@ -444,12 +465,9 @@ exportZipButton.addEventListener('click', () => {
     // 5. すべての処理が完了するのを待ってからZIPを生成・ダウンロード
     Promise.all(imagePromises)
         .then(() => {
-            // ZIPファイルを生成
             return zip.generateAsync({ type: "blob" });
         })
         .then(function(content) { 
-            // ダウンロード処理
-            // ZIPファイル名には、プロンプトで取得した zipFileName を使用する
             const link = document.createElement('a');
             link.href = URL.createObjectURL(content);
             link.download = zipFileName; 
@@ -490,12 +508,29 @@ tabButtons.forEach(button => {
             updatePreview();
         }
         
+        // ⭐ 修正: タブ切り替え時も行番号の更新とハイライトのクリアを行う ⭐
+        let activeInput = null;
+        let activeLineNumbers = null;
+        
         if (targetId === 'html-panel') {
-            updateLineNumbers(htmlInput, htmlLineNumbers);
+            activeInput = htmlInput;
+            activeLineNumbers = htmlLineNumbers;
         } else if (targetId === 'css-panel') {
-            updateLineNumbers(cssInput, cssLineNumbers);
+            activeInput = cssInput;
+            activeLineNumbers = cssLineNumbers;
         } else if (targetId === 'js-panel') {
-            updateLineNumbers(jsInput, jsLineNumbers);
+            activeInput = jsInput;
+            activeLineNumbers = jsLineNumbers;
+        }
+
+        if (activeInput) {
+            updateLineNumbers(activeInput, activeLineNumbers);
+        }
+
+        // search.jsの clearHighlights() は tab-button イベントリスナーが直接呼び出すべき（search.js側で実装済み）
+        // ただし、念のためここで呼び出しをチェック
+        if (typeof clearHighlights === 'function') {
+            clearHighlights();
         }
     });
 });
