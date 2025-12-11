@@ -1,321 +1,385 @@
-/* リセットと基本設定 */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* ================================================= */
+/* Webエディター メインスタイル (edit2.css) */
+/* ================================================= */
 
-html, body {
-    height: 100%;
+/* ベースリセット */
+body {
+    margin: 0; /* 全幅表示のためにマージンを削除 */
+    padding: 0;
     font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
 }
 
 .editor-container {
     display: flex;
     flex-direction: column;
-    height: 100vh; /* 画面の高さ全体を使う */
+    width: 100%; /* 全幅表示 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
 }
 
-/* ------------------------------------------------ */
-/* メニューバーとタブのスタイル */
-/* ------------------------------------------------ */
+/* ================================================= */
+/* 1. タブメニュー (Tab Menu) */
+/* ================================================= */
 
 .tab-menu {
     display: flex;
     background-color: #333;
-    padding: 5px;
-    flex-shrink: 0; 
-    gap: 5px; /* タブグループ間のスペース */
+    padding: 5px 10px;
+    height: 50px;
+    align-items: flex-end;
+    gap: 5px; /* タブグループ間の隙間 */
 }
 
-/* タブボタンとファイル名入力フィールドを囲むグループ */
 .tab-group {
     display: flex;
-    flex-direction: column; /* ファイル名の上にボタンを配置 */
-    flex: 1; 
-    min-width: 0; 
+    flex-direction: column;
+    flex-grow: 1; /* 均等にスペースを埋める */
+    min-width: 0;
 }
 
-/* ファイル名入力フィールドのスタイル */
+/* ファイル名入力欄 */
 .file-name-input {
-    width: 100%;
+    background: transparent;
+    border: 1px solid #555;
+    color: #bbb;
     padding: 2px 5px;
-    margin-bottom: 2px;
-    border: 1px solid #666;
-    background-color: #1e2127; /* コードエリアと近い色 */
-    color: #f8f8f2; /* 明るい白 */
-    font-size: 12px;
+    font-size: 14px;
     text-align: center;
-    border-radius: 3px;
-    overflow: hidden;
-    text-overflow: ellipsis; 
-    white-space: nowrap;
+    border-radius: 3px 3px 0 0;
+    height: 15px;
+    margin-bottom: 2px;
 }
 
+/* タブボタンの基本スタイル */
 .tab-button {
-    width: 100%; 
-    padding: 6px 0; 
-    margin: 0; 
-    border: none;
-    cursor: pointer;
     background-color: #555;
     color: white;
-    font-size: 14px; 
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    flex-grow: 1;
+    font-size: 14px;
+    border-radius: 4px 4px 0 0;
     transition: background-color 0.3s;
-    border-radius: 4px;
-}
-
-/* プレビューボタンの調整 (ファイル名入力欄がないため) */
-.tab-menu > .tab-button[data-tab="preview-panel"] {
-    flex-basis: 150px; 
-    flex-grow: 0; 
-    padding: 20px 0; 
-    align-self: flex-end; 
+    height: 30px;
+    text-align: center; /* テキストを中央寄せ */
 }
 
 .tab-button:hover:not(.active) {
     background-color: #666;
 }
 
-/* 選択中のタブのスタイル */
 .tab-button.active {
-    background-color: #007bff; 
-    font-weight: bold;
+    background-color: #2c3e50;
 }
 
-/* ------------------------------------------------ */
-/* エディタコンテンツエリアのスタイル */
-/* ------------------------------------------------ */
+/* プレビューボタン */
+.tab-menu > .tab-button[data-tab="preview-panel"] {
+    flex-basis: 50px;
+    flex-grow: 0;
+    padding: 5px;
+    height:50px;
+    align-self: flex-end;
+    background-color: #007bff;
+}
+
+.tab-menu > .tab-button[data-tab="preview-panel"]:hover {
+    background-color: #0056b3;
+}
+
+/* ================================================= */
+/* 2. コンテンツエリア (Content Area) */
+/* ================================================= */
 
 .content-wrapper {
-    flex: 1; /* 残りの高さをすべて使う */
-    position: relative;
+    display: flex;
+    flex-grow: 1;
     overflow: hidden;
 }
 
 .tab-content {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    display: none;
+    flex-grow: 1;
     padding: 0;
-    display: none; 
+    overflow: auto;
 }
 
 .tab-content.active {
-    display: block;
+    display: flex;
 }
 
-/* ⭐ 行番号とテキストエリアのラッパー */
+/* ================================================= */
+/* 3. コードエディター (Code Editor) */
+/* ================================================= */
+
 .code-editor-wrapper {
-    display: flex; 
-    height: 100%;
-    width: 100%;
+    display: flex;
+    flex-grow: 1;
+    position: relative;
     overflow: hidden;
 }
 
-/* ⭐ 行番号表示エリア */
+/* 行番号エリア */
 .line-numbers {
-    padding: 10px 8px;
-    background-color: #282c34; /* 行番号の背景色 */
-    color: #636d83; /* 行番号の色 */
-    font-family: 'Consolas', 'Courier New', monospace;
+    width: 40px; /* ★修正: 幅を 60px に拡張 ★ */
+    padding: 10px 0; /* ★修正: 右パディングを 8px に設定し、隠れるのを防ぐ ★ */
+    background-color: #333; /* ダークテーマ */
+    color: #888; /* ダークテーマ */
+    text-align: center;
     font-size: 14px;
-    line-height: 1.5; /* テキストエリアと行の高さを合わせる */
-    text-align: right;
-    user-select: none; 
-    flex-shrink: 0; 
-    overflow: hidden;
-    white-space: pre; 
+    line-height: 1.5;
+    white-space: pre;
+    overflow-y: hidden;
+    height: 100%;
 }
 
-/* ⭐ コード入力エリアのスタイル */
+/* テキスト入力エリア */
 .code-input {
-    flex-grow: 1; /* 残りのスペースを占める */
-    width: 100%;
-    height: 100%;
+    flex-grow: 1;
     padding: 10px;
     border: none;
     resize: none;
+    outline: none;
     font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5; /* 行番号と高さを合わせる */
-    background-color: #1e2127; /* ダークテーマ */
-    color: #f8f8f2; /* 明るい白 */
-    caret-color: #f8f8f2; 
+    font-size: 14px !important; /* !important を追加 */
+    line-height: 1.5 !important; /* !important を追加 */
+    overflow: auto;
+    white-space: pre-wrap;
+    
+    z-index: 2;
+    background-color: transparent;
+    color: #f8f8f2; /* ダークテーマ */
+    caret-color: white; /* ダークテーマ */
 }
 
-/* プレビュー iframe のスタイル */
-#preview-panel {
-    background-color: white; 
+/* ================================================= */
+/* 4. ハイライトコンテナ (Highlight Container) */
+/* ================================================= */
+
+.highlight-container {
+    position: absolute;
+    top: 0;
+    left: 40px; /* ★修正: 行番号の幅 60px に合わせる ★ */
+    
+    padding: 10px; 
+    width: calc(100% - 40px); /* ★修正: 行番号の幅 60px に合わせて幅を再計算 ★ */
+    height: 100%;
+    
+    z-index: 1;
+    pointer-events: none;
+    
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px !important; /* !important を追加 */
+    line-height: 1.5 !important; /* !important を追加 */
+    white-space: pre-wrap;
+    overflow: hidden;
+    
+    background-color: #1e1e1e; /* ダークテーマ */
+    color: black !important;
 }
+
+
+/* ================================================= */
+/* 5. プレビューフレーム (Preview Frame) */
+/* ================================================= */
 
 #preview {
     width: 100%;
     height: 100%;
     border: none;
-    background-color: white;
 }
 
-/* ------------------------------------------------ */
-/* ⭐ 画像リスト表示エリアのスタイル */
-/* ------------------------------------------------ */
-.imported-images-list {
-    background-color: #f8f8f8;
-    border-top: 1px solid #ccc;
-    padding: 10px;
-    display: flex;
-    overflow-x: auto; 
-    flex-shrink: 0; 
-    max-height: 100px; 
-    align-items: center;
-    gap: 15px; 
-}
-
-/* 画像リストを非表示にするクラス */
-.imported-images-list.hidden {
-    display: none;
-}
-
-/* 画像アイテムのコンテナ */
-.image-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: border 0.2s;
-}
-
-.image-item:hover {
-    border-color: #007bff;
-}
-
-/* サムネイル画像 */
-.image-item img {
-    width: 60px; 
-    height: 60px; 
-    object-fit: contain; 
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 3px;
-    background-color: white;
-}
-
-/* ファイル名表示 */
-.image-item span {
-    font-size: 10px;
-    color: #555;
-    max-width: 60px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis; 
-}
-
-/* ------------------------------------------------ */
-/* ファイル操作エリアのスタイル */
-/* ------------------------------------------------ */
+/* ================================================= */
+/* 6. ファイル操作/ボタン (File Operations) */
+/* ================================================= */
 
 .file-operations {
     display: flex;
-    align-items: center; 
-    justify-content: space-around;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
     padding: 10px;
-    background-color: #f0f0f0; 
-    border-top: 1px solid #ccc; 
-    flex-shrink: 0;
-    gap: 10px; 
+    background-color: #ddd;
+    gap: 10px;
+    min-height: 50px;
 }
 
-/* ZIPファイル名入力欄のグループ */
 .file-name-input-group {
     display: flex;
     align-items: center;
     gap: 5px;
+    margin-right: auto;
 }
 
-.file-name-input-group label {
-    font-size: 16px;
-    color: #333;
-    white-space: nowrap;
+.file-operations label {
+    font-size: 14px;
 }
 
-/* ZIPファイル名入力欄 */
-#fileNameInput {
-    padding: 5px 8px;
+.file-operations input[type="text"] {
+    padding: 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    font-size: 14px;
-    width: 150px; 
+    width: 120px;
 }
 
+/* ファイルボタンの共通スタイル */
 .file-button {
-    padding: 8px 15px;
+    padding: 8px 12px;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-    text-align: center;
     white-space: nowrap;
+    transition: background-color 0.2s;
 }
 
-.import-button {
-    background-color: #28a745; 
+/* ボタン個別のスタイル */
+.import-button, .image-import-button {
+    background-color: #28a745;
     color: white;
+}
+.import-button:hover, .image-import-button:hover {
+    background-color: #218838;
 }
 
 .export-button {
-    background-color: #007bff; 
+    background-color: #007bff;
     color: white;
 }
-
-.image-import-button {
-    background-color: #ffc107; /* 黄色っぽい色 */
-    color: #333;
+.export-button:hover {
+    background-color: #0056b3;
 }
 
-/* ⭐ トグルボタンのスタイル */
 .toggle-button {
-    background-color: #6c757d; 
+    background-color: #6c757d;
     color: white;
 }
-
-.file-button:hover {
-    opacity: 0.8;
+.toggle-button:hover {
+    background-color: #5a6268;
 }
 
-/* (オプション) モバイルでの調整 */
+
+/* ================================================= */
+/* 7. インポート画像リスト (Imported Images List) */
+/* ================================================= */
+
+.imported-images-list {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-top: 1px solid #eee;
+    max-height: 150px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.imported-images-list.hidden {
+    display: none;
+}
+
+.image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.image-item:hover {
+    background-color: #e9e9e9;
+}
+
+.image-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    margin-bottom: 5px;
+}
+
+.image-item span {
+    font-size: 10px;
+    word-break: break-all;
+    max-width: 60px;
+    text-align: center;
+}
+
+
+/* ================================================= */
+/* 8. モバイル対応 (Media Queries) */
+/* ================================================= */
+
 @media (max-width: 768px) {
-    .file-operations {
-        flex-wrap: wrap; 
-        justify-content: center;
-        gap: 8px;
-    }
-    .file-name-input-group, 
-    #fileNameInput {
-        width: 100%; 
-        justify-content: center;
-    }
-    #fileNameInput {
-        max-width: 200px;
-    }
-    .file-button {
-        font-size: 12px;
-        padding: 6px 10px;
-    }
+    
     .tab-menu {
-        flex-wrap: nowrap; 
-        overflow-x: auto; 
+        padding: 5px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 2px;
+    }
+    
+    .tab-group {
+        margin-right: 5px;
+        min-width: 100px;
     }
 
-    /* ファイル名入力フィールドのスタイル */
-    /* プレビューボタンの調整 (ファイル名入力欄がないため) */
-.tab-menu > .tab-button[data-tab="preview-panel"] {
-    flex-basis: 50px;   
-}
-}
 
+    .tab-button {
+        padding: 5px;
+    }
 
+    /* プレビューボタンの調整 */
+    .tab-menu > .tab-button[data-tab="preview-panel"] {
+        flex-basis: 50px;
+        padding: 5px;
+        font-size: 0;
+    }
+    
+    .tab-menu > .tab-button[data-tab="preview-panel"] i {
+        font-size: 14px;
+    }
+
+    /* ファイル操作エリア */
+    .file-operations {
+        padding: 5px;
+        gap: 5px;
+        justify-content: space-around;
+    }
+
+    .file-name-input-group {
+        display: none;
+    }
+
+    .file-button {
+        padding: 6px 8px;
+        font-size: 12px;
+        flex-grow: 1;
+    }
+
+    .imported-images-list {
+        justify-content: center;
+    }
+    /* ⭐ 最重要：コードエリアの行の高さを強制統一し、ズレを防止する ⭐ */
+    .code-input,
+    .line-numbers,
+    .highlight-container {
+        /* フォントファミリーも強制的に一致させる */
+        font-family: 'Consolas', 'Courier New', monospace !important; 
+        font-size: 14px !important; 
+        line-height: 1.5 !important; /* 行の高さを固定（1.5は元のコードの値を採用） */
+    }
+    
+    /* ハイライトコンテナの位置と幅の再確認 (40pxが正しい前提) */
+    .highlight-container {
+        left: 40px; 
+        width: calc(100% - 40px);
+    }
+}

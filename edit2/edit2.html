@@ -5,16 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>Webエディター</title>
+    
     <link rel="stylesheet" href="edit2.css">
+    <link rel="stylesheet" href="search.css">
+    
     <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-<script src="your_script_name.js"></script>
+    
 </head>
 <body>
     
+    <div id="searchFormContainer" class="search-form-container hidden">
+        <input type="text" id="searchInput" placeholder="キーワードを入力">
+        <button id="searchExecuteButton" class="file-button export-button">実行</button>
+    </div>
+
     <div class="editor-container">
+        
         <nav class="tab-menu">
+            
             <div class="tab-group">
                 <input type="text" class="file-name-input" id="htmlFileNameInput" value="index.html">
                 <button class="tab-button active" data-tab="html-panel">HTML</button>
@@ -30,28 +40,37 @@
                 <button class="tab-button" data-tab="js-panel">JavaScript</button>
             </div>
             
-            <button class="tab-button" data-tab="preview-panel"><i class="fas fa-eye"></i></button>
+            <button id="toggleSearchButton" class="search-toggle-button" title="コードを検索">
+                <i class="fas fa-search"></i> 検索
+            </button>
+            
+            <button class="tab-button" data-tab="preview-panel" title="プレビューを表示">
+                <i class="fas fa-eye"></i>
+            </button>
         </nav>
 
         <div class="content-wrapper">
             
             <div id="html-panel" class="tab-content active">
-                <div class="code-editor-wrapper">
+                <div class="code-editor-wrapper" id="htmlEditorWrapper">
                     <div class="line-numbers" id="htmlLineNumbers">1</div>
+                    <div class="highlight-container" id="htmlHighlightContainer"></div>
                     <textarea id="htmlCode" class="code-input" placeholder="ここにHTMLコードを入力"></textarea>
                 </div>
             </div>
 
             <div id="css-panel" class="tab-content">
-                <div class="code-editor-wrapper">
+                <div class="code-editor-wrapper" id="cssEditorWrapper">
                     <div class="line-numbers" id="cssLineNumbers">1</div>
+                    <div class="highlight-container" id="cssHighlightContainer"></div>
                     <textarea id="cssCode" class="code-input" placeholder="ここにCSSコードを入力"></textarea>
                 </div>
             </div>
 
             <div id="js-panel" class="tab-content">
-                <div class="code-editor-wrapper">
+                <div class="code-editor-wrapper" id="jsEditorWrapper">
                     <div class="line-numbers" id="jsLineNumbers">1</div>
+                    <div class="highlight-container" id="jsHighlightContainer"></div>
                     <textarea id="jsCode" class="code-input" placeholder="ここにJavaScriptコードを入力"></textarea>
                 </div>
             </div>
@@ -62,14 +81,9 @@
         </div>
         
         <div id="importedImageList" class="imported-images-list">
-            </div>
+        </div>
 
         <div class="file-operations">
-            
-            <div class="file-name-input-group">
-                <label for="fileNameInput">エクスポートファイル名:</label>
-                <input type="text" id="fileNameInput" value="project" placeholder="ファイル名を入力 (例: project)">
-            </div>
             
             <button id="toggleImageListButton" class="file-button toggle-button">
                 画像リストを隠す
@@ -91,6 +105,8 @@
         </div>
     </div>
 
-    <script src="edit2.js"></script> 
+    <script src="edit2.js"></script>
+    <script src="search.js"></script>
+    
 </body>
 </html>

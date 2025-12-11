@@ -1,0 +1,115 @@
+/* ------------------------------------------------ */
+/* 検索機能 (Search) のスタイル */
+/* ------------------------------------------------ */
+
+/* ⭐ 検索トグルボタンのスタイル調整 (タブメニュー内) */
+.tab-menu > .search-toggle-button {
+    flex-basis: 120px; /* PCでの幅 */
+    flex-grow: 0;
+    padding: 10px 0;
+    height:50px;
+    align-self: flex-end; 
+    background-color: #6c757d; 
+    
+    /* tab-buttonから流用するスタイル */
+    width: auto;
+    margin: 0;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    border-radius: 4px;
+}
+
+/* ------------------------------------------------ */
+/* 検索フォームコンテナの固定配置 */
+/* ------------------------------------------------ */
+
+#searchFormContainer {
+    /* 画面上部右端に固定表示するための設定 */
+    position: fixed; 
+    top: 70px; /* ★最終調整値: タブメニューとの重なりを避けるため★ */
+    right: 15px;
+    
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    
+    /* 見た目の設定 */
+    background-color: #f0f0f0; 
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+
+    /* アニメーション用 */
+    opacity: 1; 
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+/* 非表示クラス */
+#searchFormContainer.hidden {
+    display: none; 
+}
+
+/* ------------------------------------------------ */
+/* フォーム要素のスタイル */
+/* ------------------------------------------------ */
+
+#searchInput {
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 150px;
+}
+
+#searchExecuteButton {
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------ */
+/* ★ 検索ハイライトのスタイル (NEW) ★ */
+/* ------------------------------------------------ */
+
+/* 詳細度を最大限に上げ、ハイライト内部の文字色を強制的に黒にする */
+.highlight-container .highlighted-match,
+.highlight-container .highlighted-match * { /* ハイライト要素とその全ての子孫に適用 */
+    background-color: #007acc;
+    color: black !important;
+    border-radius: 2px;
+}
+
+
+/* ------------------------------------------------ */
+/* モバイル対応 (@media max-width: 768px) */
+/* ------------------------------------------------ */
+
+@media (max-width: 768px) {
+    
+    /* 検索ボタンのタブ内での調整 (プレビューボタンと同じ幅に) */
+    .tab-menu > .search-toggle-button {
+        flex-basis: 50px; 
+        font-size: 0; /* 文字を非表示 */
+        padding: 20px 0;
+    }
+    
+    /* アイコンは表示を維持 */
+    .tab-menu > .search-toggle-button .fa-search {
+        font-size: 14px;
+    }
+
+    /* モバイルでの検索フォームの位置調整 */
+    #searchFormContainer {
+        top: 70px; /* ★最終調整値★ */
+        right: 5px;
+        max-width: calc(100% - 10px); 
+    }
+    
+    #searchInput {
+        width: 100px; 
+    }
+}

@@ -164,7 +164,15 @@ function loadCodeFromLocalStorage() {
     if (savedJsName !== null) { jsFileNameInput.value = savedJsName; }
 }
 
-
+// ⭐ ハイライトコンテナのスクロールを同期する関数 ⭐
+function syncScroll(textAreaId, highlightContainerId) {
+    const textArea = document.getElementById(textAreaId);
+    const highlightContainer = document.getElementById(highlightContainerId);
+    
+    if (textArea && highlightContainer) {
+        highlightContainer.scrollTop = textArea.scrollTop;
+    }
+}
 // ------------------------------------
 // 8. イベントリスナーと初期実行
 // ------------------------------------
@@ -383,15 +391,30 @@ importFile.addEventListener('change', (event) => {
 
 
 // ------------------------------------
-// ⭐【最終修正 ver.2】エクスポート機能 (zipFileNameのスコープ修正)
+// ⭐【修正】エクスポート機能 (ボタンクリック後にファイル名プロンプトを表示)
 // ------------------------------------
 exportZipButton.addEventListener('click', () => {
+    // 1. プロンプトでファイル名を入力させる
+    const defaultFileName = 'web_editor_project';
+    const fileName = prompt("エクスポートするZIPファイルのベースファイル名を入力してください:", defaultFileName);
+
+    // キャンセルまたは空文字チェック
+    if (fileName === null || fileName.trim() === '') {
+        showToastNotification("エクスポートがキャンセルされました。", 1500);
+        return;
+    }
+
+    // ファイル名として安全な文字に変換
+    const safeBaseFileName = fileName.trim().replace(/[\\/:*?"<>|]/g, '_');
+    const zipFileName = `${safeBaseFileName}.zip`;
+    
+    // 2. ボタンの無効化とUI更新
     exportZipButton.disabled = true;
-    exportZipButton.textContent = 'ZIP生成中...'; 
+    exportZipButton.textContent = 'ZIP生成中...';
 
     const zip = new JSZip();
 
-    // 1. コードファイルを追加 (省略)
+    // 3. コードファイルを追加 (既存ロジックをそのまま使用)
     const htmlName = htmlFileNameInput.value.trim() || 'index.html';
     const cssName = cssFileNameInput.value.trim() || 'style.css';
     const jsName = jsFileNameInput.value.trim() || 'script.js';
@@ -400,63 +423,52 @@ exportZipButton.addEventListener('click', () => {
     zip.file(cssName, cssInput.value);
     zip.file(jsName, jsInput.value);
 
-    // 2. インポートされた画像ファイル (Blob URL) を fetch で取得しZIPに追加 (省略)
-    const imagePromises = Object.entries(importedImages).map(([fileName, url]) => {
-        // ... (fetchとPromiseのロジックは変更なし) ...
+    // 4. インポートされた画像ファイル (Blob URL) を fetch で取得しZIPに追加 (既存ロジックをそのまま使用)
+    const imagePromises = Object.entries(importedImages).map(([imgFileName, url]) => {
         return new Promise((resolve, reject) => {
             if (!url) return resolve(); 
             
             fetch(url)
                 .then(response => response.ok ? response.arrayBuffer() : Promise.reject(new Error(`HTTP status ${response.status}`)))
                 .then(arrayBuffer => {
-                    zip.file(fileName, arrayBuffer, { binary: true });
+                    zip.file(imgFileName, arrayBuffer, { binary: true });
                     resolve();
                 })
                 .catch(e => {
-                    console.error(`Fetch failed for image ${fileName}:`, e);
-                    reject(new Error(`Failed to fetch image data for ${fileName}`));
+                    console.error(`Fetch failed for image ${imgFileName}:`, e);
+                    reject(new Error(`Failed to fetch image data for ${imgFileName}`));
                 });
         });
     });
 
-    // 3. すべての処理が完了するのを待ってからZIPを生成
+    // 5. すべての処理が完了するのを待ってからZIPを生成・ダウンロード
     Promise.all(imagePromises)
         .then(() => {
-            // ⭐ 1. zipFileName を定義
-            let baseFileName = 'web_editor_project'; 
-            if (fileNameInput && fileNameInput.value.trim() !== '') {
-                baseFileName = fileNameInput.value.trim().replace(/\.zip$/i, ''); 
-            }
-            const zipFileName = `${baseFileName}.zip`;
-            
-            // ⭐ 2. 次の then に zipFileName と zip Blob を両方渡す
-            return Promise.all([
-                zip.generateAsync({ type: "blob" }),
-                Promise.resolve(zipFileName) 
-            ]);
+            // ZIPファイルを生成
+            return zip.generateAsync({ type: "blob" });
         })
-        .then(function([content, zipFileName]) { // ⭐ 3. 配列の分割代入で zipFileName を受け取る
+        .then(function(content) { 
             // ダウンロード処理
+            // ZIPファイル名には、プロンプトで取得した zipFileName を使用する
             const link = document.createElement('a');
             link.href = URL.createObjectURL(content);
-            link.download = zipFileName; // ⭐ zipFileName の参照が有効になる
+            link.download = zipFileName; 
             link.click();
             
             URL.revokeObjectURL(link.href);
             
             const imageCount = Object.keys(importedImages).length;
-            alert(`すべてのファイルと画像 (${imageCount}点) をZIPでエクスポートしました: ${zipFileName}`);
-       })
-       .catch((error) => {
+            showToastNotification(`ZIPエクスポート完了: ${zipFileName} (画像 ${imageCount}点)`, 5000);
+        })
+        .catch((error) => {
             console.error('最終的なZIP生成/処理エラー:', error);
-            alert(`ファイルの追加またはZIPの生成中にエラーが発生しました。\n詳細: ${error.message || error}`);
-       })
-       .finally(() => {
+            showToastNotification(`ZIPの生成中にエラーが発生しました。\n詳細: ${error.message || error}`, 5000);
+        })
+        .finally(() => {
             exportZipButton.disabled = false;
             exportZipButton.textContent = 'ZIPでエクスポート (すべて)'; 
-       });
+        });
 });
-
 
 // ------------------------------------
 // 9. タブ切り替え機能
