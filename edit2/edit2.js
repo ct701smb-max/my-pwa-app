@@ -14,7 +14,7 @@ const htmlLineNumbers = document.getElementById('htmlLineNumbers');
 const cssLineNumbers = document.getElementById('cssLineNumbers');
 const jsLineNumbers = document.getElementById('jsLineNumbers');
 
-// ⭐ 修正追加: search.js連携のためにハイライトコンテナのDOM要素を再定義 ⭐
+// search.js連携のためにハイライトコンテナのDOM要素を再定義
 const htmlHighlightContainer = document.getElementById('htmlHighlightContainer');
 const cssHighlightContainer = document.getElementById('cssHighlightContainer');
 const jsHighlightContainer = document.getElementById('jsHighlightContainer');
@@ -76,7 +76,6 @@ function showToastNotification(message, duration = 2000) {
 
 
 // ⭐【行番号機能】行番号を生成・更新する関数
-// ⭐ 修正: スクロール同期処理を完全に削除し、search.jsに一本化 ⭐
 function updateLineNumbers(textArea, lineNumberDiv) {
     if (!textArea || !lineNumberDiv) return;
 
@@ -89,13 +88,34 @@ function updateLineNumbers(textArea, lineNumberDiv) {
     }
     
     lineNumberDiv.innerText = lineNumbers.trimEnd();
-    
-    // ⭐ 削除: 行番号のスクロール同期は search.js の syncScroll に移譲 ⭐
-    // lineNumberDiv.scrollTop = textArea.scrollTop; 
 }
 
 
-// ⭐ ライブプレビュー機能 (画像URL置換ロジックを含む)
+// ------------------------------------
+// ⭐ 画像URL置換ヘルパー関数 (NEW) ⭐
+// ------------------------------------
+/**
+ * コード内のインポートされた画像ファイル名を Blob URL に置換する。
+ * @param {string} code - HTML, CSS, または JavaScript のコード文字列。
+ * @returns {string} Blob URL に置換されたコード。
+ */
+function replaceImageUrls(code) {
+    let newCode = code;
+    
+    for (const [fileName, url] of Object.entries(importedImages)) {
+        // 正規表現: 'fileName' または "fileName" に一致させる
+        // 例: src="image.jpg", url('image.jpg'), 'image.jpg'
+        const regex = new RegExp(`(['"])${fileName}(['"])`, 'gi');
+        
+        // 置換: マッチしたクォーテーションを保持しつつ、ファイル名部分を Blob URL に置き換える
+        // $1は最初のキャプチャグループ（クォーテーション）、$2は2番目のキャプチャグループ
+        newCode = newCode.replace(regex, `$1${url}$2`);
+    }
+    return newCode;
+}
+
+
+// ⭐ ライブプレビュー機能 (画像URL置換ロジックを拡張)
 function updatePreview() {
     const htmlCode = htmlInput.value;
     const cssCode = cssInput.value;
@@ -103,24 +123,23 @@ function updatePreview() {
 
     const previewDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
 
-    let finalHtmlCode = htmlCode;
-    for (const [fileName, url] of Object.entries(importedImages)) {
-        const regex = new RegExp(`src=["']${fileName}["']`, 'gi');
-        finalHtmlCode = finalHtmlCode.replace(regex, `src="${url}"`);
-    }
+    // ⭐ 修正: すべてのコードに対して置換関数を適用する ⭐
+    const finalHtmlCode = replaceImageUrls(htmlCode);
+    const finalCssCode = replaceImageUrls(cssCode);
+    const finalJsCode = replaceImageUrls(jsCode);
 
     const content = `
         <!DOCTYPE html>
         <html>
         <head>
             <title>Preview</title>
-            <style>${cssCode}</style>
+            <style>${finalCssCode}</style>
         </head>
         <body>
             ${finalHtmlCode}
             <script>
                 try {
-                    ${jsCode}
+                    ${finalJsCode} 
                 } catch (e) {
                     window.parent.console.error('Preview JS Error:', e.message);
                 }
@@ -180,7 +199,7 @@ function handleCodeEditorInput(textArea, lineNumberDiv) {
     updatePreview(); 
     updateLineNumbers(textArea, lineNumberDiv);
     
-    // ⭐ 追記: search.js の clearHighlights() を呼び出して、入力時にハイライトコンテナに元のコードを反映させる
+    // search.js の clearHighlights() を呼び出して、入力時にハイライトコンテナに元のコードを反映させる
     if (typeof clearHighlights === 'function') {
         clearHighlights();
     }
@@ -190,12 +209,6 @@ function handleCodeEditorInput(textArea, lineNumberDiv) {
 htmlInput.addEventListener('input', () => handleCodeEditorInput(htmlInput, htmlLineNumbers));
 cssInput.addEventListener('input', () => handleCodeEditorInput(cssInput, cssLineNumbers));
 jsInput.addEventListener('input', () => handleCodeEditorInput(jsInput, jsLineNumbers));
-
-// ⭐ 削除: scrollイベントリスナーを削除 (search.jsに一本化するため) ⭐
-// htmlInput.addEventListener('scroll', () => updateLineNumbers(htmlInput, htmlLineNumbers));
-// cssInput.addEventListener('scroll', () => updateLineNumbers(cssInput, cssLineNumbers));
-// jsInput.addEventListener('scroll', () => updateLineNumbers(jsInput, jsLineNumbers));
-
 
 // ファイル名入力
 htmlFileNameInput.addEventListener('input', saveCodeToLocalStorage);
@@ -224,7 +237,7 @@ updateLineNumbers(cssInput, cssLineNumbers);
 updateLineNumbers(jsInput, jsLineNumbers);
 updatePreview(); 
 
-// ⭐ 追記: search.js がロードされていれば、初期ロード時にハイライトをクリア（元のコードを反映）
+// search.js がロードされていれば、初期ロード時にハイライトをクリア（元のコードを反映）
 if (typeof clearHighlights === 'function') {
     clearHighlights();
 }
@@ -236,7 +249,11 @@ if (typeof clearHighlights === 'function') {
 function addImageToDisplayList(fileName, imageUrl) {
     const existingItem = document.getElementById(`img-item-${fileName}`);
     if (existingItem) {
-        // Blob URLを解放せずに古い要素を削除 (importedImagesにURLが残るため)
+        // 既存の Blob URL を解放する処理
+        const oldUrl = importedImages[fileName];
+        if (oldUrl && oldUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(oldUrl);
+        }
         existingItem.remove(); 
     }
     
@@ -281,15 +298,15 @@ importImageFile.addEventListener('change', (event) => {
     const fileName = file.name;
     
     if (importedImages[fileName]) {
-        showToastNotification(`エラー: すでに ${fileName} という名前の画像がインポートされています。`, 2500);
-        event.target.value = '';
-        return;
+        // 上書き処理を行うが、先に古い URL を解放するために addImageToDisplayList が内部で処理する
+        showToastNotification(`画像 "${fileName}" は上書きされました。`, 2500);
     }
 
-    // Blob URL を生成し、importedImagesにURLを保存 (このURLをZIP作成時にfetchする)
+    // Blob URL を生成し、importedImagesにURLを保存 
     const imageUrl = URL.createObjectURL(file);
     importedImages[fileName] = imageUrl;
 
+    // addImageToDisplayList で古い URL の解放と DOM の更新を行う
     addImageToDisplayList(fileName, imageUrl);
 
     showToastNotification(`画像 "${fileName}" をインポートしました。`, 2500);
@@ -330,7 +347,7 @@ function handleSingleFileImport(file, extension) {
             fileNameInput.value = file.name; 
             updateLineNumbers(textArea, lineNumberDiv);
             
-            // ⭐ 追記: インポート時もハイライトをクリアし、表示をリセット ⭐
+            // インポート時もハイライトをクリアし、表示をリセット
             if (typeof clearHighlights === 'function') {
                 clearHighlights();
             }
@@ -378,7 +395,7 @@ function handleZipImport(file) {
                 updatePreview();
                 alert(`ZIPファイルから ${importedCount} 個のファイルを正常にインポートしました。`);
                 
-                // ⭐ 追記: インポート時もハイライトをクリアし、表示をリセット ⭐
+                // インポート時もハイライトをクリアし、表示をリセット
                 if (typeof clearHighlights === 'function') {
                     clearHighlights();
                 }
@@ -412,7 +429,7 @@ importFile.addEventListener('change', (event) => {
 
 
 // ------------------------------------
-// ⭐【最終修正 ver.3】エクスポート機能 (プロンプト使用)
+// エクスポート機能
 // ------------------------------------
 exportZipButton.addEventListener('click', () => {
     // 1. プロンプトでファイル名を入力させる
@@ -457,7 +474,8 @@ exportZipButton.addEventListener('click', () => {
                 })
                 .catch(e => {
                     console.error(`Fetch failed for image ${imgFileName}:`, e);
-                    reject(new Error(`Failed to fetch image data for ${imgFileName}`));
+                    // エラーが出ても他のファイルのエクスポートは続行できるように resolve() する方が良い場合もある
+                    resolve(); 
                 });
         });
     });
@@ -498,39 +516,52 @@ tabButtons.forEach(button => {
     button.addEventListener('click', () => {
         const targetId = button.dataset.tab;
 
-        tabButtons.forEach(btn => btn.classList.remove('active'));
+        // アクティブ状態の切り替えとARIA属性の更新
+        tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.hasAttribute('role') && btn.getAttribute('role') === 'tab') {
+                btn.setAttribute('aria-selected', 'false');
+            }
+        });
         tabContents.forEach(content => content.classList.remove('active'));
 
         button.classList.add('active');
         document.getElementById(targetId).classList.add('active');
+        if (button.hasAttribute('role') && button.getAttribute('role') === 'tab') {
+            button.setAttribute('aria-selected', 'true');
+        }
         
         if (targetId === 'preview-panel') {
             updatePreview();
+            return; 
         }
         
-        // ⭐ 修正: タブ切り替え時も行番号の更新とハイライトのクリアを行う ⭐
-        let activeInput = null;
-        let activeLineNumbers = null;
+        // アクティブなエディタの特定と更新
+        let activeInput, activeLineNumbers;
         
-        if (targetId === 'html-panel') {
-            activeInput = htmlInput;
-            activeLineNumbers = htmlLineNumbers;
-        } else if (targetId === 'css-panel') {
-            activeInput = cssInput;
-            activeLineNumbers = cssLineNumbers;
-        } else if (targetId === 'js-panel') {
-            activeInput = jsInput;
-            activeLineNumbers = jsLineNumbers;
+        switch (targetId) {
+            case 'html-panel':
+                activeInput = htmlInput;
+                activeLineNumbers = htmlLineNumbers;
+                break;
+            case 'css-panel':
+                activeInput = cssInput;
+                activeLineNumbers = cssLineNumbers;
+                break;
+            case 'js-panel':
+                activeInput = jsInput;
+                activeLineNumbers = jsLineNumbers;
+                break;
         }
 
         if (activeInput) {
             updateLineNumbers(activeInput, activeLineNumbers);
-        }
-
-        // search.jsの clearHighlights() は tab-button イベントリスナーが直接呼び出すべき（search.js側で実装済み）
-        // ただし、念のためここで呼び出しをチェック
-        if (typeof clearHighlights === 'function') {
-            clearHighlights();
+            // search.js の clearHighlights() を呼び出し
+            if (typeof clearHighlights === 'function') {
+                clearHighlights();
+            }
+            // タブ切り替え時、スクロール位置を上端にリセット
+            activeInput.scrollTop = 0;
         }
     });
 });
