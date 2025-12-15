@@ -229,19 +229,19 @@ searchInput.addEventListener('keydown', (e) => {
 if (htmlInput) {
     htmlInput.addEventListener('scroll', () => syncScroll('htmlCode', 'htmlHighlightContainer', 'htmlLineNumbers'));
     htmlInput.addEventListener('input', clearHighlights); // ⭐ 修正: clearHighlights() に一本化 ⭐
-    htmlInput.addEventListener('click', hideSearchForm);
+   // htmlInput.addEventListener('click', hideSearchForm);
 }
 
 if (cssInput) {
     cssInput.addEventListener('scroll', () => syncScroll('cssCode', 'cssHighlightContainer', 'cssLineNumbers'));
     cssInput.addEventListener('input', clearHighlights); // ⭐ 修正: clearHighlights() に一本化 ⭐
-    cssInput.addEventListener('click', hideSearchForm);
+   // cssInput.addEventListener('click', hideSearchForm);
 }
 
 if (jsInput) {
     jsInput.addEventListener('scroll', () => syncScroll('jsCode', 'jsHighlightContainer', 'jsLineNumbers'));
     jsInput.addEventListener('input', clearHighlights); // ⭐ 修正: clearHighlights() に一本化 ⭐
-    jsInput.addEventListener('click', hideSearchForm);
+   // jsInput.addEventListener('click', hideSearchForm);
 }
 
 // 4. タブ切り替え時にもハイライトをクリア
