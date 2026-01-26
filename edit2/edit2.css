@@ -105,7 +105,7 @@ body {
     display: none;
     flex-grow: 1;
     padding: 0;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .tab-content.active {
