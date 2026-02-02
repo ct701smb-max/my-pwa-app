@@ -16,67 +16,43 @@ const fileList = document.getElementById('fileList');
 const saveCurrentImageButton = document.getElementById('saveCurrentImageButton');
 const cropAlert = document.getElementById('cropAlert');
 
-let imageFiles = [];    // 選択された全ファイル
-let croppedImages = []; //{ dataURL, originalFileName, originalType } | null
+let imageFiles = [];
+let croppedImages = [];
 let currentIndex = 0;
 let cropper = null;
 
 // ===========================================
 // ユーティリティ関数
 // ===========================================
-/**
- * 一時的なポップアップメッセージを表示する
- */
 function showTemporaryAlert(message, duration = 1500) {
-    if (!cropAlert) return; // 要素が存在しない場合は何もしない
-
+    if (!cropAlert) return;
     cropAlert.textContent = message;
-    cropAlert.classList.add('show'); // 表示クラスを追加 (CSSでフェードイン)
-
-    // 指定された時間（ミリ秒）後に非表示にする
-    setTimeout(() => {
-        cropAlert.classList.remove('show'); // 表示クラスを削除 (CSSでフェードアウト)
-    }, duration);
+    cropAlert.classList.add('show');
+    setTimeout(() => cropAlert.classList.remove('show'), duration);
 }
-/**
- * Cropper.jsにトリミング範囲のデータ（x, y, width, height）を設定する
- */
+
 function setCropData(data) {
-    if (cropper) {
-        cropper.setData(data);
-    }
+    if (cropper) cropper.setData(data);
 }
 
-/**
- * Base64データURLをBlob（バイナリデータ）に変換するヘルパー関数
- */
 function dataURLtoBlob(dataurl) {
     const arr = dataurl.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1]; 
-    const bstr = atob(arr[1]); 
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-    
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    
-    return new Blob([u8arr], {type: mime});
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new Blob([u8arr], { type: mime });
 }
 
-/**
- * ファイルリストUIをレンダリングする
- */
 function renderFileList() {
-    fileList.innerHTML = ''; 
-    
+    fileList.innerHTML = '';
     imageFiles.forEach((file, index) => {
         const li = document.createElement('li');
         li.className = 'file-item';
         li.draggable = true;
         li.dataset.index = index;
-        
-        // 現在表示中の画像を目立たせる
+
         if (index === currentIndex) {
             li.style.backgroundColor = '#e6f7ff';
             li.style.fontWeight = 'bold';
@@ -86,8 +62,7 @@ function renderFileList() {
         const isCropped = croppedImages[index] !== null;
         nameSpan.textContent = `${isCropped ? '✅ ' : '⏳ '} ${file.name}`;
         nameSpan.title = file.name;
-        
-        // 削除ボタン
+
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = '✖';
@@ -95,46 +70,40 @@ function renderFileList() {
             e.stopPropagation();
             removeFile(index);
         };
-        
+
         li.appendChild(nameSpan);
         li.appendChild(removeBtn);
 
-if (isCropped) {
+        if (isCropped) {
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'download-single-btn';
-            downloadBtn.textContent = 'ダウンロード'; // ダウンロードのアイコンやテキスト
+            downloadBtn.textContent = 'ダウンロード';
             downloadBtn.title = 'トリミング画像をダウンロード';
             downloadBtn.onclick = (e) => {
-                e.stopPropagation(); // liへのクリックイベントを停止
+                e.stopPropagation();
                 downloadSingleImage(index);
             };
             li.appendChild(downloadBtn);
         }
-        
+
         li.addEventListener('click', () => {
             currentIndex = index;
             loadAndInitCropper(currentIndex);
         });
-        
+
         fileList.appendChild(li);
     });
-
     addDragAndDropListeners();
 }
 
-/**
- * ファイルをリストから削除する
- */
 function removeFile(indexToRemove) {
     if (imageFiles.length === 0) return;
 
     imageFiles.splice(indexToRemove, 1);
     croppedImages.splice(indexToRemove, 1);
-    
+
     if (imageFiles.length > 0) {
-        if (currentIndex >= imageFiles.length) {
-            currentIndex = imageFiles.length - 1;
-        }
+        if (currentIndex >= imageFiles.length) currentIndex = imageFiles.length - 1;
         loadAndInitCropper(currentIndex);
     } else {
         totalImagesSpan.textContent = 0;
@@ -143,19 +112,15 @@ function removeFile(indexToRemove) {
         if (cropper) cropper.destroy();
         cropper = null;
     }
-    
     totalImagesSpan.textContent = imageFiles.length;
     updateUI();
 }
 
-/**
- * UI（ボタンやインデックス、リスト）の状態を更新する関数
- */
 function updateUI() {
     const total = imageFiles.length;
     currentImageIndexSpan.textContent = total > 0 ? currentIndex + 1 : 0;
     totalImagesSpan.textContent = total;
-    
+
     prevButton.disabled = currentIndex === 0 || total === 0;
     nextButton.disabled = currentIndex === total - 1 || total === 0;
     cropButton.disabled = total === 0;
@@ -170,15 +135,12 @@ function updateUI() {
     duplicateButton.disabled = controlDisabled;
     sortByNameButton.disabled = controlDisabled;
 
-const isCurrentCropped = croppedImages[currentIndex] !== null;
+    const isCurrentCropped = croppedImages[currentIndex] !== null;
     saveCurrentImageButton.disabled = !isCurrentCropped;
-    
+
     renderFileList();
 }
 
-/**
- * 画像を読み込み、Cropper.jsを初期化する
- */
 function loadAndInitCropper(index) {
     if (index < 0 || index >= imageFiles.length) return;
 
@@ -190,32 +152,26 @@ function loadAndInitCropper(index) {
             cropper.destroy();
             cropper = null;
         }
-        
+
         imageDisplay.innerHTML = `<img id="currentImage" src="${event.target.result}">`;
         const currentImage = document.getElementById('currentImage');
 
         cropper = new Cropper(currentImage, {
-            aspectRatio: NaN, 
-            viewMode: 1,
-            // 以下の2つのオプションを追加または確認します
-            // 1. 画像の回転を許可 (UIボタンがあれば)
+            aspectRatio: NaN,
+            viewMode: 1,
             rotatable: true,
-            // 2. ExifのOrientation情報を読み取り、画像を自動回転させる (最も重要)
-            autoCropArea: 1, // Exif情報で正しい向きに表示された後、画像全体を選択する
-            ready: function () {
-                // Exif情報で画像が回転された後、自動的にその向きに合わせる
-                cropper.setCropBoxData(cropper.getContainerData());
-            },
-            // 画像の方向を自動で正すオプション
-            // Cropper.jsのバージョンによってはこのオプション名ではない場合がありますが、
-            // 一般的に autoCrop, autoCropArea, viewMode:1 が解決のヒントになります
-            // **古いバージョンの場合、`autoCropArea` の設定と外部ライブラリの利用が必要なことがあります**
-        });
-        
+            autoCropArea: 1,
+
+            // ================================
+            // ピンチアウト・拡大防止のオプション
+            zoomable: false,
+            scalable: false,
+            toggleDragModeOnDblclick: false
+            // ================================
+        });
+
         currentImage.addEventListener('ready', () => {
             const imageData = cropper.getImageData();
-            
-            // 初期状態を画像全体にする
             cropper.setData({
                 x: 0,
                 y: 0,
@@ -223,12 +179,11 @@ function loadAndInitCropper(index) {
                 height: imageData.naturalHeight
             });
         });
-        
+
         updateUI();
     };
     reader.readAsDataURL(file);
 }
-
 // ===========================================
 // ドラッグ＆ドロップ処理
 // ===========================================
@@ -586,6 +541,14 @@ function downloadSingleImage(index) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+// ===========================================
+// ブラウザのピンチ・ズーム防止
+// ===========================================
+['contextmenu','selectstart'].forEach(evt => imageDisplay.addEventListener(evt, e => e.preventDefault()));
+['touchstart','touchmove','gesturestart','gesturechange','gestureend'].forEach(evt => {
+    imageDisplay.addEventListener(evt, e => e.preventDefault(), { passive: false });
+});
 
 // 初期UI更新
 updateUI();
