@@ -51,6 +51,14 @@
             border-color: #91d5ff;
             font-weight: bold;
         }
+        /* 長押し・選択・拡大メニューを無効化 */
+#imageDisplay,
+#imageDisplay * {
+    -webkit-touch-callout: none; /* iOS 長押しメニュー禁止 */
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: none; /* ジェスチャー抑制 */
+}
     </style>
 </head>
 <body>

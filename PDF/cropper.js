@@ -17,7 +17,7 @@ const saveCurrentImageButton = document.getElementById('saveCurrentImageButton')
 const cropAlert = document.getElementById('cropAlert');
 
 let imageFiles = [];    // 選択された全ファイル
-let croppedImages = []; // トリミング後のデータURLを格納
+let croppedImages = []; //{ dataURL, originalFileName, originalType } | null
 let currentIndex = 0;
 let cropper = null;
 
@@ -589,3 +589,13 @@ function downloadSingleImage(index) {
 
 // 初期UI更新
 updateUI();
+
+['contextmenu', 'selectstart'].forEach(evt => {
+    imageDisplay.addEventListener(evt, e => e.preventDefault());
+});
+
+imageDisplay.addEventListener(
+    'touchstart',
+    e => e.preventDefault(),
+    { passive: false }
+);
