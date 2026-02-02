@@ -83,7 +83,15 @@
                     </button>
                     <!-- divタグ: <div>\n\n</div> -->
                     <button data-tag-type="div" title="divタグ挿入" class="tag-button control-button">
+                        div
+                    </button>
+                    <!-- タグ: <></> -->
+                    <button data-tag-type="tag" title="タグ挿入" class="tag-button control-button">
                         &lt;/&gt;
+                    </button>
+                    <!-- 属性: ="" -->
+                    <button data-tag-type="char" title="属性挿入" class="tag-button control-button">
+                        =""
                     </button>
                     <!-- コメント -->
                     <button data-tag-type="comment" title="コメントタグ挿入 ()" class="tag-button control-button">
@@ -94,7 +102,13 @@
                         tab
                     </button>
                 </div>
-
+                
+<div id="tag-shortcut-panel">
+                    <!-- h1スタイル: h1{} -->
+                    <button data-tag-type="h1" title="h1スタイル挿入" class="tag-button2 control-button">
+                        h1
+                    </button>
+    </div>
             </div>
             
             <div id="code-content" class="tab-content active">
@@ -111,8 +125,8 @@
         <div class="panel preview-panel">
             <div class="header">
                 <h2>Preview</h2>
-                   <button id="switch-to-editor" title="コード全画面表示" class="toggle-button2">
-                    <i class="fas fa-file-code" style="font-size: 20px;"></i>
+                   <button id="switch-to-editor" title="コード全画面表示" class="toggle-button">
+                    <i class="fas fa-file-code"></i>
                 </button>
             </div>
             <iframe id="preview-iframe"></iframe>

@@ -76,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     highlightLayer,
     // ...
 };
+
+    
     // ------------------------------------
     // 2. ファイル管理の状態変数と定数
     // ------------------------------------
@@ -336,25 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <body>
     <h1>Webサイトをつくろう！</h1>
 
-<!--　ハンバーガーメニュー -->
-<div class="menu-toggle" id="menu-toggle">
-  <span></span>
-  <span></span>
-  <span></span>
-</div>
-<!--　メニュー本体 -->
 
-<div id="menu">
-	<ul>
-		<li><a href="#" target="_blank">リンク１</a></li>
-		<li><a href="#" target="_blank">リンク２</a></li>
-		<li><a href="#" target="_blank">リンク３</a></li>
-		<li><a href="#" target="_blank">リンク４</a></li>
-		<li><a href="#" target="_blank">リンク５</a></li>
-		<li><a href="#" target="_blank">リンク６</a></li>
-		<li><a href="#" target="_blank">リンク７</a></li>
-	</ul>
-  </div>
 
     <script src="${jsFileName}"></script>
     <!--PWA用処理-->
@@ -407,7 +391,7 @@ h1 {
   text-align: center;           /* 文字の位置（中央） */
   border-radius: 90px;          /* 枠線のカーブ */
   padding: 10px 10px 10px;      /* 余白（上下左右） */
-  margin: 30px 0px 0px;         /* 上:20pxの余白 */
+  margin: 20px 0px 0px;         /* 上:20pxの余白 */
   font-family: 'Lobster', cursive; /* フォント指定（Google Fontsで読み込み必要） */
   word-break: break-word;       /* 長い単語で折り返す */
 }
@@ -458,169 +442,10 @@ h2 {
   }
 }
 
-/* メニューバー */
-/*========= PC表示 ==========*/
-#menu {
-  border-top: 3px solid #cccccc;
-  border-bottom: 3px solid #cccccc;
-  background: #ffffff;
-  height: 47px;
-  width: 100%;
-  color: #ffffff;
-}
-
-#menu ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-}
-
-#menu ul li {
-  flex: 1; /* 均等に分ける */
-  height: 47px;
-  border-right: 1px solid #ffffff;
-}
-
-#menu ul li:last-child {
-  border-right: none;
-}
-
-#menu ul li a {
-  display: block;
-  color: #ffffff;
-  background: #000000;
-  font-weight: bold;
-  font-size: 18px;
-  text-align: center;
-  letter-spacing: 2px;
-  line-height: 47px;
-  text-decoration: none;
-}
-
-#menu ul li a:hover {
-  color: #000000;
-  background: #cccccc;
-  text-decoration: underline;
-}
-
-/*========= ハンバーガーボタン ==========*/
-.menu-toggle {
-  display: none;
-  cursor: pointer;
-  width: 30px;
-  height: 25px;
-  position: fixed;
-  top: 15px;
-  right: 15px;
-  z-index: 1001;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 5px;
-  padding: 5px;
-}
-
-.menu-toggle span {
-  display: block;
-  height: 3px;
-  background: #fff;
-  margin: 4px 0;
-  transition: 0.4s;
-  border-radius: 2px;
-}
-
-.menu-toggle.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-.menu-toggle.active span:nth-child(2) {
-  opacity: 0;
-}
-.menu-toggle.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(6px, -6px);
-}
-
-/*========= スマホ表示 ==========*/
-@media screen and (max-width: 600px) {
-  #menu {
-    height: auto; /* 高さ固定しない */
-    border: none;
-    background: transparent;
-  }
-
-  #menu ul {
-    position: fixed;
-    top: 60px;
-    right: 15px;
-    width: 50vw;
-    max-height: 80vh;
-    background: #fff;
-    display: none;
-    flex-direction: column;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    overflow-y: auto;
-    z-index: 1000;
-  }
-
-  #menu ul.active {
-    display: flex;
-  }
-
-  #menu ul li {
-    border-bottom: 1px solid #ddd;
-    width: 100%;
-  }
-
-  #menu ul li:last-child {
-    border-bottom: none;
-  }
-
-  #menu ul li a {
-    display: block;
-    padding: 15px;
-    color: #000;
-    background: transparent;
-    font-size: 16px;
-    text-align: left;
-    line-height: 1.5;
-  }
-
-  #menu ul li a:hover {
-    background: #eee;
-    color: #000;
-  }
-
-  .menu-toggle {
-    display: block;
-  }
-}
 `;
         } else if (type === 'js') {
             return `/* ${name} */
-/*ハンバーガーメニュー*/
-document.addEventListener("DOMContentLoaded", function () {
-    const toggle = document.getElementById("menu-toggle");
-    const menu = document.getElementById("menu");
-    const menuLists = document.querySelectorAll("#menu ul");
-
-    // メニュー開閉
-    toggle.addEventListener("click", function (e) {
-      e.stopPropagation(); // イベントのバブリングを防止
-      toggle.classList.toggle("active");
-      menuLists.forEach(function (ul) {
-        ul.classList.toggle("active");
-      });
-    });
-
-    // メニューの外をクリックしたら閉じる
-    document.addEventListener("click", function (event) {
-      if (!toggle.contains(event.target) && !menu.contains(event.target)) {
-        toggle.classList.remove("active");
-        menuLists.forEach(function (ul) {
-          ul.classList.remove("active");
-        });
-      }
-    });
-  });
+/*コードを入力してください*/
 `;
         } else if (type === 'json') {
             return `{
@@ -1981,7 +1806,15 @@ document.addEventListener('keydown', (event) => {
                 break;
             case 'div':// divタグの処理
                 tagToInsert = '<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">\n\n</div>';
-                cursorOffset = '<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">\n'.length;
+                cursorOffset = '<div>\n'.length;
+                break;
+                case 'tag':// タグの処理
+                tagToInsert = '<></>';
+                cursorOffset = '<'.length;
+                break;
+                case 'char':// 属性の処理
+                tagToInsert = '=""';
+                cursorOffset = '="'.length;
                 break;
             case 'comment': // コメントタグの処理
                 tagToInsert = '<!--コメント-->';
@@ -1990,6 +1823,11 @@ document.addEventListener('keydown', (event) => {
             case 'tab': // タブの挿入
                 tagToInsert = '    ';
                 cursorOffset = '   \n'.length;
+                break;
+
+                case 'h1':// h1スタイルの処理
+                tagToInsert = 'h1{}';
+                cursorOffset = 'h1{'.length;
                 break;
             default:
                 return;
@@ -2015,7 +1853,7 @@ document.addEventListener('keydown', (event) => {
     }
     
     // タグショートカットボタンのイベントリスナー設定 (HTMLから移動)
-    const tagButtons = document.querySelectorAll('#tag-shortcut-panel .tag-button');
+    const tagButtons = document.querySelectorAll('#tag-shortcut-panel .tag-button, #tag-shortcut-panel .tag-button2');
     tagButtons.forEach(button => {
         button.addEventListener('click', () => {
             const tagType = button.getAttribute('data-tag-type');

@@ -14,7 +14,8 @@ body {
 
 #app-container {
     display: flex;
-    flex-direction: column; /* 常に縦並びで、どちらかを隠す */
+    /* デフォルトはモバイル優先で縦並び */
+    flex-direction: column;
     height: 100%;
     box-sizing: border-box;
     transition: all 0.3s ease; /* スムーズな切り替え */
@@ -26,9 +27,10 @@ body {
     box-sizing: border-box;
     overflow: hidden;
     padding: 0;
-    /* 初期状態はどちらも画面半分 */
+    /* 縦並びのデフォルトサイズ */
     height: 50%; 
     min-height: 0; 
+    width: 100%; /* 縦並び時はフル幅 */
 }
 
 /* ================================== */
@@ -56,18 +58,7 @@ body {
     margin-left: 5px; 
     flex-shrink: 0;
 }
-.toggle-button2 {
-    background: none;
-    border: none;
-    color: #000; /* エディタ側デフォルト色 */
-    font-size: 1.2em;
-    cursor: pointer;
-    padding: 5px;
-    margin-left: 5px; 
-    flex-shrink: 0;
-    position: absolute; 
-    right: 0;
-}
+
 /* ★ 操作ボタンの共通スタイル (エクスポート/インポートなど) */
 .control-button {
     background-color: #555;
@@ -81,7 +72,7 @@ body {
     line-height: 1;
     display: flex; /* アイコンとテキストを縦方向中央に配置 */
     align-items: center;
-    justify-content: center; /* 水平方向の中央揃え (新規調整) */
+    justify-content: center; /* 水平方向の中央揃え */
     flex-shrink: 0; 
 }
 
@@ -199,9 +190,7 @@ body {
     border: 1px solid #555;
     background-color: #444;
     outline: none;
-    flex-grow: 1;  利用可能なスペースを占有 -> 削除 */
-    
-    flex-shrink: 0; /* 縮小を禁止 */
+    flex-grow: 1; /* 利用可能なスペースを占有 */
     box-sizing: border-box;
     min-width: 100px;
 }
@@ -212,8 +201,8 @@ body {
 /* 共通コード入力エリア (エディタ本体) */
 #code-content {
     flex-grow: 1;
+    height: calc(100% - 40px); /* ヘッダー高さを引いた残りの高さ */
     box-sizing: border-box;
-    overflow-y: auto;
 }
 
 /* 行番号とコード入力を保持するコンテナ */
@@ -223,6 +212,7 @@ body {
     width: 100%;
     padding: 10px 0 10px 10px; /* コードと行番号の両方にかかるパディング */
     box-sizing: border-box;
+    overflow: hidden; 
     background-color: #222; /* HTMLのデフォルト背景色 */
     position: relative;
 }
@@ -244,7 +234,11 @@ body {
 
 /* 実際のコード入力エリア */
 #code-input {
-    width: calc(100% - 30px - 10px);
+    position: absolute;
+    top: 10px;
+    right: 0;
+    /* line-numbers(30px) + padding-left(10px) + padding-right(10px) = 50px */
+    width: calc(100% - 48px);
     height: calc(100% - 20px);
     padding: 0 10px 0 0; 
     border: none;
@@ -258,6 +252,7 @@ body {
     z-index: 1;
     outline: none;
     line-height: 1.5; 
+    overflow-y: scroll; /* 縦スクロールを担当 */
     margin-left: 0px; /* 行番号との隙間を詰める */
 }
 
@@ -298,18 +293,15 @@ body {
 }
 
 .preview-panel h2 {
-    /* 🌟 ここを修正しました 🌟 */
     margin: 0;
     padding: 10px 0;
     font-size: 1.1em;
     color: #333;
-    /* flex-grow: 1; /* 利用可能なスペースを占有 -> 削除 */
-    width: 150px; /* 幅を固定 (エディター側と統一) */
-    flex-shrink: 0; /* 縮小を禁止 */
+    flex-grow: 1;
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; /* ... で省略表示 */
-    /* max-width: calc(100% - 60px); /* ボタンの幅を考慮 -> 削除 */
+    max-width: calc(100% - 60px); /* ボタンの幅を考慮 */
 }
 /* プレビューパネル内の切り替えボタンの色調整 */
 .preview-panel .toggle-button {
@@ -327,60 +319,112 @@ body {
 /* 7. 全画面表示と補助機能 */
 /* ================================== */
 
+/* ---------------------------------- */
+/* 縦分割（モバイルサイズ、またはデフォルト）での全画面表示 */
+/* ---------------------------------- */
+
 /* コード全画面表示モード (.view-editor) */
 .view-editor .editor-panel {
     height: 100%; 
     flex: 1;
 }
 .view-editor .preview-panel {
-    height: 100%; 
-    flex: 0; /* 非表示 */
+    height: 0; /* 高さを0にして非表示 */
+    flex: 0;
 }
 
 /* プレビュー全画面表示モード (.view-preview) */
 .view-preview .editor-panel {
-    height: 0;  
-    flex: 0; 
+    height: 0; /* 高さを0にして非表示 */
+    flex: 0;
 }
 .view-preview .preview-panel {
-    height: 100%;  
+    height: 100%; 
     flex: 1;
 }
 
-/* 1. エディター側のヘッダー（ファイル名、Import/Exportなど）を画面上部に固定 */
-.view-preview .editor-panel .header {
-    display: flex !important;
-    position: fixed !important; 
-    top: 0 !important;
-    width: 96% !important;
-    z-index: 1000 !important; /* 最前面に表示 */
-    border-bottom: 2px solid #000;
+/* ---------------------------------- */
+/* 右側のコントロールパネル (Undo/Redo, タグショートカットなど) */
+/* ---------------------------------- */
+
+#control-panel-right {
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-end;
+    position: absolute;
+    top: 50px; /* ヘッダーの下に配置 */
+    right: 5px;
+    z-index: 50; 
+    gap: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    background: rgba(40, 40, 40, 0.8);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-/* 2. プレビュー側のヘッダー（エディターに戻るボタン）も表示を維持し、エディターヘッダーのすぐ下に固定 */
-.view-preview .preview-panel .header {
-    display: flex !important; /* 非表示設定を上書き */
-    position: fixed !important;
-    top: 40px; /* エディターヘッダーの高さ（40px）のすぐ下に配置 */
-    width: 100% !important;
-    z-index: 999; /* エディターヘッダーより一つ下 */
-    /* プレビュー側のヘッダー色を維持 */
-}
-
-/* 3. プレビュー iframe の表示開始位置を、2つのヘッダーの合計の高さ分だけずらす */
-.view-preview #preview-iframe {
-    /* 2つのヘッダーの合計高さ: 40px + 40px = 80px */
-    height: calc(100% - 120px); 
-    margin-top: 120px; 
-}
-
-/* 4. 右側のコントロールパネルはエディタ非表示時は不要なので非表示を維持 */
+/* プレビュー全画面表示時、Undo/Redoボタンを非表示にする */
 #app-container.view-preview #control-panel-right {
     display: none;
 }
 
+/* タグショートカットパネルのスタイル */
+#tag-shortcut-panel {
+    display: flex;
+    flex-direction: column; /* タグボタンを縦に並べる */
+    gap: 5px; /* タグボタン間の間隔 */
+    margin-top: 10px; /* Undo/Redoボタンとの間にスペース */
+    padding-top: 5px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%; /* 親に合わせて幅を確保 */
+    align-items: flex-end;
+}
+
+/* タグボタンの固有スタイル */
+.tag-button {
+    width: 40px; /* 幅を固定 */
+    height: 40px; /* 高さを固定 */
+    min-width: 0;
+    padding: 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #5c6bc0; /* 青系の色で識別しやすく */
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    /* control-buttonのスタイルを上書き */
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+.tag-button:hover {
+    background-color: #7986cb;
+}
+
+/* タグボタンの固有スタイル */
+.tag-button2 {
+    width: 40px; /* 幅を固定 */
+    height: 40px; /* 高さを固定 */
+    min-width: 0;
+    padding: 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000;
+    background-color: #7fff00; /* 緑系の色で識別しやすく */
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    /* control-buttonのスタイルを上書き */
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+.tag-button2:hover {
+    background-color: #00fa9a;
+}
+
 /* ================================== */
-/* 7. 検索ハイライトと全画面表示の機能CSS */
+/* 8. 検索ハイライト機能 */
 /* ================================== */
 
 /* 検索結果を重ねて表示するレイヤーのスタイル */
@@ -419,31 +463,54 @@ body {
 }
 
 
+/* ================================== */
+/* 9. レスポンシブデザイン（モバイル対応） */
+/* ================================== */
 
-/* 右側のコントロールパネル (Undo/Redoなど) */
-#control-panel-right {
-    display: flex;
-    flex-direction: column; 
-    align-items: flex-end;
-    position: absolute;
-    top: 50px; /* ヘッダーの下に配置 */
-    right: 5px;
-    z-index: 50; 
-    gap: 5px;
-    padding: 5px;
-    border-radius: 5px;
-    background: rgba(40, 40, 40, 0.8);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+/* ---------------------------------- */
+/* PCサイズ以上 (769px以上) - 横分割レイアウト */
+/* ---------------------------------- */
+@media (min-width: 769px) {
+    #app-container {
+        /* PCサイズ以上は横並び */
+        flex-direction: row;
+    }
+    .panel {
+        /* 横並びのデフォルトサイズ */
+        width: 50%;
+        height: 100%; /* 高さもフルに */
+    }
+
+    /* 横分割時の全画面表示ロジック（幅で制御） */
+    .view-editor .editor-panel {
+        width: 100%;
+        height: 100%; /* 縦の制限を解除 */
+        flex: 1;
+    }
+    .view-editor .preview-panel {
+        width: 0;
+        height: 100%; 
+        flex: 0;
+        /* 非表示 */
+    }
+    .view-preview .editor-panel {
+        width: 0;
+        height: 100%; 
+        flex: 0;
+        /* 非表示 */
+    }
+    .view-preview .preview-panel {
+        width: 100%;
+        height: 100%; 
+        flex: 1;
+    }
+
+    /* PCモードではハンバーガーメニューを非表示にする */
+    .file-menu-toggle {
+        display: none;
+    }
 }
 
-/* プレビュー全画面表示時、Undo/Redoボタンを非表示にする */
-#app-container.view-preview #control-panel-right {
-    display: none;
-}
-
-/* ================================== */
-/* 8. レスポンシブデザイン（モバイル対応） */
-/* ================================== */
 
 /* ---------------------------------- */
 /* モバイル向けメディアクエリ (768px以下) */
@@ -506,102 +573,30 @@ body {
         background-color: #555;
         color: white;
     }
-}
 
-
-/* ---------------------------------- */
-/* モバイルフレンドリーな調整 (600px以下) */
-/* ---------------------------------- */
-@media (max-width: 600px) {
-    #control-panel-right {
-        top: 50px; 
-        right: 0px;
-        background: none;
-        box-shadow: none;
-    }
-    /* Undo/Redo/Previewボタンのサイズを大きくしてタッチしやすいようにする */
-    #control-panel-right .control-button {
-        padding: 8px 12px; 
-        font-size: 16px; 
-    }
-}
-
-/* ---------------------------------- */
-/* PCモードの調整 (601px以上) */
-/* ---------------------------------- */
-@media (min-width: 601px) {
-    /* PCモードではハンバーガーメニューを非表示にする */
-    #file-menu-toggle {
-        display: none;
-    }
-}
-     
-        
-        /* 🌟 [新規追加] タグショートカットパネルのスタイル */
-        #tag-shortcut-panel {
-            display: flex;
-            flex-direction: column; /* タグボタンを縦に並べる */
-            gap: 5px; /* タグボタン間の間隔 */
-            margin-top: 10px; /* Undo/Redoボタンとの間にスペース */
-            padding-top: 5px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* ---------------------------------- */
+    /* より小さなモバイルフレンドリーな調整 (600px以下) */
+    /* ---------------------------------- */
+    @media (max-width: 600px) {
+        #control-panel-right {
+            top: 50px; 
+            right: 0px;
+            background: none;
+            box-shadow: none;
+        }
+        /* Undo/Redo/Previewボタンのサイズを大きくしてタッチしやすいようにする */
+        #control-panel-right .control-button {
+            padding: 8px 12px; 
+            font-size: 16px; 
         }
 
-        /* 🌟 [新規追加] タグボタンの固有スタイル */
+        /* タグボタンもタッチしやすいサイズに調整 */
         .tag-button {
-            width: 40px; /* 幅を固定 */
-            height: 40px; /* 高さを固定 */
-            min-width: 0;
-            padding: 0;
-            font-size: 14px;
-            font-weight: bold;
-            color: #fff;
-            background-color: #5c6bc0; /* 青系の色で識別しやすく */
-            border: none;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            width: 44px;
+            height: 44px;
+            font-size: 16px;
         }
-
-        
-
-        /* モバイルフレンドリーな調整 */
-        @media (max-width: 600px) {
-            #control-panel-right {
-                top: 50px;
-                right: 0px;
-                background: none;
-                box-shadow: none;
-            }
-            
-        }
-
-/* ====================================
-   プレビュー切り替え機能のスタイル
-==================================== */
-
-/* 通常時: エディタとプレビューが横並び */
-#code-area {
-    width: 50%; 
-    display: flex;
-}
-#preview-area {
-    width: 50%;
-    display: block; 
+    }
 }
 
-/* プレビューモード時 (.preview-active が #app-container に付与される) */
-#app-container.preview-active #code-area {
-    display: none; /* エディタを非表示 */
-}
-#app-container.preview-active #preview-area {
-    width: 100%; /* プレビューを全幅表示 */
-    display: block;
-}
 
-/* エディタモード時 (通常時と同じだが、念のため) */
-#app-container:not(.preview-active) #code-area {
-    display: flex;
-}
-#app-container:not(.preview-active) #preview-area {
-    display: block;
-}
