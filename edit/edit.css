@@ -529,7 +529,7 @@ body {
     
     /* ファイルタブコンテナを絶対配置にし、デフォルトで非表示 */
     .file-tabs-container {
-        display: none; /* デフォルトで非表示 */
+        display: flex; /* デフォルトで表示 */
         position: absolute; 
         top: 40px; /* ヘッダーの高さ(40px)のすぐ下に配置 */
         left: 0;
