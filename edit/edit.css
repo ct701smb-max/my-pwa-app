@@ -39,13 +39,15 @@ body {
 
 .header {
     display: flex;
-    align-items: center; /* 要素を垂直方向に中央揃え */
-    padding: 0 10px; /* 左右にパディング */
+    flex-wrap: wrap;    /* ★重要：入り切らないボタンを改行させる */
+    align-items: center;
+    padding: 5px 10px;  /* 上下パディングを少し追加 */
     border-bottom: 2px solid #555;
-    background-color: #333; /* エディタ側ヘッダーのデフォルト色 */
-    height: 40px; /* ヘッダーの高さを固定 */
-    gap: 10px; /* 要素間の間隔を追加 */
-    position: relative; /* 子要素 (ハンバーガーメニュー) の absolute 配置の基点 */
+    background-color: #333;
+    min-height: 40px;   /* ★ height を min-height に変更 */
+    height: auto;       /* ★ 自動で伸びるようにする */
+    gap: 5px;           /* 間隔を少し詰める */
+    position: relative;
 }
 
 .toggle-button {
@@ -529,7 +531,7 @@ body {
     
     /* ファイルタブコンテナを絶対配置にし、デフォルトで非表示 */
     .file-tabs-container {
-        display: flex; /* デフォルトで表示 */
+        display: none; /* デフォルトで非表示 */
         position: absolute; 
         top: 40px; /* ヘッダーの高さ(40px)のすぐ下に配置 */
         left: 0;
@@ -599,4 +601,28 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    /* 1. ファイル名入力欄を極限まで縮小可能にする */
+    .filename-input {
+        min-width: 50px; 
+        flex-shrink: 1;
+        font-size: 14px;
+        padding: 2px 5px;
+    }
 
+    /* 2. 各ボタンの余白を最小限にする */
+    .header {
+        gap: 4px; /* 要素間の隙間を狭く */
+        padding: 0 5px;
+    }
+
+    .control-button {
+        padding: 5px 6px; /* ボタン内の余白を削る */
+    }
+
+    /* 3. Export/Importの文字を消してアイコンのみにする */
+    /* ※HTMLで文字を<span>などで囲んでいる場合 */
+    .control-button span {
+        display: none;
+    }
+}
