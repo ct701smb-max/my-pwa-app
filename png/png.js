@@ -373,24 +373,30 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // スポイト処理: インジケーター位置に rawDisplayX/Y を使用
-    const handleSamplerStart = (e) => {
-        e.preventDefault();
-        const pos = getMousePos(e);
-        const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
-        tempSampleColor = color;
-        // rawDisplayX/Y を使用して、指の真下に表示
-        updateSamplerIndicator(pos.rawDisplayX, pos.rawDisplayY, color);
-    };
+    // スポイト処理: インジケーター位置に pos.x / pos.y を使用するように修正
+const handleSamplerStart = (e) => {
+    e.preventDefault();
+    const pos = getMousePos(e);
+    // 描画座標（オフセット適用済み）の色を取得
+    const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
+    tempSampleColor = color;
+    
+    // インジケーターの表示位置も、指の真下(rawDisplay)ではなく、
+    // 実際に抽出している座標(brushDisplay)に合わせる
+    updateSamplerIndicator(pos.brushDisplayX, pos.brushDisplayY, color);
+};
 
-    const handleSamplerMove = (e) => {
-        if (!samplerActive) return;
-        e.preventDefault();
-        const pos = getMousePos(e);
-        const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
-        tempSampleColor = color;
-        // rawDisplayX/Y を使用して、指の真下に表示
-        updateSamplerIndicator(pos.rawDisplayX, pos.rawDisplayY, color);
-    };
+const handleSamplerMove = (e) => {
+    if (!samplerActive) return;
+    e.preventDefault();
+    const pos = getMousePos(e);
+    // 描画座標（オフセット適用済み）の色を取得
+    const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
+    tempSampleColor = color;
+    
+    // インジケーターの表示位置を更新
+    updateSamplerIndicator(pos.brushDisplayX, pos.brushDisplayY, color);
+};
 
     const handleSamplerEnd = () => {
         if (!samplerActive) return;
@@ -749,7 +755,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (redoBtn) {
         redoBtn.addEventListener('click', redo);
     }
-    
+    // ----------------------------------------------------
+// キーボードショートカット (Ctrl+Z / Ctrl+Y)
+// ----------------------------------------------------
+window.addEventListener('keydown', (e) => {
+    // Ctrlキー（またはMacのCommandキー）が押されているか確認
+    const isControl = e.ctrlKey || e.metaKey;
+
+    if (isControl) {
+        switch (e.key.toLowerCase()) {
+            case 'z':
+                e.preventDefault(); // ブラウザ既定の挙動を防止
+                if (e.shiftKey) {
+                    // Ctrl + Shift + Z は Redo として動作させることが多い
+                    redo();
+                } else {
+                    undo();
+                }
+                break;
+            case 'y':
+                e.preventDefault();
+                redo();
+                break;
+        }
+    }
+});
     // ダウンロード
     if(downloadBtn) downloadBtn.addEventListener('click', () => {
         if (downloadBtn.disabled) return;

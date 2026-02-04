@@ -103,13 +103,13 @@ button.active {
 
 /* ダウンロードボタン */
 #download-btn {
-    width: 100%;
+    width: 50%;
     background-color: #dc3545; /* 強調色（ダウンロード） */
     color: white;
     border: none;
-    padding: 14px 20px;
+    padding: 10px 0px;
     font-size: 16px;
-    margin-top: 20px;
+    margin-top: 0px;
     box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4);
 }
 
@@ -324,3 +324,4 @@ input[type="color"], input[type="range"] {
         margin-top: 10px;
     }
 }
+
