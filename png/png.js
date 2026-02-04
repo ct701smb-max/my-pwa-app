@@ -176,42 +176,49 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (event) => {
             const img = new Image();
             img.onload = () => {
-                // 1. 画像のオリジナルサイズをキャンバスの描画解像度に設定
-                canvas.width = img.width;
-                canvas.height = img.height;
-                
-                // 2. 画面に収まるようにキャンバスのCSS表示サイズを調整
-                const container = canvas.parentElement; 
-                const maxWidth = container.clientWidth;
-                const maxHeight = container.clientHeight;
+    // スマホの巨大画像対策: 最大長を1600px程度に制限（任意）
+    // あまりに大きいとAIがクラッシュするため
+    const MAX_SIZE = 2000; 
+    let targetWidth = img.width;
+    let targetHeight = img.height;
 
-                const imgWidth = img.width;
-                const imgHeight = img.height;
-                
-                const widthRatio = maxWidth / imgWidth;
-                const heightRatio = maxHeight / imgHeight;
-                
-                const scale = Math.min(widthRatio, heightRatio, 1.0); 
+    if (targetWidth > MAX_SIZE || targetHeight > MAX_SIZE) {
+        if (targetWidth > targetHeight) {
+            targetHeight = (MAX_SIZE / targetWidth) * targetHeight;
+            targetWidth = MAX_SIZE;
+        } else {
+            targetWidth = (MAX_SIZE / targetHeight) * targetWidth;
+            targetHeight = MAX_SIZE;
+        }
+    }
 
-                canvas.style.width = `${imgWidth * scale}px`;
-                canvas.style.height = `${imgHeight * scale}px`;
-                canvas.style.maxWidth = `100%`;
-                canvas.style.maxHeight = `100%`;
+    // 1. キャンバス解像度の設定
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    
+    // 2. 表示サイズの設定（親要素に合わせる）
+    const container = canvas.parentElement;
+    const scale = Math.min(container.clientWidth / targetWidth, container.clientHeight / targetHeight, 1.0);
+    canvas.style.width = `${targetWidth * scale}px`;
+    canvas.style.height = `${targetHeight * scale}px`;
 
-                // 3. 描画
-                ctx.drawImage(img, 0, 0);
-                const tempImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                originalImageData = new ImageData(
-                    new Uint8ClampedArray(tempImageData.data),
-                    tempImageData.width,
-                    tempImageData.height
-                );
-                edgeMap = createEdgeMap(tempImageData);
-                if (downloadBtn) downloadBtn.disabled = false;
-                history = [];
-                historyIndex = -1;
-                saveState();
-            };
+    // 3. 描画
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+    // 以降の処理（ImageData取得など）
+    const tempImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    originalImageData = new ImageData(
+        new Uint8ClampedArray(tempImageData.data),
+        tempImageData.width,
+        tempImageData.height
+    );
+    edgeMap = createEdgeMap(tempImageData);
+    if (downloadBtn) downloadBtn.disabled = false;
+    history = [];
+    historyIndex = -1;
+    saveState();
+};
             img.src = event.target.result;
         };
         reader.readAsDataURL(file);
