@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const brushSizeInput = document.getElementById('brush-size');
     const toolEraserBtn = document.getElementById('tool-eraser');
     const toolRestoreBtn = document.getElementById('tool-restore');
+    const toolLassoBtn = document.getElementById('tool-lasso');
+    const toolRectBtn = document.getElementById('tool-rect');     // 四角形ボタン
+    const toolCircleBtn = document.getElementById('tool-circle'); // 円形ボタン
+    const toolInvertBtn = document.getElementById('tool-invert'); // 色反転ボタン
     const brushIndicator = document.getElementById('brush-indicator');
     const sideMenuPanel = document.getElementById('side-menu-panel');
     const menuToggleBtn = document.getElementById('menu-toggle-btn');
@@ -35,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初期変数設定
     // ----------------------------------------------------
     let isDrawing = false;
-    let currentTool = 'eraser';
+    let currentTool = 'eraser'; // 'eraser', 'restore', 'lasso', 'sampler', 'rect', 'circle'
     let brushSize = parseInt(brushSizeInput.value);
     let targetColor = [255, 255, 255];
     let colorTolerance = colorEraserToleranceInput ? parseInt(colorEraserToleranceInput.value) : 30;
@@ -47,72 +51,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastX = null;
     let lastY = null;
     let originalImageData = null;
-    // 境界検出機能を削除するため、edgeMap関連の変数は残しますが、使われません。
-    let edgeMap = null;
-    let edgeMapWidth = 0;
-    let edgeMapHeight = 0;
     let segmentationThreshold = autoRemoveThresholdInput ? parseFloat(autoRemoveThresholdInput.value) : 0.7;
     let bodyPixNet = null; 
 
+    // 投げ縄・図形ツール用の座標保存
+    let lassoPoints = [];
+    let shapeStartPoint = null;
+    let shapeEndPoint = null;
+
     // 定数
     const TOUCH_OFFSET_Y_DISPLAY = -80;
-    // 境界判別機能削除のため、以下の定数は使わなくなりますが、残しておきます。
-    const EDGE_THRESHOLD = 0.4;
-    const EDGE_BUFFER_DISTANCE = 3; 
     const DRAW_OFFSET_X = 0; 
     const DRAW_OFFSET_Y = 0; 
 
     // ----------------------------------------------------
     // ユーティリティ関数
     // ----------------------------------------------------
-
-    // 境界判別機能を削除するため、createEdgeMap関数は呼び出されますが、イレイサーには使われません。
-    const createEdgeMap = (imageData) => {
-        const data = imageData.data;
-        const width = imageData.width;
-        const height = imageData.height;
-        const edgeData = new Array(width * height).fill(0);
-        const KERNEL = [0, 1, 0, 1, -4, 1, 0, 1, 0];
-        const OFFSET = 1;
-
-        for (let y = OFFSET; y < height - OFFSET; y++) {
-            for (let x = OFFSET; x < width - OFFSET; x++) {
-                let sumR = 0;
-                let sumG = 0;
-                let sumB = 0;
-                let kernelIndex = 0;
-                for (let ky = -OFFSET; ky <= OFFSET; ky++) {
-                    for (let kx = -OFFSET; kx <= OFFSET; kx++) {
-                        const pixelIndex = ((y + ky) * width + (x + kx)) * 4;
-                        const kernelValue = KERNEL[kernelIndex++];
-                        sumR += data[pixelIndex] * kernelValue;
-                        sumG += data[pixelIndex + 1] * kernelValue;
-                        sumB += data[pixelIndex + 2] * kernelValue;
-                    }
-                }
-                const edgeStrength = (Math.abs(sumR) + Math.abs(sumG) + Math.abs(sumB)) / 3;
-                const normalizedStrength = Math.min(255, edgeStrength * 0.5);
-                edgeData[y * width + x] = normalizedStrength;
-            }
-        }
-        
-        edgeMapWidth = width;
-        edgeMapHeight = height;
-        return edgeData;
-    };
-    
     const updateUndoRedoButtons = () => {
-        if (undoBtn) {
-            undoBtn.disabled = historyIndex <= 0;
-        }
-        if (redoBtn) {
-            redoBtn.disabled = historyIndex >= history.length - 1;
-        }
+        if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+        if (redoBtn) redoBtn.disabled = historyIndex >= history.length - 1;
     };
     
     const applyState = (imageData) => {
         ctx.putImageData(imageData, 0, 0);
-        edgeMap = createEdgeMap(imageData);
         updateUndoRedoButtons();
     };
     
@@ -157,13 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
         hideBrushIndicator(); 
         if (colorSamplerIndicator) colorSamplerIndicator.classList.add('hidden');
 
-        if (tool === 'eraser' && toolEraserBtn) {
-            toolEraserBtn.classList.add('active');
-        } else if (tool === 'restore' && toolRestoreBtn) {
-            toolRestoreBtn.classList.add('active');
-        } else if (tool === 'sampler' && toolSamplerBtn) {
-            toolSamplerBtn.classList.add('active');
-        }
+        if (tool === 'eraser' && toolEraserBtn) toolEraserBtn.classList.add('active');
+        else if (tool === 'restore' && toolRestoreBtn) toolRestoreBtn.classList.add('active');
+        else if (tool === 'lasso' && toolLassoBtn) toolLassoBtn.classList.add('active');
+        else if (tool === 'rect' && toolRectBtn) toolRectBtn.classList.add('active');
+        else if (tool === 'circle' && toolCircleBtn) toolCircleBtn.classList.add('active');
+        else if (tool === 'sampler' && toolSamplerBtn) toolSamplerBtn.classList.add('active');
     };
 
     // ----------------------------------------------------
@@ -176,65 +136,64 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (event) => {
             const img = new Image();
             img.onload = () => {
-    // スマホの巨大画像対策: 最大長を1600px程度に制限（任意）
-    // あまりに大きいとAIがクラッシュするため
-    const MAX_SIZE = 2000; 
-    let targetWidth = img.width;
-    let targetHeight = img.height;
+                const MAX_SIZE = 2000; 
+                let targetWidth = img.width;
+                let targetHeight = img.height;
 
-    if (targetWidth > MAX_SIZE || targetHeight > MAX_SIZE) {
-        if (targetWidth > targetHeight) {
-            targetHeight = (MAX_SIZE / targetWidth) * targetHeight;
-            targetWidth = MAX_SIZE;
-        } else {
-            targetWidth = (MAX_SIZE / targetHeight) * targetWidth;
-            targetHeight = MAX_SIZE;
-        }
-    }
+                if (targetWidth > MAX_SIZE || targetHeight > MAX_SIZE) {
+                    if (targetWidth > targetHeight) {
+                        targetHeight = (MAX_SIZE / targetWidth) * targetHeight;
+                        targetWidth = MAX_SIZE;
+                    } else {
+                        targetWidth = (MAX_SIZE / targetHeight) * targetWidth;
+                        targetHeight = MAX_SIZE;
+                    }
+                }
 
-    // 1. キャンバス解像度の設定
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    
-    // 2. 表示サイズの設定（親要素に合わせる）
-    const container = canvas.parentElement;
-    const scale = Math.min(container.clientWidth / targetWidth, container.clientHeight / targetHeight, 1.0);
-    canvas.style.width = `${targetWidth * scale}px`;
-    canvas.style.height = `${targetHeight * scale}px`;
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                
+                const container = canvas.parentElement;
+                const scale = Math.min(container.clientWidth / targetWidth, container.clientHeight / targetHeight, 1.0);
+                canvas.style.width = `${targetWidth * scale}px`;
+                canvas.style.height = `${targetHeight * scale}px`;
 
-    // 3. 描画
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-    // 以降の処理（ImageData取得など）
-    const tempImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    originalImageData = new ImageData(
-        new Uint8ClampedArray(tempImageData.data),
-        tempImageData.width,
-        tempImageData.height
-    );
-    edgeMap = createEdgeMap(tempImageData);
-    if (downloadBtn) downloadBtn.disabled = false;
-    history = [];
-    historyIndex = -1;
-    saveState();
-};
+                const tempImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                originalImageData = new ImageData(
+                    new Uint8ClampedArray(tempImageData.data),
+                    tempImageData.width,
+                    tempImageData.height
+                );
+                
+                if (downloadBtn) downloadBtn.disabled = false;
+                history = [];
+                historyIndex = -1;
+                saveState();
+                setActiveTool('eraser');
+            };
             img.src = event.target.result;
         };
         reader.readAsDataURL(file);
     });
 
-    if(toolEraserBtn) toolEraserBtn.addEventListener('click', () => {
-        deactivateSamplerMode();
-        setActiveTool('eraser');
-        closeMenu();
-    });
-    
-    if(toolRestoreBtn) toolRestoreBtn.addEventListener('click', () => {
+    // ツール切り替えイベント群
+    if(toolEraserBtn) toolEraserBtn.addEventListener('click', () => { deactivateSamplerMode(); setActiveTool('eraser'); closeMenu(); });
+    if(toolRestoreBtn) toolRestoreBtn.addEventListener('click', () => { if (originalImageData) { deactivateSamplerMode(); setActiveTool('restore'); closeMenu(); } else { alert("先に画像を読み込んでください。"); } });
+    if(toolLassoBtn) toolLassoBtn.addEventListener('click', () => { if (originalImageData) { deactivateSamplerMode(); setActiveTool('lasso'); closeMenu(); } else { alert("先に画像を読み込んでください。"); } });
+    if(toolRectBtn) toolRectBtn.addEventListener('click', () => { if (originalImageData) { deactivateSamplerMode(); setActiveTool('rect'); closeMenu(); } else { alert("先に画像を読み込んでください。"); } });
+    if(toolCircleBtn) toolCircleBtn.addEventListener('click', () => { if (originalImageData) { deactivateSamplerMode(); setActiveTool('circle'); closeMenu(); } else { alert("先に画像を読み込んでください。"); } });
+
+    if(toolInvertBtn) toolInvertBtn.addEventListener('click', () => {
         if (originalImageData) {
             deactivateSamplerMode();
-            setActiveTool('restore');
+            toolInvertBtn.classList.add('active');
+            applyColorInversion();
+            setActiveTool('eraser'); 
             closeMenu();
+            setTimeout(() => { toolInvertBtn.classList.remove('active'); }, 100);
         } else {
             alert("先に画像を読み込んでください。");
         }
@@ -243,7 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // 描画座標と表示座標の取得・変換 
     // ----------------------------------------------------
-    
     const getMousePos = (event) => {
         const rect = canvas.getBoundingClientRect(); 
         
@@ -254,48 +212,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
 
-        // 1. 描画座標 (x, y)
         let drawYOffset = 0;
         if (isTouchEvent) {
             drawYOffset = TOUCH_OFFSET_Y_DISPLAY * scaleY;
         }
 
         const x = (clientX - rect.left) * scaleX + DRAW_OFFSET_X; 
-        const y = (clientY - rect.top) * scaleY + DRAW_OFFSET_Y + drawYOffset; // オフセットを加算
+        const y = (clientY - rect.top) * scaleY + DRAW_OFFSET_Y + drawYOffset;
 
-        // 2. DOM上の正確な位置
         const rawDisplayX = clientX - rect.left;
         const rawDisplayY = clientY - rect.top;
 
-        // 3. ブラシの表示位置
         let brushDisplayY = rawDisplayY;
-        
         if (isTouchEvent) {
-            brushDisplayY += TOUCH_OFFSET_Y_DISPLAY; // インジケーターはDOM座標系でずらす
+            brushDisplayY += TOUCH_OFFSET_Y_DISPLAY; 
         }
 
         return {
-            x: x, // キャンバス描画座標 (描画に使われる座標)
-            y: y, // キャンバス描画座標 (描画に使われる座標)
+            x: x, 
+            y: y, 
             rawDisplayX: rawDisplayX, 
             rawDisplayY: rawDisplayY, 
-            brushDisplayX: rawDisplayX, // DOM表示座標 (横軸)
-            brushDisplayY: brushDisplayY // DOM表示座標 (縦軸、操作に応じてオフセット適用)
+            brushDisplayX: rawDisplayX, 
+            brushDisplayY: brushDisplayY 
         };
     };
 
-    // インジケーターのDOM表示位置を更新する関数
     const updateBrushIndicatorForDisplay = (pos) => {
         const size = brushSize;
         if(brushIndicator) {
             brushIndicator.style.width = `${size}px`;
             brushIndicator.style.height = `${size}px`;
-            
             brushIndicator.style.left = `${pos.brushDisplayX}px`;
             brushIndicator.style.top = `${pos.brushDisplayY}px`;
             brushIndicator.style.opacity = 1;
         }
-    }
+    };
 
     const hideBrushIndicator = () => {
         if(brushIndicator) brushIndicator.style.opacity = 0;
@@ -304,7 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // カスタムスポイトツールのロジック
     // ----------------------------------------------------
-    
     const getColorAtPos = (x, y) => {
         if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
             return [255, 255, 255];
@@ -315,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateSamplerIndicator = (x, y, color) => {
-        // x, y はDOM座標（オフセットなし）。指の真下に正確に表示。
         colorSamplerIndicator.style.left = `${x}px`;
         colorSamplerIndicator.style.top = `${y}px`;
         
@@ -334,22 +284,16 @@ document.addEventListener('DOMContentLoaded', () => {
         samplerActive = true;
         if (colorSamplerIndicator) colorSamplerIndicator.classList.remove('hidden'); 
         
-        // 描画イベントリスナーを削除
         canvas.removeEventListener('mousedown', handleDrawStart);
         canvas.removeEventListener('mousemove', handleDrawMove);
         canvas.removeEventListener('mouseup', stopDrawing);
         canvas.removeEventListener('mouseleave', hideBrushIndicator);
         canvas.removeEventListener('touchstart', handleTouchStart);
         canvas.removeEventListener('touchmove', handleTouchMove);
-        window.removeEventListener('touchend', stopDrawing);
-        window.removeEventListener('touchcancel', stopDrawing);
 
-
-        // スポイト専用イベントリスナーを設定
         canvas.addEventListener('mousedown', handleSamplerStart);
         window.addEventListener('mousemove', handleSamplerMove);
         window.addEventListener('mouseup', handleSamplerEnd);
-
         canvas.addEventListener('touchstart', handleSamplerStart, { passive: false });
         window.addEventListener('touchmove', handleSamplerMove, { passive: false });
         window.addEventListener('touchend', handleSamplerEnd);
@@ -360,7 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
             samplerActive = false;
             if (colorSamplerIndicator) colorSamplerIndicator.classList.add('hidden');
             
-            // スポイト用イベントリスナーを削除
             canvas.removeEventListener('mousedown', handleSamplerStart);
             window.removeEventListener('mousemove', handleSamplerMove);
             window.removeEventListener('mouseup', handleSamplerEnd);
@@ -368,42 +311,31 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.removeEventListener('touchmove', handleSamplerMove);
             window.removeEventListener('touchend', handleSamplerEnd);
 
-            // 通常の描画イベントリスナーを再設定
             canvas.addEventListener('mousedown', handleDrawStart);
             canvas.addEventListener('mousemove', handleDrawMove);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseleave', hideBrushIndicator);
-            
             canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         }
     };
     
-    // スポイト処理: インジケーター位置に rawDisplayX/Y を使用
-    // スポイト処理: インジケーター位置に pos.x / pos.y を使用するように修正
-const handleSamplerStart = (e) => {
-    e.preventDefault();
-    const pos = getMousePos(e);
-    // 描画座標（オフセット適用済み）の色を取得
-    const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
-    tempSampleColor = color;
-    
-    // インジケーターの表示位置も、指の真下(rawDisplay)ではなく、
-    // 実際に抽出している座標(brushDisplay)に合わせる
-    updateSamplerIndicator(pos.brushDisplayX, pos.brushDisplayY, color);
-};
+    const handleSamplerStart = (e) => {
+        e.preventDefault();
+        const pos = getMousePos(e);
+        const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
+        tempSampleColor = color;
+        updateSamplerIndicator(pos.brushDisplayX, pos.brushDisplayY, color);
+    };
 
-const handleSamplerMove = (e) => {
-    if (!samplerActive) return;
-    e.preventDefault();
-    const pos = getMousePos(e);
-    // 描画座標（オフセット適用済み）の色を取得
-    const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
-    tempSampleColor = color;
-    
-    // インジケーターの表示位置を更新
-    updateSamplerIndicator(pos.brushDisplayX, pos.brushDisplayY, color);
-};
+    const handleSamplerMove = (e) => {
+        if (!samplerActive) return;
+        e.preventDefault();
+        const pos = getMousePos(e);
+        const color = getColorAtPos(Math.round(pos.x), Math.round(pos.y));
+        tempSampleColor = color;
+        updateSamplerIndicator(pos.brushDisplayX, pos.brushDisplayY, color);
+    };
 
     const handleSamplerEnd = () => {
         if (!samplerActive) return;
@@ -423,10 +355,6 @@ const handleSamplerMove = (e) => {
         });
     }
 
-    // ----------------------------------------------------
-    // その他イベントリスナー
-    // ----------------------------------------------------
-    
     if(colorEraserToleranceInput) colorEraserToleranceInput.addEventListener('input', (e) => {
         colorTolerance = parseInt(e.target.value);
         if (toleranceValueSpan) toleranceValueSpan.textContent = e.target.value;
@@ -439,9 +367,7 @@ const handleSamplerMove = (e) => {
             applyColorEraser();
             setActiveTool('eraser');
             closeMenu();
-            setTimeout(() => {
-                toolColorEraserBtn.classList.remove('active');
-            }, 100);
+            setTimeout(() => { toolColorEraserBtn.classList.remove('active'); }, 100);
         } else {
             alert("先に画像を読み込んでください。");
         }
@@ -450,11 +376,8 @@ const handleSamplerMove = (e) => {
     if(brushSizeInput) brushSizeInput.addEventListener('input', (e) => {
         brushSize = parseInt(e.target.value);
         if (brushIndicator && brushIndicator.style.opacity > 0) {
-            // 現在のDOM表示位置を取得（オフセット適用済み）
             const currentDisplayX = parseFloat(brushIndicator.style.left);
             const currentDisplayY = parseFloat(brushIndicator.style.top);
-            
-            // 新しいブラシサイズでインジケーターを更新（位置は変えない）
             updateBrushIndicatorForDisplay({
                 brushDisplayX: currentDisplayX,
                 brushDisplayY: currentDisplayY
@@ -463,12 +386,10 @@ const handleSamplerMove = (e) => {
     });
 
     // ----------------------------------------------------
-    // コアロジック関数 (描画処理/透過/修復)
+    // コアロジック関数 (描画処理/透過/修復/投げ縄/色反転)
     // ----------------------------------------------------
-    
     const applyEraser = (x, y) => {
         const halfSize = brushSize / 2;
-        // 🌟 境界判別機能を削除したため、探索範囲をシンプルにブラシサイズで設定
         const startX = Math.max(0, Math.floor(x - halfSize));
         const startY = Math.max(0, Math.floor(y - halfSize));
         const width = Math.min(canvas.width - startX, Math.ceil(brushSize));
@@ -489,17 +410,91 @@ const handleSamplerMove = (e) => {
                 
                 if (distance <= halfSize) {
                     const alphaIndex = (j * width + i) * 4 + 3;
-                    
-                    // 🌟 無条件に透明度を0に設定
                     data[alphaIndex] = 0; 
-                    
                 }
             }
         }
-
         ctx.putImageData(imageData, startX, startY);
     };
-    
+
+    // 四角形・円形マスクの確定処理（指定範囲外を透過）
+    const applyShapeCrop = () => {
+        if (!shapeStartPoint || !shapeEndPoint) return;
+
+        ctx.putImageData(history[historyIndex], 0, 0);
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        const x = shapeStartPoint.x;
+        const y = shapeStartPoint.y;
+        const w = shapeEndPoint.x - x;
+        const h = shapeEndPoint.y - y;
+
+        tempCtx.fillStyle = 'black';
+        tempCtx.beginPath();
+
+        if (currentTool === 'rect') {
+            tempCtx.rect(x, y, w, h);
+        } else if (currentTool === 'circle') {
+            // 【変更】始点を左上、終点を右下とした四角形に内接する円を計算
+            const centerX = x + w / 2;
+            const centerY = y + h / 2;
+            const radiusX = Math.abs(w / 2);
+            const radiusY = Math.abs(h / 2);
+            // 正円にするため、幅と高さの大きい方を基準に半径を決定（好みに応じてMath.minでも可）
+            const radius = Math.max(radiusX, radiusY); 
+            
+            tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        }
+        tempCtx.fill();
+
+        const mainImgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const maskImgData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = mainImgData.data;
+        const maskPixels = maskImgData.data;
+
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (maskPixels[i + 3] === 0) {
+                pixels[i + 3] = 0; // マスク外の領域を透明化
+            }
+        }
+        ctx.putImageData(mainImgData, 0, 0);
+    };
+
+    // 図形ドラッグ中のプレビュー描画
+    const drawShapePreview = () => {
+        if (!shapeStartPoint || !shapeEndPoint) return;
+        ctx.putImageData(history[historyIndex], 0, 0);
+
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+
+        const x = shapeStartPoint.x;
+        const y = shapeStartPoint.y;
+        const w = shapeEndPoint.x - x;
+        const h = shapeEndPoint.y - y;
+
+        if (currentTool === 'rect') {
+            ctx.strokeRect(x, y, w, h);
+        } else if (currentTool === 'circle') {
+            // 【変更】プレビュー側も同様に内接する円として描画
+            const centerX = x + w / 2;
+            const centerY = y + h / 2;
+            const radiusX = Math.abs(w / 2);
+            const radiusY = Math.abs(h / 2);
+            const radius = Math.max(radiusX, radiusY);
+
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+    };
+        
     const applyColorEraser = () => {
         if (!originalImageData) return;
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -524,7 +519,6 @@ const handleSamplerMove = (e) => {
             }
         }
         ctx.putImageData(imageData, 0, 0);
-        edgeMap = createEdgeMap(imageData);
         saveState();
     };
 
@@ -564,6 +558,70 @@ const handleSamplerMove = (e) => {
         ctx.putImageData(currentImageData, startX, startY);
     };
 
+    const applyLassoCrop = () => {
+        if (lassoPoints.length < 3) return;
+
+        ctx.putImageData(history[historyIndex], 0, 0);
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        tempCtx.fillStyle = 'black';
+        tempCtx.beginPath();
+        tempCtx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+        for (let i = 1; i < lassoPoints.length; i++) {
+            tempCtx.lineTo(lassoPoints[i].x, lassoPoints[i].y);
+        }
+        tempCtx.closePath();
+        tempCtx.fill();
+
+        const mainImgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const maskImgData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        const pixels = mainImgData.data;
+        const maskPixels = maskImgData.data;
+
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (maskPixels[i + 3] === 0) {
+                pixels[i + 3] = 0;
+            }
+        }
+        ctx.putImageData(mainImgData, 0, 0);
+    };
+
+    const drawLassoPreview = () => {
+        if (lassoPoints.length < 2) return;
+        ctx.putImageData(history[historyIndex], 0, 0);
+
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]); 
+        ctx.beginPath();
+        ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+        for (let i = 1; i < lassoPoints.length; i++) {
+            ctx.lineTo(lassoPoints[i].x, lassoPoints[i].y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]); 
+    };
+
+    const applyColorInversion = () => {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] > 0) {
+                data[i]     = 255 - data[i];     // Red
+                data[i + 1] = 255 - data[i + 1]; // Green
+                data[i + 2] = 255 - data[i + 2]; // Blue
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+        saveState();
+    };
+
     const continuousDraw = (x, y) => {
         if (lastX !== null && lastY !== null) {
             const dist = Math.sqrt((x - lastX) ** 2 + (y - lastY) ** 2);
@@ -595,11 +653,8 @@ const handleSamplerMove = (e) => {
     // ----------------------------------------------------
     // AI/機械学習ロジック
     // ----------------------------------------------------
-
-    // BodyPixモデルのロード
     const loadBodyPix = async () => {
         try {
-            // モデルの設定（速度と精度のバランスを取る）
             bodyPixNet = await bodyPix.load({
                 architecture: 'MobileNetV1', 
                 outputStride: 16, 
@@ -613,7 +668,6 @@ const handleSamplerMove = (e) => {
         }
     };
     
-    // 自動背景削除の実行関数
     const applyAutoBackgroundRemoval = async () => {
         if (!originalImageData) {
             alert("先に画像を読み込んでください。");
@@ -624,38 +678,30 @@ const handleSamplerMove = (e) => {
             return;
         }
 
-        // 描画開始前に履歴を保存
         saveState(); 
 
         try {
-            // BodyPixで人物のセグメンテーションを実行
             const segmentation = await bodyPixNet.segmentPerson(canvas, {
                 flipHorizontal: false, 
                 internalResolution: 'high', 
-                segmentationThreshold: segmentationThreshold // ユーザー設定値を使用
+                segmentationThreshold: segmentationThreshold 
             });
 
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
-            const segmentationData = segmentation.data; // マスクデータ (1=人物, 0=背景)
+            const segmentationData = segmentation.data; 
             const pixelCount = segmentationData.length;
 
-            // マスクデータを使って背景を一括透明化
             for (let i = 0; i < pixelCount; i++) {
-                // segmentationDataが0（背景）の場合
                 if (segmentationData[i] === 0) { 
-                    // ImageDataのインデックスを計算 (R, G, B, A の A)
                     const alphaIndex = i * 4 + 3; 
-                    data[alphaIndex] = 0; // アルファ値を0に設定（透明化）
+                    data[alphaIndex] = 0; 
                 }
             }
 
-            // 変更をキャンバスに反映
             ctx.putImageData(imageData, 0, 0);
-            edgeMap = createEdgeMap(imageData); // エッジマップも更新
-            
             updateUndoRedoButtons();
-            
+            saveState();
 
         } catch (error) {
             console.error("Automatic background removal failed:", error);
@@ -667,24 +713,42 @@ const handleSamplerMove = (e) => {
     // 描画イベント制御
     // ----------------------------------------------------
     const stopDrawing = () => {
-        isDrawing = false;
-        lastX = null;
-        lastY = null;
+        if (isDrawing) {
+            isDrawing = false;
+            
+            if (currentTool === 'lasso') {
+                applyLassoCrop();
+                lassoPoints = [];
+            } else if (currentTool === 'rect' || currentTool === 'circle') {
+                applyShapeCrop();
+                shapeStartPoint = null;
+                shapeEndPoint = null;
+            }
+
+            lastX = null;
+            lastY = null;
+            saveState(); 
+        }
         hideBrushIndicator(); 
     };
     
-    const drawTools = ['eraser', 'restore'];
+    const drawTools = ['eraser', 'restore', 'lasso', 'rect', 'circle'];
     
     const handleDrawStart = (e) => {
         if (downloadBtn && !downloadBtn.disabled) {
             if (drawTools.includes(currentTool)) {
-                saveState(); // 描画開始時に履歴を保存
                 isDrawing = true;
                 const pos = getMousePos(e);
-                // 描画にはオフセットあり/なしが調整された pos.x/y を使用
-                continuousDraw(pos.x, pos.y);
-                // インジケーター表示には操作に応じた pos.brushDisplayX/Y を使用
-                updateBrushIndicatorForDisplay(pos);
+                
+                if (currentTool === 'lasso') {
+                    lassoPoints = [{ x: pos.x, y: pos.y }];
+                } else if (currentTool === 'rect' || currentTool === 'circle') {
+                    shapeStartPoint = { x: pos.x, y: pos.y };
+                    shapeEndPoint = { x: pos.x, y: pos.y };
+                } else {
+                    continuousDraw(pos.x, pos.y);
+                    updateBrushIndicatorForDisplay(pos);
+                }
             }
         }
     };
@@ -693,15 +757,21 @@ const handleSamplerMove = (e) => {
         if (drawTools.includes(currentTool) || currentTool === 'sampler') {
             const pos = getMousePos(e);
             
-            // 描画ツールの場合はブラシインジケーターを表示
-            if (drawTools.includes(currentTool)) {
+            if (currentTool === 'eraser' || currentTool === 'restore') {
                 updateBrushIndicatorForDisplay(pos);
             }
             
             if (isDrawing) {
-                // 描画にはオフセットあり/なしが調整された pos.x/y を使用
                 if (pos.x >= 0 && pos.x <= canvas.width && pos.y >= 0 && pos.y <= canvas.height) {
-                    continuousDraw(pos.x, pos.y);
+                    if (currentTool === 'lasso') {
+                        lassoPoints.push({ x: pos.x, y: pos.y });
+                        drawLassoPreview();
+                    } else if (currentTool === 'rect' || currentTool === 'circle') {
+                        shapeEndPoint = { x: pos.x, y: pos.y };
+                        drawShapePreview();
+                    } else {
+                        continuousDraw(pos.x, pos.y);
+                    }
                 } else {
                     lastX = pos.x;
                     lastY = pos.y;
@@ -713,25 +783,17 @@ const handleSamplerMove = (e) => {
     const handleTouchStart = (e) => { e.preventDefault(); handleDrawStart(e); };
     const handleTouchMove = (e) => { e.preventDefault(); handleDrawMove(e); };
 
-    // ----------------------------------------------------
-    // 閾値スライダー イベントリスナー
-    // ----------------------------------------------------
     if(autoRemoveThresholdInput) autoRemoveThresholdInput.addEventListener('input', (e) => {
         segmentationThreshold = parseFloat(e.target.value);
         if (thresholdValueSpan) thresholdValueSpan.textContent = e.target.value;
     });
 
-    // ----------------------------------------------------
-    // 初期イベントリスナーのセットアップ
-    // ----------------------------------------------------
-    
     if (reloadBtn) {
         reloadBtn.addEventListener('click', () => {
             location.reload(); 
         });
     }
     
-    // 自動背景削除ボタンのイベントリスナー
     if (toolAutoRemoveBtn) {
         toolAutoRemoveBtn.addEventListener('click', () => {
             deactivateSamplerMode();
@@ -741,53 +803,37 @@ const handleSamplerMove = (e) => {
         });
     }
 
-
-    // マウスイベント (キャンバス専用)
+    // キャンバスイベント設定
     canvas.addEventListener('mousedown', handleDrawStart);
     canvas.addEventListener('mousemove', handleDrawMove);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', hideBrushIndicator);
 
-    // タッチイベント (キャンバス上での描画操作用)
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', stopDrawing); 
     window.addEventListener('touchcancel', stopDrawing); 
 
+    if (undoBtn) undoBtn.addEventListener('click', undo);
+    if (redoBtn) redoBtn.addEventListener('click', redo);
 
-    // Undo/Redoボタンのイベントリスナー登録
-    if (undoBtn) {
-        undoBtn.addEventListener('click', undo);
-    }
-    if (redoBtn) {
-        redoBtn.addEventListener('click', redo);
-    }
-    // ----------------------------------------------------
-// キーボードショートカット (Ctrl+Z / Ctrl+Y)
-// ----------------------------------------------------
-window.addEventListener('keydown', (e) => {
-    // Ctrlキー（またはMacのCommandキー）が押されているか確認
-    const isControl = e.ctrlKey || e.metaKey;
-
-    if (isControl) {
-        switch (e.key.toLowerCase()) {
-            case 'z':
-                e.preventDefault(); // ブラウザ既定の挙動を防止
-                if (e.shiftKey) {
-                    // Ctrl + Shift + Z は Redo として動作させることが多い
+    // ショートカットキー設定
+    window.addEventListener('keydown', (e) => {
+        const isControl = e.ctrlKey || e.metaKey;
+        if (isControl) {
+            switch (e.key.toLowerCase()) {
+                case 'z':
+                    e.preventDefault();
+                    if (e.shiftKey) redo(); else undo();
+                    break;
+                case 'y':
+                    e.preventDefault();
                     redo();
-                } else {
-                    undo();
-                }
-                break;
-            case 'y':
-                e.preventDefault();
-                redo();
-                break;
+                    break;
+            }
         }
-    }
-});
-    // ダウンロード
+    });
+
     if(downloadBtn) downloadBtn.addEventListener('click', () => {
         if (downloadBtn.disabled) return;
         const dataURL = canvas.toDataURL('image/png');
@@ -799,7 +845,6 @@ window.addEventListener('keydown', (e) => {
         document.body.removeChild(a);
     });
 
-    // ハンバーガーメニューの開閉制御
     if (menuToggleBtn && sideMenuPanel) {
         menuToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -819,6 +864,5 @@ window.addEventListener('keydown', (e) => {
         });
     }
     
-    // 起動時にAIモデルのロードを開始
     loadBodyPix();
 });
