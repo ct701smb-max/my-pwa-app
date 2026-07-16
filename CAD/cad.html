@@ -2548,36 +2548,40 @@ function draw2DEditor() {
     ctx2D.fill();
     ctx2D.stroke();
 
-// 【4】穴の描画
-if (target.userData.holes && Array.isArray(target.userData.holes)) {
-    target.userData.holes.forEach(hole => {
-        ctx2D.beginPath();
-        const hx = hole.x || 0;
-        const hy = -(hole.y || 0); 
-        
-        if (hole.type === 'circle' || hole.shape === 'circle') {
-            ctx2D.arc(hx, hy, (hole.size || hole.dia || 40) / 2, 0, Math.PI * 2);
-        } else {
-
-            const currentW = hole.holeW ?? hole.w ?? hole.size ?? 40;
-            const currentH = hole.holeH ?? hole.h ?? hole.d ?? hole.size ?? 40;
+    // 【4】穴の描画
+    if (target.userData.holes && Array.isArray(target.userData.holes)) {
+        target.userData.holes.forEach(hole => {
+            ctx2D.beginPath();
+            const hx = hole.x || 0;
+            const hy = -(hole.y || 0); 
             
-            ctx2D.rect(hx - currentW / 2, hy - currentH / 2, currentW, currentH);
-        }
-        ctx2D.fillStyle = "#2a2a2a";
-        ctx2D.fill();
-        ctx2D.strokeStyle = "#555";
-        ctx2D.lineWidth = 1.5 / scale2D;
-        ctx2D.stroke();
-    });
-}
+            if (hole.type === 'circle' || hole.shape === 'circle') {
+                ctx2D.arc(hx, hy, (hole.size || hole.dia || 40) / 2, 0, Math.PI * 2);
+            } else {
+                const currentW = hole.holeW ?? hole.w ?? hole.size ?? 40;
+                const currentH = hole.holeH ?? hole.h ?? hole.d ?? hole.size ?? 40;
+                ctx2D.rect(hx - currentW / 2, hy - currentH / 2, currentW, currentH);
+            }
+            ctx2D.fillStyle = "#2a2a2a";
+            ctx2D.fill();
+            ctx2D.strokeStyle = "#555";
+            ctx2D.lineWidth = 1.5 / scale2D;
+            ctx2D.stroke();
+        });
+    }
 
-   // 【5】頂点ハンドル ＆ 辺ハンドル描画
+    // 【5】頂点ハンドル ＆ 辺ハンドル描画
     if (is2DZoomed) {
+        // 💡 拡大率（scale2D）に応じて、画面上の見た目の半径を動的に小さくする
+        // 基本サイズを14pxとし、ズームが進むほど徐々に小さく（最小8px相当まで）制限します
+        const baseRadius = Math.max(8, Math.min(14, 16 / (scale2D * 0.4)));
+        const pointRadius = baseRadius / scale2D;
+
         pts.forEach((pt, index) => {
             // ーーー 頂点ハンドル（赤丸）の描画 ーーー
             ctx2D.beginPath();
-            ctx2D.arc(pt.x, pt.y, 16 / scale2D, 0, Math.PI * 2);
+            // 💡 固定の 16 / scale2D から、動的に計算した pointRadius に変更
+            ctx2D.arc(pt.x, pt.y, pointRadius, 0, Math.PI * 2);
             
             if (index === active2DPointIndex) {
                 ctx2D.fillStyle = "#ff4500"; // ドラッグ中：オレンジ
@@ -2591,14 +2595,20 @@ if (target.userData.holes && Array.isArray(target.userData.holes)) {
             ctx2D.lineWidth = 2 / scale2D;
             ctx2D.stroke();
             
-            // ーーー 辺ハンドル（中央の曲げボタン）の描画 ーーー
+           // ーーー 辺ハンドル（中央の曲げボタン）の描画 ーーー
             const nextPt = pts[(index + 1) % pts.length];
             const midX = (pt.x + nextPt.x) / 2;
             const midY = (pt.y + nextPt.y) / 2;
             const edgeId = (index + 1) % pts.length;
 
+            // 💡 拡大率（scale2D）に応じて、画面上の見た目の半径を動的に小さくする
+            // 頂点ハンドルより少し小さめの基本サイズ（最小6px 〜 最大10px）で変動させます
+            const baseEdgeRadius = Math.max(6, Math.min(10, 12 / (scale2D * 0.4)));
+            const edgeRadius = baseEdgeRadius / scale2D;
+
             ctx2D.beginPath();
-            ctx2D.arc(midX, midY, 12 / scale2D, 0, Math.PI * 2);
+            // 💡 固定の 12 / scale2D から、動的に計算した edgeRadius に変更
+            ctx2D.arc(midX, midY, edgeRadius, 0, Math.PI * 2);
             
             if (edgeId === active2DEdgeIndex) {
                 ctx2D.fillStyle = "#00ffff"; // ドラッグ中
@@ -2608,10 +2618,14 @@ if (target.userData.holes && Array.isArray(target.userData.holes)) {
                 ctx2D.fillStyle = nextPt.isCurve ? "rgba(0, 120, 255, 0.9)" : "rgba(200, 200, 200, 0.6)";
             }
             ctx2D.fill();
+            // 頂点と同様に線の太さもスケール調整（既存の仕様を維持）
+            ctx2D.strokeStyle = "#fff";
+            ctx2D.lineWidth = 2 / scale2D;
             ctx2D.stroke();
         });
     }
-// --- すべての辺の長さ・ドラッグ中の角度描画 ---
+
+    // --- すべての辺の長さ・ドラッグ中の角度描画 ---
     const isDragging = (active2DPointIndex !== null && active2DPointIndex !== -1);
     
     let centerX = 0, centerY = 0;
@@ -2621,7 +2635,12 @@ if (target.userData.holes && Array.isArray(target.userData.holes)) {
         centerY /= pts.length;
     }
 
-    const fontSize = 18; 
+    // スケール（拡大率）に応じてフォントサイズを動的に変更
+    let fontSize = 18;
+    if (scale2D > 1.5) {
+        fontSize = Math.max(12, Math.min(20, 24 / (scale2D * 0.5)));
+    }
+
     ctx2D.font = `bold ${fontSize}px sans-serif`;
     ctx2D.textAlign = 'center';
     ctx2D.textBaseline = 'middle';
@@ -2630,10 +2649,62 @@ if (target.userData.holes && Array.isArray(target.userData.holes)) {
     const isZoomedIn = scale2D > 1.5; 
 
     if (isZoomedIn) {
-        for (let i = 0; i < pts.length; i++) {
-            const pStart = pts[i];
-            const pEnd = pts[(i + 1) % pts.length];
+        // ------------------------------------------------------------
+        // 板全体の最大寸法（幅 W と奥行 D）の表示
+        // ------------------------------------------------------------
+        const overallW = maxX - minX;
+        const overallH = maxY - minY;
+        
+        const outerOffset = 100 / scale2D; 
 
+        ctx2D.save();
+        ctx2D.font = `bold ${fontSize + 2}px sans-serif`;
+        ctx2D.fillStyle = '#39FF14'; // 板全体寸法用の色
+
+        // ① 全体の横幅 (W) 表示 -> 上側外線【mm表記あり】
+        const topW_X = (minX + maxX) / 2;
+        const topW_Y = minY - outerOffset;
+        ctx2D.fillText(`[ 全幅: ${Math.round(overallW)}mm ]`, topW_X, topW_Y);
+
+        // ② 全体の縦幅/奥行 (D) 表示 -> 左側外線【mm表記あり】
+        const leftD_X = minX - outerOffset;
+        const leftD_Y = (minY + maxY) / 2;
+        ctx2D.save();
+        ctx2D.translate(leftD_X, leftD_Y);
+        ctx2D.rotate(-Math.PI / 2);
+        ctx2D.fillText(`[ 全長: ${Math.round(overallH)}mm ]`, 0, 0);
+        ctx2D.restore();
+
+        ctx2D.restore();
+
+        // ------------------------------------------------------------
+        // 各辺の長さ描画
+        // ------------------------------------------------------------
+        ctx2D.font = `bold ${fontSize}px sans-serif`; 
+
+        for (let i = 0; i < pts.length; i++) {
+            const startIndex = i;
+            const endIndex = (i + 1) % pts.length;
+
+            const pStart = pts[startIndex];
+            const pEnd = pts[endIndex];
+
+            // 1. 点自体が持つフラグで「追加された点」かどうかを判定
+            const isStartAdded = pStart.isAdded === true;
+            const isEndAdded = pEnd.isAdded === true;
+
+            // 2. ドラッグ中かどうかに応じた表示制限の統一
+            if (isDragging) {
+                if (active2DPointIndex !== startIndex && active2DPointIndex !== endIndex) {
+                    continue;
+                }
+            } else {
+                if (isStartAdded || isEndAdded) {
+                    continue;
+                }
+            }
+
+            // ーーー 実際のテキスト描画処理 ーーー
             const dist = Math.hypot(pEnd.x - pStart.x, pEnd.y - pStart.y);
             if (dist < 1) continue;
 
@@ -2657,13 +2728,14 @@ if (target.userData.holes && Array.isArray(target.userData.holes)) {
                 angle += Math.PI;
             }
 
-            const offset = 35 / scale2D; 
+            const markerSafetyBuffer = 1 / scale2D;
+            const offset = ((fontSize * 1.5) / scale2D) + markerSafetyBuffer; 
 
             ctx2D.save();
             ctx2D.translate(midX + nx * offset, midY + ny * offset);
             ctx2D.rotate(angle);
-            ctx2D.fillStyle = '#0033ff';
-            ctx2D.fillText(`${Math.round(dist)}mm`, 0, 0);
+            ctx2D.fillStyle = '#0033ff'; // 個別の辺の長さ（青）
+            ctx2D.fillText(`${Math.round(dist)}`, 0, 0);
             ctx2D.restore();
         }
     }
@@ -2700,15 +2772,12 @@ if (target.userData.holes && Array.isArray(target.userData.holes)) {
 
         switch (idx) {
             case 1: // 右上の角
-                // 180度になってしまうのを、本来の90度付近（-90度シフト）に補正
                 diff = Math.abs(diff - 90);
                 break;
             case 3: // 左下の角
-                // 0度になってしまうのを、本来の90度付近（+90度シフト）に補正
                 diff = diff + 90;
                 if (diff > 360) diff -= 360;
                 break;
-            // 左上(0)と右下(2)は最初から90度でOKとのことなのでそのまま
             default:
                 break;
         }
@@ -2903,7 +2972,14 @@ function handleDblClick(e) {
     const edgeIdx = findNearestEdgeIndex(points, mousePos);
     if (edgeIdx !== -1) {
         console.log("点追加実行中...");
-        points.splice(edgeIdx, 0, { x: mousePos.x, y: mousePos.y, isCurve: false });
+        
+        points.splice(edgeIdx, 0, { 
+            x: mousePos.x, 
+            y: mousePos.y, 
+            isCurve: false,
+            isAdded: true
+        });
+        
         sync2DTo3D(target);
         draw2DEditor();
     }
