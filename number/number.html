@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+  <title>多機能Web電卓</title>
+  <style>
+  :root {
+    --bg-color: #f4f6f8;
+    --card-bg: #ffffff;
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --text-color: #1f2937;
+    --border-color: #e5e7eb;
+    --btn-bg: #f3f4f6;
+    --btn-hover: #e5e7eb;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .calculator-container {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  /* タブのスタイル */
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4等分に並べる */
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .tab-btn {
+    padding: 10px 4px; /* 幅に合わせて文字が収まるようパディングを調整 */
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 13px; /* 4分割でも入りやすいフォントサイズ */
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    border-right: 1px solid var(--border-color); /* 境界線をわかりやすく（任意） */
+    box-sizing: border-box;
+  }
+
+  /* 4の倍数番目（右端）のボタンの右枠線を消す */
+  .tab-btn:nth-child(4n) {
+    border-right: none;
+  }
+
+  /* 1〜4個目のボタン（上段）に下枠線をつける */
+  .tab-btn:nth-child(-n+4) {
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .tab-btn:hover {
+    color: var(--primary-color);
+  }
+
+  .tab-btn.active {
+    color: var(--primary-color);
+    background: var(--card-bg);
+    border-bottom: 2px solid var(--primary-color); /* アクティブ時の下線を表示 */
+  }
+
+  /* パネルの基本スタイル（共通） */
+  .panel {
+    display: none;
+    padding: 20px;
+  }
+
+  .panel.active {
+    display: block;
+  }
+
+  /* 時間パネルのみ active 時に flex レイアウトを適用 */
+  .panel#time.active {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 計算式の小表示 */
+  .formula-display {
+    width: 100%;
+    height: 24px;
+    font-size: 14px;
+    text-align: right;
+    padding: 0 15px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  /* メイン入力ディスプレイ */
+  .display {
+    width: 100%;
+    height: 60px;
+    font-size: 28px;
+    text-align: right;
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #f8fafc;
+    outline: none;
+  }
+
+  /* グリッドレイアウト */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .grid5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  /* ボタン共通スタイル */
+  .btn {
+    padding: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    background: var(--btn-bg);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .btn:hover {
+    background: var(--btn-hover);
+  }
+
+  .btn.operator {
+    background: #dbeafe;
+    color: var(--primary-color);
+  }
+
+  .btn.action {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .btn.action:hover {
+    background: var(--primary-hover);
+  }
+
+  .btn.clear {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  /* フォーム形式の計算機能 */
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #4b5563;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 16px;
+    outline: none;
+  }
+
+  .result-box {
+    margin-top: 15px;
+    padding: 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    font-weight: bold;
+    color: #166534;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .row > * {
+    flex: 1;
+  }
+
+  /* --- 時間計算パネル専用スタイル --- */
+  .time-input-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+
+  .time-input-card .card-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .time-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .input-unit {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .input-unit input[type="text"] {
+    width: 100%;
+    height: 38px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #ffffff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+
+  .input-unit input[type="text"]:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  .input-unit .unit {
+    font-size: 13px;
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  .time-btn-group {
+    display: flex;
+    gap: 10px;
+  }
+
+  .time-btn-group .btn {
+    flex: 1;
+    height: 42px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .time-btn-group .btn:active {
+    transform: scale(0.98);
+  }
+
+  .time-result-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    color: #166534;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .time-result-box small {
+    display: block;
+    font-size: 12px;
+    color: #15803d;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="calculator-container">
+<h2>　<a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　多機能電卓</h2>
+  <!-- タブ領域 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('basic')">標準/関数</button>
+    <button class="tab-btn" onclick="switchTab('baseN')">進数変換</button>
+    <button class="tab-btn" onclick="switchTab('percent')">％・割合</button>
+    <button class="tab-btn" onclick="switchTab('time')">時間</button>
+    <button class="tab-btn" onclick="switchTab('length')">長さ</button>
+    <button class="tab-btn" onclick="switchTab('weight')">重さ</button>
+    <button class="tab-btn" onclick="switchTab('area')">面積</button>
+    <button class="tab-btn" onclick="switchTab('volume')">体積</button>
+  </div>
+
+  <!-- 1. 標準・関数電卓 -->
+<div id="basic" class="panel active">
+  <!-- 計算式を表示する小さな領域 -->
+  <input type="text" id="basic-formula" class="formula-display" readonly placeholder="">
+  <!-- メインの数値/結果表示領域 -->
+  <input type="text" id="basic-display" class="display" maxlength="25" value="0">
+  
+  <div class="grid5">
+    <!-- 1行目: 機能・消去系 -->
+    <button class="btn clear" onclick="clearBasic()">AC</button>
+    <button class="btn clear" onclick="clearEntryBasic()">CE</button>
+    <button class="btn operator" onclick="appendBasic('(')">(</button>
+    <button class="btn operator" onclick="appendBasic(')')">)</button>
+      <button class="btn operator" onclick="deleteLastBasic()">⌫</button>
+
+    <!-- 2行目: 関数・定数・カッコ -->
+    <button class="btn operator" onclick="insertMath('d/dx(')">微分</button>
+    <button class="btn operator" onclick="insertMath('∫(')">積分</button>
+    <button class="btn operator" onclick="insertMath('√(')">√</button>
+    <button class="btn operator" onclick="insertConstant('π')">π</button>
+    <button class="btn operator" onclick="appendBasic('/')">÷</button>
+    
+
+    <!-- 3行目: 7, 8, 9, x (変数), × -->
+    <button class="btn" onclick="appendBasic('7')">7</button>
+    <button class="btn" onclick="appendBasic('8')">8</button>
+    <button class="btn" onclick="appendBasic('9')">9</button>
+    <button class="btn operator" onclick="appendBasic('x')">x</button>
+    <button class="btn operator" onclick="appendBasic('*')">×</button>
+
+    <!-- 4行目: 4, 5, 6, x², - -->
+    <button class="btn" onclick="appendBasic('4')">4</button>
+    <button class="btn" onclick="appendBasic('5')">5</button>
+    <button class="btn" onclick="appendBasic('6')">6</button>
+    <button class="btn operator" onclick="appendBasic('^')">^</button>
+    <button class="btn operator" onclick="appendBasic('-')">-</button>
+
+    <!-- 5行目: 1, 2, 3, ,, + -->
+    <button class="btn" onclick="appendBasic('1')">1</button>
+    <button class="btn" onclick="appendBasic('2')">2</button>
+    <button class="btn" onclick="appendBasic('3')">3</button>
+    <button class="btn operator" onclick="appendBasic(',')">,</button>
+    <button class="btn operator" onclick="appendBasic('+')">+</button>
+
+    <!-- 6行目: 0 (2列分), ., = (2列分) -->
+    <button class="btn" style="grid-column: span 2;" onclick="appendBasic('0')">0</button>
+    <button class="btn" onclick="appendBasic('.')">.</button>
+    <button class="btn action" style="grid-column: span 2;" onclick="calculateBasic()">=</button>
+  </div>
+</div>
+
+  <!-- 2. 進数変換・計算 -->
+  <div id="baseN" class="panel">
+    <div class="form-group">
+      <label>10進数 (Decimal)</label>
+      <input type="number" id="dec-input" class="form-control" oninput="convertBase('dec')" placeholder="例: 255">
+    </div>
+    <div class="form-group">
+      <label>2進数 (Binary)</label>
+      <input type="text" id="bin-input" class="form-control" oninput="convertBase('bin')" placeholder="例: 11111111">
+    </div>
+    <div class="form-group">
+      <label>16進数 (Hexadecimal)</label>
+      <input type="text" id="hex-input" class="form-control" oninput="convertBase('hex')" placeholder="例: FF">
+    </div>
+  </div>
+
+  <!-- 3. 割合・％計算 -->
+  <div id="percent" class="panel">
+    <div class="form-group">
+      <label>数値</label>
+      <input type="number" id="pct-num" class="form-control" placeholder="1000">
+    </div>
+    <div class="form-group">
+      <label>割合 (%)</label>
+      <input type="number" id="pct-rate" class="form-control" placeholder="10">
+    </div>
+    <button class="btn action" style="width: 100%;" onclick="calcPercent()">計算</button>
+    <div id="pct-result" class="result-box">結果がここに表示されます</div>
+  </div>
+
+ <!-- 4. 時間計算パネル -->
+<div id="time" class="panel">
+  <!-- 時間1 -->
+  <div class="time-input-card">
+    <span class="card-label">時間 1</span>
+    <div class="time-inputs">
+      <div class="input-unit">
+        <input type="text" id="t1-h" value="0">
+        <span class="unit">時</span>
+      </div>
+      <div class="input-unit">
+        <input type="text" id="t1-m" value="0">
+        <span class="unit">分</span>
+      </div>
+      <div class="input-unit">
+        <input type="text" id="t1-s" value="0">
+        <span class="unit">秒</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 時間2 -->
+  <div class="time-input-card">
+    <span class="card-label">時間 2</span>
+    <div class="time-inputs">
+      <div class="input-unit">
+        <input type="text" id="t2-h" value="0">
+        <span class="unit">時</span>
+      </div>
+      <div class="input-unit">
+        <input type="text" id="t2-m" value="0">
+        <span class="unit">分</span>
+      </div>
+      <div class="input-unit">
+        <input type="text" id="t2-s" value="0">
+        <span class="unit">秒</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 操作ボタン -->
+  <div class="time-btn-group">
+    <button class="btn operator" onclick="calcTime('add')">加算 (+)</button>
+    <button class="btn operator" onclick="calcTime('sub')">減算 (-)</button>
+  </div>
+
+  <!-- 計算結果 -->
+  <div id="time-result" class="time-result-box">
+    <b>0 時間 0 分 0 秒</b><br>
+    <small>（合計 0 分 / 0 秒）</small>
+  </div>
+</div>
+
+  <!-- 5. 長さ換算 -->
+<div id="length" class="panel">
+  <div class="form-group">
+    <label>値</label>
+    <!-- id="len-val" を "length-val" に変更 -->
+    <input type="number" id="length-val" class="form-control" value="1" oninput="convertUnit('length')">
+  </div>
+  <div class="row form-group">
+    <div>
+      <label>変換前</label>
+      <!-- id="len-from" を "length-from" に変更 -->
+      <select id="length-from" class="form-control" onchange="convertUnit('length')">
+        <option value="mm">ミリメートル (mm)</option>
+        <option value="cm">センチメートル (cm)</option>
+        <option value="m" selected>メートル (m)</option>
+        <option value="km">キロメートル (km)</option>
+        <option value="inch">インチ (in)</option>
+      </select>
+    </div>
+    <div>
+      <label>変換後</label>
+      <!-- id="len-to" を "length-to" に変更 -->
+      <select id="length-to" class="form-control" onchange="convertUnit('length')">
+        <option value="mm">ミリメートル (mm)</option>
+        <option value="cm" selected>センチメートル (cm)</option>
+        <option value="m">メートル (m)</option>
+        <option value="km">キロメートル (km)</option>
+        <option value="inch">インチ (in)</option>
+      </select>
+    </div>
+  </div>
+  <!-- id="len-result" を "length-result" に変更 -->
+  <div id="length-result" class="result-box">100 cm</div>
+</div>
+
+  <!-- 6. 重さ換算 -->
+  <div id="weight" class="panel">
+    <div class="form-group">
+      <label>値</label>
+      <input type="number" id="weight-val" class="form-control" value="1" oninput="convertUnit('weight')">
+    </div>
+    <div class="row form-group">
+      <div>
+        <label>変換前</label>
+        <select id="weight-from" class="form-control" onchange="convertUnit('weight')">
+          <option value="mg">ミリグラム (mg)</option>
+          <option value="g">グラム (g)</option>
+          <option value="kg" selected>キログラム (kg)</option>
+          <option value="t">トン (t)</option>
+          <option value="lb">ポンド (lb)</option>
+        </select>
+      </div>
+      <div>
+        <label>変換後</label>
+        <select id="weight-to" class="form-control" onchange="convertUnit('weight')">
+          <option value="mg">ミリグラム (mg)</option>
+          <option value="g" selected>グラム (g)</option>
+          <option value="kg">キログラム (kg)</option>
+          <option value="t">トン (t)</option>
+          <option value="lb">ポンド (lb)</option>
+        </select>
+      </div>
+    </div>
+    <div id="weight-result" class="result-box">1000 g</div>
+  </div>
+
+  <!-- 7. 面積計算 -->
+<div id="area" class="panel">
+  <div class="form-group">
+    <label>図形の種類</label>
+    <select id="area-type" class="form-control" onchange="toggleAreaInputs()">
+      <option value="rect">長方形 / 正方形</option>
+      <option value="parallelogram">平行四辺形</option>
+      <option value="triangle">三角形</option>
+      <option value="regular-polygon">正多角形</option>
+      <option value="circle">円</option>
+      <option value="sector">扇形</option>
+      <option value="trapezoid">台形</option>
+      <option value="sphere-surface">球の表面積</option>
+    </select>
+  </div>
+
+  <!-- 入力項目を横並びにするコンテナ (.row) -->
+  <div class="row">
+    <div class="form-group" id="area-v1-group">
+      <label id="area-label1">幅 (m)</label>
+      <input type="text" id="area-v1" class="form-control" value="0">
+    </div>
+
+    <div class="form-group" id="area-v2-group">
+      <label id="area-label2">高さ (m)</label>
+      <input type="text" id="area-v2" class="form-control" value="0">
+    </div>
+
+    <div class="form-group" id="area-v3-group" style="display: none;">
+      <label id="area-label3">高さ (m)</label>
+      <input type="text" id="area-v3" class="form-control" value="0">
+    </div>
+  </div>
+
+  <button class="btn action" style="width:100%; margin-top:5px;" onclick="calcArea()">計算</button>
+
+  <!-- 結果表示領域 -->
+  <div id="area-result" class="result-box" style="margin-top: 15px; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-family: sans-serif;">
+    <div style="font-size: 13px; color: #94a3b8; text-align: center;">
+      数値を入力をすると計算結果が表示されます
+    </div>
+  </div>
+
+  <!-- 図形描画用キャンバス領域 -->
+  <div style="margin-top: 15px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">【形状イメージ】</div>
+    <canvas id="area-canvas" width="280" height="200" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%;"></canvas>
+  </div>
+</div>
+
+<!-- 8. 体積計算 -->
+<div id="volume" class="panel">
+  <div class="form-group">
+    <label>立体の種類</label>
+    <select id="vol-type" class="form-control" onchange="toggleVolInputs()">
+      <option value="box">直方体 / 立方体</option>
+      <option value="tri-prism">三角柱</option>
+      <option value="cylinder">円柱</option>
+      <option value="cone">円錐</option>
+      <option value="tri-pyramid">三角錐</option>
+      <option value="sphere">球</option>
+    </select>
+  </div>
+
+  <!-- 入力項目を横並びにするコンテナ (.row) -->
+  <div class="row">
+    <div class="form-group" id="vol-v1-group">
+      <label id="vol-label1">縦 (m)</label>
+      <input type="text" id="vol-v1" class="form-control" value="0">
+    </div>
+
+    <div class="form-group" id="vol-v2-group">
+      <label id="vol-label2">横 (m)</label>
+      <input type="text" id="vol-v2" class="form-control" value="0">
+    </div>
+
+    <div class="form-group" id="vol-v3-group">
+      <label id="vol-label3">高さ (m)</label>
+      <input type="text" id="vol-v3" class="form-control" value="0">
+    </div>
+  </div>
+
+  <button class="btn action" style="width:100%; margin-top:5px;" onclick="calcVolume()">計算</button>
+
+  <!-- 結果表示領域 -->
+  <div id="vol-result" class="result-box" style="margin-top: 15px;">
+    <!-- 式と結果が表示されます -->
+  </div>
+
+  <!-- 立体イメージ描画用キャンバス領域 -->
+  <div style="margin-top: 15px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">【立体イメージ】</div>
+    <canvas id="vol-canvas" width="280" height="200" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%;"></canvas>
+  </div>
+</div>
+
+<script>
+  // --- タブ切り替え ---
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+    
+    event.currentTarget.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+  }
+
+ // --- 1. 標準/関数電卓 ---
+const display = document.getElementById('basic-display');
+const formulaDisplay = document.getElementById('basic-formula');
+
+// 上部の計算式表示を更新する関数
+function updateFormula(text) {
+  if (formulaDisplay) {
+    formulaDisplay.value = text;
+  }
+}
+
+// 入力欄をクリック（フォーカス）した時に全選択する
+display.addEventListener('focus', function() {
+  this.select();
+});
+
+// 全角数字・全角記号を半角に変換する共通マップ
+const keyReplaceMap = {
+  '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
+  '５':'5', '６':'6', '７':'7', '８':'8', '９':'9',
+  '＋':'+', 'ー':'-', '―':'-', '＊':'*', '／':'/',
+  '．':'.', '（':'(', '）':')', '，':','
+};
+
+// AC: 全消去
+function clearBasic() {
+  display.value = '0';
+  updateFormula('');
+}
+
+// CE: 直前の入力要素（または末尾の数値・関数）を消去
+function clearEntryBasic() {
+  if (display.value === 'エラー' || display.value.length <= 1) {
+    display.value = '0';
+  } else {
+    display.value = display.value.replace(/([0-9.]+|d\/dx\(|∫\(|[+\-*\/^,()xπ])$/, '');
+    if (display.value === '') display.value = '0';
+  }
+  updateFormula(display.value);
+}
+
+// 一文字消去 (BS)
+function deleteLastBasic() {
+  if (display.value === 'エラー' || display.value.length <= 1) {
+    display.value = '0';
+  } else {
+    display.value = display.value.slice(0, -1);
+  }
+  updateFormula(display.value);
+}
+
+// 最大桁数（文字数）の定数設定
+const MAX_LENGTH = 25;
+
+// 値（数字や記号）を追加する処理
+function appendBasic(val) {
+  const operators = ['+', '-', '*', '/', '^', ','];
+
+  if (display.value === 'エラー') {
+    display.value = '';
+  }
+
+  // 25桁を超える場合は追加しない
+  if (display.value.length >= MAX_LENGTH) return;
+
+  if (display.value === '0') {
+    if (operators.includes(val) || val === '.') {
+      display.value = '0' + val;
+    } else {
+      display.value = val;
+    }
+  } else {
+    display.value += val;
+  }
+  
+  // リアルタイムで上の式表示に反映
+  updateFormula(display.value);
+}
+
+function insertMath(func) {
+  if (display.value === '0' || display.value === 'エラー') display.value = '';
+  
+  // 追加後に25桁を超える場合は制限
+  if ((display.value + func).length > MAX_LENGTH) return;
+
+  display.value += func;
+  updateFormula(display.value);
+}
+
+function insertConstant(c) {
+  if (display.value === '0' || display.value === 'エラー') display.value = '';
+  
+  // 追加後に25桁を超える場合は制限
+  if ((display.value + c).length > MAX_LENGTH) return;
+
+  display.value += c;
+  updateFormula(display.value);
+}
+
+// 画面全体のキーボードイベント
+document.addEventListener('keydown', function(e) {
+  if (document.activeElement && document.activeElement !== display && document.activeElement.tagName === 'INPUT') {
+    return;
+  }
+
+  const basicPanel = document.getElementById('basic');
+  if (!basicPanel || !basicPanel.classList.contains('active')) return;
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    calculateBasic();
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    clearBasic();
+    return;
+  }
+
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    deleteLastBasic();
+    return;
+  }
+
+  let inputChar = e.key;
+
+  if (e.code === 'Semicolon') {
+    inputChar = '+';
+  } else if (e.code === 'Quote' || e.code === 'IntlRo') {
+    if (e.key === ':' || e.key === '*') inputChar = '*';
+  }
+
+  inputChar = keyReplaceMap[inputChar] || inputChar;
+
+  const validKeys = ['0','1','2','3','4','5','6','7','8','9','+','-','*','/','.','(',')','x',',','^'];
+
+  if (validKeys.includes(inputChar)) {
+    e.preventDefault();
+    appendBasic(inputChar);
+  }
+});
+
+// 入力欄に直接打ち込まれた全角文字もリアルタイムで半角に変換し、25桁制限を適用
+display.addEventListener('input', function() {
+  this.value = this.value.replace(/[０-９＋ー―＊／．（），]/g, function(s) {
+    return keyReplaceMap[s] || s;
+  });
+
+  // 25文字を超えた分をカット
+  if (this.value.length > MAX_LENGTH) {
+    this.value = this.value.slice(0, MAX_LENGTH);
+  }
+
+  updateFormula(this.value);
+});
+
+// --- 微分・積分を数値計算する処理 ---
+function evalCalculus(expr) {
+  expr = expr.replace(/d\/dx\(([^,]+),([^)]+)\)/g, (match, funcStr, xValStr) => {
+    const xVal = parseFloat(eval(funcStrReplacer(xValStr)));
+    const h = 0.00001;
+    const f = (x) => eval(funcStrReplacer(funcStr).replace(/x/g, `(${x})`));
+    const df = (f(xVal + h) - f(xVal - h)) / (2 * h);
+    return Math.abs(df) < 1e-9 ? 0 : df.toFixed(4);
+  });
+
+  expr = expr.replace(/∫\(([^,]+),([^,]+),([^)]+)\)/g, (match, funcStr, aStr, bStr) => {
+    const a = parseFloat(eval(funcStrReplacer(aStr)));
+    const b = parseFloat(eval(funcStrReplacer(bStr)));
+    const n = 1000;
+    const h = (b - a) / n;
+    const f = (x) => eval(funcStrReplacer(funcStr).replace(/x/g, `(${x})`));
+    
+    let sum = f(a) + f(b);
+    for (let i = 1; i < n; i++) {
+      let x = a + i * h;
+      sum += (i % 2 === 0 ? 2 : 4) * f(x);
+    }
+    const result = (h / 3) * sum;
+    return Math.abs(result) < 1e-9 ? 0 : result.toFixed(4);
+  });
+
+  return expr;
+}
+
+function funcStrReplacer(str) {
+  return str.replace(/π/g, 'Math.PI').replace(/√\(/g, 'Math.sqrt(').replace(/\^/g, '**');
+}
+
+// 計算実行関数
+function calculateBasic() {
+  try {
+    const rawFormula = display.value; // 計算前のテキストを保存
+
+    let expr = display.value;
+
+    // --- 1. ルート(√) や 定数(π) の前に数字がある場合の乗算 (* ) 自動補完 ---
+    expr = expr.replace(/(\d|\)|Math\.PI|x)(√|π)/g, '$1*$2');
+    
+    // --- 2. √ や π や ** への置き換え ---
+    expr = expr.replace(/π/g, 'Math.PI')
+               .replace(/√\(/g, 'Math.sqrt(')
+               .replace(/√(\d+(\.\d+)?)/g, 'Math.sqrt($1)')
+               .replace(/\^/g, '**');
+
+    // --- 3. カッコ・定数(π)・変数(x) 周りの乗算省略 (* ) を自動補完 ---
+    expr = expr.replace(/\)\(/g, ')*(');
+    expr = expr.replace(/(\d|Math\.PI)(\(|Math\.PI|x)/g, '$1*$2');
+    expr = expr.replace(/(\)|Math\.PI|x)(\d|Math\.PI)/g, '$1*$2');
+
+    // --- 4. 閉じカッコの自動補完 ---
+    const openBrackets = (expr.match(/\(/g) || []).length;
+    const closeBrackets = (expr.match(/\)/g) || []).length;
+    let completedBrackets = '';
+    if (openBrackets > closeBrackets) {
+      completedBrackets = ')'.repeat(openBrackets - closeBrackets);
+      expr += completedBrackets;
+    }
+
+    // --- 5. 微分・積分の評価 ---
+    expr = evalCalculus(expr);
+
+    // 計算実行
+    let result = eval(expr);
+
+    if (!isFinite(result)) {
+      display.value = 'エラー';
+    } else {
+      // 上のサブディスプレイに「入力した式＋補完された閉じカッコ＋ ＝」を残す
+      updateFormula(rawFormula + completedBrackets + ' =');
+      
+      // 下のメインディスプレイに結果を表示（有効数字・文字数を25桁以内に制御）
+      let resStr = Number(result.toPrecision(15)).toString();
+      if (resStr.length > MAX_LENGTH) {
+        resStr = resStr.slice(0, MAX_LENGTH);
+      }
+      display.value = resStr;
+    }
+  } catch (e) {
+    display.value = 'エラー';
+  }
+}
+
+  // --- 2. 進数変換 ---
+  function convertBase(source) {
+    const dec = document.getElementById('dec-input');
+    const bin = document.getElementById('bin-input');
+    const hex = document.getElementById('hex-input');
+
+    try {
+      let val;
+      if (source === 'dec' && dec.value !== '') {
+        val = parseInt(dec.value, 10);
+      } else if (source === 'bin' && bin.value !== '') {
+        val = parseInt(bin.value, 2);
+      } else if (source === 'hex' && hex.value !== '') {
+        val = parseInt(hex.value, 16);
+      } else {
+        if (source === 'dec') { bin.value = ''; hex.value = ''; }
+        if (source === 'bin') { dec.value = ''; hex.value = ''; }
+        if (source === 'hex') { dec.value = ''; bin.value = ''; }
+        return;
+      }
+
+      if (isNaN(val)) return;
+
+      if (source !== 'dec') dec.value = val.toString(10);
+      if (source !== 'bin') bin.value = val.toString(2);
+      if (source !== 'hex') hex.value = val.toString(16).toUpperCase();
+    } catch(e) {}
+  }
+
+  // --- 3. 割合計算 ---
+function calcPercent() {
+  const numInput = document.getElementById('pct-num');
+  const rateInput = document.getElementById('pct-rate');
+
+  const num = parseFloat(numInput.value) || 0;
+  const rate = parseFloat(rateInput.value) || 0;
+  const val = num * (rate / 100);
+  const added = num + val;
+  const subbed = num - val;
+
+  document.getElementById('pct-result').innerHTML = `
+    ${num} の ${rate}% は <b>${val}</b><br>
+    <small>加算 (+${rate}%): ${added} | 減算 (-${rate}%): ${subbed}</small>
+  `;
+}
+
+// 割合計算の入力欄に対するイベント設定
+document.addEventListener('DOMContentLoaded', function() {
+  const pctInputs = [
+    document.getElementById('pct-num'),
+    document.getElementById('pct-rate')
+  ];
+
+  pctInputs.forEach(input => {
+    if (!input) return;
+
+    // 1. フォーカス時に全選択
+    input.addEventListener('focus', function() {
+      this.select();
+    });
+
+    // 2. Enterキーで計算実行
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        calcPercent();
+      }
+    });
+  });
+});
+
+ // --- 4. 時間計算 ---
+function calcTime(mode = 'add') {
+  // 各入力欄から値を取得（空文字や未入力は0として扱う）
+  const h1 = parseInt(document.getElementById('t1-h').value) || 0;
+  const m1 = parseInt(document.getElementById('t1-m').value) || 0;
+  const s1 = parseInt(document.getElementById('t1-s').value) || 0;
+
+  const h2 = parseInt(document.getElementById('t2-h').value) || 0;
+  const m2 = parseInt(document.getElementById('t2-m').value) || 0;
+  const s2 = parseInt(document.getElementById('t2-s').value) || 0;
+
+  // すべて「秒」単位に換算して計算
+  const total1Seconds = h1 * 3600 + m1 * 60 + s1;
+  const total2Seconds = h2 * 3600 + m2 * 60 + s2;
+  
+  let diffSeconds = mode === 'add' ? total1Seconds + total2Seconds : total1Seconds - total2Seconds;
+
+  const isNegative = diffSeconds < 0;
+  const absSeconds = Math.abs(diffSeconds);
+
+  // 時間・分・秒への逆算
+  const resH = Math.floor(absSeconds / 3600);
+  const resM = Math.floor((absSeconds % 3600) / 60);
+  const resS = absSeconds % 60;
+
+  // 分表示用の計算（小数切り捨てせず、秒もまとめた分換算）
+  const totalMinutes = (absSeconds / 60).toFixed(2).replace(/\.00$/, '');
+
+  const sign = isNegative ? '-' : '';
+
+  // 結果表示の出力
+  const resultEl = document.getElementById('time-result');
+  if (resultEl) {
+    resultEl.innerHTML = `
+      <b>${sign}${resH} 時間 ${resM} 分 ${resS} 秒</b><br>
+      <small>（合計 ${sign}${totalMinutes.toLocaleString()} 分 / ${sign}${absSeconds.toLocaleString()} 秒）</small>
+    `;
+  }
+}
+
+// 時間計算の入力欄に対する自動イベント設定（フォーカス全選択・全角半角変換・Enter実行）
+document.addEventListener('DOMContentLoaded', function() {
+  const timeInputs = [
+    document.getElementById('t1-h'),
+    document.getElementById('t1-m'),
+    document.getElementById('t1-s'),
+    document.getElementById('t2-h'),
+    document.getElementById('t2-m'),
+    document.getElementById('t2-s')
+  ];
+
+  // 全角→半角変換用マップ
+  const zenToHanMap = {
+    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
+    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9'
+  };
+
+  function convertZenkaku(inputEl) {
+    inputEl.value = inputEl.value.replace(/[０-９]/g, function(s) {
+      return zenToHanMap[s] || s;
+    });
+  }
+
+  timeInputs.forEach(input => {
+    if (!input) return;
+
+    let isComposing = false;
+
+    // 日本語入力（IME）の状態管理
+    input.addEventListener('compositionstart', function() {
+      isComposing = true;
+    });
+
+    input.addEventListener('compositionend', function() {
+      isComposing = false;
+      convertZenkaku(this);
+    });
+
+    // 1. フォーカス時に全選択
+    input.addEventListener('focus', function() {
+      this.select();
+    });
+
+    // 2. Enterキー押下で計算（加算）を実行
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !isComposing && !e.isComposing) {
+        e.preventDefault();
+        calcTime('add');
+      }
+    });
+
+    // 3. 入力時のリアルタイム半角自動変換
+    input.addEventListener('input', function() {
+      if (!isComposing) {
+        convertZenkaku(this);
+      }
+    });
+  });
+});
+
+// --- 5 & 6. 単位換算 ---
+const rates = {
+  length: { mm: 0.001, cm: 0.01, m: 1, km: 1000, inch: 0.0254 },
+  weight: { mg: 0.001, g: 1, kg: 1000, t: 1000000, lb: 453.592 }
+};
+
+function convertUnit(type) {
+  const valEl = document.getElementById(`${type}-val`);
+  const fromEl = document.getElementById(`${type}-from`);
+  const toEl = document.getElementById(`${type}-to`);
+  const resultEl = document.getElementById(`${type}-result`);
+
+  if (!valEl || !fromEl || !toEl || !resultEl) return;
+
+  const val = parseFloat(valEl.value) || 0;
+  const from = fromEl.value;
+  const to = toEl.value;
+
+  const baseValue = val * rates[type][from];
+  const result = baseValue / rates[type][to];
+
+  // 端数処理を行いつつ結果を表示（数値を読みやすく調整）
+  const formattedResult = Number(result.toFixed(6)); 
+  resultEl.innerText = `${formattedResult} ${to}`;
+}
+
+// 単位換算の入力欄に対するイベント設定
+document.addEventListener('DOMContentLoaded', function() {
+  const types = ['length', 'weight'];
+
+  const zenToHanMap = {
+    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
+    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9',
+    '．':'.'
+  };
+
+  function convertZenkaku(inputEl) {
+    inputEl.value = inputEl.value.replace(/[０-９．]/g, function(s) {
+      return zenToHanMap[s] || s;
+    });
+  }
+
+  types.forEach(type => {
+    const valInput = document.getElementById(`${type}-val`);
+    const fromSelect = document.getElementById(`${type}-from`);
+    const toSelect = document.getElementById(`${type}-to`);
+
+    // --- 数値入力欄（len-val / weight-val）のイベント ---
+    if (valInput) {
+      let isComposing = false;
+
+      valInput.addEventListener('compositionstart', function() {
+        isComposing = true;
+      });
+
+      valInput.addEventListener('compositionend', function() {
+        isComposing = false;
+        convertZenkaku(this);
+        convertUnit(type);
+      });
+
+      // 1. フォーカス時全選択
+      valInput.addEventListener('focus', function() {
+        this.select();
+      });
+
+      // 2. 入力時に全角変換＋即時計算
+      valInput.addEventListener('input', function() {
+        if (!isComposing) {
+          convertZenkaku(this);
+          convertUnit(type);
+        }
+      });
+    }
+
+    // --- セレクトボックス（単位変更時）のイベント ---
+    if (fromSelect) {
+      fromSelect.addEventListener('change', function() {
+        convertUnit(type);
+      });
+    }
+    if (toSelect) {
+      toSelect.addEventListener('change', function() {
+        convertUnit(type);
+      });
+    }
+
+    // 初回読み込み時に初期計算を実行
+    convertUnit(type);
+  });
+});
+
+// --- 7. 面積計算 ---
+function toggleAreaInputs() {
+  const type = document.getElementById('area-type').value;
+  const g2 = document.getElementById('area-v2-group');
+  const g3 = document.getElementById('area-v3-group');
+
+  if (g3) g3.style.display = 'none';
+
+  if (type === 'circle' || type === 'sphere-surface') {
+    document.getElementById('area-label1').innerText = "半径 (m)";
+    if (g2) g2.style.display = 'none';
+  } else if (type === 'sector') {
+    document.getElementById('area-label1').innerText = "半径 (m)";
+    document.getElementById('area-label2').innerText = "中心角 (度)";
+    if (g2) g2.style.display = 'block';
+  } else if (type === 'trapezoid') {
+    document.getElementById('area-label1').innerText = "上底 (m)";
+    document.getElementById('area-label2').innerText = "下底 (m)";
+    if (document.getElementById('area-label3')) {
+      document.getElementById('area-label3').innerText = "高さ (m)";
+    }
+    if (g2) g2.style.display = 'block';
+    if (g3) g3.style.display = 'block';
+  } else if (type === 'triangle') {
+    document.getElementById('area-label1').innerText = "底辺 (m)";
+    document.getElementById('area-label2').innerText = "高さ (m)";
+    if (g2) g2.style.display = 'block';
+  } else if (type === 'parallelogram') {
+    document.getElementById('area-label1').innerText = "底辺 (m)";
+    document.getElementById('area-label2').innerText = "高さ (m)";
+    if (g2) g2.style.display = 'block';
+  } else if (type === 'regular-polygon') {
+    document.getElementById('area-label1').innerText = "1辺の長さ (m)";
+    if (document.getElementById('area-label3')) {
+      document.getElementById('area-label3').innerText = "頂点の数 (角形)";
+    }
+    if (g2) g2.style.display = 'none';
+    if (g3) g3.style.display = 'block';
+  } else {
+    document.getElementById('area-label1').innerText = "幅 (m)";
+    document.getElementById('area-label2').innerText = "高さ (m)";
+    if (g2) g2.style.display = 'block';
+  }
+  calcArea();
+}
+
+function calcArea() {
+  const type = document.getElementById('area-type').value;
+  const v1Input = document.getElementById('area-v1');
+  const v2Input = document.getElementById('area-v2');
+  const v3Input = document.getElementById('area-v3');
+
+  const v1 = parseFloat(v1Input ? v1Input.value : 0) || 0;
+  const v2 = parseFloat(v2Input ? v2Input.value : 0) || 0;
+  const v3 = parseFloat(v3Input ? v3Input.value : 0) || 0;
+
+  let resDecimal = 0;
+  let piCoefficient = 0;
+  let hasPi = false;
+  let formulaStr = "";
+
+  // 正多角形用の追加情報変数
+  let isRegularPolygon = false;
+  let interiorSum = 0;
+  let exteriorSum = 360;
+  let exactFormulaResult = "";
+  let polyN = 0;
+    
+  if (type === 'rect') {
+    resDecimal = v1 * v2;
+    formulaStr = `${v1}m × ${v2}m`;
+  } else if (type === 'circle') {
+    hasPi = true;
+    piCoefficient = v1 * v1;
+    resDecimal = Math.PI * piCoefficient;
+    formulaStr = `π × ${v1}m × ${v1}m`;
+  } else if (type === 'sphere-surface') {
+    hasPi = true;
+    piCoefficient = 4 * v1 * v1;
+    resDecimal = Math.PI * piCoefficient;
+    formulaStr = `4 × π × ${v1}m × ${v1}m`;
+  } else if (type === 'sector') {
+    hasPi = true;
+    piCoefficient = v1 * v1 * (v2 / 360);
+    resDecimal = Math.PI * piCoefficient;
+    formulaStr = `π × ${v1}m × ${v1}m × (${v2}° ÷ 360)`;
+  } else if (type === 'trapezoid') {
+    resDecimal = ((v1 + v2) * v3) / 2;
+    formulaStr = `((${v1}m + ${v2}m) × ${v3}m) ÷ 2`;
+  } else if (type === 'triangle') {
+    resDecimal = (v1 * v2) / 2;
+    formulaStr = `(${v1}m × ${v2}m) ÷ 2`;
+  } else if (type === 'parallelogram') {
+    resDecimal = v1 * v2;
+    formulaStr = `${v1}m × ${v2}m`;
+  } else if (type === 'regular-polygon') {
+    isRegularPolygon = true;
+    // v3が0または未入力の場合はデフォルトで 3（正三角形）扱いにする
+    const rawN = parseInt(v3Input ? v3Input.value : 0);
+    const n = rawN >= 3 ? rawN : 3;
+    polyN = n; // ← 【追加】ここで角数を保存
+
+    const side = v1; // 1辺の長さ (a)
+    const a2 = side * side;
+
+    // 内角の和・外角の和の計算
+    interiorSum = (n - 2) * 180;
+    exteriorSum = 360;
+
+    // ルート表記および面積計算
+    if (n === 3) {
+      // 正三角形: (√3 / 4) * a^2
+      formulaStr = `(√3 ÷ 4) × ${side}²`;
+      exactFormulaResult = (a2 % 4 === 0) ? `${(a2 / 4)}√3` : `(${a2}√3) / 4`;
+      resDecimal = (Math.sqrt(3) / 4) * a2;
+    } else if (n === 4) {
+      // 正方形: a^2
+      formulaStr = `${side}m × ${side}m`;
+      exactFormulaResult = `${a2}`;
+      resDecimal = a2;
+    } else if (n === 5) {
+      // 正五角形: (1/4) * √(5(5+2√5)) * a^2
+      formulaStr = `1/4 × √(5(5+2√5)) × ${side}²`;
+      const factor = Math.sqrt(5 * (5 + 2 * Math.sqrt(5))) / 4;
+      exactFormulaResult = `${a2}/4 × √(5(5+2√5))`;
+      resDecimal = factor * a2;
+    } else if (n === 6) {
+      // 正六角形: (3√3 / 2) * a^2
+      formulaStr = `(3√3 ÷ 2) × ${side}²`;
+      const num = a2 * 3;
+      exactFormulaResult = (num % 2 === 0) ? `${num / 2}√3` : `(${num}√3) / 2`;
+      resDecimal = ((3 * Math.sqrt(3)) / 2) * a2;
+    } else if (n === 8) {
+      // 正八角形: 2(1 + √2) * a^2
+      formulaStr = `2(1 + √2) × ${side}²`;
+      exactFormulaResult = `${2 * a2}(1 + √2)`;
+      resDecimal = 2 * (1 + Math.sqrt(2)) * a2;
+    } else {
+      // その他の正多角形: (n / 4) * a^2 * cot(180° / n)
+      const triHeight = ((side / 2) / Math.tan(Math.PI / n)).toFixed(2);
+      formulaStr = `(${side} × ${triHeight} ÷ 2) × ${n}個`;
+      exactFormulaResult = `${n}/4 × ${a2} × cot(180°/${n})`;
+      resDecimal = (n * a2) / (4 * Math.tan(Math.PI / n));
+    }
+  }
+
+  const formattedDecimal = Number(resDecimal.toFixed(2));
+  const formattedPiCoef = Number(piCoefficient.toFixed(2));
+
+  // 結果テキストの更新
+  const resultEl = document.getElementById('area-result');
+  if (resultEl) {
+    const labelText = (type === 'sphere-surface') ? "表面積" : "面積";
+    let resultHTML = "";
+
+    if (isRegularPolygon) {
+      resultHTML += `
+        <div style="font-size: 13px; color: #4b5563; margin-bottom: 6px;">
+          <!-- 【修正】内角の和の横に計算式を追加 -->
+          <div><strong>内角の和:</strong> ${interiorSum}° <span style="font-size: 12px; color: #64748b; margin-left: 4px;">(式: (${polyN} - 2) × 180°)</span></div>
+          <div><strong>外角の和:</strong> ${exteriorSum}° <span style="font-size: 12px; color: #64748b; margin-left: 4px;">(常に360°)</span></div>
+        </div>
+        <div style="font-size: 13px; color: #4b5563; margin-bottom: 4px;">公式: ${formulaStr}</div>
+      `;
+      if (exactFormulaResult !== "―") {
+        resultHTML += `<div>${labelText} (ルート表記): <strong>${exactFormulaResult}</strong> ㎡</div>`;
+      }
+      resultHTML += `<div style="margin-top: 2px;">${labelText} (概算): <strong>${formattedDecimal}</strong> ㎡</div>`;
+    } else if (hasPi) {
+      resultHTML += `
+        <div style="font-size: 13px; color: #4b5563; margin-bottom: 4px;">式: ${formulaStr}</div>
+        <div>${labelText} (π表記): <strong>${formattedPiCoef}π</strong> ㎡</div>
+        <div style="margin-top: 2px;">${labelText} (概算): <strong>${formattedDecimal}</strong> ㎡</div>
+      `;
+    } else {
+      resultHTML += `
+        <div style="font-size: 13px; color: #4b5563; margin-bottom: 4px;">式: ${formulaStr}</div>
+        <div>${labelText}: <strong>${formattedDecimal}</strong> ㎡</div>
+      `;
+    }
+    resultEl.innerHTML = resultHTML;
+  }
+
+  // 図形の描画呼び出し
+  drawAreaShape(type, v1, v2, v3);
+}
+
+// Canvasへの描画関数
+function drawAreaShape(type, v1, v2, v3) {
+  const canvas = document.getElementById('area-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // キャンバスのクリア
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 数値が0以下の場合は描画スキップ
+  if (v1 <= 0) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+
+  // スタイル設定
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#2563eb';
+  ctx.fillStyle = 'rgba(37, 99, 235, 0.1)';
+  ctx.font = '12px sans-serif';
+
+  if (type === 'rect') {
+    if (v2 <= 0) return;
+    const maxDim = Math.max(v1, v2);
+    const scale = Math.min((w - 80) / maxDim, (h - 80) / maxDim);
+    const drawW = v1 * scale;
+    const drawH = v2 * scale;
+    const x = (w - drawW) / 2;
+    const y = (h - drawH) / 2;
+
+    ctx.beginPath();
+    ctx.rect(x, y, drawW, drawH);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${v1} m`, x + drawW / 2, y - 8);
+    ctx.textAlign = 'right';
+    ctx.fillText(`${v2} m`, x - 8, y + drawH / 2 + 4);
+
+  } else if (type === 'circle' || type === 'sphere-surface') {
+    const radius = Math.min(w, h) / 2 - 30;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + radius, cy);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    if (type === 'sphere-surface') {
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.ellipse(cx, cy, radius, radius * 0.3, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'center';
+    ctx.fillText(`r = ${v1} m`, cx + radius / 2, cy - 8);
+
+  } else if (type === 'sector') {
+    const radius = Math.min(w, h) / 2 - 35;
+    const angleRad = (v2 * Math.PI) / 180;
+    const startAngle = -Math.PI / 2; // 真上 (12時方向)
+    const endAngle = startAngle + angleRad;
+
+    // 扇形の本体
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 中心角のアーク描画
+    if (v2 > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, 25, startAngle, endAngle);
+      ctx.strokeStyle = '#10b981';
+      ctx.stroke();
+
+      ctx.fillStyle = '#10b981';
+      ctx.textAlign = 'center';
+      const midAngle = startAngle + angleRad / 2;
+      ctx.fillText(`${v2}°`, cx + 38 * Math.cos(midAngle), cy + 38 * Math.sin(midAngle) + 4);
+    }
+
+    // r (半径) の表示位置を始点半径の外側（左側）に配置
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`r = ${v1} m`, cx - 8, cy - radius / 2);
+
+  } else if (type === 'trapezoid') {
+    if (v2 <= 0 || v3 <= 0) return;
+    const maxW = Math.max(v1, v2);
+    const scaleX = (w - 80) / maxW;
+    const scaleY = (h - 80) / v3;
+    const scale = Math.min(scaleX, scaleY);
+
+    const topW = v1 * scale;
+    const botW = v2 * scale;
+    const drawH = v3 * scale;
+
+    const topX1 = (w - topW) / 2;
+    const topX2 = topX1 + topW;
+    const botX1 = (w - botW) / 2;
+    const botX2 = botX1 + botW;
+    const y1 = (h - drawH) / 2;
+    const y2 = y1 + drawH;
+
+    // 台形の描画
+    ctx.beginPath();
+    ctx.moveTo(topX1, y1);
+    ctx.lineTo(topX2, y1);
+    ctx.lineTo(botX2, y2);
+    ctx.lineTo(botX1, y2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 高さを表す赤い点線
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(topX1, y1);
+    ctx.lineTo(topX1, y2);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // テキスト表示
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`上底: ${v1} m`, w / 2, y1 - 8);
+    ctx.fillText(`下底: ${v2} m`, w / 2, y2 + 18);
+
+    // 赤い点線の右側に表示
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'left';
+    ctx.fillText(`h = ${v3} m`, topX1 + 6, y1 + drawH / 2 + 4);
+
+  } else if (type === 'triangle') {
+    if (v2 <= 0) return;
+
+    const maxW = Math.max(v1, 1);
+    const scaleX = (w - 80) / maxW;
+    const scaleY = (h - 80) / v2;
+    const scale = Math.min(scaleX, scaleY);
+
+    const drawW = v1 * scale;
+    const drawH = v2 * scale;
+
+    const xBaseLeft = (w - drawW) / 2;
+    const xBaseRight = xBaseLeft + drawW;
+    const xTop = w / 2;
+
+    const yTop = (h - drawH) / 2;
+    const yBottom = yTop + drawH;
+
+    // 三角形の本体描画
+    ctx.beginPath();
+    ctx.moveTo(xTop, yTop);
+    ctx.lineTo(xBaseRight, yBottom);
+    ctx.lineTo(xBaseLeft, yBottom);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 高さを表す赤い点線
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(xTop, yTop);
+    ctx.lineTo(xTop, yBottom);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 底辺のテキスト表示
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`底辺: ${v1} m`, w / 2, yBottom + 18);
+
+    // 高さ h の表示（赤い点線の右側に配置）
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'left';
+    ctx.fillText(`h = ${v2} m`, xTop + 6, yTop + drawH / 2 + 4);
+
+  } else if (type === 'parallelogram') {
+    if (v2 <= 0) return;
+
+    const offset = 30;
+    const drawW = Math.min(w - 80 - offset, v1 * 10); 
+    const drawH = Math.min(h - 80, v2 * 10);
+
+    const x1 = (w - drawW - offset) / 2;
+    const y1 = (h - drawH) / 2;
+    const y2 = y1 + drawH;
+
+    // 平行四辺形の本体描画
+    ctx.beginPath();
+    ctx.moveTo(x1 + offset, y1);
+    ctx.lineTo(x1 + offset + drawW, y1);
+    ctx.lineTo(x1 + drawW, y2);
+    ctx.lineTo(x1, y2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 高さを表す赤い点線
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(x1 + offset, y1);
+    ctx.lineTo(x1 + offset, y2);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // テキスト表示
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`底辺: ${v1} m`, x1 + offset + drawW / 2, y2 + 18);
+
+    // 赤い点線の右側に表示
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'left';
+    ctx.fillText(`h = ${v2} m`, x1 + offset + 6, y1 + drawH / 2 + 4);
+
+  } else if (type === 'regular-polygon') {
+    const n = Math.max(3, parseInt(v3) || 5);
+    const radius = Math.min(w, h) / 2 - 35;
+
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = (i * 2 * Math.PI) / n - Math.PI / 2;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 数値表示
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`正${n}角形 (1辺: ${v1} m)`, cx, cy + radius + 20);
+  }
+}
+
+// 面積計算用 イベントリスナー設定
+document.addEventListener('DOMContentLoaded', function() {
+  const areaInputs = ['area-v1', 'area-v2', 'area-v3'];
+  const zenToHanMap = {
+    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
+    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9',
+    '．':'.'
+  };
+
+  function convertZenkaku(inputEl) {
+    inputEl.value = inputEl.value.replace(/[０-９．]/g, function(s) {
+      return zenToHanMap[s] || s;
+    });
+  }
+
+  areaInputs.forEach(id => {
+    const inputEl = document.getElementById(id);
+    if (inputEl) {
+      let isComposing = false;
+
+      inputEl.addEventListener('compositionstart', function() {
+        isComposing = true;
+      });
+
+      inputEl.addEventListener('compositionend', function() {
+        isComposing = false;
+        convertZenkaku(this);
+        calcArea();
+      });
+
+      // フォーカス時全選択
+      inputEl.addEventListener('focus', function() {
+        this.select();
+      });
+
+      // リアルタイム入力＆全角変換
+      inputEl.addEventListener('input', function() {
+        if (!isComposing) {
+          convertZenkaku(this);
+          calcArea();
+        }
+      });
+
+      // Enterキー押下時に計算＆フォーカス解除
+      inputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          calcArea();
+          this.blur(); // キーボードを閉じる/フォーカスを外す
+        }
+      });
+    }
+  });
+
+  // 初期計算
+  calcArea();
+});
+
+// --- 8. 体積計算 ---
+function toggleVolInputs() {
+  const type = document.getElementById('vol-type').value;
+  const g2 = document.getElementById('vol-v2-group');
+  const g3 = document.getElementById('vol-v3-group');
+
+  if (type === 'box') {
+    document.getElementById('vol-label1').innerText = "縦 (m)";
+    document.getElementById('vol-label2').innerText = "横 (m)";
+    document.getElementById('vol-label3').innerText = "高さ (m)";
+    if (g2) g2.style.display = 'block';
+    if (g3) g3.style.display = 'block';
+  } else if (type === 'tri-prism') { // ★追加: 三角柱
+    document.getElementById('vol-label1').innerText = "底面の底辺 (m)";
+    document.getElementById('vol-label2').innerText = "底面の高さ (m)";
+    document.getElementById('vol-label3').innerText = "柱の高さ (m)";
+    if (g2) g2.style.display = 'block';
+    if (g3) g3.style.display = 'block';
+  } else if (type === 'cylinder') {
+    document.getElementById('vol-label1').innerText = "底面の半径 (m)";
+    document.getElementById('vol-label3').innerText = "高さ (m)";
+    if (g2) g2.style.display = 'none';
+    if (g3) g3.style.display = 'block';
+  } else if (type === 'cone') {
+    document.getElementById('vol-label1').innerText = "底面の半径 (m)";
+    document.getElementById('vol-label3').innerText = "高さ (m)";
+    if (g2) g2.style.display = 'none';
+    if (g3) g3.style.display = 'block';
+  } else if (type === 'tri-pyramid') {
+    document.getElementById('vol-label1').innerText = "底辺 (m)";
+    document.getElementById('vol-label2').innerText = "底面の高さ (m)";
+    document.getElementById('vol-label3').innerText = "立体の高さ (m)";
+    if (g2) g2.style.display = 'block';
+    if (g3) g3.style.display = 'block';
+  } else if (type === 'sphere') {
+    document.getElementById('vol-label1').innerText = "半径 (m)";
+    if (g2) g2.style.display = 'none';
+    if (g3) g3.style.display = 'none';
+  }
+  calcVolume();
+}
+
+function calcVolume() {
+  const type = document.getElementById('vol-type').value;
+  const v1Input = document.getElementById('vol-v1');
+  const v2Input = document.getElementById('vol-v2');
+  const v3Input = document.getElementById('vol-v3');
+
+  const v1 = parseFloat(v1Input ? v1Input.value : 0) || 0;
+  const v2 = parseFloat(v2Input ? v2Input.value : 0) || 0;
+  const v3 = parseFloat(v3Input ? v3Input.value : 0) || 0;
+
+  let resDecimal = 0;
+  let piCoefficient = 0;
+  let hasPi = false;
+  let formulaStr = "";
+
+  if (type === 'box') {
+    resDecimal = v1 * v2 * v3;
+    formulaStr = `${v1}m × ${v2}m × ${v3}m`;
+  } else if (type === 'tri-prism') { // ★追加: 三角柱
+    resDecimal = (v1 * v2 / 2) * v3;
+    formulaStr = `(${v1}m × ${v2}m ÷ 2) × ${v3}m`;
+  } else if (type === 'cylinder') {
+    hasPi = true;
+    piCoefficient = v1 * v1 * v3;
+    resDecimal = Math.PI * piCoefficient;
+    formulaStr = `π × ${v1}m × ${v1}m × ${v3}m`;
+  } else if (type === 'cone') {
+    hasPi = true;
+    piCoefficient = (v1 * v1 * v3) / 3;
+    resDecimal = Math.PI * piCoefficient;
+    formulaStr = `(π × ${v1}m × ${v1}m × ${v3}m) ÷ 3`;
+  } else if (type === 'tri-pyramid') {
+    resDecimal = (v1 * v2 / 2) * v3 / 3;
+    formulaStr = `(${v1}m × ${v2}m ÷ 2) × ${v3}m ÷ 3`;
+  } else if (type === 'sphere') {
+    hasPi = true;
+    piCoefficient = (4 / 3) * Math.pow(v1, 3);
+    resDecimal = Math.PI * piCoefficient;
+    formulaStr = `(4 ÷ 3) × π × ${v1}m³`;
+  }
+
+  const formattedDecimal = Number(resDecimal.toFixed(2));
+  const formattedPiCoef = Number(piCoefficient.toFixed(2));
+
+  // 結果テキストの更新
+  const resultEl = document.getElementById('vol-result');
+  if (resultEl) {
+    let resultHTML = `<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px;">式: ${formulaStr}</div>`;
+
+    if (hasPi) {
+      resultHTML += `
+        <div>体積 (π表記): <strong>${formattedPiCoef}π</strong> ㎥</div>
+        <div style="margin-top: 2px;">体積 (概算): <strong>${formattedDecimal}</strong> ㎥</div>
+      `;
+    } else {
+      resultHTML += `
+        <div>体積: <strong>${formattedDecimal}</strong> ㎥</div>
+      `;
+    }
+    resultEl.innerHTML = resultHTML;
+  }
+
+  // 立体の描画呼び出し
+  drawVolShape(type, v1, v2, v3);
+}
+
+// 体積Canvas描画関数
+function drawVolShape(type, v1, v2, v3) {
+  const canvas = document.getElementById('vol-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setLineDash([]);
+  
+  if (v1 <= 0) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#2563eb';
+  ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
+  ctx.font = '12px sans-serif';
+
+  if (type === 'box') {
+    if (v2 <= 0 || v3 <= 0) return;
+    const maxDim = Math.max(v1, v2, v3);
+    const scale = Math.min((w - 100) / maxDim, (h - 100) / maxDim);
+
+    const dx = (v1 * scale) * 0.7;
+    const dy = (v1 * scale) * 0.4;
+    const drawW = v2 * scale;
+    const drawH = v3 * scale;
+
+    const startX = cx - (drawW + dx) / 2;
+    const startY = cy + (drawH - dy) / 2;
+
+    ctx.beginPath();
+    ctx.rect(startX, startY - drawH, drawW, drawH);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY - drawH);
+    ctx.lineTo(startX + dx, startY - drawH - dy);
+    ctx.lineTo(startX + drawW + dx, startY - drawH - dy);
+    ctx.lineTo(startX + drawW, startY - drawH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(startX + drawW, startY - drawH);
+    ctx.lineTo(startX + drawW + dx, startY - drawH - dy);
+    ctx.lineTo(startX + drawW + dx, startY - dy);
+    ctx.lineTo(startX + drawW, startY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`横: ${v2}m`, startX + drawW / 2, startY + 16);
+    ctx.textAlign = 'right';
+    ctx.fillText(`高さ: ${v3}m`, startX - 6, startY - drawH / 2);
+    ctx.textAlign = 'left';
+    ctx.fillText(`縦: ${v1}m`, startX + drawW + dx / 2 + 4, startY - dy / 2 + 10);
+
+  } else if (type === 'tri-prism') { // ★三角柱描画
+    if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
+
+    // 視点の固定角度（斜め上からの見下ろし感）
+    const depthAngle = Math.PI / 6; // 30度
+
+    // 3D空間上のバウンディングボックスサイズ
+    const total3DWidth = v1 + v2 * Math.cos(depthAngle);
+    const total3DHeight = v3 + v2 * Math.sin(depthAngle);
+
+    // キャンバスに収めるための統一スケール計算
+    const scale = Math.min(
+        (w - 120) / total3DWidth,
+        (h - 120) / total3DHeight
+    );
+
+    // スケール変換後の描画サイズ
+    const s1 = v1 * scale; // 底辺
+    const s2 = v2 * scale; // 底面の高さ
+    const s3 = v3 * scale; // 立体の高さ
+
+    // --- 底面（下側の三角形）の3頂点座標 (斜め投影) ---
+    const baseY = cy + s3 / 2 - (s2 * Math.sin(depthAngle)) / 2;
+    const baseX = cx;
+
+    const bot1 = { x: baseX - s1 / 2, y: baseY }; // 底辺の左端
+    const bot2 = { x: baseX + s1 / 2, y: baseY }; // 底辺の右端
+    const botBack = {                            // 底面の奥の点
+        x: baseX - s2 * Math.cos(depthAngle) * 0.5,
+        y: baseY - s2 * Math.sin(depthAngle)
+    };
+
+    // --- 上面（上側の三角形）の3頂点座標 (真上に s3 シフト) ---
+    const top1 = { x: bot1.x, y: bot1.y - s3 };
+    const top2 = { x: bot2.x, y: bot2.y - s3 };
+    const topBack = { x: botBack.x, y: botBack.y - s3 };
+
+    // 底辺の中点（高さ線の足）
+    const midBotBase = { x: (bot1.x + bot2.x) / 2, y: baseY };
+
+    // --- 1. 側面・全面の塗りつぶし ---
+    ctx.beginPath();
+    ctx.moveTo(top1.x, top1.y);
+    ctx.lineTo(top2.x, top2.y);
+    ctx.lineTo(bot2.x, bot2.y);
+    ctx.lineTo(bot1.x, bot1.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // --- 2. 上面三角形（塗り ＋ 実線） ---
+    ctx.beginPath();
+    ctx.moveTo(top1.x, top1.y);
+    ctx.lineTo(top2.x, top2.y);
+    ctx.lineTo(topBack.x, topBack.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#1e293b';
+    ctx.stroke();
+
+    // --- 3. 手前・見えている稜線（実線） ---
+    ctx.beginPath();
+    // 柱の垂直線（手前2本）
+    ctx.moveTo(top1.x, top1.y);
+    ctx.lineTo(bot1.x, bot1.y);
+    ctx.moveTo(top2.x, top2.y);
+    ctx.lineTo(bot2.x, bot2.y);
+    // 底面の手前底辺
+    ctx.moveTo(bot1.x, bot1.y);
+    ctx.lineTo(bot2.x, bot2.y);
+    ctx.stroke();
+
+    // --- 4. 奥の隠れ線（灰色点線） ---
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    // 奥の柱の垂直線
+    ctx.moveTo(topBack.x, topBack.y);
+    ctx.lineTo(botBack.x, botBack.y);
+    // 底面の奥の2辺
+    ctx.moveTo(bot1.x, bot1.y);
+    ctx.lineTo(botBack.x, botBack.y);
+    ctx.lineTo(bot2.x, bot2.y);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.stroke();
+
+    // ★★★ 5. 底面の高さ（v2）を示す【赤い点線】と直角マーク ★★★
+    ctx.beginPath();
+    ctx.setLineDash([4, 3]);
+    ctx.moveTo(midBotBase.x, midBotBase.y);
+    ctx.lineTo(botBack.x, botBack.y);
+    ctx.strokeStyle = '#ef4444'; // 鮮やかな赤色
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 直角マーク
+    const sq = 6;
+    ctx.beginPath();
+    ctx.setLineDash([]);
+    ctx.moveTo(midBotBase.x - sq, midBotBase.y);
+    ctx.lineTo(midBotBase.x - sq, midBotBase.y - sq * 0.5);
+    ctx.lineTo(midBotBase.x, midBotBase.y - sq * 0.5);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 設定を元に戻す
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#1e293b';
+
+    // --- 6. ラベル・数値表示 ---
+    // 底辺 (v1)
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`底辺: ${v1}m`, midBotBase.x, midBotBase.y + 16);
+
+    // 立体の高さ (v3)
+    ctx.textAlign = 'right';
+    ctx.fillText(`高さ: ${v3}m`, bot1.x - 8, cy);
+
+    // 底面の高さ (v2) - 赤色テキスト
+    ctx.fillStyle = '#dc2626';
+    ctx.textAlign = 'left';
+    ctx.fillText(`底面の高さ: ${v2}m`, (midBotBase.x + botBack.x) / 2 + 6, (midBotBase.y + botBack.y) / 2);
+
+  } else if (type === 'cylinder') {
+    if (v3 <= 0) return;
+    const scale = Math.min((w - 90) / (v1 * 2), (h - 90) / v3);
+    const rx = v1 * scale;
+    const ry = Math.min(rx * 0.35, 22);
+    const drawH = v3 * scale;
+
+    const topY = cy - drawH / 2 + ry;
+    const botY = topY + drawH;
+
+    ctx.beginPath();
+    ctx.rect(cx - rx, topY, rx * 2, drawH);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cx - rx, topY);
+    ctx.lineTo(cx - rx, botY);
+    ctx.moveTo(cx + rx, topY);
+    ctx.lineTo(cx + rx, botY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(cx, topY, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(cx, botY, rx, ry, 0, 0, Math.PI);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.ellipse(cx, botY, rx, ry, 0, Math.PI, Math.PI * 2);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.moveTo(cx, topY);
+    ctx.lineTo(cx + rx, topY);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'center';
+    ctx.fillText(`r = ${v1}m`, cx + rx / 2, topY - 6);
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'right';
+    ctx.fillText(`h = ${v3}m`, cx - rx - 8, topY + drawH / 2 + 4);
+
+  } else if (type === 'cone') {
+    if (v3 <= 0) return;
+    const scale = Math.min((w - 90) / (v1 * 2), (h - 90) / v3);
+    const rx = v1 * scale;
+    const ry = Math.min(rx * 0.35, 22);
+    const drawH = v3 * scale;
+
+    const topY = cy - drawH / 2;
+    const botY = topY + drawH;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, topY);
+    ctx.lineTo(cx - rx, botY);
+    ctx.lineTo(cx + rx, botY);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cx, topY);
+    ctx.lineTo(cx - rx, botY);
+    ctx.moveTo(cx, topY);
+    ctx.lineTo(cx + rx, botY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(cx, botY, rx, ry, 0, 0, Math.PI);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.ellipse(cx, botY, rx, ry, 0, Math.PI, Math.PI * 2);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(cx, topY);
+    ctx.lineTo(cx, botY);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([]);
+    ctx.moveTo(cx, botY);
+    ctx.lineTo(cx + rx, botY);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'center';
+    ctx.fillText(`r = ${v1}m`, cx + rx / 2, botY + 16);
+    ctx.textAlign = 'right';
+    ctx.fillText(`h = ${v3}m`, cx - 8, topY + drawH / 2);
+
+  } else if (type === 'tri-pyramid') {
+    if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
+
+    // 視点の固定角度（斜め上からの見下ろし感）
+    const depthAngle = Math.PI / 6; // 30度
+    
+    // 3D空間上のバウンディングボックスサイズ
+    const total3DWidth = v1 + v2 * Math.cos(depthAngle);
+    const total3DHeight = v3 + v2 * Math.sin(depthAngle);
+
+    // キャンバスに収めるための統一スケール計算
+    const scale = Math.min(
+        (w - 120) / total3DWidth,
+        (h - 120) / total3DHeight
+    );
+
+    // スケール変換後の描画サイズ
+    const s1 = v1 * scale; // 底辺
+    const s2 = v2 * scale; // 底面の高さ
+    const s3 = v3 * scale; // 立体の高さ
+
+    // --- 底面（三角形）の3頂点座標 (斜め投影) ---
+    const baseY = cy + s3 / 2 - (s2 * Math.sin(depthAngle)) / 2;
+    const baseX = cx;
+
+    const p1 = { x: baseX - s1 / 2, y: baseY }; // 底辺の左端
+    const p2 = { x: baseX + s1 / 2, y: baseY }; // 底辺の右端
+
+    // 底面の奥の点（頂点）
+    const pBack = {
+        x: baseX - s2 * Math.cos(depthAngle) * 0.5,
+        y: baseY - s2 * Math.sin(depthAngle)
+    };
+
+    // --- 立体の頂点 (高さ v3 の分だけ真上) ---
+    const topPt = {
+        x: (p1.x + p2.x + pBack.x) / 3,
+        y: ((p1.y + p2.y + pBack.y) / 3) - s3
+    };
+
+    // 底辺の中点（底面の高さ線の足）
+    const midBase = { x: (p1.x + p2.x) / 2, y: baseY };
+
+    // --- 1. 手前の面（実線） ---
+    ctx.beginPath();
+    ctx.moveTo(topPt.x, topPt.y);
+    ctx.lineTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#1e29ab';
+    ctx.stroke();
+
+    // --- 2. 奥の頂点への稜線（実線） ---
+    ctx.beginPath();
+    ctx.moveTo(topPt.x, topPt.y);
+    ctx.lineTo(pBack.x, pBack.y);
+    ctx.stroke();
+
+    // --- 3. 底面の奥の隠れ線（灰色点線） ---
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(pBack.x, pBack.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.stroke();
+
+    // ★★★ 4. 底面の高さ（v2）を示す【赤い点線】と直角マーク ★★★
+    ctx.beginPath();
+    ctx.setLineDash([4, 3]);
+    ctx.moveTo(midBase.x, midBase.y);
+    ctx.lineTo(pBack.x, pBack.y);
+    ctx.strokeStyle = '#ef4444'; // 鮮やかな赤色
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 直角マーク（赤色）
+    const sq = 6;
+    ctx.beginPath();
+    ctx.setLineDash([]);
+    ctx.moveTo(midBase.x - sq, midBase.y);
+    ctx.lineTo(midBase.x - sq, midBase.y - sq * 0.5);
+    ctx.lineTo(midBase.x, midBase.y - sq * 0.5);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 線の設定を戻す
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#1e293b';
+
+    // --- 5. ラベル・数値表示 ---
+    // 底辺 (v1)
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`底辺: ${v1}m`, midBase.x, midBase.y + 16);
+    
+    // 立体の高さ (v3)
+    ctx.textAlign = 'right';
+    ctx.fillText(`立体の高さ: ${v3}m`, p1.x - 8, (p1.y + topPt.y) / 2);
+
+    // 底面の高さ (v2) - 赤色テキストで点線に対応
+    ctx.fillStyle = '#dc2626';
+    ctx.textAlign = 'left';
+    ctx.fillText(`底面の高さ: ${v2}m`, (midBase.x + pBack.x) / 2 + 6, (midBase.y + pBack.y) / 2);
+  } else if (type === 'sphere') {
+    const radius = Math.min(w, h) / 2 - 30;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.ellipse(cx, cy, radius, radius * 0.3, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + radius, cy);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'center';
+    ctx.fillText(`r = ${v1}m`, cx + radius / 2, cy - 8);
+  }
+}
+
+// 体積計算用 イベントリスナー設定
+document.addEventListener('DOMContentLoaded', function() {
+  const volInputs = ['vol-v1', 'vol-v2', 'vol-v3'];
+  const zenToHanMap = {
+    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
+    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9',
+    '．':'.'
+  };
+
+  function convertZenkaku(inputEl) {
+    inputEl.value = inputEl.value.replace(/[０-９．]/g, function(s) {
+      return zenToHanMap[s] || s;
+    });
+  }
+
+  volInputs.forEach(id => {
+    const inputEl = document.getElementById(id);
+    if (inputEl) {
+      let isComposing = false;
+
+      inputEl.addEventListener('compositionstart', function() {
+        isComposing = true;
+      });
+
+      inputEl.addEventListener('compositionend', function() {
+        isComposing = false;
+        convertZenkaku(this);
+        calcVolume();
+      });
+
+      // フォーカス時全選択
+      inputEl.addEventListener('focus', function() {
+        this.select();
+      });
+
+      // リアルタイム入力＆全角変換
+      inputEl.addEventListener('input', function() {
+        if (!isComposing) {
+          convertZenkaku(this);
+          calcVolume();
+        }
+      });
+
+      // Enterキー押下時に計算＆フォーカス解除
+      inputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          calcVolume();
+          this.blur(); // キーボードを閉じる/フォーカスを外す
+        }
+      });
+    }
+  });
+
+  // 初期計算
+  calcVolume();
+});
+</script>
+
+</body>
+</html>

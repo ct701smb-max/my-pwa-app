@@ -1,0 +1,4243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自由設計</title>
+    <!--更新日：2026年6月18日-->
+<!--==========３Ｄ木工デザイナー（自由設計ver.）の機能==========
+    ・板材、丸材の追加
+    ・材料のサイズ変更・コピー・削除
+        ※板のサイズは2000mmまで
+    ・材料の位置移動（スナップあり）、回転
+    ・面取り（自由加工）
+    ・穴あけ（円・四角形からの自由加工）
+        サイズ調整・位置移動可・選択および全削除可
+    ・表示形式の変更（寸法表示・視点リセット・半透明化）
+    ・保存（JSON形式でのデータ保存・読込）
+    ・レポート作成（学年・組・番号・名前を入力）
+    ・PDF出力（上記の項目＋日付・制作物の図・使用した材料リスト・木取り図）
+    ・戻る、進むボタンの実装
+    ====================================================-->
+
+    <!--初期値の設定　使用教材により変更可-->
+    <!--====================================================
+    以下のキーワードでHTMLコード内を検索してください。
+    （Ctrl + F）
+    ・板のサイズ調整
+    幅：value="300"　奥行：value="160"　厚さ：value="15"
+    ====================================================-->
+    <style>
+        /* ==========================================================================
+           1. 全体・共通変数とベーススタイル
+           ========================================================================== */
+        :root {
+            --bg-main: #1a1a1a;
+            --bg-header: #333;
+            --bg-group: #444;
+            --bg-input: #222;
+            --accent-color: #deb887;
+            --accent-hover: #e6c59b;
+            --text-color: #fff;
+            --border-color: #444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            background-color: var(--bg-main); 
+            color: var(--text-color); 
+            overflow: hidden;
+            touch-action: pan-x pan-y;
+        }
+        
+        /* ==========================================================================
+           2. ヘッダー（最上部の行を残せるようブロックを分離）
+           ========================================================================== */
+        header { 
+            background-color: var(--bg-header); 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            flex-shrink: 0; 
+            width: 100%;
+            position: relative;
+            z-index: 100000; /* 常に最大化パネルより上に配置 */
+        }
+
+        /* 常に表示しておきたい最上部の行 */
+        .header-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 20px;
+            border-bottom: 1px solid #222;
+        }
+
+        /* 拡大時に非表示にする下部メニューエリア */
+        .header-menu-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 20px;
+        }
+        
+        .app-title { 
+            font-size: 1.3rem; 
+            font-weight: bold; 
+            color: var(--accent-color); 
+            margin: 0; 
+            letter-spacing: 1px; 
+        }
+
+        .header-guides {
+            display: flex;
+            gap: 10px;
+            position: relative;
+        }
+        
+        .tool-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            flex-wrap: wrap; 
+            width: 100%;
+        }
+
+        .btn-wrapper, .report-controls, .adjust-controls-row, .header-panel-row {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            gap: 8px;
+        }
+        
+        .control-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            background: var(--bg-group); 
+            padding: 4px 12px; 
+            border-radius: 6px; 
+            flex: 1; 
+            min-width: 0;
+        }
+        
+        .control-group label { 
+            font-size: 0.8rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            white-space: nowrap; 
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .section-label { 
+            font-size: 0.85rem; 
+            color: var(--accent-color); 
+            font-weight: bold; 
+            margin-right: 4px; 
+            white-space: nowrap; 
+        }
+
+        .inline-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .inline-grid label {
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .report-controls input {
+            background: var(--bg-input);
+            color: var(--text-color);
+            border: 1px solid #555;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* ==========================================================================
+           3. ボタン・ステップコンテナのスタイル
+           ========================================================================== */
+        button { 
+            padding: 6px 12px; 
+            background: var(--accent-color); 
+            border: none; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 5px; 
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        button:hover { background: var(--accent-hover); }
+        button:disabled { background: #555; color: #888; cursor: not-allowed; }
+        
+        .sys-btn { 
+            background: #555; 
+            color: #fff; 
+            padding: 6px 8px; 
+            font-size: 0.8rem; 
+            flex: 1; 
+            text-align: center;
+        }
+        .sys-btn:hover { background: #666; }
+        .sys-btn.active-toggle { background: var(--accent-color); color: #222; }
+        .round-btn { background: #8fbc8f; color: #fff; }
+        .round-btn:hover { background: #9fcc9f; }
+        .copy-btn { background: #ceb0fa; color: #333; }
+        .copy-btn:hover { background: #dfcbff; }
+        .hole-btn { background: #4682b4; color: #fff; }
+        .hole-btn:hover { background: #5c93c4; }
+        .delete-hole-btn { background: #cd5c5c; color: #fff; }
+        .delete-hole-btn:hover { background: #df6e6e; }
+        
+        .axis-jump-btn { 
+            background: var(--accent-color); 
+            color: #333; 
+            font-size: 0.8rem; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
+        
+        .step-container { 
+            display: flex; 
+            align-items: center; 
+            gap: 2px; 
+            background: #222; 
+            padding: 1px; 
+            border-radius: 4px; 
+            border: 1px solid #555; 
+            min-width: 0;
+            width: 100%;
+            flex: 1; 
+        }
+        
+        .step-btn { 
+            flex: 2; 
+            padding: 4px 0; 
+            font-size: 0.9rem; 
+            background: #555; 
+            color: #fff; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            min-width: 30px;
+        }
+        .step-btn:hover { background: #666; }
+        
+        .step-btn.wide { 
+            flex: 1.5;
+            padding: 4px 0; 
+            font-size: 0.7rem; 
+            background: #444; 
+            color: #bbb; 
+        }
+        .step-btn.wide:hover { background: #555; color: #fff; }
+
+        .step-container input {
+            width: 40px; 
+            max-width: 40px;
+            padding: 3px 2px; 
+            background: var(--bg-input); 
+            color: var(--text-color); 
+            border: none;
+            text-align: center; 
+            font-size: 0.8rem;
+            font-weight: bold;
+            min-width: 0;
+            flex: 1;
+        }
+        .step-container input::-webkit-outer-spin-button,
+        .step-container input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* =======================================================================
+           4. メインレイアウト
+           ========================================================================== */
+        #app-container { 
+            display: flex; 
+            flex: 1; 
+            width: 100%; 
+            min-height: 0; 
+            overflow: hidden; 
+            position: relative;
+            z-index: 1;
+            background-color: #111; 
+            margin-bottom: 50px; 
+        }
+        
+        #board-list { 
+            background: #252525; 
+            padding: 15px 10px; 
+            width: 250px; 
+            border-right: 1px solid var(--border-color); 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            flex-shrink: 0; 
+        }
+        
+        .board-item {
+            padding: 8px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .board-item.active {
+            background: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .panel { 
+            flex: 1; 
+            position: relative; 
+            border-right: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            margin: 10px 0; 
+            background: #222;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            height: calc(100% - 20px); 
+        }
+        
+        .panel-title { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            background: rgba(0,0,0,0.7); 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 0.75rem; 
+            z-index: 10; 
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            padding: 0 2px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .zoom-btn:hover {
+            color: #fff;
+        }
+        
+        canvas { 
+            width: 100% !important; 
+            height: 100% !important; 
+            display: block; 
+            background-color: #ffffff; 
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+        
+        .accordion-panel { 
+            background: #2f2f2f; 
+            border: 1px solid var(--border-color); 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            position: relative;
+        }
+        
+        .accordion-title { 
+            font-size: 0.8rem; 
+            color: var(--accent-color); 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 6px;
+            white-space: nowrap;
+        }
+        
+        .accordion-content { 
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            background: #2a2a2a;
+            border: 1px solid #555;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.5);
+            padding: 12px;
+            border-radius: 6px;
+            width: 290px;
+            font-size: 0.75rem; 
+            z-index: 100;
+        }
+        
+        .guide-list { margin: 0; padding-left: 12px; }
+        .guide-list li { margin-bottom: 6px; }
+        kbd {
+            background: #444;
+            color: #fff;
+            padding: 2px 5px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            font-size: 0.7rem;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        #file-input { display: none; }
+
+/* ==========================================================================
+   1. 通常時（ヘッダー内）の設定
+   ========================================================================== */
+.header-panel-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 8px !important;            /* 要素間の適切なスキマ */
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+
+.header-panel-row > #btn-delete-selected,
+.header-panel-row > #btn-delete-all,
+.header-panel-row > #btn-add-circle-hole,
+.header-panel-row > #btn-add-rect-hole,
+.header-panel-row > #hole-adjust-container-placeholder {
+    flex: 1 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+
+.header-panel-row #hole-adjust-container-placeholder .accordion-panel,
+.header-panel-row #hole-adjust-container-placeholder .accordion-title {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
+/* --------------------------------------------------------------------------
+   2D編集拡大（全画面）モード時の非表示トリガー
+   -------------------------------------------------------------------------- */
+/* 2D拡大時、ヘッダーに居る「円形穴」と「四角穴」と「穴調整メニュー」はヘッダー側から見えなくする */
+body.panel-is-maximized #global-header .header-panel-row > #btn-add-circle-hole,
+body.panel-is-maximized #global-header .header-panel-row > #btn-add-rect-hole,
+body.panel-is-maximized #global-header .header-panel-row > #hole-adjust-container-placeholder {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   2. 2D編集画面 拡大（全画面）モード用スタイル
+   ========================================================================== */
+.panel.maximized-fullscreen {
+    position: fixed !important;
+    top: 52px !important; 
+    left: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 52px) !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+    border: none !important;
+    background: #1e1e1e !important;
+}
+
+#panel-2d.maximized-fullscreen {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+}
+
+/* 2-A. 左側：パーツリスト */
+#panel-2d.maximized-fullscreen #board-list {
+    display: flex !important;
+    position: static !important;
+    width: 240px !important;
+    border-right: 1px solid var(--border-color);
+    background: #252525;
+    order: 1 !important;
+    height: calc(100% - 60px) !important;
+}
+
+/* 2-B. 中央：キャンバスコンテナ */
+#panel-2d.maximized-fullscreen .canvas-container-2d {
+    flex: 1 !important;
+    min-width: 0 !important;
+    position: relative !important;
+    order: 2 !important;
+    height: calc(100% - 60px) !important;
+    overflow: hidden !important;
+}
+
+#panel-2d.maximized-fullscreen .canvas-container-2d canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+/* 2-C. 右側：穴調整サイドバー */
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 280px !important;
+    background: #2a2a2a;
+    border-left: 1px solid var(--border-color);
+    padding: 15px !important;
+    overflow-y: auto !important;
+    gap: 15px !important;
+    order: 3 !important;
+    height: calc(100% - 60px) !important;
+    box-sizing: border-box !important;
+}
+
+/* 2-D. 最下部：3つの編集ボタン（移動&曲げ、角丸め、点追加） */
+#panel-2d.maximized-fullscreen #editor-tools {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    height: 60px !important;
+    margin: 0 !important;
+    padding: 10px 20px !important;
+    background: #252525 !important;
+    border-top: 1px solid #333 !important;
+    box-sizing: border-box !important;
+    order: 4 !important; 
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 99999 !important;
+}
+
+
+/* ==========================================================================
+   3. 拡大時サイドバー専用：円形・四角ボタン横並び ＆ アコーディオン強制解除
+   ========================================================================== */
+
+/* サイドバー内に作成される、引っ越し先ボタン行（.hole-btn-row）の配置設定 */
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d .hole-btn-row {
+    order: 1 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-bottom: 5px !important;
+}
+
+/* サイドバー内の円形穴・四角穴ボタンの等間隔50%分配 */
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d .hole-btn-row .hole-btn {
+    flex: 1 !important;
+    width: 100% !important;
+    text-align: center !important;
+    padding: 10px 0 !important;
+    display: inline-block !important;
+}
+
+/* サイドバー内の穴調整メニューコンテナの配置 */
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d #migrated-hole-menu-container {
+    order: 2 !important;
+    width: 100% !important;
+}
+
+/* --- アコーディオンの強制解除（常時全開表示スタイル） --- */
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d .accordion-title {
+    pointer-events: none !important;
+    font-size: 0.95rem !important;
+    font-weight: bold !important;
+    margin-bottom: 10px !important;
+    border-bottom: 1px solid #444 !important;
+    padding-bottom: 6px !important;
+}
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d .accordion-title span:last-child {
+    display: none !important;
+}
+
+/* メニューコンテンツを強制開閉なしのブロック展開にする */
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d .accordion-content {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+}
+
+/* 微調整内の入力グリッドのレイアウトを綺麗に整える */
+#panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d .inline-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+        /* ==========================================================================
+           5. PC・タブレット表示設定（画面幅 951px 以上）
+           ========================================================================== */
+        @media (min-width: 951px) {
+            #app-container { flex-direction: row !important; }
+            #mobile-tabs { display: none !important; }
+            .tool-row button, .header-panel-row button, .header-panel-row .accordion-panel {
+                flex: 1 !important;
+                width: auto !important;
+            }
+        }
+
+        /* ==========================================================================
+           6. コンパクト・スマホ表示設定（画面幅 950px 以下）
+           ========================================================================== */
+        @media (max-width: 950px) {
+            body { overflow-y: auto !important; height: auto !important; } 
+            .header-top-row { flex-direction: column; }
+            .tool-row { flex-direction: column; }
+
+            #mobile-tabs { 
+                display: flex !important; 
+                flex-direction: column;
+                gap: 8px;
+                padding: 8px;
+                background: #222;
+            }
+            
+            .tab-btn { 
+                flex: 1; 
+                padding: 10px 5px; 
+                background: #444; 
+                color: #ccc; 
+                font-size: 0.8rem;
+                text-align: center;
+                border-radius: 4px;
+            }
+            .tab-btn.active { 
+                background: var(--accent-color); 
+                color: #000; 
+                font-weight: bold; 
+            }
+            
+            #app-container { 
+                flex-direction: column !important; 
+                height: auto !important; 
+                overflow: visible !important;
+            }
+
+            #board-list { 
+                width: 100% !important; 
+                height: 180px !important; 
+            }
+            
+            .panel { 
+                display: none; 
+                width: 100% !important; 
+                height: 60vh !important;
+            }
+            .panel.active { display: flex !important; }
+            .header-panel-row, .adjust-controls-row { flex-direction: column; }
+            
+
+            #panel-2d.maximized-fullscreen, #panel-assembly.maximized-fullscreen {
+                flex-direction: column !important;
+            }
+            #panel-2d.maximized-fullscreen .hole-adjust-sidebar-2d,
+            #panel-assembly.maximized-fullscreen .transform-sidebar-assembly {
+                width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+        /* フッター固定 */
+        #global-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            gap: 10px;
+            padding: 8px;
+            background: #222;
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        #global-footer button {
+            flex: 1;
+            padding: 10px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+<header id="global-header">
+    <div class="header-top-row">
+        <!--3D木工デザイナー　ロゴ-->
+    <div class="brand-logo-container">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 590 80" width="100%" height="100%">
+    <defs>
+      <linearGradient id="woodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#E6C280" />
+        <stop offset="100%" stop-color="#C69C5D" />
+      </linearGradient>
+      <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#A47C43" />
+        <stop offset="100%" stop-color="#785428" />
+      </linearGradient>
+      <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#00D2FF" />
+        <stop offset="100%" stop-color="#0078FF" />
+      </linearGradient>
+    </defs>
+
+    <g transform="translate(5, 2)">
+      <polygon points="35,10 60,22 35,35 18,26" fill="url(#woodGrad)" />
+      <polygon points="18,26 35,35 28,45 10,35" fill="#F3D19E" />
+      
+      <polygon points="35,35 60,22 60,52 35,65" fill="url(#shadowGrad)" />
+      <polygon points="10,35 28,45 28,65 10,55" fill="#966F3B" />
+      
+      <circle cx="35" cy="65" r="5" fill="#00D2FF" opacity="0.8" />
+      <line x1="30" y1="65" x2="40" y2="65" stroke="#FFFFFF" stroke-width="1.5" />
+      <line x1="35" y1="60" x2="35" y2="70" stroke="#FFFFFF" stroke-width="1.5" />
+    </g>
+
+    <text x="80" y="52" font-family="'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif" font-size="38" font-weight="900" fill="url(#blueGrad)" letter-spacing="1">3D</text>
+    
+    <text x="140" y="52" font-family="'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif" font-size="34" font-weight="800" fill="#C5A312" letter-spacing="4">木工</text>
+    
+    <text x="225" y="52" font-family="'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif" font-size="30" font-weight="600" fill="#A4BBE8" letter-spacing="2">デザイナー</text>
+
+    <text x="395" y="52" font-family="'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif" font-size="30" font-weight="600" fill="#E2E8F0" letter-spacing="3">自由設計ver.</text>
+            
+    <text x="82" y="72" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13.5" font-weight="600" fill="#A0AEC0" letter-spacing="7.5">3D WOODWORK DESIGNER CUSTOM ED.</text>
+  </svg>
+</div>
+        
+        <div class="header-guides">
+            <div class="accordion-panel" data-menu-panel>
+                <div class="accordion-title" onclick="toggleAccordion(event, 'menu-guide', 'arrow-guide')">
+                    <span>📝 2D編集の操作方法</span><span id="arrow-guide">▼</span>
+                </div>
+                <div id="menu-guide" class="accordion-content" style="display: none;">
+                    <ul class="guide-list">
+                        <li><strong>頂点移動:</strong> 赤い点を掴んでドラッグ</li>
+                        <li><strong>辺を曲げる:</strong> 辺（線）の途中を掴んでドラッグ</li>
+                        <li><strong>点を増やす:</strong> 「➕ 点を増やす」をONにして、辺の近くをクリック（Shiftキーを押しながら辺上を選択）</li>
+                        <li><strong>角丸め加工:</strong> 「📐 角を丸める」をONにして頂点をクリック（ダブルクリック／右クリック）</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="accordion-panel" data-menu-panel>
+                <div class="accordion-title" onclick="toggleAccordion(event, 'menu-shortcut', 'arrow-shortcut')">
+                    <span>⚡ ショートカット</span><span id="arrow-shortcut">▼</span>
+                </div>
+                <div id="menu-shortcut" class="accordion-content" style="display: none;">
+                    <ul class="guide-list">
+                        <li><kbd>V</kbd> : 寸法 ON/OFF</li>
+                        <li><kbd>T</kbd> : 半透明切り替え</li>
+                        <li><kbd>A</kbd> : 視点リセット</li>
+                        <li><kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> : 指定軸へ接着・ジャンプ</li>
+                        <li><kbd>Shift</kbd> + <kbd>X</kbd> / <kbd>Y</kbd> : 隣のパーツへ接着</li>
+                        <li><kbd>Shift</kbd> + <kbd>Z</kbd> : 地面にピッタリ接地</li>
+                        <li><kbd>Alt</kbd> + <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> : 指定軸で＋90度回転</li>
+                        <li><kbd>Ctrl</kbd> + <kbd>C</kbd> : パーツの複製</li>
+                        <li><kbd>Ctrl</kbd> + <kbd>S</kbd> / <kbd>O</kbd> : 保存 / 読込</li>
+                        <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Y</kbd> : 操作の戻る / 進む</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="header-menu-block" id="header-menu-area">
+        <div class="tool-row">
+            <button id="btn-add-board">+ 新しい板</button>
+            <button id="btn-add-round-board" class="round-btn">● 円形の板</button>
+            <button id="btn-copy-board" class="copy-btn" title="Ctrl + C">📋 パーツを複製</button>
+            
+<!--板のサイズ調整-->            
+            <div class="control-group" style="background:#3a3a3a; max-width: 220px; padding: 4px 10px; flex: initial !important;">
+    <label>W: <input type="number" id="add-w" value="300" style="width:45px; background:var(--bg-input); color:#fff; border:1px solid #666; text-align:center;"></label>
+    <label>D: <input type="number" id="add-d" value="160" style="width:45px; background:var(--bg-input); color:#fff; border:1px solid #666; text-align:center;"></label>
+    <label>T: <input type="number" id="add-t" value="15" style="width:45px; background:var(--bg-input); color:#fff; border:1px solid #666; text-align:center;"></label>
+</div>
+
+<div style="display: none;">
+    <input type="number" id="in-w" value="300">
+    <input type="number" id="in-d" value="160">
+    <input type="number" id="in-t" value="15">
+</div>
+
+            <div class="report-controls" style="flex: 1; display: flex; gap: 6px;">
+                <input type="text" id="grade" placeholder="学年" value="1" style="width: 40px;" onblur="this.value = this.value.replace(/[０-９]/g, s => '0123456789'['０１２３４５６７８９'.indexOf(s)])">年
+<input type="text" id="class" placeholder="組" style="width: 40px;" onblur="this.value = this.value.replace(/[０-９]/g, s => '0123456789'['０１２３４５６７８９'.indexOf(s)])">組
+<input type="text" id="number" placeholder="番号" style="width: 50px;" onblur="this.value = this.value.replace(/[０-９]/g, s => '0123456789'['０１２３４５６７８９'.indexOf(s)])">番
+<input type="text" id="student-name" placeholder="名前" style="flex: 1; min-width: 80px;">
+                <button onclick="generateReport()" style="background: var(--accent-color); color:#000;">📊 レポート出力</button>
+            </div>
+        </div>
+
+        <div class="header-panel-row">
+            <button id="btn-delete-selected" class="delete-hole-btn" onclick="deleteActiveBoard()">選択パーツを削除</button>
+            <button id="btn-delete-all" class="delete-hole-btn" style="background:#8b0000;">全てのパーツを削除</button>
+            <button id="btn-add-circle-hole" class="hole-btn">🕳️ 円形穴</button>
+            <button id="btn-add-rect-hole" class="hole-btn">🟦 四角穴</button>
+
+            <div id="hole-adjust-container-placeholder" style="flex: 1; display: flex;">
+                <div class="accordion-panel" data-menu-panel style="flex: 1;">
+                    <div class="accordion-title" onclick="toggleAccordion(event, 'menu-hole-adjust', 'arrow-hole-adjust')">
+                        <span>🕳 選択中の穴加工・微調整</span><span id="arrow-hole-adjust">▼</span>
+                    </div>
+                    <div id="menu-hole-adjust" class="accordion-content" style="display: none; right: 0; left: auto;">
+                        <div style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: 4px;">
+                            <button id="btn-delete-hole" class="delete-hole-btn" style="padding: 6px 12px; font-size: 0.8rem; width: 100%;" disabled>選択中の穴を削除</button>
+                        </div>
+                        <div class="inline-grid">
+                            <label>穴位置 X
+                                <div class="step-container">
+                                    <button class="step-btn" onclick="stepHolePos('X', -10)">-</button>
+                                    <input type="number" id="in-hole-x" value="0">
+                                    <button class="step-btn" onclick="stepHolePos('X', 10)">+</button>
+                                </div>
+                            </label>
+                            <label>穴位置 Y
+                                <div class="step-container">
+                                    <button class="step-btn" onclick="stepHolePos('Y', -10)">-</button>
+                                    <input type="number" id="in-hole-y" value="0">
+                                    <button class="step-btn" onclick="stepHolePos('Y', 10)">+</button>
+                                </div>
+                            </label>
+                            <label id="lbl-hole-w">幅/直径
+                                <div class="step-container">
+                                    <button class="step-btn" onclick="stepHoleSize('W', -10)">-</button>
+                                    <input type="number" id="in-hole-w" value="50">
+                                    <button class="step-btn" onclick="stepHoleSize('W', 10)">+</button>
+                                </div>
+                            </label>
+                            <label id="lbl-hole-h">長さ
+                                <div class="step-container">
+                                    <button class="step-btn" onclick="stepHoleSize('H', -10)">-</button>
+                                    <input type="number" id="in-hole-h" value="50">
+                                    <button class="step-btn" onclick="stepHoleSize('H', 10)">+</button>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            
+        <div class="adjust-controls-row" id="transform-controls-container" style="display: flex; gap: 10px; width: 100%; align-items: stretch;">
+            <div style="flex: 1.1; display: flex; flex-direction: column; gap: 4px; justify-content: center;" class="system-view-buttons">
+                <div style="display: flex; gap: 4px; width: 100%;">
+                    <button id="btn-save" class="sys-btn" title="Ctrl + S">💾 保存</button>
+                    <button id="btn-load" class="sys-btn" title="Ctrl + O">📂 読込</button>
+                </div>
+                <input type="file" id="file-input" accept=".json">
+                <div style="display: flex; gap: 4px; width: 100%;">
+                    <button id="btn-toggle-dimensions" class="sys-btn" title="Vキー">📐 寸法: OFF</button>
+                    <button id="btn-toggle-transparent" class="sys-btn" title="Tキー">🌓 半透明</button>
+                    <button id="btn-reset-view" class="sys-btn" title="Aキー">🔄 リセット</button>
+                </div>
+            </div>
+
+            <div style="flex: 2; display: flex; flex-direction: column; gap: 4px;" class="transform-inputs-wrapper">
+                <div class="control-group">
+                    <span class="section-label" style="min-width: 35px;">位置</span>
+                    <label>
+                        <button id="btn-jump-X" class="axis-jump-btn" title="X軸方向に接着">X</button>
+                        <div class="step-container">
+                            <button class="step-btn" onclick="stepPos('X', -10)" style="flex:1;">-</button>
+                            <button class="step-btn" onclick="stepPos('X', -1)" style="flex:1; background:#444; font-size:0.7rem; color:#bbb;">◀</button>
+                            <input type="number" id="in-posX" value="0">
+                            <button class="step-btn" onclick="stepPos('X', 1)" style="flex:1; background:#444; font-size:0.7rem; color:#bbb;">▶</button>
+                            <button class="step-btn" onclick="stepPos('X', 10)" style="flex:1;">+</button>
+                        </div>
+                    </label>
+                    <label>
+                        <button id="btn-jump-Y" class="axis-jump-btn" title="Y軸方向に接着">Y</button>
+                        <div class="step-container">
+                            <button class="step-btn" onclick="stepPos('Y', -10)" style="flex:1;">-</button>
+                            <button class="step-btn" onclick="stepPos('Y', -1)" style="flex:1; background:#444; font-size:0.7rem; color:#bbb;">◀</button>
+                            <input type="number" id="in-posY" value="0">
+                            <button class="step-btn" onclick="stepPos('Y', 1)" style="flex:1; background:#444; font-size:0.7rem; color:#bbb;">▶</button>
+                            <button class="step-btn" onclick="stepPos('Y', 10)" style="flex:1;">+</button>
+                        </div>
+                    </label>
+                    <label>
+                        <button id="btn-snap-Z" class="axis-jump-btn" title="Z軸方向に接地">Z</button>
+                        <div class="step-container">
+                            <button class="step-btn" onclick="stepPos('Z', -10)" style="flex:1;">-</button>
+                            <button class="step-btn" onclick="stepPos('Z', -1)" style="flex:1; background:#444; font-size:0.7rem; color:#bbb;">◀</button>
+                            <input type="number" id="in-posZ" value="0">
+                            <button class="step-btn" onclick="stepPos('Z', 1)" style="flex:1; background:#444; font-size:0.7rem; color:#bbb;">▶</button>
+                            <button class="step-btn" onclick="stepPos('Z', 10)" style="flex:1;">+</button>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="control-group">
+                    <span class="section-label" style="min-width: 35px;">回転</span>
+                    <label>X
+                        <div class="step-container">
+                            <button class="step-btn wide" onclick="stepRot('X', -90)">-90</button>
+                            <button class="step-btn" onclick="stepRot('X', -15)">-</button>
+                            <input type="number" id="in-rotX" value="0">
+                            <button class="step-btn" onclick="stepRot('X', 15)">+</button>
+                            <button class="step-btn wide" onclick="stepRot('X', 90)">+90</button>
+                        </div>
+                    </label>
+                    <label>Y
+                        <div class="step-container">
+                            <button class="step-btn wide" onclick="stepRot('Y', -90)">-90</button>
+                            <button class="step-btn" onclick="stepRot('Y', -15)">-</button>
+                            <input type="number" id="in-rotY" value="0">
+                            <button class="step-btn" onclick="stepRot('Y', 15)">+</button>
+                            <button class="step-btn wide" onclick="stepRot('Y', 90)">+90</button>
+                        </div>
+                    </label>
+                    <label>Z
+                        <div class="step-container">
+                            <button class="step-btn wide" onclick="stepRot('Z', -90)">-90</button>
+                            <button class="step-btn" onclick="stepRot('Z', -15)">-</button>
+                            <input type="number" id="in-rotZ" value="0">
+                            <button class="step-btn" onclick="stepRot('Z', 15)">+</button>
+                            <button class="step-btn wide" onclick="stepRot('Z', 90)">+90</button>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div id="mobile-tabs">
+    <div class="tab-row">
+        <button class="tab-btn active" onclick="switchMobilePanel('cv-2d', this)">2D編集</button>
+        <button class="tab-btn" onclick="switchMobilePanel('cv-single', this)">単体</button>
+        <button class="tab-btn" onclick="switchMobilePanel('cv-assembly', this)">全体</button>
+    </div>
+</div>
+
+<div id="app-container">
+    <div id="board-list">
+        <div style="font-size:0.75rem; color:#888; margin: 0 0 10px 0; padding:5px 0; font-weight: bold; border-bottom: 1px solid #333;">パーツリスト</div>
+        <div id="list-container" style="display: flex; flex-direction: column; gap: 6px; width: 100%;"></div>
+    </div>
+
+    <div class="panel active" id="panel-2d" style="display: flex; flex-direction: column;">
+        <div class="panel-title">
+            <span>2D 編集 (自由曲線加工 & 穴あけ)</span>
+            <button class="zoom-btn" onclick="handleMaximize2D()" title="全画面 拡大/元に戻す">🔍</button>
+        </div>
+        
+        <div class="canvas-container-2d" style="flex: 1; position: relative; min-height: 0;">
+            <canvas id="cv-2d" style="width: 100%; height: 100%; display: block;"></canvas>
+        </div>
+        
+        <div id="editor-tools" style="display: flex; gap: 8px; margin: 8px 12px 12px 12px; background: #333; padding: 8px; border-radius: 4px; z-index: 10; flex-shrink: 0;">
+            <button id="btn-mode-edit" onclick="setEditMode('edit')" style="background: #deb887; color: #000; flex: 1;">🖐️ 移動＆曲げ</button>
+            <button id="btn-mode-round" onclick="setEditMode('round')" style="background: #444; color: #fff; flex: 1;">📐 角を丸める</button>
+            <button id="btn-mode-addpoint" onclick="setEditMode('addpoint')" style="background: #444; color: #fff; flex: 1;">➕ 点を増やす</button>
+        </div>
+        
+        <div class="hole-adjust-sidebar-2d" style="display: none;"></div>
+    </div>
+    
+    <div class="panel" id="panel-single">
+        <div class="panel-title">単体プレビュー</div>
+        <canvas id="cv-single"></canvas>
+    </div>
+
+    <div class="panel" id="panel-assembly" style="border-right:none;">
+        <div class="panel-title">
+            <span>全体レイアウト</span>
+            <button class="zoom-btn" onclick="handleMaximizeAssembly()" title="全画面 拡大/元に戻す">🔍</button>
+        </div>
+        <canvas id="cv-assembly"></canvas>
+        
+        <div class="transform-sidebar-assembly" style="display: none;"></div>
+    </div>
+</div>
+    
+<footer id="global-footer">
+    <button id="btn-undo" class="sys-btn" disabled>↶ 戻る</button>
+    <button id="btn-redo" class="sys-btn" disabled>↷ 進む</button>
+</footer>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/**
+ * --- アプリケーションの状態管理 ---
+ * シミュレーションのデータ保持、編集履歴、およびUIの状態管理変数
+ */
+
+// 編集データ管理
+let boards = [];             // 配置されているボードのリスト
+let activeIdx = -1;          // 現在選択中のボードインデックス
+let activeHoleIdx = -1;      // 現在選択中の穴（Hole）のインデックス
+
+// 編集履歴管理 (Undo/Redo)
+let undoStack = [];
+let redoStack = [];
+
+// 表示・設定オプション
+let woodTexture;             // 木材のテクスチャ画像データ
+let showDimensions = false;  // 寸法表示の切り替えフラグ
+let globalTransparent = false; // 全体透過表示の切り替えフラグ
+
+let zDirection = 1;          // Z軸の移動方向 (1: 上昇, -1: 下降)
+// --- 2Dキャンバスのズーム・パン管理用変数 ---
+let zoom = 1.0;            // 拡大倍率（初期値 1.0 = 100%）
+let offsetX = 0;           // X軸の表示オフセット位置
+let offsetY = 0;           // Y軸の表示オフセット位置
+let initialTouchDist = 0;  // ピンチ開始時の2本指の距離初期値
+let initialZoom = 1.0;     // ピンチ開始時の初期倍率
+let isPinching = false;    // ピンチ操作中フラグ
+// ドラッグ操作関連
+let draggedPt = null;        // ドラッグ中のポイント
+let draggedEdgeIdx = -1;     // ドラッグ中のエッジインデックス
+let draggedHoleIdx = -1;     // ドラッグ中の穴インデックス
+let hasDraggedSinceDown = false; // マウス押下からドラッグが発生したかの判定
+
+// UI・モード管理
+let currentEditMode = 'edit'; // 現在のモード ('edit', 'view'等)
+let lastClickTime = 0;        // ダブルクリック判定用などの時刻保持
+
+/**
+ * --- UI操作関数 ---
+ * アコーディオンメニューの開閉を制御する
+ * @param {string} contentId - 開閉するコンテンツ要素のID
+ * @param {string} arrowId   - 切り替える矢印アイコン要素のID
+ */
+function toggleAccordion(event, contentId, arrowId) {
+    event.stopPropagation();
+    
+    const content = document.getElementById(contentId);
+    const arrow = document.getElementById(arrowId);
+    const isHidden = (content.style.display === "none" || content.style.display === "");
+
+    // 💡 一旦すべてのガイドメニューを閉じる（同時開きを防ぐ）
+    closeAllMenus();
+
+    if (isHidden) {
+        content.style.display = "block";
+        arrow.textContent = "▲";
+    }
+}
+
+// ==========================================================================
+// パネルの拡大表示・元に戻す処理 (タイミング競合対策版)
+// ==========================================================================
+function toggleMaximizePanel(panelId) {
+    const targetPanel = document.getElementById(panelId);
+    const menuArea = document.getElementById('header-menu-area');
+    const footer = document.getElementById('global-footer');
+    const mobileTabs = document.getElementById('mobile-tabs');
+    const appContainer = document.getElementById('app-container');
+    
+    // 現在すでに拡大状態であるかチェック
+    const isMaximized = targetPanel.classList.contains('maximized-fullscreen');
+
+    if (isMaximized) {
+        // 元に戻す処理
+        targetPanel.classList.remove('maximized-fullscreen');
+        document.body.classList.remove('panel-is-maximized');
+        
+        if (menuArea) menuArea.style.display = '';
+        if (footer) footer.style.display = '';
+        if (mobileTabs) mobileTabs.style.display = '';
+        if (appContainer) appContainer.style.marginBottom = ''; 
+        
+    } else {
+        // 拡大処理
+        targetPanel.classList.add('maximized-fullscreen');
+        document.body.classList.add('panel-is-maximized');
+        
+        if (menuArea) menuArea.style.display = 'none';
+        if (footer) footer.style.display = 'none';
+        if (mobileTabs) mobileTabs.style.display = 'none';
+        if (appContainer) appContainer.style.marginBottom = '0';
+    }
+
+    // --- Canvas引き伸ばし・強制リサイズ同期 ---
+    if (typeof resizeAllViews === 'function') {
+        resizeAllViews();
+    }
+
+    const triggerResize = () => {
+        window.dispatchEvent(new Event('resize'));
+        if (typeof resizeAllViews === 'function') {
+            resizeAllViews();
+        }
+        if (typeof scenes !== 'undefined') {
+            Object.keys(scenes).forEach(key => {
+                const s = scenes[key];
+                if (s && s.controls) {
+                    s.controls.enabled = true;
+                    s.controls.update();
+                    s.renderer.render(s.scene, s.camera);
+                }
+            });
+        }
+    };
+
+    setTimeout(triggerResize, 0);
+    setTimeout(triggerResize, 50);
+    setTimeout(triggerResize, 150);
+}
+
+// ==========================================================================
+// 2D編集画面 拡大時のDOM要素ワープ・レイアウト制御【非同期バグ修正版】
+// ==========================================================================
+function handleMaximize2D() {
+    const panel = document.getElementById('panel-2d');
+    const boardList = document.getElementById('board-list');
+    const appContainer = document.getElementById('app-container');
+    
+    // 各穴要素の取得
+    const btnCircle = document.getElementById('btn-add-circle-hole');
+    const btnRect = document.getElementById('btn-add-rect-hole');
+    const holePlaceholder = document.getElementById('hole-adjust-container-placeholder');
+    const holeAdjustMenu = holePlaceholder ? holePlaceholder.querySelector('.accordion-panel') : null;
+    const holeSidebar = panel.querySelector('.hole-adjust-sidebar-2d');
+
+    // 現在が拡大中かどうかの判定（クラスが付いているか）
+    const isMaximized = panel.classList.contains('maximized-fullscreen');
+
+    // サイドバー内で2つの穴ボタンを横並びにするための専用行コンテナ
+    let holeBtnRow = holeSidebar ? holeSidebar.querySelector('.hole-btn-row') : null;
+
+    if (!isMaximized) {
+        // 【拡大アクション】
+        
+        // 1. パーツリストを2Dパネルの内部（一番左）に移動
+        if (boardList) {
+            panel.insertBefore(boardList, panel.firstChild);
+        }
+
+        // 2. 円形穴・四角穴ボタンをサイドバー専用の横並び行（.hole-btn-row）に格納して最上部に移動
+        if (btnCircle && btnRect && holeSidebar) {
+            if (!holeBtnRow) {
+                holeBtnRow = document.createElement('div');
+                holeBtnRow.className = 'hole-btn-row';
+            }
+            holeBtnRow.appendChild(btnCircle);
+            holeBtnRow.appendChild(btnRect);
+            holeSidebar.appendChild(holeBtnRow);
+        }
+
+        // 3. 穴調整メニュー（アコーディオン親要素ごと）を、IDを付与してサイドバーの2番目に配置
+        if (holeAdjustMenu && holeSidebar) {
+            holeAdjustMenu.id = 'migrated-hole-menu-container';
+            holeSidebar.appendChild(holeAdjustMenu);
+        }
+
+        // サイドバーを表示
+        if (holeSidebar) holeSidebar.style.display = 'flex';
+
+        // 基本の拡大関数を実行
+        toggleMaximizePanel('panel-2d');
+
+    } else {
+        // 【元に戻すアクション】
+        toggleMaximizePanel('panel-2d');
+
+        setTimeout(() => {
+            // 1. パーツリストを元のメインコンテナ（一番左）に戻す
+            if (boardList && appContainer) {
+                appContainer.insertBefore(boardList, appContainer.firstChild);
+            }
+
+            // 2. 円形穴・四角穴ボタンをヘッダーの元の位置（穴調整プレースホルダーの前）に正しく復元
+            if (btnCircle && btnRect && holePlaceholder) {
+                const headerRow = holePlaceholder.parentNode;
+                if (headerRow) {
+                    headerRow.insertBefore(btnCircle, holePlaceholder);
+                    headerRow.insertBefore(btnRect, holePlaceholder);
+                }
+                // サイドバー内の空になった行を削除
+                const freshHoleBtnRow = holeSidebar ? holeSidebar.querySelector('.hole-btn-row') : null;
+                if (freshHoleBtnRow) freshHoleBtnRow.remove();
+            }
+
+            // 3. 穴調整メニューを元のヘッダーエリア（プレースホルダーの中）に戻し、仮IDを削除
+            const currentMenu = document.getElementById('migrated-hole-menu-container') || holeAdjustMenu;
+            if (currentMenu && holePlaceholder) {
+                currentMenu.removeAttribute('id');
+                holePlaceholder.appendChild(currentMenu);
+                
+                // 元に戻した際、アコーディオンの表示状態を閉じ状態（通常時の初期スタイル）にリセット
+                const accordionContent = currentMenu.querySelector('.accordion-content');
+                const arrow = currentMenu.querySelector('#arrow-hole-adjust');
+                if (accordionContent) {
+                    accordionContent.style.display = 'none';
+                    if (arrow) arrow.innerText = '▼';
+                }
+            }
+
+            // サイドバーを非表示
+            if (holeSidebar) holeSidebar.style.display = 'none';
+        }, 30);
+    }
+}
+
+// ==========================================================================
+// 全体レイアウト画面 拡大時のDOM要素ワープ制御
+// ==========================================================================
+function handleMaximizeAssembly() {
+    const panel = document.getElementById('panel-assembly');
+    const transformInputs = document.getElementById('transform-controls-container');
+    const transformSidebar = panel.querySelector('.transform-sidebar-assembly');
+    const headerMenuBlock = document.getElementById('header-menu-area');
+
+    const isMaximized = panel.classList.contains('maximized-fullscreen');
+
+    if (!isMaximized) {
+        if (transformInputs && transformSidebar) {
+            transformSidebar.appendChild(transformInputs);
+            transformSidebar.style.display = 'flex';
+        }
+        toggleMaximizePanel('panel-assembly');
+    } else {
+        toggleMaximizePanel('panel-assembly');
+        setTimeout(() => {
+            if (transformInputs && headerMenuBlock) {
+                headerMenuBlock.appendChild(transformInputs);
+                transformSidebar.style.display = 'none';
+            }
+        }, 30);
+    }
+}
+
+// アコーディオンの既存開閉関数
+function toggleAccordion(e, id, arrowId) {
+    const el = document.getElementById(id);
+    const arrow = document.getElementById(arrowId);
+    if (!el) return;
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        if (arrow) arrow.innerText = '▲';
+    } else {
+        el.style.display = 'none';
+        if (arrow) arrow.innerText = '▼';
+    }
+}
+    
+function closeAllMenus() {
+    const contents = document.querySelectorAll('.accordion-content');
+    contents.forEach(menu => menu.style.display = "none");
+    
+    const arrowGuide = document.getElementById('arrow-guide');
+    if (arrowGuide) arrowGuide.textContent = "▼";
+    
+    const arrowShortcut = document.getElementById('arrow-shortcut');
+    if (arrowShortcut) arrowShortcut.textContent = "▼";
+}
+
+// 画面のどこかがクリックされたときの処理（メニューの外側なら閉じる）
+document.addEventListener('click', function(event) {
+    // クリックされた要素が「メニューパネル自体（またはその内部要素）」ではない場合
+    if (!event.target.closest('[data-menu-panel]')) {
+        closeAllMenus();
+    }
+});
+
+
+/**
+ * --- データの永続化と履歴管理 ---
+ * ローカルストレージへの保存・読み込み、およびUndo/Redoスタックの操作
+ */
+
+const STORAGE_KEY = 'wood_designer_autosave';
+
+/**
+ * 現在の状態をLocalStorageに保存する
+ */
+function saveToLocalStorage() {
+    const data = {
+        boards,
+        activeIdx,
+        activeHoleIdx,
+        showDimensions,
+        globalTransparent
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+/**
+ * LocalStorageから状態を復元する
+ * @returns {boolean} 読み込みが成功したか
+ */
+function loadFromLocalStorage() {
+    const dataStr = localStorage.getItem(STORAGE_KEY);
+    if (!dataStr) return false;
+
+    try {
+        const data = JSON.parse(dataStr);
+        
+        // データの適用
+        boards            = data.boards || [];
+        activeIdx         = data.activeIdx ?? -1;
+        activeHoleIdx     = data.activeHoleIdx ?? -1;
+        showDimensions    = data.showDimensions ?? false;
+        globalTransparent = data.globalTransparent ?? false;
+        
+        return true;
+    } catch (e) {
+        console.error("Autosave load error:", e);
+        return false;
+    }
+}
+
+/**
+ * 現在の操作を履歴スタックに記録し、自動保存を実行する
+ */
+function saveHistory() {
+    // 状態をシリアライズして記録（※寸法表示、透過設定、視点リセットなどのUI状態は除外）
+    const snapshot = JSON.stringify({ 
+        boards, 
+        activeIdx, 
+        activeHoleIdx 
+    });
+    
+    undoStack.push(snapshot);
+    
+    // 履歴制限（最大50件）
+    if (undoStack.length > 50) undoStack.shift();
+    
+    // 操作が行われたらRedoスタックはクリア
+    redoStack = [];
+    
+    updateHistoryButtons();
+    saveToLocalStorage();
+}
+
+/**
+ * Undo/Redoボタンの有効・無効状態を更新する
+ */
+function updateHistoryButtons() {
+    const undoBtn = document.getElementById('btn-undo');
+    const redoBtn = document.getElementById('btn-redo');
+    
+    if (undoBtn) undoBtn.disabled = (undoStack.length === 0);
+    if (redoBtn) redoBtn.disabled = (redoStack.length === 0);
+}
+
+
+/**
+ * --- レイアウト・リサイズ管理 ---
+ * ウィンドウサイズ変更に合わせて2Dキャンバスと3Dプレビューの表示を最適化する
+ */
+function resizeAllViews() {
+    // 1. 2D編集キャンバスのリサイズ処理
+    if (cv2d && cv2d.parentElement) {
+        const toolsEl = document.getElementById('editor-tools');
+        const historyEl = document.getElementById('editor-tools-history');
+        
+        // ツールバーや履歴欄の高さを考慮して、余白を計算
+        let subtractions = 0;
+        if (toolsEl) subtractions += toolsEl.offsetHeight + 16;
+        if (historyEl) subtractions += historyEl.offsetHeight + 16;
+        
+        cv2d.width = cv2d.parentElement.clientWidth;
+        cv2d.height = Math.max(200, cv2d.parentElement.clientHeight - subtractions);
+    }
+    
+    // 2. 3Dプレビュー（Single/Assembly）のリサイズ処理
+    if (scenes && Object.keys(scenes).length > 0) {
+        Object.keys(scenes).forEach(key => {
+            const s = scenes[key];
+            const canvasId = (key === 'single') ? 'cv-single' : 'cv-assembly';
+            const canvas = document.getElementById(canvasId);
+            
+            if (canvas?.parentElement) {
+                const parent = canvas.parentElement;
+
+                if (window.innerWidth <= 950 && parent.offsetParent === null) {
+                    return; 
+                }
+
+                // Three.jsのリサイズ：バッファをリセットしてから最新のコンテナサイズを適用
+                s.renderer.setSize(10, 10, false); 
+
+                const { width, height } = parent.getBoundingClientRect();
+                
+                if (width > 0 && height > 0) {
+                    s.renderer.setSize(width, height, true);
+                    
+                    // カメラのアスペクト比を再計算して投影行列を更新
+                    s.camera.aspect = width / height;
+                    s.camera.updateProjectionMatrix();
+                    
+                    // コントローラーの更新と再描画
+                    s.controls?.update();
+                    s.renderer.render(s.scene, s.camera);
+                }
+            }
+        });
+    }
+    
+    // 最後に2D描画を更新
+    draw2D();
+}
+
+
+/**
+ * モバイル表示用：パネルとタブの切り替え、およびキャンバスサイズのリセット処理
+ * @param {string} canvasId - 表示対象のキャンバスID
+ * @param {HTMLElement} btn - クリックされたタブボタン要素
+ */
+function switchMobilePanel(canvasId, btn) {
+    // 1. パネルの表示状態をリセットし、対象パネルをアクティブ化
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    
+    const targetCanvas = document.getElementById(canvasId);
+    const targetPanel = targetCanvas ? targetCanvas.closest('.panel') : null;
+    if (targetPanel) targetPanel.classList.add('active');
+    
+    // 2. タブボタンの表示状態を更新
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // 3. 表示されたパネルのサイズに合わせて描画領域を強制リサイズ
+    setTimeout(() => {
+        // 2D編集キャンバスのリサイズ
+        if (canvasId === 'cv-2d' && typeof cv2d !== 'undefined' && cv2d) {
+            cv2d.width = cv2d.clientWidth;
+            cv2d.height = cv2d.clientHeight;
+        }
+        
+        // 3Dシーン（単体・全体）のリサイズ
+        if (typeof scenes !== 'undefined' && targetPanel) {
+            const sceneKey = (canvasId === 'cv-single') ? 'single' : 
+                             (canvasId === 'cv-assembly') ? 'assembly' : null;
+            
+            const s = sceneKey ? scenes[sceneKey] : null;
+            if (s) {
+                const w = targetPanel.clientWidth;
+                const h = targetPanel.clientHeight;
+                
+                // サイズが有効な場合のみ更新処理を実行
+                if (w > 0 && h > 0) {
+                    s.renderer.setSize(w, h);
+                    s.camera.aspect = w / h;
+                    s.camera.updateProjectionMatrix();
+                    
+                    s.controls.update();
+                    s.renderer.render(s.scene, s.camera);
+                }
+            }
+        }
+        
+        // アプリ全体の同期処理
+        if (typeof refreshApp === 'function') {
+            refreshApp();
+        }
+    }, 100);
+}
+
+/**
+ * --- ウィンドウイベントの管理 ---
+ * 読み込み時およびリサイズ時のレイアウト同期処理
+ */
+
+// 初回読み込み時の初期パネル設定
+window.addEventListener('DOMContentLoaded', () => {
+    const dimBtn = document.getElementById('btn-toggle-dimensions');
+    const transBtn = document.getElementById('btn-toggle-transparent');
+    
+    if (dimBtn) {
+        dimBtn.innerText = "📐 寸法: OFF";
+        dimBtn.classList.remove('active-toggle');
+    }
+    if (transBtn) {
+        transBtn.innerText = "🌓 半透明: OFF";
+        transBtn.classList.remove('active-toggle');
+    }
+ if (window.innerWidth <= 950) {
+        const initialBtn = document.querySelector('.tab-btn');
+        if (initialBtn) switchMobilePanel('cv-2d', initialBtn);
+    }
+});
+
+// 画面サイズ変更時の動的追従
+window.addEventListener('resize', () => {
+    // 1. スマホ・タブレット表示時 (幅 <= 950px)
+    if (window.innerWidth <= 950) {
+        const activeBtn = document.querySelector('.tab-btn.active');
+        const activePanel = document.querySelector('.panel.active');
+        const canvas = activePanel?.querySelector('canvas');
+        
+        if (canvas && activeBtn) {
+            switchMobilePanel(canvas.id, activeBtn);
+        }
+    } 
+    // 2. PC表示時 (幅 > 950px)
+    else {
+        // スマホ用処理で付与されたスタイルを強制クリア
+        document.querySelectorAll('.panel').forEach(p => {
+            p.style.display = ''; 
+        });
+        
+        // 全画面のレンダリング領域を再計算
+        if (typeof resizeAllViews === 'function') {
+            resizeAllViews();
+        }
+    }
+});
+
+
+/**
+ * --- 履歴操作とデータ削除 ---
+ * Undo/Redoおよびボード・穴の削除管理
+ */
+
+/**
+ * 共通処理：指定された状態データを現在の状態に適用する
+ * @param {string} stateStr - JSON文字列化された状態データ
+ */
+function applyState(stateStr) {
+    const state = JSON.parse(stateStr);
+    
+    // 構造データのみを復元
+    boards = state.boards;
+    activeIdx = state.activeIdx;
+    activeHoleIdx = state.activeHoleIdx ?? -1;
+    
+    refreshApp();
+    saveToLocalStorage();
+}
+
+/**
+ * 現在の状態を現在のスタックに保存し、履歴から復元する
+ */
+function undo() {
+    if (undoStack.length === 0) return;
+    
+    // 現在の状態をRedoスタックへ
+    redoStack.push(JSON.stringify({ boards, activeIdx, activeHoleIdx, globalTransparent }));
+    
+    // Undo履歴から復元
+    applyState(undoStack.pop());
+    updateHistoryButtons();
+}
+
+/**
+ * 現在の状態を履歴スタックに保存し、やり直しスタックから復元する
+ */
+function redo() {
+    if (redoStack.length === 0) return;
+    
+    // 現在の状態をUndoスタックへ
+    undoStack.push(JSON.stringify({ boards, activeIdx, activeHoleIdx, globalTransparent }));
+    
+    // Redo履歴から復元
+    applyState(redoStack.pop());
+    updateHistoryButtons();
+}
+
+/**
+ * 現在選択中のボードを削除する
+ */
+function deleteActiveBoard() {
+    if (activeIdx === -1) return;
+    
+    saveHistory();
+    boards.splice(activeIdx, 1);
+    
+    // 選択インデックスを調整
+    activeIdx = (boards.length === 0) ? -1 : Math.min(activeIdx, boards.length - 1);
+    activeHoleIdx = -1;
+    
+    refreshApp();
+}
+
+/**
+ * 現在選択中の穴を削除する
+ */
+function deleteActiveHole() {
+    if (activeIdx === -1 || activeHoleIdx === -1) return;
+    
+    saveHistory();
+    const board = boards[activeIdx];
+    board.holes.splice(activeHoleIdx, 1);
+    
+    // 選択インデックスを調整
+    activeHoleIdx = (board.holes.length === 0) ? -1 : Math.min(activeHoleIdx, board.holes.length - 1);
+    
+    refreshApp();
+}
+
+/**
+ * 全てのボードを削除（イベントリスナー）
+ */
+document.getElementById('btn-delete-all')?.addEventListener('click', () => {
+    if (boards.length === 0) return;
+    
+    if (confirm("本当にすべての板を削除しますか？")) {
+        saveHistory();
+        boards = [];
+        activeIdx = -1;
+        activeHoleIdx = -1;
+        refreshApp();
+    }
+});
+
+
+/**
+ * --- ボードの複製操作 ---
+ * 選択中のボードを複製し、新しいオフセット位置に追加する
+ */
+function copyActiveBoard() {
+    if (activeIdx === -1) return;
+    
+    saveHistory();
+    
+    const src = boards[activeIdx];
+    
+    // 複製用データの作成
+    const newBoard = {
+        id: Date.now(), // ユニークIDの発行
+        points: deepCopyPoints(src.points),
+        holes: (src.holes || []).map(h => ({
+            type: h.type || 'free',
+            points: deepCopyPoints(h.points)
+        })),
+        thickness: src.thickness,
+        posX: (src.posX || 0) + 30, // 30pxずつずらして配置
+        posY: (src.posY || 0) + 30,
+        posZ: (src.posZ ?? src.elevation ?? 0) + 30,
+        rotX: src.rotX || 0,
+        rotY: src.rotY || 0,
+        rotZ: src.rotZ || 0,
+        transparent: src.transparent || false
+    };
+
+    boards.push(newBoard);
+    activeIdx = boards.length - 1; // 複製したボードを選択状態に
+    activeHoleIdx = -1;
+    
+    refreshApp();
+}
+
+/**
+ * --- 補助関数: ポイント情報のディープコピー ---
+ * カーブデータを含めたポイントの配列を安全に複製する
+ */
+function deepCopyPoints(points) {
+    return points.map(p => ({
+        x: p.x,
+        y: p.y,
+        ...(p.curveX !== undefined && { curveX: p.curveX }),
+        ...(p.curveY !== undefined && { curveY: p.curveY })
+    }));
+}
+
+
+/**
+ * --- ボードの位置計算と移動制御 ---
+ */
+
+/**
+ * 特定のボードの3D空間上でのバウンディングボックス（当たり判定用領域）を計算する
+ */
+function computeTargetBox3(boardIdx, customX, customY) {
+    const b = boards[boardIdx];
+    const shape = createThreeShape(b);
+    
+    // ExtrudeGeometryで3Dメッシュ化
+    const geo = new THREE.ExtrudeGeometry(shape, { 
+        depth: b.thickness, 
+        bevelEnabled: true, 
+        bevelThickness: 1, 
+        bevelSize: 1 
+    });
+    geo.center();
+    
+    const mesh = new THREE.Mesh(geo);
+    mesh.rotateX(-Math.PI / 2);
+    
+    // グループを作成して回転・位置を適用
+    const tempGroup = new THREE.Group();
+    tempGroup.add(mesh);
+    tempGroup.rotation.set(
+        (b.rotX || 0) * Math.PI / 180, 
+        (b.rotY || 0) * Math.PI / 180, 
+        (b.rotZ || 0) * Math.PI / 180, 
+        'XYZ'
+    );
+    
+    const posX = customX ?? (b.posX || 0);
+    const posY = customY ?? (b.posY || 0);
+    tempGroup.position.set(posX, b.posZ || 0, posY);
+    
+    tempGroup.updateMatrixWorld(true);
+    return new THREE.Box3().setFromObject(tempGroup);
+}
+
+/**
+ * 軸方向の移動をスマートに行う（衝突判定を含む）
+ */
+function jumpAxisSmart(axis, isForced = false) {
+    if (activeIdx === -1) return;
+    saveHistory();
+
+    const b = boards[activeIdx];
+
+    if (axis === 'Z') {
+        handleZAxisJump(b);
+        return;
+    }
+
+    // 整数丸めを排除し、浮動小数点のまま扱う
+    const startVal = b[`pos${axis}`] || 0;
+    const targetVal = calculateNextTarget(axis, startVal, b);
+
+    if (isForced) {
+        applyMove(axis, targetVal, b);
+        return;
+    }
+
+    // 丸めを行わず、高精度な位置を計算
+    const finalVal = calculateCollisionSafePosition(axis, startVal, targetVal, b);
+    applyMove(axis, finalVal, b);
+}
+
+/** 補助関数: Z軸の跳躍処理 */
+function handleZAxisJump(b) {
+    const currentZ = Math.round(b.posZ || 0);
+    const zMap = { 0: 100, 100: 200, 200: 300, 300: 200 };
+    
+    if (currentZ === 0) { b.posZ = 100; zDirection = 1; }
+    else if (currentZ === 300) { b.posZ = 200; zDirection = -1; }
+    else { b.posZ = (zDirection === 1) ? zMap[currentZ] : (currentZ === 100 ? 0 : 100); }
+
+    document.getElementById('in-posZ').value = b.posZ;
+    sync3D(); updateUI();
+}
+
+/** 補助関数: 衝突判定を伴う最終位置計算 */
+function calculateCollisionSafePosition(axis, startVal, targetVal, b) {
+    const steps = 30;
+    
+    for (let i = 1; i <= steps; i++) {
+        const ratio = i / steps;
+        const testX = (axis === 'X') ? startVal + (targetVal - startVal) * ratio : (b.posX || 0);
+        const testY = (axis === 'Y') ? startVal + (targetVal - startVal) * ratio : (b.posY || 0);
+
+        const activeBox = computeTargetBox3(activeIdx, testX, testY);
+        
+        for (let targetIdx = 0; targetIdx < boards.length; targetIdx++) {
+            if (targetIdx === activeIdx) continue;
+
+            const targetBox = computeTargetBox3(targetIdx);
+            
+            // 衝突判定: ベベル同士が接触しただけの時点ではなく、
+            // 「お互いに2mm食い込んだ状態」を本来のデータ上の衝突ラインとするため、
+            // 判定用の箱を一時的に 1mm ずつ（両側で2mm）縮めてから交差をチェックします。
+            const activeCheckBox = activeBox.clone().expandByScalar(-1);
+            const targetCheckBox = targetBox.clone().expandByScalar(-1);
+
+            if (activeCheckBox.intersectsBox(targetCheckBox)) {
+                // 衝突を検知したため、ベベル分の 2mm を食い込ませた位置でピタッと止めます。
+                if (targetVal > startVal) {
+                    // プラス方向への移動時: 相手のminから、ベベル食い込み分(2mm)だけめり込ませる
+                    return (axis === 'X' 
+                        ? targetBox.min.x - (activeBox.max.x - testX) + 2
+                        : targetBox.min.z - (activeBox.max.z - testY) + 2
+                    );
+                } else {
+                    // マイナス方向への移動時: 相手のmaxから、ベベル食い込み分(2mm)だけめり込ませる
+                    return (axis === 'X' 
+                        ? targetBox.max.x + (testX - activeBox.min.x) - 2
+                        : targetBox.max.z + (testY - activeBox.min.z) - 2
+                    );
+                }
+            }
+        }
+    }
+    return targetVal;
+}
+
+/** 補助関数: UIとデータの更新 */
+function applyMove(axis, value, b) {
+    b[`pos${axis}`] = value;
+    document.getElementById(`in-pos${axis}`).value = value;
+    sync3D(); updateUI();
+}
+
+/** 補助関数: 次のターゲット座標を取得 */
+function calculateNextTarget(axis, startVal, b) {
+    if (startVal === 0) {
+        b[`_seq${axis}`] = (b[`_seq${axis}`] === 'toMinus') ? 'toZeroFromMinus' : 'toZeroFromPlus';
+        return (b[`_seq${axis}`] === 'toZeroFromMinus') ? -200 : 200;
+    }
+    b[`_seq${axis}`] = (startVal === 200) ? 'toMinus' : 'toPlus';
+    return 0;
+}
+
+/**
+ * --- 位置・表示操作 ---
+ */
+
+/**
+ * 選択中のボードを直下のボードまたは地面に吸着させる
+ */
+/**
+ * 選択中のボードを直下のボードまたは地面に吸着させる（垂直落下・食い込み補正版）
+ */
+function snapToTargetOrGround() {
+    if (activeIdx === -1) return;
+    saveHistory();
+    
+    const b = boards[activeIdx];
+    
+    const activeBox = getActiveBoardBox(b); 
+    const activeOffsetZ = -activeBox.min.y;
+    
+    let highestUnderZ = 0;
+    let targetHasBevel = false; // 地面か、真下の板かを判定するフラグ
+    
+    boards.forEach((targetBoard, targetIdx) => {
+        if (targetIdx === activeIdx) return;
+        
+        const targetBox = computeTargetBox3(targetIdx);
+        
+        // 1. 真下判定（X軸とZ軸の投影が重なっているか）
+        const overlapX = Math.max(0, Math.min(activeBox.max.x, targetBox.max.x) - Math.max(activeBox.min.x, targetBox.min.x));
+        const overlapZ = Math.max(0, Math.min(activeBox.max.z, targetBox.max.z) - Math.max(activeBox.min.z, targetBox.min.z));
+        
+        if (overlapX > 0.01 && overlapZ > 0.01) { 
+            // 2. 【修正ポイント】現在の自分の「底面」よりも物理的に【下】にある板だけを対象にする
+            // 横にくっついているだけの板（自分の底面より高い位置にある面）は完全に無視します
+            const myBottomY = b.posZ + activeOffsetZ; // 現在の自分のメッシュの底面（ベベル込み）
+            
+            // 相手の上端が、自分の底面よりも下（許容誤差+2mm以内）にある場合のみ、真下の土台とみなす
+            if (targetBox.max.y <= myBottomY + 2) {
+                // その中で、一番高い位置にある土台を記録
+                if (targetBox.max.y > highestUnderZ) {
+                    highestUnderZ = targetBox.max.y;
+                    targetHasBevel = true; 
+                }
+            }
+        }
+    });
+    
+    // 3. 【H方向の食い込み補正】
+    if (targetHasBevel) {
+        // 真下の板の上に乗る場合は、お互いのベベル(2mm)を食い込ませる
+        b.posZ = highestUnderZ + activeOffsetZ - 2;
+    } else {
+        // 真下に板がない（地面 Z=0 に着地する）場合は、自分の底面のベベル(1mm)だけ食い込ませる
+        b.posZ = 0 + activeOffsetZ - 1;
+    }
+    
+    document.getElementById('in-posZ').value = b.posZ.toFixed(2);
+    sync3D(); 
+    updateUI();
+}
+/**
+ * 選択中のボードを【X軸方向】の隣接するボードに吸着させる
+ */
+function snapToTargetX() {
+    if (activeIdx === -1) return;
+    saveHistory();
+    
+    const b = boards[activeIdx];
+    const activeBox = computeTargetBox3(activeIdx);
+    
+    let bestX = null;
+    let minDistance = Infinity;
+
+    boards.forEach((targetBoard, targetIdx) => {
+        if (targetIdx === activeIdx) return;
+        const targetBox = computeTargetBox3(targetIdx);
+
+        // Y軸（高さ）とZ軸（奥行き）の投影が重なっているか（＝真横に相手がいるか）
+        const overlapY = Math.max(0, Math.min(activeBox.max.y, targetBox.max.y) - Math.max(activeBox.min.y, targetBox.min.y));
+        const overlapZ = Math.max(0, Math.min(activeBox.max.z, targetBox.max.z) - Math.max(activeBox.min.z, targetBox.min.z));
+
+        if (overlapY > 0.01 && overlapZ > 0.01) {
+            // 現在の自分の中心位置
+            const currentX = b.posX || 0;
+            const sizeX = activeBox.max.x - activeBox.min.x;
+
+            // 相手の「左側」に吸着する場合（相手のmin.xに、自分の右端を2mm食い込ませる）
+            const snapLeft = targetBox.min.x - (sizeX / 2) + 2;
+            // 相手の「右側」に吸着する場合（相手のmax.xに、自分の左端を2mm食い込ませる）
+            const snapRight = targetBox.max.x + (sizeX / 2) - 2;
+
+            // 最も近い吸着位置を選択
+            [snapLeft, snapRight].forEach(testX => {
+                const dist = Math.abs(testX - currentX);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    bestX = testX;
+                }
+            });
+        }
+    });
+
+    if (bestX !== null) {
+        b.posX = bestX;
+        document.getElementById('in-posX').value = b.posX.toFixed(2);
+        sync3D();
+        updateUI();
+    }
+}
+
+/**
+ * 選択中のボードを【Y軸方向（3D空間のZ軸・奥行き）】の隣接するボードに吸着させる
+ */
+function snapToTargetY() {
+    if (activeIdx === -1) return;
+    saveHistory();
+    
+    const b = boards[activeIdx];
+    const activeBox = computeTargetBox3(activeIdx);
+    
+    let bestY = null;
+    let minDistance = Infinity;
+
+    boards.forEach((targetBoard, targetIdx) => {
+        if (targetIdx === activeIdx) return;
+        const targetBox = computeTargetBox3(targetIdx);
+
+        // X軸（横幅）とY軸（高さ）の投影が重なっているか（＝前後に相手がいるか）
+        const overlapX = Math.max(0, Math.min(activeBox.max.x, targetBox.max.x) - Math.max(activeBox.min.x, targetBox.min.x));
+        const overlapY = Math.max(0, Math.min(activeBox.max.y, targetBox.max.y) - Math.max(activeBox.min.y, targetBox.min.y));
+
+        if (overlapX > 0.01 && overlapY > 0.01) {
+            // 現在の自分の中心位置（データ上のposYは3D空間のZ軸）
+            const currentY = b.posY || 0;
+            const sizeZ = activeBox.max.z - activeBox.min.z;
+
+            // 相手の「手前」に吸着する場合（相手のmin.zに、自分の奥側を2mm食い込ませる）
+            const snapFront = targetBox.min.z - (sizeZ / 2) + 2;
+            // 相手の「奥側」に吸着する場合（相手のmax.zに、自分の手前側を2mm食い込ませる）
+            const snapBack = targetBox.max.z + (sizeZ / 2) - 2;
+
+            // 最も近い吸着位置を選択
+            [snapFront, snapBack].forEach(testY => {
+                const dist = Math.abs(testY - currentY);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    bestY = testY;
+                }
+            });
+        }
+    });
+
+    if (bestY !== null) {
+        b.posY = bestY;
+        document.getElementById('in-posY').value = b.posY.toFixed(2);
+        sync3D();
+        updateUI();
+    }
+}
+/**
+ * --- 補助関数: ボードのバウンディングボックス生成 ---
+ */
+function getActiveBoardBox(b) {
+    const shape = createThreeShape(b);
+    const geo = new THREE.ExtrudeGeometry(shape, { 
+    depth: b.thickness, bevelEnabled: false 
+});
+    geo.center();
+    
+    const mesh = new THREE.Mesh(geo);
+    mesh.rotateX(-Math.PI / 2);
+    
+    const group = new THREE.Group();
+    group.add(mesh);
+    group.rotation.set((b.rotX||0)*Math.PI/180, (b.rotY||0)*Math.PI/180, (b.rotZ||0)*Math.PI/180, 'XYZ');
+    group.position.set(b.posX||0, 0, b.posY||0);
+    group.updateMatrixWorld(true);
+    
+    return new THREE.Box3().setFromObject(group);
+}
+
+/**
+ * 全ボードの透過状態を一括切り替え
+ */
+function toggleTransparent() {
+    saveHistory();
+    globalTransparent = !globalTransparent;
+    
+    const btn = document.getElementById('btn-toggle-transparent');
+    if (btn) {
+        btn.innerText = globalTransparent ? "🌓 半透明: ON" : "🌓 半透明: OFF";
+        btn.classList.toggle('active-toggle', globalTransparent);
+    }
+    
+    boards.forEach(b => b.transparent = globalTransparent);
+    sync3D();
+}
+
+/**
+ * --- UI操作・数値調整関数 ---
+ * 寸法表示の切り替え、位置・回転の微調整、汎用的な数値更新処理
+ */
+
+/**
+ * 寸法線の表示状態をトグル切り替えする
+ */
+function toggleDimensions() {
+    showDimensions = !showDimensions;
+    
+    const btn = document.getElementById('btn-toggle-dimensions');
+    if (btn) {
+        btn.innerText = showDimensions ? "📐 寸法表示: ON" : "📐 寸法表示: OFF";
+        btn.classList.toggle('active-toggle', showDimensions);
+    }
+    sync3D();
+}
+
+/**
+ * 視点リセット処理
+ * 3Dシーンのカメラ位置と2D編集画面のズーム・パンを初期状態に戻します
+ */
+function resetView() {
+    // 1.すべての3Dシーンのカメラとコントロールをリセット
+    Object.values(scenes).forEach(s => {
+        s.camera.position.set(0, 500, 700);
+        s.camera.lookAt(0, 0, 0);
+        s.controls.target.set(0, 0, 0);
+        s.controls.update();
+    });
+
+    // 2.2D編集画面（キャンバス）の倍率と表示位置をリセット
+    zoom = 1.0;     // 拡大倍率を 100% (等倍) に戻す
+    offsetX = 0;    // X軸の画面ズレ（パン）を中央に戻す
+    offsetY = 0;    // Y軸の画面ズレ（パン）を中央に戻す
+
+    // 3. 画面全体（3Dビュー、2Dキャンバス、UI）を再描画して最新状態を反映
+    if (typeof refreshApp === 'function') {
+        refreshApp();
+    }
+}
+
+/**
+ * 位置座標(posX, posY, posZ)をステップ値で増減させる
+ * @param {string} axis - 'X', 'Y', 'Z'
+ * @param {number} amount - 増減量
+ */
+function stepPos(axis, amount) {
+    if (activeIdx === -1) return;
+    saveHistory();
+    
+    const input = document.getElementById(`in-pos${axis}`);
+    if (input) {
+        const val = (parseInt(input.value) || 0) + amount;
+        input.value = val;
+        boards[activeIdx][`pos${axis}`] = val;
+        sync3D();
+        updateUI();
+    }
+}
+
+/**
+ * 回転角(rotX, rotY, rotZ)をステップ値で増減させ、0〜359度の範囲に収める
+ * @param {string} axis - 'X', 'Y', 'Z'
+ * @param {number} amount - 増減量
+ */
+function stepRot(axis, amount) {
+    if (activeIdx === -1) return;
+    saveHistory();
+    
+    const input = document.getElementById(`in-rot${axis}`);
+    if (input) {
+        let val = (parseInt(input.value) || 0) + amount;
+        val = (val % 360 + 360) % 360; // 負の値にも対応した循環計算
+        
+        input.value = val;
+        boards[activeIdx][`rot${axis}`] = val;
+        sync3D();
+    }
+}
+
+/**
+ * 汎用：入力フォームの数値を増減させ、イベントを強制発火させる
+ * @param {string} inputId - 操作対象のinput要素ID
+ * @param {number} amount - 増減量
+ */
+function stepValue(inputId, amount) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const newValue = (parseFloat(input.value) || 0) + amount;
+    input.value = newValue;
+    
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/**
+ * 数値入力欄（サイズ・位置・回転・穴加工）のフォーカス制御
+ */
+// 1. クリック（フォーカス時）に中身の数値を全選択する
+document.addEventListener('focusin', (e) => {
+    // type="number" の入力欄が対象
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+        // 少しだけタイミングをずらすことで、ブラウザのデフォルト挙動による選択解除を防ぐ
+        setTimeout(() => {
+            e.target.select();
+        }, 50);
+    }
+});
+
+// 2. 入力欄以外の場所（3D画面や背景など）をクリックしたときにフォーカスを外す
+document.addEventListener('click', (e) => {
+    if (
+        e.target.tagName !== 'INPUT' && 
+        !e.target.classList.contains('step-btn') && 
+        !e.target.classList.contains('axis-jump-btn')
+    ) {
+        // 現在フォーカスが当たっている要素が入力欄であれば、フォーカスを外す(blur)
+        if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+            document.activeElement.blur();
+        }
+    }
+});
+/**
+ * --- UI状態同期管理 ---
+ * アプリの状態変化に応じてボタンの有効・無効を切り替え、画面を再描画する
+ */
+
+/**
+ * 操作履歴や選択状態に基づき、各アクションボタンの状態を更新する
+ */
+function updateHistoryButtons() {
+    // 履歴系ボタン
+    setDisabled('btn-undo', undoStack.length === 0);
+    setDisabled('btn-redo', redoStack.length === 0);
+    
+    // 全体操作系ボタン
+    setDisabled('btn-toggle-transparent', boards.length === 0);
+    
+    // 選択中のボードに対する操作系
+    const hasActive = activeIdx !== -1;
+    setDisabled('btn-copy-board', !hasActive);
+    setDisabled('btn-jump-X', !hasActive);
+    setDisabled('btn-jump-Y', !hasActive);
+    setDisabled('btn-snap-Z', !hasActive);
+    setDisabled('btn-add-circle-hole', !hasActive);
+    setDisabled('btn-add-rect-hole', !hasActive);
+    
+    // 選択中の穴に対する操作系
+    setDisabled('btn-delete-hole', activeHoleIdx === -1);
+}
+
+/**
+ * 汎用: 要素が存在する場合のみdisabled属性を更新する
+ */
+function setDisabled(id, isDisabled) {
+    const el = document.getElementById(id);
+    if (el) el.disabled = isDisabled;
+}
+
+/**
+ * アプリケーションのUIと3D/2Dプレビュー、ボタン状態を最新に同期する
+ */
+function refreshApp() {
+    // 1. 各種UIテキストやプロパティパネルの入力値を最新データに同期
+    if (typeof updateUI === 'function') updateUI();
+    
+    // 2. 3Dビュー（Three.js空間）のメッシュ形状・位置を更新
+    if (typeof sync3D === 'function') sync3D();
+    
+    // 3. 2Dエディタ（Canvas）の描画処理を実行
+    if (typeof draw2D === 'function') {
+        try {
+            draw2D();
+        } catch (err) {
+            console.error("2Dエディタの描画中にエラーが発生しました:", err);
+        }
+    }
+    
+    // 4. 履歴（Undo/Redo）ボタンの有効・無効（disabled）状態を更新
+    if (typeof updateHistoryButtons === 'function') updateHistoryButtons();
+}
+
+
+/**
+ * --- Three.js シーンと操作の管理 ---
+ */
+
+// シーン初期化
+const scenes = {
+    single: createScene('cv-single', false),
+    assembly: createScene('cv-assembly', true)
+};
+
+const assemblyCanvas = document.getElementById('cv-assembly');
+
+/**
+ * 3D空間上のクリック/タップ位置からボードを判定して選択状態にする
+ */
+function handleAssemblyInteraction(event) {
+    const rect = assemblyCanvas.getBoundingClientRect();
+    
+    // 入力座標の正規化（マウスとタッチ共通）
+    const clientX = event.clientX ?? event.changedTouches?.[0].clientX;
+    const clientY = event.clientY ?? event.changedTouches?.[0].clientY;
+    if (clientX === undefined) return;
+
+    const mouse = new THREE.Vector2(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -((clientY - rect.top) / rect.height) * 2 + 1
+    );
+
+    // Raycasterによる交差判定
+    const raycaster = new THREE.Raycaster();
+    const s = scenes.assembly;
+    raycaster.setFromCamera(mouse, s.camera);
+
+    const intersects = raycaster.intersectObjects(s.meshGroup.children, true);
+
+    if (intersects.length > 0) {
+        // userDataからボードインデックスを取得するまで親を遡る
+        const boardIdx = findBoardIndex(intersects[0].object, s.meshGroup);
+        
+        if (boardIdx !== undefined && boardIdx !== -1) {
+            saveHistory();
+            activeIdx = boardIdx;
+            activeHoleIdx = -1;
+            refreshApp();
+        }
+    }
+}
+
+/** 補助関数: 指定オブジェクトからボードIDを探索 */
+function findBoardIndex(obj, rootGroup) {
+    let curr = obj;
+    while (curr && curr !== rootGroup) {
+        if (curr.userData?.boardIdx !== undefined) return curr.userData.boardIdx;
+        curr = curr.parent;
+    }
+    return undefined;
+}
+
+// 操作イベント登録
+assemblyCanvas.addEventListener('click', handleAssemblyInteraction);
+assemblyCanvas.addEventListener('touchend', handleAssemblyInteraction, { passive: false });
+
+/**
+ * シーンの初期設定
+ */
+function createScene(canvasId, hasGrid) {
+    const canvas = document.getElementById(canvasId);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    
+    // 4番目の引数（far）を 2000 から 10000 に拡張します
+const camera = new THREE.PerspectiveCamera(45, 1, 1, 10000);
+camera.position.set(0, 500, 700);
+    
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.addEventListener('change', () => {
+        renderer.render(scene, camera);
+    });
+    // ライト設定
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    light.position.set(200, 500, 300);
+    scene.add(light);
+    
+    if (hasGrid) scene.add(new THREE.GridHelper(2000, 40, 0xcccccc, 0xeeeeee));
+
+    const meshGroup = new THREE.Group();
+    const dimGroup = new THREE.Group();
+    scene.add(meshGroup, dimGroup);
+
+    return { renderer, scene, camera, controls, meshGroup, dimGroup };
+}
+
+/**
+ * 木材用テクスチャの生成
+ */
+function initTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#b58a55'; 
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = '#966f3b';
+    for(let i = 0; i < 40; i++) {
+        ctx.fillRect(0, Math.random() * 256, 256, Math.random() * 2);
+    }
+    
+    woodTexture = new THREE.CanvasTexture(canvas);
+    woodTexture.wrapS = woodTexture.wrapT = THREE.RepeatWrapping;
+}
+initTexture();
+
+
+/**
+ * --- 寸法表示機能 (回転対応・自動接着減算対応) ---
+ */
+function drawDimensionBox(sceneOrGroup, box, textW, textD, textH, color = 0xffffff) {
+    const dimensionGroup = new THREE.Group();
+    const allBoards = typeof boards !== 'undefined' ? boards : []; 
+
+    let autoSubW = false;
+    let autoSubD = false;
+    let autoSubH = false;
+
+    // 許容誤差（微小な隙間を吸収）
+    const epsilon = 0.5; 
+
+    // --- 接着判定ロジック ---
+    allBoards.forEach(otherBoard => {
+        // 自分自身（対象のメッシュ）ならスキップ
+        if (!otherBoard.mesh || otherBoard.mesh === sceneOrGroup) return;
+
+        const otherBox = new THREE.Box3().setFromObject(otherBoard.mesh);
+
+        // 接触判定: expandByScalar(epsilon) で少し広げて重なりをチェック
+        if (box.clone().expandByScalar(epsilon).intersectsBox(otherBox)) {
+            
+            // W軸 (X): 面の最大値と最小値がほぼ一致するか
+            if (Math.abs(box.max.x - otherBox.min.x) < epsilon || Math.abs(box.min.x - otherBox.max.x) < epsilon) autoSubW = true;
+            
+            // D軸 (Y): 面の最大値と最小値がほぼ一致するか
+            if (Math.abs(box.max.y - otherBox.min.y) < epsilon || Math.abs(box.min.y - otherBox.max.y) < epsilon) autoSubD = true;
+            
+            // H軸 (Z): 面の最大値と最小値がほぼ一致するか
+            if (Math.abs(box.max.z - otherBox.min.z) < epsilon || Math.abs(box.min.z - otherBox.max.z) < epsilon) autoSubH = true;
+        }
+    });
+
+    // 地面接地判定 (必要に応じて有効化)
+    if (Math.abs(box.min.z) < epsilon) autoSubH = true;
+
+    // --- 【型変換とデバッグ】 ---
+    const valW = Number(textW);
+    const valD = Number(textD);
+    const valH = Number(textH);
+
+    // 接触していれば -2mm、そうでなければそのまま
+    const finalW = autoSubW ? (valW - 2) : valW;
+    const finalD = autoSubD ? (valD - 2) : valD;
+    const finalH = autoSubH ? (valH - 2) : valH;
+
+    // デバッグ用（F12コンソールで確認してください）
+    console.log(`W: 接触=${autoSubW}, 計算前=${valW}, 計算後=${finalW}`);
+    console.log(`D: 接触=${autoSubD}, 計算前=${valD}, 計算後=${finalD}`);
+    console.log(`H: 接触=${autoSubH}, 計算前=${valH}, 計算後=${finalH}`);
+
+
+    // --- 描画ロジック ---
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const margin = Math.max(size.x, size.y, size.z) * 0.15 + 5; // ラベルまでの距離を動的に
+    const labelScale = 0.4;
+
+    const dims = [
+        { label: 'W', val: finalW, p1: [box.min.x, box.min.y, box.max.z], p2: [box.max.x, box.min.y, box.max.z], offset: [0, 0, margin] },
+        { label: 'D', val: finalD, p1: [box.max.x, box.min.y, box.max.z], p2: [box.max.x, box.min.y, box.min.z], offset: [margin, 0, 0] },
+        { label: 'H', val: finalH, p1: [box.max.x, box.min.y, box.min.z], p2: [box.max.x, box.max.y, box.min.z], offset: [margin, 0, -margin] }
+    ];
+
+    dims.forEach(d => {
+        const v1 = new THREE.Vector3(...d.p1);
+        const v2 = new THREE.Vector3(...d.p2);
+        const offsetVec = new THREE.Vector3(...d.offset);
+
+        const p1Off = v1.clone().add(offsetVec);
+        const p2Off = v2.clone().add(offsetVec);
+        const midPoint = p1Off.clone().lerp(p2Off, 0.5);
+
+        // 線を描画
+        const points = [v1, p1Off, p2Off, v2];
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({ color: color, depthTest: false, transparent: true });
+        dimensionGroup.add(new THREE.Line(geometry, material));
+
+        // ラベル配置
+        const sprite = createTextSprite(d.label, d.val, labelScale);
+        sprite.position.copy(midPoint.clone().add(offsetVec.clone().multiplyScalar(0.5)));
+        dimensionGroup.add(sprite);
+    });
+
+    sceneOrGroup.add(dimensionGroup);
+    return dimensionGroup;
+}
+
+
+/**
+ * --- 補助関数: 文字の視認性を高めたラベル ---
+ * （文字と枠を大幅に小さく最適化）
+ */
+function createTextSprite(label, value, scale) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const displayValue = Number.isInteger(value) ? value : parseFloat(value.toFixed(1));
+    const text = `${label}: ${displayValue} mm`;
+    
+    // 1. フォントサイズをさらに小さく設定 (50 -> 36)
+    const fontSize = 36; 
+    ctx.font = `bold ${fontSize}px Arial`;
+    const textMetrics = ctx.measureText(text);
+    const textWidth = textMetrics.width;
+    
+    // 2. 余白（パディング）を極限まで小さく (X:20->12, Y:15->8)
+    const paddingX = 12; 
+    const paddingY = 8; 
+    
+    // 3. 計測したサイズをCanvasの大きさに指定
+    const canvasWidth = textWidth + (paddingX * 2);
+    const canvasHeight = fontSize + (paddingY * 2);
+    
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    
+    // ※Canvasのサイズを変えるとフォント設定がリセットされるため再設定
+    ctx.font = `bold ${fontSize}px Arial`;
+    
+    // 4. 背景描画
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+    // 5. 文字描画
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Canvasの中心（半分）の位置に描画
+    ctx.fillText(text, canvasWidth / 2, canvasHeight / 2); 
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    const mat = new THREE.SpriteMaterial({ map: tex, sizeAttenuation: false, depthTest: false });
+    const sprite = new THREE.Sprite(mat);
+    sprite.renderOrder = 2000;
+    
+    // 6. 3D空間上での全体の表示サイズ（スケール）を小さく調整
+    const baseScale = scale * 0.7;
+    const aspect = canvasWidth / canvasHeight;
+    sprite.scale.set(baseScale * (aspect / 4) * (0.18/0.25), baseScale * 0.18, 1); 
+    
+    return sprite;
+}
+
+
+
+/**
+ * --- メモリ管理補助関数 ---
+ * 指定されたグループ内の全オブジェクトのジオメトリとマテリアルを破棄する
+ * @param {THREE.Group|THREE.Object3D} g - 削除対象のグループまたはオブジェクト
+ */
+function clearGroup(g) {
+    if (!g) return;
+
+    // グループ内の全子要素を走査して破棄
+    while (g.children.length > 0) {
+        const obj = g.children[0];
+        
+        // 1. ジオメトリの破棄
+        if (obj.geometry) {
+            obj.geometry.dispose();
+        }
+        
+        // 2. マテリアルの破棄（配列対応）
+        if (obj.material) {
+            if (Array.isArray(obj.material)) {
+                obj.material.forEach(m => m.dispose());
+            } else {
+                obj.material.dispose();
+            }
+        }
+        
+        // 3. シーンから取り除く
+        g.remove(obj);
+    }
+}
+
+
+/**
+ * --- 形状構築ロジック ---
+ * ボードの外周と、その内部にある穴のパスを合成して Three.js Shape を生成する
+ */
+function createThreeShape(board) {
+    const shape = new THREE.Shape();
+    
+    // 1. 板の中心オフセットを計算
+    const xs = board.points.map(p => p.x);
+    const ys = board.points.map(p => p.y);
+    const bounds = {
+        minX: Math.min(...xs), maxX: Math.max(...xs),
+        minY: Math.min(...ys), maxY: Math.max(...ys)
+    };
+    const offsetX = bounds.minX + (bounds.maxX - bounds.minX) / 2;
+    const offsetY = bounds.minY + (bounds.maxY - bounds.minY) / 2;
+
+    // 2. 外周パスの構築
+    shape.moveTo(board.points[0].x - offsetX, board.points[0].y - offsetY);
+    board.points.forEach((p1, i) => {
+        const p2 = board.points[(i + 1) % board.points.length];
+        if (p1.curveX !== undefined && p1.curveY !== undefined) {
+            shape.quadraticCurveTo(
+                p1.curveX - offsetX, p1.curveY - offsetY,
+                p2.x - offsetX, p2.y - offsetY
+            );
+        } else {
+            shape.lineTo(p2.x - offsetX, p2.y - offsetY);
+        }
+    });
+
+    // 3. 穴の処理
+    if (board.holes) {
+        board.holes.forEach(hole => processHole(hole, board, shape, offsetX, offsetY, bounds));
+    }
+
+    return shape;
+}
+
+/** 穴のクリッピングとパス生成 */
+function processHole(hole, board, shape, offsetX, offsetY, bounds) {
+    if (!hole.points || hole.points.length < 3) return;
+
+    // 外側判定：完全に外にある穴はスキップ
+    const isInside = hole.points.some(p => isPointInPolygon(p, board.points));
+    if (!isInside) {
+        const hXs = hole.points.map(p => p.x);
+        const hYs = hole.points.map(p => p.y);
+        if (Math.max(...hXs) <= bounds.minX || Math.min(...hXs) >= bounds.maxX ||
+            Math.max(...hYs) <= bounds.minY || Math.min(...hYs) >= bounds.maxY) return;
+    }
+
+    // クリップされたパスの計算
+    const clippedPoints = getClippedPoints(hole.points, board.points, offsetX, offsetY);
+    if (clippedPoints.length < 3) return;
+
+    // Three.jsパス変換
+    const holePath = new THREE.Path();
+    const pts = [...clippedPoints].reverse(); // 穴と外周は逆回りである必要がある
+    
+    holePath.moveTo(pts[0].x - offsetX, pts[0].y - offsetY);
+    pts.forEach((pt, i) => {
+        const pNext = pts[(i + 1) % pts.length];
+        const orig = pt.origPoint;
+        
+        if (orig?.curveX !== undefined && isPointInPolygon({x: orig.curveX, y: orig.curveY}, board.points)) {
+            holePath.quadraticCurveTo(orig.curveX - offsetX, orig.curveY - offsetY, pNext.x - offsetX, pNext.y - offsetY);
+        } else {
+            holePath.lineTo(pNext.x - offsetX, pNext.y - offsetY);
+        }
+    });
+
+    shape.holes.push(holePath);
+}
+
+/** 幾何学ヘルパー: クリッピング処理 */
+function getClippedPoints(holePoints, boardPoints, offsetX, offsetY) {
+    let clipped = [];
+    for (let i = 0; i < holePoints.length; i++) {
+        const p1 = holePoints[i], p2 = holePoints[(i + 1) % holePoints.length];
+        if (isPointInPolygon(p1, boardPoints)) clipped.push({ ...p1, origPoint: p1 });
+
+        // 交点計算
+        const intersections = boardPoints.map((bp1, j) => {
+            const bp2 = boardPoints[(j + 1) % boardPoints.length];
+            return getLineIntersection(p1, p2, bp1, bp2);
+        }).filter(Boolean);
+
+        intersections.sort((a, b) => Math.hypot(a.x - p1.x, a.y - p1.y) - Math.hypot(b.x - p1.x, b.y - p1.y));
+        intersections.forEach(inter => {
+            clipped.push({ x: inter.x + (offsetX - inter.x) * 0.0001, y: inter.y + (offsetY - inter.y) * 0.0001 });
+        });
+    }
+    return clipped;
+}
+
+/** 幾何学ヘルパー: 点の内外判定 */
+function isPointInPolygon(pt, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        if (((poly[i].y > pt.y) !== (poly[j].y > pt.y)) && 
+            (pt.x < (poly[j].x - poly[i].x) * (pt.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x)) inside = !inside;
+    }
+    return inside;
+}
+
+/** 幾何学ヘルパー: 線分交差判定 */
+function getLineIntersection(p1, p2, p3, p4) {
+    const d = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
+    if (d === 0) return null;
+    const ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / d;
+    const ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / d;
+    return (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) ? { x: p1.x + ua * (p2.x - p1.x), y: p1.y + ua * (p2.y - p1.y) } : null;
+}
+
+
+/**
+ * --- 3Dレンダリング同期関数 ---
+ * boardsデータに基づきシーン内の全オブジェクトを再構築する
+ */
+function sync3D() {
+    // 1. シーンのクリーンアップ
+    [scenes.single, scenes.assembly].forEach(s => {
+        clearGroup(s.meshGroup);
+        clearGroup(s.dimGroup);
+    });
+
+    // 2. 各ボードのメッシュ構築とシーン追加
+    boards.forEach((b, i) => {
+        const mesh = createBoardMesh(b, i);
+        scenes.assembly.meshGroup.add(mesh);
+    });
+
+    // 3. 全体と個別プレビューの更新
+    updateAssemblyScene();
+    updateSingleScene();
+    
+    // 変更された内容を今すぐ画面にレンダリング（描画発火）する
+if (scenes.assembly) scenes.assembly.renderer.render(scenes.assembly.scene, scenes.assembly.camera);
+    if (scenes.single) scenes.single.renderer.render(scenes.single.scene, scenes.single.camera);
+    
+    updateUI();
+}
+
+/** 補助関数: ボードメッシュの生成 */
+function createBoardMesh(b, i) {
+    b.posZ ??= b.elevation ?? 0;
+    b.posX ??= 0;
+    b.posY ??= 0;
+    b.holes ??= [];
+
+    const isTrans = globalTransparent || b.transparent;
+    const shape = createThreeShape(b);
+    const geo = new THREE.ExtrudeGeometry(shape, { 
+        depth: b.thickness, bevelEnabled: true, bevelThickness: 1, bevelSize: 1, curveSegments: 24 
+    });
+    geo.center();
+
+    const mat = new THREE.MeshStandardMaterial({ 
+        map: woodTexture, roughness: 0.5, transparent: isTrans, 
+        opacity: isTrans ? 0.35 : 1.0, side: THREE.DoubleSide
+    });
+    if (i === activeIdx) mat.color.set('#fcd7a1');
+
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotateX(-Math.PI / 2);
+
+    const pivot = new THREE.Group();
+    pivot.add(mesh);
+    pivot.rotation.set((b.rotX ?? 0) * Math.PI / 180, (b.rotY ?? 0) * Math.PI / 180, (b.rotZ ?? 0) * Math.PI / 180, 'XYZ');
+    pivot.position.set(b.posX, b.posZ, b.posY);
+    pivot.userData = { boardIdx: i };
+    
+    return pivot;
+}
+
+/** 補助関数: 全体シーンの寸法更新 */
+function updateAssemblyScene() {
+    if (boards.length === 0) return;
+
+    const assemblyBox = new THREE.Box3();
+    scenes.assembly.meshGroup.children.forEach(pivot => assemblyBox.expandByObject(pivot));
+
+    if (showDimensions) {
+        const size = new THREE.Vector3();
+        assemblyBox.getSize(size);
+        const [w, d, h] = [size.x, size.z, size.y].map(v => Math.max(0, Math.round(v) - 2));
+        
+        const visualBox = assemblyBox.clone();
+        visualBox.expandByScalar(-1); // 面取り調整
+        drawDimensionBox(scenes.assembly.dimGroup, visualBox, w, d, h, 0x222222);
+    }
+}
+
+/** 補助関数: 個別選択ボードの更新 */
+function updateSingleScene() {
+    if (activeIdx === -1) return;
+
+    const activePivot = scenes.assembly.meshGroup.children.find(p => p.userData.boardIdx === activeIdx);
+    if (!activePivot) return;
+
+    const singleClone = activePivot.clone();
+    singleClone.position.set(0, 0, 0);
+    scenes.single.meshGroup.add(singleClone);
+
+   
+}
+
+
+// --- 2D Editor Logistics ---
+const cv2d = document.getElementById('cv-2d');
+const ctx2d = cv2d.getContext('2d');
+
+/**
+ * 点と線分の距離を計算
+ */
+function getDistToSegment(p, p1, p2) {
+    const l2 = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
+    if (l2 === 0) return Math.hypot(p.x - p1.x, p.y - p1.y);
+    let t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(p.x - (p1.x + t * (p2.x - p1.x)), p.y - (p1.y + t * (p2.y - p1.y)));
+}
+
+/**
+ * 2Dエディタの描画処理
+ */
+function draw2D() {
+    ctx2d.clearRect(0, 0, cv2d.width, cv2d.height);
+    ctx2d.fillStyle = '#f0f0f0';
+    ctx2d.fillRect(0, 0, cv2d.width, cv2d.height);
+    
+    ctx2d.save();
+    ctx2d.translate(cv2d.width / 2 + offsetX, cv2d.height / 2 + offsetY);
+    ctx2d.scale(zoom, -zoom);
+
+    ctx2d.strokeStyle = '#e0e0e0';
+    ctx2d.lineWidth = 1;
+    
+    for (let x = -1000; x <= 1000; x += 50) {
+        ctx2d.beginPath(); 
+        ctx2d.moveTo(x, -1000); 
+        ctx2d.lineTo(x, 1000); 
+        ctx2d.stroke();
+    }
+    
+    for (let y = -1000; y <= 1000; y += 50) {
+        ctx2d.beginPath(); 
+        ctx2d.moveTo(-1000, y); 
+        ctx2d.lineTo(1000, y); 
+        ctx2d.stroke();
+    }
+
+    // 中心軸を描画
+    ctx2d.strokeStyle = '#999999';
+    ctx2d.beginPath();
+    ctx2d.moveTo(-400, 0); ctx2d.lineTo(400, 0);
+    ctx2d.moveTo(0, -400); ctx2d.lineTo(0, 400);
+    ctx2d.stroke();
+
+    if (activeIdx === -1 || !boards[activeIdx]) {
+        ctx2d.restore();
+        return;
+    }
+
+    const b = boards[activeIdx];
+
+    // 1. 板の外周を描画
+    if (b.points && b.points.length > 0) {
+        ctx2d.fillStyle = 'rgba(222, 184, 135, 0.6)';
+        ctx2d.strokeStyle = '#8b5a2b';
+        ctx2d.lineWidth = 3;
+        ctx2d.beginPath();
+        ctx2d.moveTo(b.points[0].x, b.points[0].y);
+        for (let i = 0; i < b.points.length; i++) {
+            const p1 = b.points[i];
+            const p2 = b.points[(i + 1) % b.points.length];
+            if (p1.curveX !== undefined && p1.curveY !== undefined) {
+                ctx2d.quadraticCurveTo(p1.curveX, p1.curveY, p2.x, p2.y);
+            } else {
+                ctx2d.lineTo(p2.x, p2.y);
+            }
+        }
+        ctx2d.closePath();
+        ctx2d.fill();
+        ctx2d.stroke();
+    }
+
+    // 2. 穴の形状（白塗り・輪郭線）を描画
+    if (b.holes) {
+        b.holes.forEach((h, hIdx) => {
+            if (!h.points || h.points.length === 0) return;
+            ctx2d.fillStyle = '#ffffff';
+            ctx2d.strokeStyle = (hIdx === activeHoleIdx) ? '#ff0000' : '#4682b4';
+            ctx2d.lineWidth = (hIdx === activeHoleIdx) ? 3 : 2;
+            ctx2d.beginPath();
+            ctx2d.moveTo(h.points[0].x, h.points[0].y);
+            for (let i = 0; i < h.points.length; i++) {
+                const p1 = h.points[i];
+                const p2 = b.holes[hIdx].points[(i + 1) % h.points.length];
+                if (p1.curveX !== undefined && p1.curveY !== undefined) {
+                    ctx2d.quadraticCurveTo(p1.curveX, p1.curveY, p2.x, p2.y);
+                } else {
+                    ctx2d.lineTo(p2.x, p2.y);
+                }
+            }
+            ctx2d.closePath();
+            ctx2d.fill();
+            ctx2d.stroke();
+        });
+    }
+
+    // 3. 板の外周の頂点（ドット）を描画
+    if (b.points) {
+        b.points.forEach(p => {
+            ctx2d.fillStyle = '#ff4500';
+            ctx2d.beginPath(); ctx2d.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx2d.fill();
+            if (p.curveX !== undefined && p.curveY !== undefined) {
+                ctx2d.strokeStyle = '#008080'; ctx2d.lineWidth = 1;
+                ctx2d.beginPath(); ctx2d.arc(p.curveX, p.curveY, 4, 0, Math.PI * 2); ctx2d.stroke();
+            }
+        });
+    }
+
+    // 4. 穴の頂点（ドット）とカーブ制御点を色分けして描画
+    if (b.holes) {
+        b.holes.forEach((h, hIdx) => {
+            const isSelectedHole = (hIdx === activeHoleIdx);
+            h.points.forEach(p => {
+                ctx2d.fillStyle = isSelectedHole ? '#ff3333' : '#4169e1';
+                ctx2d.beginPath(); ctx2d.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx2d.fill();
+                if (isSelectedHole) {
+                    ctx2d.strokeStyle = '#ffffff'; ctx2d.lineWidth = 1;
+                    ctx2d.stroke();
+                }
+                if (p.curveX !== undefined && p.curveY !== undefined) {
+                    ctx2d.strokeStyle = isSelectedHole ? '#ff8c00' : '#008080';
+                    ctx2d.lineWidth = isSelectedHole ? 2 : 1;
+                    ctx2d.beginPath(); ctx2d.arc(p.curveX, p.curveY, 4, 0, Math.PI * 2); ctx2d.stroke();
+                }
+            });
+        });
+    }
+
+    // 5. 板の頂点ドラッグ中の寸法・角度表示
+    if (typeof draggedPt !== 'undefined' && draggedPt) {
+        const pts = b.points || [];
+        const idx = pts.indexOf(draggedPt);
+        
+        if (idx !== -1) {
+            const len = pts.length;
+            const pPrev = pts[(idx - 1 + len) % len];
+            const pCurr = draggedPt;
+            const pNext = pts[(idx + 1) % len];
+
+            // 辺の長さをリアルタイムに算出
+            const distPrev = Math.hypot(pCurr.x - pPrev.x, pCurr.y - pPrev.y);
+            const distNext = Math.hypot(pNext.x - pCurr.x, pNext.y - pCurr.y);
+
+            // 角度の算出
+            const anglePrev = Math.atan2(pPrev.y - pCurr.y, pPrev.x - pCurr.x);
+            const angleNext = Math.atan2(pNext.y - pCurr.y, pNext.x - pCurr.x);
+            let diffAngle = angleNext - anglePrev;
+            while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+            while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+            const deg = Math.abs(diffAngle * 180 / Math.PI);
+
+            // --- 5-A. 角度表示（ぴったり90度のときのみ直角マーク） ---
+            ctx2d.beginPath();
+            ctx2d.strokeStyle = '#ff3300';
+            ctx2d.lineWidth = 2.5;
+
+            if (Math.round(deg * 10) / 10 === 90.0) {
+                // 直角マークのサイズ（一辺の長さ）
+                const rSize = 30; 
+                
+                // 2つの隣接辺の方向を指す単位ベクトルを算出
+                const cosP = Math.cos(anglePrev), sinP = Math.sin(anglePrev);
+                const cosN = Math.cos(angleNext), sinN = Math.sin(angleNext);
+
+                // 直角四角形の各頂点を計算
+                const x1 = pCurr.x + cosP * rSize;
+                const y1 = pCurr.y + sinP * rSize;
+                const x2 = x1 + cosN * rSize;
+                const y2 = y1 + sinN * rSize;
+                const x3 = pCurr.x + cosN * rSize;
+                const y3 = pCurr.y + sinN * rSize;
+
+                // 2辺に沿った四角い折れ線を描画
+                ctx2d.moveTo(x1, y1);
+                ctx2d.lineTo(x2, y2);
+                ctx2d.lineTo(x3, y3);
+                ctx2d.stroke();
+            } else {
+                // 90度以外は、従来通り滑らかな円弧（アーク）を描画
+                ctx2d.arc(pCurr.x, pCurr.y, 25, anglePrev, angleNext, diffAngle > 0);
+                ctx2d.stroke();
+            }
+
+
+            // 5-B. 座標系反転をリセットしてテキストを正位置でレンダリング
+            ctx2d.font = 'bold 12px sans-serif';
+            ctx2d.lineWidth = 3.5;
+            ctx2d.strokeStyle = '#ffffff';
+            ctx2d.lineJoin = 'round';
+
+            // 隣接辺1（前の頂点への辺）の中点
+            ctx2d.save();
+            ctx2d.translate((pCurr.x + pPrev.x) / 2, (pCurr.y + pPrev.y) / 2);
+            ctx2d.scale(1, -1); // テキストの上下鏡像反転を相殺
+            ctx2d.fillStyle = '#0055ff';
+            const txtP = `${Math.round(distPrev)} mm`;
+            ctx2d.strokeText(txtP, 5, -5); ctx2d.fillText(txtP, 5, -5);
+            ctx2d.restore();
+
+            // 隣接辺2（次の頂点への辺）の中点
+            ctx2d.save();
+            ctx2d.translate((pCurr.x + pNext.x) / 2, (pCurr.y + pNext.y) / 2);
+            ctx2d.scale(1, -1);
+            ctx2d.fillStyle = '#0055ff';
+            const txtN = `${Math.round(distNext)} mm`;
+            ctx2d.strokeText(txtN, 5, -5); ctx2d.fillText(txtN, 5, -5);
+            ctx2d.restore();
+
+            // 内角の数値表示 (角の二等分線ベクトルに沿って少し外側にオフセット配置)
+            const halfAngle = anglePrev + (diffAngle > 0 ? diffAngle / 2 : diffAngle / 2 + Math.PI);
+            ctx2d.save();
+            ctx2d.translate(pCurr.x + Math.cos(halfAngle) * 38, pCurr.y + Math.sin(halfAngle) * 38);
+            ctx2d.scale(1, -1);
+            ctx2d.fillStyle = '#ff3300';
+            const txtD = `${deg.toFixed(1)}°`;
+            ctx2d.strokeText(txtD, -12, 4); ctx2d.fillText(txtD, -12, 4);
+            ctx2d.restore();
+        }
+    }
+
+    ctx2d.restore();
+}
+
+/**
+ * --- UI編集モード切り替え ---
+ * 現在の編集モードに応じてボタンのデザイン（スタイル）を更新する
+ * @param {string} mode - 'edit', 'round', 'addpoint'
+ */
+window.setEditMode = function(mode) {
+    currentEditMode = mode;
+    
+    // 各ボタンのIDと、モードごとのスタイル定義をマッピング
+    const modeButtons = {
+        edit: document.getElementById('btn-mode-edit'),
+        round: document.getElementById('btn-mode-round'),
+        addpoint: document.getElementById('btn-mode-addpoint')
+    };
+
+    // ボタンが存在しない場合は終了
+    if (Object.values(modeButtons).some(btn => !btn)) return;
+
+    // 1. 全ボタンをデフォルト状態（非アクティブ）にリセット
+    Object.values(modeButtons).forEach(btn => {
+        btn.style.background = '#444';
+        btn.style.color = '#fff';
+        btn.style.fontWeight = 'normal';
+    });
+
+    // 2. 現在のモードに応じてスタイルを適用
+    const targetBtn = modeButtons[mode];
+    if (targetBtn) {
+        // 'addpoint' モードのみ特別な配色（緑）、他はデフォルトの配色（茶）を適用
+        const isAddPoint = (mode === 'addpoint');
+        targetBtn.style.background = isAddPoint ? '#2e8b57' : '#deb887';
+        targetBtn.style.color = isAddPoint ? '#fff' : '#000';
+        targetBtn.style.fontWeight = 'bold';
+    }
+};
+
+
+/**
+ * --- 2D座標変換とジオメトリ編集 ---
+ */
+
+/**
+ * イベントオブジェクトからキャンバス内のモデル座標を計算する
+ * 画面上の位置をCanvasの原点中心の数学座標に変換
+ */
+function getCanvasCoordinates(e) {
+    const rect = cv2d.getBoundingClientRect();
+    
+    // Canvas解像度を画面表示サイズに同期
+    if (cv2d.width !== Math.floor(rect.width) || cv2d.height !== Math.floor(rect.height)) {
+        cv2d.width = rect.width;
+        cv2d.height = rect.height;
+        draw2D();
+    }
+
+    // タッチまたはマウス位置を取得
+    const touch = e.touches?.[0] || e.changedTouches?.[0];
+    const clientX = touch ? touch.clientX : e.clientX;
+    const clientY = touch ? touch.clientY : e.clientY;
+
+    const cssX = clientX - rect.left;
+    const cssY = clientY - rect.top;
+    
+    // Canvas内部の座標に変換
+    const canvasX = (cssX / rect.width) * cv2d.width;
+    const canvasY = (cssY / rect.height) * cv2d.height;
+
+    const dataX = (canvasX - (cv2d.width / 2 + offsetX)) / zoom;
+    const dataY = -(canvasY - (cv2d.height / 2 + offsetY)) / zoom;
+
+    return { 
+        x: dataX, 
+        y: dataY 
+    };
+}
+
+/**
+ * 頂点に角丸（フィレット）を適用し、ベジェ曲線ポイントに分割する
+ */
+function cornerRounding(b, clickedPt, clickHoleIdx) {
+    saveHistory();
+    
+    const target = (clickHoleIdx === -1) ? b : b.holes[clickHoleIdx];
+    if (!target?.points) return;
+    
+    const idx = target.points.indexOf(clickedPt);
+    if (idx === -1) return;
+    
+    const len = target.points.length;
+    const prev = target.points[(idx - 1 + len) % len];
+    const curr = target.points[idx];
+    const next = target.points[(idx + 1) % len];
+    
+    const radius = 25;
+    
+    // 現在の頂点と前後の頂点との距離を計算
+    const vec1 = { x: prev.x - curr.x, y: prev.y - curr.y };
+    const vec2 = { x: next.x - curr.x, y: next.y - curr.y };
+    const dist1 = Math.hypot(vec1.x, vec1.y);
+    const dist2 = Math.hypot(vec2.x, vec2.y);
+    
+    // 角が小さすぎて丸められない場合は処理中断
+    if (dist1 < radius || dist2 < radius) return;
+    
+    // 新しい頂点の生成（元の角を制御点とするベジェ曲線へ）
+    const p1 = { 
+        x: curr.x + (vec1.x / dist1) * radius, 
+        y: curr.y + (vec1.y / dist1) * radius, 
+        curveX: curr.x, 
+        curveY: curr.y 
+    };
+    const p2 = { 
+        x: curr.x + (vec2.x / dist2) * radius, 
+        y: curr.y + (vec2.y / dist2) * radius 
+    };
+    
+    // 元の頂点を削除し、分割した2点を挿入
+    target.points.splice(idx, 1, p1, p2);
+    
+    refreshApp();
+}
+
+
+function insertPointAtCoordinates(mx, my) {
+    if (activeIdx === -1) return;
+    saveHistory();
+    const b = boards[activeIdx];
+    const target = (activeHoleIdx !== -1 && b.holes && b.holes[activeHoleIdx]) ? b.holes[activeHoleIdx] : b;
+    if (!target || !target.points || target.points.length < 2) return;
+
+    let minDistance = Infinity; let insertIndex = 1; let bestPoint = { x: mx, y: my };
+
+    for (let i = 0; i < target.points.length; i++) {
+        const p1 = target.points[i]; const p2 = target.points[(i + 1) % target.points.length];
+        const l2 = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
+        let t = 0;
+        if (l2 !== 0) {
+            t = ((mx - p1.x) * (p2.x - p1.x) + (my - p1.y) * (p2.y - p1.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+        }
+        const projPt = { x: p1.x + t * (p2.x - p1.x), y: p1.y + t * (p2.y - p1.y) };
+        const dist = Math.hypot(mx - projPt.x, my - projPt.y);
+        if (dist < minDistance) { minDistance = dist; insertIndex = i + 1; bestPoint = projPt; }
+    }
+    target.points.splice(insertIndex, 0, { x: bestPoint.x, y: bestPoint.y });
+    setEditMode('edit'); refreshApp();
+}
+
+// --- handlePointerDown 内で Shiftキーの判定を追加 ---
+function handlePointerDown(e) {
+    if (activeIdx === -1) return;
+    const coords = getCanvasCoordinates(e); const mx = coords.x; const my = coords.y;
+    const b = boards[activeIdx]; const currentTime = new Date().getTime();
+
+    // 「点追加モード」であるか、または「Shiftキーを押しながらクリック」された場合
+    if (currentEditMode === 'addpoint' || e.shiftKey) {
+        if (e.cancelable) e.preventDefault(); 
+        insertPointAtCoordinates(mx, my); 
+        return;
+    }
+
+    let clickedPt = null; let clickHoleIdx = -1;
+    // 頂点クリック判定（ボード）
+    if (b.points) {
+        b.points.forEach(p => { if (Math.hypot(p.x - mx, p.y - my) < 22) { clickedPt = p; clickHoleIdx = -1; } });
+    }
+    // 頂点クリック判定（穴）
+    if (!clickedPt && b.holes) {
+        for (let h = 0; h < b.holes.length; h++) {
+            if (!b.holes[h] || !b.holes[h].points) continue;
+            b.holes[h].points.forEach(p => { if (Math.hypot(p.x - mx, p.y - my) < 22) { clickedPt = p; clickHoleIdx = h; } });
+            if (clickedPt) break;
+        }
+    }
+
+    // 頂点がクリックされた場合の処理
+    if (clickedPt) {
+        if (e.cancelable) e.preventDefault(); activeHoleIdx = clickHoleIdx;
+        const isRightClick = e.button === 2; const isDoubleClick = (currentTime - lastClickTime < 300);
+        lastClickTime = currentTime;
+        if (currentEditMode === 'round' || isDoubleClick || isRightClick) { cornerRounding(b, clickedPt, clickHoleIdx); draggedPt = null; return; }
+        draggedPt = clickedPt; draggedHoleIdx = clickHoleIdx; draggedEdgeIdx = -1; hasDraggedSinceDown = false; refreshApp(); return;
+    }
+
+    // 辺やカーブ制御点のクリック判定
+    if (currentEditMode === 'edit' || e.ctrlKey) {
+        // 制御点探索（ボード）
+        for(let i = 0; i < b.points.length; i++) {
+            const p = b.points[i];
+            if (p.curveX !== undefined && Math.hypot(p.curveX - mx, p.curveY - my) < 22) {
+                if (e.cancelable) e.preventDefault(); draggedEdgeIdx = i; draggedHoleIdx = -1; draggedPt = null; hasDraggedSinceDown = false; return;
+            }
+        }
+        // 制御点探索（穴）
+        if (b.holes) {
+            for (let h = 0; h < b.holes.length; h++) {
+                if (!b.holes[h] || !b.holes[h].points) continue;
+                for (let i = 0; i < b.holes[h].points.length; i++) {
+                    const p = b.holes[h].points[i];
+                    if (p.curveX !== undefined && Math.hypot(p.curveX - mx, p.curveY - my) < 22) {
+                        if (e.cancelable) e.preventDefault(); draggedEdgeIdx = i; draggedHoleIdx = h; draggedPt = null; hasDraggedSinceDown = false; return;
+                    }
+                }
+            }
+        }
+        // 辺の探索（ボード）
+        for (let i = 0; i < b.points.length; i++) {
+            if (getDistToSegment({x:mx, y:my}, b.points[i], b.points[(i + 1) % b.points.length]) < 22) {
+                if (e.cancelable) e.preventDefault(); draggedEdgeIdx = i; draggedHoleIdx = -1; draggedPt = null; hasDraggedSinceDown = false; return;
+            }
+        }
+        // 辺の探索（穴）
+        if (b.holes) {
+            for (let h = 0; h < b.holes.length; h++) {
+                if (!b.holes[h] || !b.holes[h].points) continue;
+                for (let i = 0; i < b.holes[h].points.length; i++) {
+                    if (getDistToSegment({x:mx, y:my}, b.holes[h].points[i], b.holes[h].points[(i + 1) % b.holes[h].points.length]) < 22) {
+                        if (e.cancelable) e.preventDefault(); draggedEdgeIdx = i; draggedHoleIdx = h; draggedPt = null; hasDraggedSinceDown = false; return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** * ---  点が穴の内側にあるか判定するヘルパー ---
+ */
+function isPointInHole(mx, my, holePoints) {
+    let inside = false;
+    for (let i = 0, j = holePoints.length - 1; i < holePoints.length; j = i++) {
+        const xi = holePoints[i].x, yi = holePoints[i].y;
+        const xj = holePoints[j].x, yj = holePoints[j].y;
+        const intersect = ((yi > my) !== (yj > my)) 
+            && (mx < (xj - xi) * (my - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+/**
+ * --- マウス/タッチドラッグ操作 ---
+ * 頂点またはカーブ制御点の位置を更新する
+ */
+function handlePointerMove(e) {
+    if (draggedPt === null && draggedEdgeIdx === -1) return;
+    if (e.cancelable) e.preventDefault();
+    
+    const coords = getCanvasCoordinates(e);
+    
+    // ドラッグ開始時に履歴を保存
+    if (!hasDraggedSinceDown) {
+        saveHistory();
+        hasDraggedSinceDown = true;
+    }
+
+    if (draggedPt) {
+        // 頂点の移動
+        draggedPt.x = Math.round(coords.x);
+        draggedPt.y = Math.round(coords.y);
+    } else if (draggedEdgeIdx !== -1) {
+        // 辺のドラッグによる「カーブ制御点」の更新
+        const b = boards[activeIdx];
+        const target = (draggedHoleIdx === -1) ? b : b.holes[draggedHoleIdx];
+        if (target?.points) {
+            const p = target.points[draggedEdgeIdx];
+            p.curveX = Math.round(coords.x);
+            p.curveY = Math.round(coords.y);
+        }
+    }
+    
+    refreshApp();
+}
+
+/** * ドラッグ終了処理 
+ * マウスや指を離した瞬間に、寸法線と内角のポップアップ表示を即座に消去します
+ */
+function handlePointerUp(e) {
+    // ドラッグ状態だった場合のみクリーンアップを実行
+    if (draggedPt !== null || draggedEdgeIdx !== -1) {
+        
+        draggedPt = null;
+        draggedEdgeIdx = -1;
+        
+        refreshApp();
+    }
+}
+
+/**
+ * 点が多角形の内側にあるかを判定する関数
+ */
+function isPointInHole(mx, my, holePoints) {
+    let inside = false;
+    for (let i = 0, j = holePoints.length - 1; i < holePoints.length; j = i++) {
+        const xi = holePoints[i].x, yi = holePoints[i].y;
+        const xj = holePoints[j].x, yj = holePoints[j].y;
+        const intersect = ((yi > my) !== (yj > my)) && (mx < (xj - xi) * (my - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+/**
+ * クリック時に選択状態を管理する
+ * 穴の頂点、制御点、または穴の内部をクリックした場合は選択を維持/更新する
+ */
+function checkSelectionClear(e) {
+    if (draggedPt || draggedEdgeIdx !== -1) return;
+
+    const rect = cv2d.getBoundingClientRect();
+    const clientX = e.clientX ?? e.changedTouches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.changedTouches?.[0]?.clientY;
+
+    if (clientX === undefined || clientY === undefined) return;
+
+    const mx = clientX - rect.left - cv2d.width / 2;
+    const my = -(clientY - rect.top - cv2d.height / 2);
+
+    const b = boards[activeIdx];
+    if (!b || !b.holes) return;
+
+    let selectedHoleIdx = -1;
+    let hitAnyHoleElement = false;
+
+    // 各穴を判定
+    b.holes.forEach((h, hIdx) => {
+        // 1. 頂点または制御点に近いか？
+        const hitPoint = h.points.some(p => 
+            Math.hypot(mx - p.x, my - p.y) < 12 || 
+            (p.curveX !== undefined && Math.hypot(mx - p.curveX, my - p.curveY) < 12)
+        );
+
+        // 2. 穴の内部をクリックしたか？
+        const hitInside = isPointInHole(mx, my, h.points);
+
+        if (hitPoint || hitInside) {
+            selectedHoleIdx = hIdx;
+            hitAnyHoleElement = true;
+        }
+    });
+
+    if (hitAnyHoleElement) {
+        // 穴を選択状態に更新
+        activeHoleIdx = selectedHoleIdx;
+        document.getElementById('btn-delete-hole')?.removeAttribute('disabled');
+        refreshApp();
+    } else {
+        // 何もクリックしていなければ選択解除
+        activeHoleIdx = -1;
+        document.getElementById('btn-delete-hole')?.setAttribute('disabled', 'true');
+        refreshApp();
+    }
+}
+
+/**
+ * --- イベントリスナーのセットアップ ---
+ */
+function setupEventListeners() {
+    // Canvas操作 (マウス/タッチ)
+    // ドラッグ開始（Down）
+    cv2d.addEventListener('mousedown', handlePointerDown);
+    cv2d.addEventListener('touchstart', handlePointerDown, { passive: false });
+    
+    // ドラッグ移動（Move）
+    // ウィンドウ全体で監視することで、指やマウスがキャンバスから外れても追従させる
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    
+    // ドラッグ終了（Up）
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchend', handlePointerUp, { passive: false });
+    
+    // 選択解除の判定 (クリック/タッチ終了時に実行)
+    cv2d.addEventListener('click', checkSelectionClear);
+    cv2d.addEventListener('touchend', checkSelectionClear);
+    
+    // 右クリックメニューの禁止
+    cv2d.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+// 2本の指の間の距離を計算するヘルパー関数
+function getTouchDistance(e) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    return Math.hypot(dx, dy);
+}
+
+// 既存のイベント登録、またはtouchstartハンドラーに以下を組み込む
+cv2d.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        // 2本指が触れたらピンチモードを開始
+        isPinching = true;
+        initialTouchDist = getTouchDistance(e);
+        initialZoom = zoom;
+        
+        // 頂点ドラッグなどの1本指操作をキャンセル
+        draggedPt = null;
+        draggedEdgeIdx = -1;
+    }
+}, { passive: false });
+
+// 既存の handlePointerMove / touchmove 周辺に統合、または独立して登録
+cv2d.addEventListener('touchmove', (e) => {
+    if (isPinching && e.touches.length === 2) {
+        if (e.cancelable) e.preventDefault();
+
+        // --- ピンチイン・ピンチアウト（ズーム）の計算 ---
+        const currentDist = getTouchDistance(e);
+        if (initialTouchDist > 0) {
+            const factor = currentDist / initialTouchDist;
+            // 倍率を制限（0.4倍〜5.0倍など、環境に合わせて調整）
+            zoom = Math.max(0.4, Math.min(5.0, initialZoom * factor));
+        }
+
+        // アプリケーションを再描画してズームをリアルタイム反映
+        refreshApp();
+    }
+}, { passive: false });
+
+// 既存の handlePointerUp / touchend 周辺にクリーンアップを組み込む
+cv2d.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+        isPinching = false;
+        initialTouchDist = 0;
+    }
+});
+// ページ読み込み完了時、あるいは初期化の最後に必ず呼ぶ
+setupEventListeners();
+
+/**
+ * --- 軸移動ボタンの初期化 ---
+ */
+const btnJumpX = document.getElementById('btn-jump-X');
+const btnJumpY = document.getElementById('btn-jump-Y');
+const btnSnapZ = document.getElementById('btn-snap-Z');
+
+if (btnJumpX) btnJumpX.onclick = () => jumpAxisSmart('X', true);
+if (btnJumpY) btnJumpY.onclick = () => jumpAxisSmart('Y', true);
+if (btnSnapZ) btnSnapZ.onclick = () => jumpAxisSmart('Z', true);
+
+/**
+ * --- UI同期・更新処理 ---
+ * 現在のデータ（boards）に基づいてリストとプロパティパネルを最新化する
+ */
+function updateUI() {
+    const listCont = document.getElementById('list-container');
+    if (!listCont) return;
+    listCont.innerHTML = '';
+
+   // パーツリストを生成
+    boards.forEach((b, idx) => {
+        const item = document.createElement('div');
+        const isActive = (idx === activeIdx); // 選択中かどうかの判定フラグ
+        item.className = `board-item ${isActive ? 'active' : ''}`;
+        
+        const xs = b.points?.map(p => p.x) || [0];
+        const ys = b.points?.map(p => p.y) || [0];
+        const wVal = Math.round(Math.max(...xs) - Math.min(...xs));
+        const dVal = Math.round(Math.max(...ys) - Math.min(...ys));
+        const tVal = Math.round(b.thickness || 0);
+
+        item.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 2px;">
+                パーツ ${idx + 1} (${b.points?.length || 0}頂点${b.holes?.length > 0 ? ' / 穴あり' : ''})
+            </div>
+            <div style="font-size: 0.75rem; color: ${isActive ? '#000000' : '#aaaaaa'};">
+                W: ${wVal} / D: ${dVal} / T: ${tVal} (mm)
+            </div>
+        `;
+
+        item.onclick = () => { activeIdx = idx; activeHoleIdx = -1; refreshApp(); };
+        listCont.appendChild(item);
+    });
+
+    // プロパティパネルの更新
+    if (activeIdx !== -1) {
+        const b = boards[activeIdx];
+        
+        // サイズ計算と入力値反映
+        if (b.points?.length > 0) {
+            const xs = b.points.map(p => p.x);
+            const ys = b.points.map(p => p.y);
+            const inW = document.getElementById('in-w');
+            const inD = document.getElementById('in-d');
+            if (inW) inW.value = Math.round(Math.max(...xs) - Math.min(...xs));
+            if (inD) inD.value = Math.round(Math.max(...ys) - Math.min(...ys));
+        }
+        
+        document.getElementById('in-t').value = Math.round(b.thickness || 0);
+document.getElementById('in-posX').value = (b.posX || 0).toFixed(2);
+document.getElementById('in-posY').value = (b.posY || 0).toFixed(2);
+document.getElementById('in-posZ').value = (b.posZ || 0).toFixed(2);
+document.getElementById('in-rotX').value = Math.round(b.rotX || 0);
+document.getElementById('in-rotY').value = Math.round(b.rotY || 0);
+document.getElementById('in-rotZ').value = Math.round(b.rotZ || 0);
+
+        // 穴の選択があれば詳細情報を更新
+        if (activeHoleIdx !== -1 && b.holes?.[activeHoleIdx]) {
+            const h = b.holes[activeHoleIdx];
+            const xs = h.points.map(p => p.x);
+            const ys = h.points.map(p => p.y);
+            const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+            const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+            const hw = Math.max(...xs) - Math.min(...xs);
+            const hh = Math.max(...ys) - Math.min(...ys);
+
+            document.getElementById('in-hole-x').value = Math.round(cx);
+            document.getElementById('in-hole-y').value = Math.round(cy);
+            document.getElementById('in-hole-w').value = Math.round(hw);
+            document.getElementById('in-hole-h').value = Math.round(h.type === 'circle' ? hw : hh);
+
+            const lblW = document.getElementById('lbl-hole-w');
+            const lblH = document.getElementById('lbl-hole-h');
+            if (lblW) lblW.firstChild.textContent = h.type === 'circle' ? "直径 (mm): " : "幅 (mm): ";
+            if (lblH) lblH.style.display = h.type === 'circle' ? 'none' : 'flex';
+        } else {
+            // 穴なしのデフォルト値
+            document.getElementById('in-hole-x').value = 0;
+            document.getElementById('in-hole-y').value = 0;
+            document.getElementById('in-hole-w').value = 50;
+            document.getElementById('in-hole-h').value = 50;
+            document.getElementById('lbl-hole-h').style.display = 'flex';
+        }
+    }
+}
+
+// --- プロパティパネル変更イベント ---
+document.getElementById('in-w')?.addEventListener('change', resizeActiveBoard);
+document.getElementById('in-d')?.addEventListener('change', resizeActiveBoard);
+document.getElementById('in-t')?.addEventListener('change', (e) => {
+    if(activeIdx === -1) return; 
+    saveHistory();
+    boards[activeIdx].thickness = Math.max(1, parseInt(e.target.value) || 15); 
+    refreshApp();
+});
+
+
+/**
+ * --- 1. ボード・穴の操作ロジック ---
+ */
+
+/**
+ * サイズが2000mmを超えているかチェックし、超えていれば警告して2000に丸める共通関数
+ */
+function checkAndLimitSize(value, label) {
+    const num = parseFloat(value) || 0;
+    if (num > 2000) {
+        alert(`${label}の上限は2000mmです。数値を2000mmに調整しました。`);
+        return 2000;
+    }
+    return num;
+}
+
+// ボードの幅と奥行きを更新
+function resizeActiveBoard() {
+    if (activeIdx === -1) return;
+
+    if (document.activeElement !== document.getElementById('add-w') && 
+        document.activeElement !== document.getElementById('add-d')) {
+        return;
+    }
+
+    saveHistory();
+    
+    // 2000mmの上限ガードを適用
+    let w = parseInt(document.getElementById('add-w').value) || 100;
+    let d = parseInt(document.getElementById('add-d').value) || 100;
+    
+    if (w > 2000) { w = checkAndLimitSize(w, '幅(W)'); document.getElementById('add-w').value = w; }
+    if (d > 2000) { d = checkAndLimitSize(d, '奥行き(D)'); document.getElementById('add-d').value = d; }
+
+    w = Math.max(10, w);
+    d = Math.max(10, d);
+
+    boards[activeIdx].points = [
+        { x: -w/2, y: -d/2 }, { x: w/2, y: -d/2 }, 
+        { x: w/2, y: d/2 }, { x: -w/2, y: d/2 }
+    ];
+    refreshApp();
+}
+
+// Enterキーによるサイズ確定ロジック（上限ガード付き）
+['add-w', 'add-d', 'add-t'].forEach(id => {
+    const inputEl = document.getElementById(id);
+    if (inputEl) {
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                if (activeIdx !== -1 && boards[activeIdx]) {
+                    saveHistory();
+                    
+                    if (id === 'add-w' || id === 'add-d') {
+                        let w = parseInt(document.getElementById('add-w').value) || 100;
+                        let d = parseInt(document.getElementById('add-d').value) || 100;
+                        
+                        if (w > 2000) { w = checkAndLimitSize(w, '幅(W)'); document.getElementById('add-w').value = w; }
+                        if (d > 2000) { d = checkAndLimitSize(d, '奥行き(D)'); document.getElementById('add-d').value = d; }
+                        
+                        w = Math.max(10, w);
+                        d = Math.max(10, d);
+
+                        boards[activeIdx].points = [
+                            { x: -w/2, y: -d/2 }, { x: w/2, y: -d/2 }, 
+                            { x: w/2, y: d/2 }, { x: -w/2, y: d/2 }
+                        ];
+                    }
+                    if (id === 'add-t') {
+                        
+                        boards[activeIdx].thickness = Math.max(1, parseFloat(inputEl.value) || 15);
+                    }
+                    refreshApp();
+                }
+                inputEl.blur();
+            }
+        });
+    }
+});
+
+// 「+ 新しい板」ボタンのクリック処理（上限ガード付き）
+document.getElementById('btn-add-board').onclick = () => {
+    let w = parseFloat(document.getElementById('add-w')?.value || 300);
+    let d = parseFloat(document.getElementById('add-d')?.value || 160);
+    const t = parseFloat(document.getElementById('add-t')?.value || 15);
+
+    if (w > 2000) { w = checkAndLimitSize(w, '幅(W)'); document.getElementById('add-w').value = w; }
+    if (d > 2000) { d = checkAndLimitSize(d, '奥行き(D)'); document.getElementById('add-d').value = d; }
+
+    const halfW = w / 2;
+    const halfD = d / 2;
+    const pts = [
+        { x: -halfW, y: -halfD }, { x:  halfW, y: -halfD }, 
+        { x:  halfW, y:  halfD }, { x: -halfW, y:  halfD }  
+    ];
+
+    saveHistory();
+    boards.push({ id: Date.now(), points: pts, holes: [], thickness: t, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0 });
+    activeIdx = boards.length - 1; activeHoleIdx = -1; refreshApp();
+};
+
+// 「● 円形の板」ボタンのクリック処理（上限ガード付き）
+document.getElementById('btn-add-round-board').onclick = () => {
+    let w = parseFloat(document.getElementById('add-w')?.value || 300);
+    let d = parseFloat(document.getElementById('add-d')?.value || 160);
+    const t = parseFloat(document.getElementById('add-t')?.value || 15);
+
+    if (w > 2000) { w = checkAndLimitSize(w, '幅(W)'); document.getElementById('add-w').value = w; }
+    if (d > 2000) { d = checkAndLimitSize(d, '奥行き(D)'); document.getElementById('add-d').value = d; }
+
+    const halfW = w / 2;
+    const halfD = d / 2;
+    const pts = [];
+    for(let i = 0; i < 24; i++) { 
+        const r = (i / 24) * Math.PI * 2; 
+        pts.push({ x: Math.cos(r) * halfW, y: Math.sin(r) * halfD }); 
+    }
+
+    saveHistory(); 
+    boards.push({ id: Date.now(), points: pts, holes: [], thickness: t, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0 });
+    activeIdx = boards.length - 1; activeHoleIdx = -1; refreshApp();
+};
+
+// ボードの移動・回転操作（XYZ軸）
+['X','Y','Z'].forEach(axis => {
+    document.getElementById(`in-pos${axis}`).addEventListener('input', (e) => {
+        if (activeIdx === -1) return; boards[activeIdx][`pos${axis}`] = parseInt(e.target.value) || 0; sync3D();
+    });
+    document.getElementById(`in-rot${axis}`).addEventListener('input', (e) => {
+        if (activeIdx === -1) return; boards[activeIdx][`rot${axis}`] = parseInt(e.target.value) || 0; sync3D();
+    });
+});
+
+// 穴の移動（ステップ実行）
+function stepHolePos(axis, amount) {
+    if (activeIdx === -1 || activeHoleIdx === -1) return; saveHistory();
+    const h = boards[activeIdx].holes[activeHoleIdx];
+    h.points.forEach(p => {
+        if (axis === 'X') p.x += amount; if (axis === 'Y') p.y += amount;
+        if (p.curveX !== undefined) { if (axis === 'X') p.curveX += amount; if (axis === 'Y') p.curveY += amount; }
+    });
+    refreshApp();
+}
+
+// 穴のサイズ変更（円・矩形対応）
+function stepHoleSize(type, amount) {
+    if (activeIdx === -1 || activeHoleIdx === -1) return; saveHistory();
+    const h = boards[activeIdx].holes[activeHoleIdx];
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    h.points.forEach(p => {
+        if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
+        if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
+    });
+    const cx = (minX + maxX) / 2; const cy = (minY + maxY) / 2;
+    let hw = maxX - minX; let hh = maxY - minY;
+    if (type === 'W') hw = Math.max(10, hw + amount); if (type === 'H') hh = Math.max(10, hh + amount);
+
+    if (h.type === 'circle') {
+        if (type === 'W') hh = hw; h.points = [];
+        for(let i=0; i<16; i++) { const rad = (i / 16) * Math.PI * 2; h.points.push({ x: cx + Math.cos(rad) * (hw/2), y: cy + Math.sin(rad) * (hw/2) }); }
+    } else if (h.type === 'rect') {
+        h.points = [{ x: cx - hw/2, y: cy - hh/2 }, { x: cx + hw/2, y: cy - hh/2 }, { x: cx + hw/2, y: cy + hh/2 }, { x: cx - hw/2, y: cy + hh/2 }];
+    }
+    refreshApp();
+}
+
+// 「+ 新しい板」ボタンのクリック処理
+document.getElementById('btn-add-board').onclick = () => {
+    
+    let w = parseFloat(document.getElementById('add-w')?.value || 300);
+    let d = parseFloat(document.getElementById('add-d')?.value || 160);
+    const t = parseFloat(document.getElementById('add-t')?.value || 15);
+
+    if (w > 2000) { w = checkAndLimitSize(w, '幅(W)'); document.getElementById('add-w').value = w; }
+    if (d > 2000) { d = checkAndLimitSize(d, '奥行き(D)'); document.getElementById('add-d').value = d; }
+
+
+    const halfW = w / 2;
+    const halfD = d / 2;
+    
+    const pts = [
+        { x: -halfW, y: -halfD }, // 左下
+        { x:  halfW, y: -halfD }, // 右下
+        { x:  halfW, y:  halfD }, // 右上
+        { x: -halfW, y:  halfD }  // 左上
+    ];
+
+    saveHistory();
+    boards.push({ id: Date.now(), points: pts, holes: [], thickness: t, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0 });
+    activeIdx = boards.length - 1; activeHoleIdx = -1; refreshApp();
+};
+
+// 「● 円形の板」ボタンのクリック処理（バグ修正版）
+document.getElementById('btn-add-round-board').onclick = () => {
+    
+    let w = parseFloat(document.getElementById('add-w')?.value || 300);
+    let d = parseFloat(document.getElementById('add-d')?.value || 160);
+    const t = parseFloat(document.getElementById('add-t')?.value || 15);
+
+    if (w > 2000) { w = checkAndLimitSize(w, '幅(W)'); document.getElementById('add-w').value = w; }
+    if (d > 2000) { d = checkAndLimitSize(d, '奥行き(D)'); document.getElementById('add-d').value = d; }
+
+    const halfW = w / 2;
+    const halfD = d / 2;
+    const pts = [];
+    
+    for(let i = 0; i < 24; i++) { 
+        const r = (i / 24) * Math.PI * 2; 
+
+        pts.push({ x: Math.cos(r) * halfW, y: Math.sin(r) * halfD }); 
+    }
+
+    saveHistory(); 
+    boards.push({ id: Date.now(), points: pts, holes: [], thickness: t, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0 });
+    activeIdx = boards.length - 1; activeHoleIdx = -1; refreshApp();
+};
+// その他アクションのバインド
+document.getElementById('btn-copy-board').onclick = copyActiveBoard;
+document.getElementById('btn-delete-hole').onclick = deleteActiveHole;
+document.getElementById('btn-undo').onclick = undo;
+document.getElementById('btn-redo').onclick = redo;
+document.getElementById('btn-toggle-dimensions').onclick = toggleDimensions;
+document.getElementById('btn-toggle-transparent').onclick = toggleTransparent;
+document.getElementById('btn-reset-view').onclick = resetView;
+document.getElementById('btn-jump-X').onclick = () => jumpAxisSmart('X');
+document.getElementById('btn-jump-Y').onclick = () => jumpAxisSmart('Y');
+document.getElementById('btn-snap-Z').onclick = snapToTargetOrGround;
+
+// 穴追加（円・矩形）
+document.getElementById('btn-add-circle-hole').onclick = () => {
+    if(activeIdx === -1) return; saveHistory(); const pts = [];
+    for(let i=0; i<16; i++) { const r = (i/16)*Math.PI*2; pts.push({ x: Math.cos(r)*25, y: Math.sin(r)*25 }); }
+    boards[activeIdx].holes.push({ type: 'circle', points: pts }); activeHoleIdx = boards[activeIdx].holes.length - 1; refreshApp();
+};
+
+document.getElementById('btn-add-rect-hole').onclick = () => {
+    if(activeIdx === -1) return; saveHistory();
+    boards[activeIdx].holes.push({ type: 'rect', points: [{x:-25, y:-25}, {x:25, y:-25}, {x:25, y:25}, {x:-25, y:25}] });
+    activeHoleIdx = boards[activeIdx].holes.length - 1; refreshApp();
+};
+
+/**
+ * --- 3. ファイル入出力 ---
+ */
+document.getElementById('btn-save').onclick = saveToFile;
+function saveToFile() {
+    const blob = new Blob([JSON.stringify({ boards: boards })], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'wood-design.json'; a.click();
+}
+
+document.getElementById('btn-load').onclick = () => document.getElementById('file-input').click();
+document.getElementById('file-input').onchange = (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        try {
+            const data = JSON.parse(evt.target.result);
+            if(data.boards) { saveHistory(); boards = data.boards; activeIdx = boards.length > 0 ? 0 : -1; activeHoleIdx = -1; refreshApp(); }
+        } catch(err) { alert('ファイルの読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+};
+
+/**
+ * --- 4. キーボードショートカット ---
+ */
+window.addEventListener('keydown', (e) => {
+    // 入力欄編集中は無視
+    if (e.target.tagName === 'INPUT') return; 
+    
+    const key = e.key.toLowerCase(); 
+    const isCtrl = e.ctrlKey || e.metaKey; 
+    const isShift = e.shiftKey;
+    const isAlt = e.altKey;
+    
+    // Altキー操作（Alt + X/Y/Z で +90度回転）
+    if (isAlt && !isCtrl && !isShift) {
+        if (key === 'x') { 
+            e.preventDefault(); 
+            stepRot('X', 90);
+            return; 
+        }
+        if (key === 'y') { 
+            e.preventDefault(); 
+            stepRot('Y', 90);
+            return; 
+        }
+        if (key === 'z') { 
+            e.preventDefault(); 
+            stepRot('Z', 90);
+            return; 
+        }
+    }
+
+    // 修飾キーなしのショートカット
+    if (!isCtrl && !isShift && !isAlt) {
+        // 軸合わせ操作
+        if (key === 'x') { e.preventDefault(); jumpAxisSmart('X', true); return; }
+        if (key === 'y') { e.preventDefault(); jumpAxisSmart('Y', true); return; }
+        if (key === 'z') { e.preventDefault(); jumpAxisSmart('Z', true); return; }
+        
+        // ビュー操作
+        if (key === 'v') { e.preventDefault(); toggleDimensions(); return; }
+        if (key === 't') { e.preventDefault(); toggleTransparent(); return; }
+        if (key === 'a') { e.preventDefault(); resetView(); return; } // ビューリセット
+    }
+
+    // Shiftキー操作
+    if (isShift && !isCtrl && !isAlt) {
+        if (key === 'x') { e.preventDefault(); jumpAxisSmart('X', false); return; }
+        if (key === 'y') { e.preventDefault(); jumpAxisSmart('Y', false); return; }
+        if (key === 'z') { e.preventDefault(); snapToTargetOrGround(); return; }
+    }
+
+    // Ctrl/Metaキー操作
+    if (isCtrl) {
+        if (key === 'c') { e.preventDefault(); copyActiveBoard(); }
+        else if (key === 's') { e.preventDefault(); saveToFile(); }
+        else if (key === 'o') { e.preventDefault(); document.getElementById('file-input').click(); }
+        else if (key === 'z') { e.preventDefault(); undo(); }
+        else if (key === 'y') { e.preventDefault(); redo(); }
+    } 
+    
+    // 削除操作
+    else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault(); 
+        if (activeHoleIdx !== -1) deleteActiveHole(); 
+        else deleteActiveBoard();
+    }
+});
+
+
+/**
+ * --- 5. レンダリング・初期化ライフサイクル ---
+ */
+function animate() {
+    requestAnimationFrame(animate);
+    if (typeof scenes !== 'undefined') {
+        Object.values(scenes).forEach(s => {
+            if (s?.renderer?.domElement) {
+                const parent = s.renderer.domElement.parentElement;
+                // 非表示パネルの描画をスキップして負荷を軽減
+                if (parent?.offsetParent !== null) {
+                    s.controls.update();
+                    s.renderer.render(s.scene, s.camera);
+                }
+            }
+        });
+    }
+}
+
+window.onload = () => {
+    cv2d.width = cv2d.clientWidth; 
+    cv2d.height = cv2d.clientHeight;
+    // 初期化処理...
+    Object.values(scenes).forEach(s => {
+        const parent = s.renderer.domElement.parentElement;
+        if (parent?.offsetParent !== null) {
+            s.renderer.setSize(parent.clientWidth, parent.clientHeight); 
+            s.camera.aspect = parent.clientWidth / parent.clientHeight; 
+            s.camera.updateProjectionMatrix();
+        }
+    });
+    
+    let loaded = typeof loadFromLocalStorage === 'function' ? loadFromLocalStorage() : false;
+    if (!loaded && typeof boards !== 'undefined' && boards.length === 0) {
+        boards.push({ id: Date.now(), points: [{x:-150, y:-80}, {x:150, y:-80}, {x:150, y:80}, {x:-150, y:80}], holes: [], thickness: 15, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0 });
+        activeIdx = 0;
+    }
+    refreshApp();
+    animate();
+};
+
+
+/**
+ * --- PDFレポート出力機能 ---
+ */
+async function generateReport() {
+    if (typeof jspdf === 'undefined') {
+        alert("PDFライブラリが読み込まれていません。");
+        return;
+    }
+
+    // 1. 各要素の取得と未入力チェック
+    const gradeEl = document.getElementById('grade');
+    const clsEl = document.getElementById('class');
+    const numEl = document.getElementById('number');
+    const nameEl = document.getElementById('student-name');
+
+    const missingFields = [];
+    if (!gradeEl?.value.trim()) missingFields.push("学年");
+    if (!clsEl?.value.trim()) missingFields.push("クラス");
+    if (!numEl?.value.trim()) missingFields.push("番号");
+    if (!nameEl?.value.trim()) missingFields.push("名前");
+
+    // 未入力項目がある場合はアラートを出して処理を中断
+    if (missingFields.length > 0) {
+        alert(`以下の項目が入力されていません：\n・${missingFields.join('\n・')}`);
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // 入力値の取得（チェック済みなので必ず値が入っています）
+    const grade = gradeEl.value;
+    const cls = clsEl.value;
+    const num = numEl.value;
+    const name = nameEl.value;
+    const studentInfo = `${grade}年 ${cls}組 ${num}番 名前: ${name}`;
+
+    // テキスト画像化関数
+    function addTextAsImage(text, x, y, size, docInstance) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 1000;
+        tempCanvas.height = 100;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.font = `${size}px sans-serif`;
+        ctx.fillStyle = 'black';
+        ctx.fillText(text, 0, size);
+        const imgData = tempCanvas.toDataURL('image/png');
+        docInstance.addImage(imgData, 'PNG', x, y, (text.length * size * 0.5), size * 0.8);
+    }
+    // 1. タイトル
+    addTextAsImage("3D木工デザイナー　自由設計ver.", 20, 20, 26, doc);
+    addTextAsImage(studentInfo, 20, 35, 24, doc);
+    addTextAsImage(`作成日 : ${new Date().toLocaleDateString()}`, 20, 40, 25, doc);
+
+   // 2. 3Dシーンの画像配置
+if (typeof scenes !== 'undefined') {
+    Object.values(scenes).forEach(s => {
+        const wasGridVisible = s.gridHelper ? s.gridHelper.visible : false;
+        if (s.gridHelper) s.gridHelper.visible = false;
+        
+        const boundingBox = new THREE.Box3();
+        
+        // グリッド以外の純粋なメッシュのみを計算対象にする
+        s.scene.traverse(obj => {
+            if (obj.isMesh && obj !== s.gridHelper) {
+                boundingBox.expandByObject(obj);
+            }
+        });
+
+        if (boundingBox.isEmpty()) {
+            s.camera.position.set(800, 800, 800);
+            s.camera.lookAt(0, 0, 0);
+        } else {
+            // 1. 物体の正確な中心点を取得
+            const center = new THREE.Vector3();
+            boundingBox.getCenter(center);
+            
+            // 2. 物体のサイズ（半径）を取得
+            const sphere = new THREE.Sphere();
+            boundingBox.getBoundingSphere(sphere);
+            const radius = sphere.radius;
+
+            // 3. カメラの視野角から必要な「引きの距離」を計算
+            const fovRad = (s.camera.fov * Math.PI) / 180;
+
+            let distance = (radius / Math.sin(fovRad / 2)) * 1.6;
+            distance = Math.max(300, Math.min(distance, 2500));
+
+            // 4. 全体を少し右寄りにするための「視点ずらし（オフセット）」
+const offsetLeft = radius * 0.25; // 物体の大きさに応じて左にずらす量を自動調節（約25%）
+
+// カメラの向き（斜め45度 [1, 1, 1]）に対して「右方向」のベクトルを計算
+const viewDirection = new THREE.Vector3(1, 1, 1).normalize();
+const upVector = new THREE.Vector3(0, 1, 0);
+const rightVector = new THREE.Vector3().crossVectors(viewDirection, upVector).normalize();
+
+// 左に注視点をずらします
+const targetCenter = center.clone().addScaledVector(rightVector, -offsetLeft);
+
+            // 5. 新しい位置にカメラを配置して、ずらした中心を向かせる
+            s.camera.position.copy(center).addScaledVector(viewDirection, distance);
+            s.camera.lookAt(targetCenter);
+        }
+        // -------------------------------------------------------------
+
+        const originalWidth = s.renderer.domElement.width;
+        const originalHeight = s.renderer.domElement.height;
+        s.renderer.setSize(originalWidth * 2, originalHeight * 2, false);
+        s.camera.aspect = (originalWidth * 2) / (originalHeight * 2);
+        s.camera.updateProjectionMatrix();
+
+        const originalColors = new Map();
+        s.scene.traverse(obj => {
+            if (obj.isMesh && obj.material) {
+                originalColors.set(obj.id, obj.material.color.getHex());
+                obj.material.color.set(0xdeb887);
+            }
+        });
+        
+        s.renderer.render(s.scene, s.camera);
+        const imgData = s.renderer.domElement.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', 10, 50, 200, 170);
+
+        s.renderer.setSize(originalWidth, originalHeight, false);
+        s.camera.aspect = originalWidth / originalHeight;
+        s.camera.updateProjectionMatrix();
+        if (s.gridHelper) s.gridHelper.visible = wasGridVisible;
+        s.scene.traverse((obj) => {
+            if (obj.isMesh && obj.material && originalColors.has(obj.id)) {
+                obj.material.color.setHex(originalColors.get(obj.id));
+            }
+        });
+        s.renderer.render(s.scene, s.camera);
+    });
+}
+
+    // 3. パーツリスト
+    addTextAsImage("■ パーツリスト :", 20, 230, 30, doc); // タイトルを少し強調
+    if (typeof boards !== 'undefined') {
+        const startY = 245;
+        const colWidth = 95; 
+        
+        doc.setFontSize(12); 
+        
+        boards.forEach((b, i) => {
+            const col = i % 2; 
+            const row = Math.floor(i / 2);
+            
+            if (i > 0 && i % 14 === 0) doc.addPage();
+            
+            const currentY = startY + ((row % 7) * 7);
+            const posX = 20 + (col * colWidth);
+            
+            // 寸法計算
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            if (b.points?.length > 0) {
+                b.points.forEach(p => {
+                    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+                    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+                });
+            }
+            const w = (maxX - minX || 0).toFixed(1);
+            const l = (maxY - minY || 0).toFixed(1);
+            const t = (b.thickness || 0).toFixed(1);
+            const holeCount = b.holes?.length || 0;
+            
+            // テキスト出力
+            doc.text(`Part ${i + 1}: ${w}x${l}x${t}mm | H:${holeCount}`, posX, currentY);
+        });
+    }
+
+
+
+// --- 2ページ目以降：木取り図 ---
+
+if (typeof boards !== 'undefined') {
+    boards.forEach((b, i) => {
+        if (i % 6 === 0) doc.addPage();
+            doc.setFontSize(16);
+            doc.text("Cutting diagram", 20, 15);
+
+        const row = Math.floor((i % 6) / 2);
+        const col = (i % 6) % 2;
+        const imgSize = 85; 
+        
+        
+        const gapX = 20;
+        const startX = (210 - (imgSize * 2 + gapX)) / 2; // PDF幅210mmを基準
+        const startY = 20; 
+        
+        const gapY = 10;
+        
+        const posX = startX + (col * (imgSize + gapX));
+        const posY = startY + (row * (imgSize + gapY));
+
+        const xs = b.points?.map(p => p.x) || [0, 0];
+        const ys = b.points?.map(p => p.y) || [0, 0];
+        const minX = Math.min(...xs), maxX = Math.max(...xs);
+        const minY = Math.min(...ys), maxY = Math.max(...ys);
+        const wVal = Math.round(maxX - minX);
+        const dVal = Math.round(maxY - minY);
+        const tVal = Math.round(b.thickness || 0);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 400; 
+        canvas.height = 300;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, 400, 300);
+
+
+  // 図形描画
+        if (b.points && b.points.length > 0) {
+            const scale = Math.min(380 / Math.max(wVal, 1), 280 / Math.max(dVal, 1));
+            const offX = (400 - (wVal * scale)) / 2;
+            const offY = (300 - (dVal * scale)) / 2;
+
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 6;
+            ctx.lineJoin = "round";
+          ctx.beginPath();
+
+// 板の高さを基準に反転させる計算
+const heightScaled = dVal * scale; 
+
+// 1. 始点の設定（Yを反転）
+const startX = (b.points[0].x - minX) * scale + offX;
+const startY = offY + (heightScaled - (b.points[0].y - minY) * scale);
+ctx.moveTo(startX, startY);
+
+for (let i = 0; i < b.points.length; i++) {
+    const p1 = b.points[i];
+    const p2 = b.points[(i + 1) % b.points.length];
+
+    // 2. 次の点のYを反転
+    const x2 = (p2.x - minX) * scale + offX;
+    const y2 = offY + (heightScaled - (p2.y - minY) * scale);
+
+    if (typeof p1.curveX === 'number' && typeof p1.curveY === 'number') {
+        // 3. 制御点のYを反転
+        const cx = (p1.curveX - minX) * scale + offX;
+        const cy = offY + (heightScaled - (p1.curveY - minY) * scale);
+        
+        ctx.quadraticCurveTo(cx, cy, x2, y2);
+    } else {
+        ctx.lineTo(x2, y2);
+    }
+}
+ctx.closePath();
+ctx.stroke();
+
+
+
+
+// --- 穴の描画（曲線対応・上下反転版） ---
+if (b.holes && b.holes.length > 0) {
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 4;
+    ctx.lineJoin = "round";
+
+    // 反転のための高さ基準（外周描画と同じものを使用してください）
+    const heightScaled = dVal * scale; 
+
+    b.holes.forEach(h => {
+        ctx.beginPath();
+        
+        if (h.points && h.points.length > 0) {
+            // 始点の設定（反転計算）
+            const startX = (h.points[0].x - minX) * scale + offX;
+            const startY = offY + (heightScaled - (h.points[0].y - minY) * scale);
+            ctx.moveTo(startX, startY);
+
+            for (let i = 0; i < h.points.length; i++) {
+                const p1 = h.points[i];
+                const p2 = h.points[(i + 1) % h.points.length];
+
+                // 次の点の座標（反転計算）
+                const x2 = (p2.x - minX) * scale + offX;
+                const y2 = offY + (heightScaled - (p2.y - minY) * scale);
+
+                // 制御点があるか確認して曲線を描画
+                if (typeof p1.curveX === 'number' && typeof p1.curveY === 'number') {
+                    const cx = (p1.curveX - minX) * scale + offX;
+                    const cy = offY + (heightScaled - (p1.curveY - minY) * scale);
+                    ctx.quadraticCurveTo(cx, cy, x2, y2);
+                } else {
+                    ctx.lineTo(x2, y2);
+                }
+            }
+            ctx.closePath();
+        } else {
+            // 円形の穴の場合（反転計算）
+            const hx = ((h.x || 0) - minX) * scale + offX;
+            const hy = offY + (heightScaled - ((h.y || 0) - minY) * scale);
+            const hr = (h.radius || 5) * scale;
+            ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+        }
+        ctx.stroke();
+    });
+}
+
+        }
+
+                // PDFへの出力
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', posX, posY, imgSize, (imgSize * 300 / 400));
+        
+        const textY = posY + (imgSize * 300 / 400) + 3;
+        doc.setFontSize(11);
+        doc.text(`Part ${i + 1}`, posX, textY);
+        
+        doc.setFontSize(10);
+        doc.text(`${wVal}x${dVal}x${tVal}mm`, posX, textY + 5);
+
+    });
+}
+
+    // --- レポート情報から学年・組・番号を取得してフォーマット ---
+    // HTMLの入力欄（grade, class, number）から値を取得（空白ならデフォルト値を設定）
+    const gradeVal = document.getElementById('grade')?.value.trim() || '1';
+    const classVal = document.getElementById('class')?.value.trim() || '1';
+    const numberVal = document.getElementById('number')?.value.trim() || '0';
+
+    // 出席番号を常に2桁に揃える（例: "5" -> "05"、"15" -> "15"）
+    const formattedNumber = String(numberVal).padStart(2, '0');
+    
+    // ファイル名の生成 (例: work_1215.pdf や work_1301.pdf)
+    const fileName = `work_${gradeVal}${classVal}${formattedNumber}.pdf`;
+
+    // PDFの保存実行
+    doc.save(fileName);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const inputs = [
+        document.getElementById('grade'),
+        document.getElementById('class'),
+        document.getElementById('number'),
+        document.getElementById('student-name')
+    ];
+
+    // --- 1. エンターキーでのフォーカス移動＆出力実行 ---
+    inputs.forEach((input, index) => {
+        if (!input) return;
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.isComposing) {
+                event.preventDefault();
+
+                if (input.id === 'student-name') {
+                    generateReport();
+                } else {
+                    const nextInput = inputs[index + 1];
+                    if (nextInput) {
+                        nextInput.focus();
+                    }
+                }
+            }
+        });
+    });
+
+   // --- 2. 入力欄以外がタップ・クリックされたときにフォーカスを外す / クリック時に全選択 ---
+    document.addEventListener('click', (event) => {
+        const isInputClicked = inputs.some(input => input && input.contains(event.target));
+    
+        const isButtonClicked = event.target.tagName === 'BUTTON' || event.target.closest('button');
+
+        if (isInputClicked) {
+            
+            const targetInput = inputs.find(input => input && input.contains(event.target));
+            if (targetInput) {
+                
+                setTimeout(() => {
+                    targetInput.select();
+                }, 50);
+            }
+        } else if (!isButtonClicked) {
+            
+            if (document.activeElement && inputs.includes(document.activeElement)) {
+                document.activeElement.blur();
+            }
+        }
+    });
+});
+</script>
+</body>
+</html>

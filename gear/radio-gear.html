@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+    <title>歯車・電波学習シュミレーター</title>
+    <style>
+    :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --idle: #eab308;
+        --secondary: #10b981;
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --text: #1e293b;
+        --text-muted: #64748b;
+        --border-color: #cbd5e1;
+    }
+
+    body {
+        font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .container {
+        max-width: 1020px;
+        width: 100%;
+        background: var(--panel);
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        box-sizing: border-box;
+    }
+
+    /* ヘッダー */
+    .header-area {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--bg);
+        padding-bottom: 12px;
+    }
+
+    h1 {
+        font-size: 1.4rem;
+        margin: 0;
+        color: #0f172a;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.9rem;
+        border: 1px solid #cbd5e1;
+        background-color: #f1f5f9;
+        color: #475569;
+        transition: all 0.2s;
+    }
+
+    .btn:hover {
+        background-color: #e2e8f0;
+    }
+
+    /* モード切り替えタブ */
+    .mode-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap; /* スマホで入り切らない場合に折り返す */
+    }
+
+    .tab-btn {
+        flex: 1;
+        min-width: 140px; /* スマホ用に最小幅を縮小 */
+        padding: 10px 8px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        border: 2px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s;
+        text-align: center;
+        word-break: break-word; /* 長いテキストの入り切りに対応 */
+        box-sizing: border-box;
+    }
+
+    .tab-btn.active {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: #eff6ff;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* 解説エリアスタイル */
+    .explanation {
+        font-size: 0.95rem;
+        color: var(--text);
+        line-height: 1.6;
+        background: #f1f5f9;
+        padding: 16px;
+        border-left: 4px solid var(--primary);
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 20px;
+    }
+
+    /* コントロールパネル */
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        background: var(--bg);
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 20px;
+    }
+
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    label {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .value-display {
+        font-weight: bold;
+    }
+    #t1-val { color: var(--primary); }
+    #t2-val { color: var(--idle); }
+    #t3-val { color: var(--secondary); }
+
+    .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    input[type="range"] {
+        flex: 1;
+        cursor: pointer;
+        height: 8px;
+        border-radius: 4px;
+        background: #e2e8f0;
+        outline: none;
+        accent-color: var(--primary);
+    }
+
+    /* 自転車用変速ボタン */
+    .bike-shifter {
+        display: flex;
+        gap: 6px;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .shift-btn {
+        flex: 1;
+        min-width: 60px;
+        padding: 8px 4px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+    .shift-btn.active {
+        background: var(--secondary);
+        color: white;
+        border-color: var(--secondary);
+    }
+
+    /* ラジオ選択ボタン */
+    .radio-options {
+        display: flex;
+        gap: 15px;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        font-weight: normal;
+    }
+
+    /* ダッシュボード（解説・ビジュアル分割） */
+    .dashboard {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .info-panel {
+        background: #f0fdf4;
+        border-left: 4px solid var(--secondary);
+        padding: 16px;
+        border-radius: 0 8px 8px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .info-title {
+        font-weight: bold;
+        color: #166534;
+        font-size: 1.1rem;
+    }
+
+    .formula-box {
+        background: #ffffff;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #dcfce7;
+        font-size: 0.9rem;
+    }
+
+    .formula {
+        background: #f1f5f9;
+        padding: 6px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 1.1rem;
+        text-align: center;
+        margin-top: 4px;
+        font-weight: bold;
+    }
+
+    /* シミュレーションエリア */
+    .canvas-container {
+        position: relative;
+        background: #1e293b;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+    }
+
+    /* ステータス・情報表示 */
+    .status-display {
+        font-size: 1rem;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+        padding: 12px;
+        border-radius: 6px;
+        min-height: 24px;
+        transition: all 0.2s ease;
+    }
+
+    .station-list {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 10px;
+        border-radius: 6px;
+        line-height: 1.5;
+    }
+
+    .btn-reset {
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+        display: none;
+    }
+
+    .btn-reset:hover {
+        background-color: #dc2626;
+    }
+
+    /* モーダルのスタイル */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 1000; opacity: 0; pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .modal-content {
+        background: var(--panel); max-width: 650px; width: 90%; max-height: 85vh;
+        overflow-y: auto; padding: 30px; border-radius: 12px;
+        position: relative; transform: translateY(-20px); transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+
+    .close-modal-btn {
+        position: absolute; top: 15px; right: 15px; background: #f1f5f9;
+        border: none; width: 32px; height: 32px; border-radius: 50%;
+        cursor: pointer; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+    }
+
+    .modal-body h2 { font-size: 1.4rem; color: var(--primary); margin-top: 0; border-bottom: 2px solid #eff6ff; padding-bottom: 8px; }
+    .modal-body h3 { font-size: 1.1rem; margin-top: 20px; color: #0f172a; }
+    .modal-body blockquote { background: #f8fafc; border-left: 4px solid #cbd5e1; margin: 10px 0; padding: 10px 15px; border-radius: 0 6px 6px 0; }
+
+    /* ===================================================
+       スマートフォン・タブレット向けレスポンシブ調整
+    =================================================== */
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+
+        .container {
+            padding: 14px;
+        }
+
+        .header-area {
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+            align-items: stretch;
+        }
+
+        h1 {
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        .dashboard {
+            grid-template-columns: 1fr;
+        }
+
+        /* タブをスマホ画面で縦/横フィットに調整 */
+        .mode-tabs {
+            gap: 6px;
+        }
+
+        .tab-btn {
+            min-width: calc(33.33% - 6px); /* 3つ並べた時に画面幅に収まる */
+            padding: 8px 4px;
+            font-size: 0.75rem;
+            white-space: normal; /* 折り返しを許可 */
+            line-height: 1.3;
+        }
+
+        .controls {
+            grid-template-columns: 1fr;
+            padding: 12px;
+            gap: 12px;
+        }
+
+        .control-group.bike-ctrl {
+            grid-column: span 1 !important;
+        }
+
+        .modal-content {
+            padding: 20px 15px;
+            width: 95%;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ヘッダー -->
+    <div class="header-area">
+        <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　歯車と変速・ダイナモ発電・ラジオ学習シミュレーター</h1>
+        <button class="btn" id="openModal">💡 「ピッチ円」「モジュール」とは？</button>
+    </div>
+
+    <!-- モード切り替えタブ（3枚構成） -->
+    <div class="mode-tabs">
+        <button class="tab-btn active" onclick="switchTab('gear')">⚙️ ① 歯車と変速</button>
+        <button class="tab-btn" onclick="switchTab('dynamo')">⚡ ② ダイナモ発電</button>
+        <button class="tab-btn" onclick="switchTab('radio')">📡 ③ ラジオと電波</button>
+    </div>
+
+    <!-- ==================== タブ1: 歯車＆自転車変速 ==================== -->
+    <div id="tab-gear" class="tab-content active">
+        <!-- 変速サブモード切り替え -->
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button class="tab-btn active" id="mode3Gear" style="min-width: unset; padding: 8px;">⚙️ 3連歯車（直接噛み合い）</button>
+            <button class="tab-btn" id="modeBike" style="min-width: unset; padding: 8px;">🚲 自転車の変速（チェーン連結）</button>
+        </div>
+
+        <div class="explanation" id="mode-explanation">
+            <strong>【学習のポイント：なぜアイドルギアを使うのか？】</strong><br>
+            1. <strong>回転方向の反転：</strong> 2つの歯車を直接噛み合わせると回転方向が逆になりますが、間にもう1つ歯車を挟むことで、<strong>「元の回転方向に戻す」</strong>ことができます。<br>
+            2. <strong>距離の調整：</strong> ギヤ比を変えることなく、離れた場所に動力を伝えたいときに非常に便利です。
+        </div>
+
+        <!-- コントロール -->
+        <div class="controls">
+            <!-- 3連歯車用コントロール -->
+            <div class="control-group normal-ctrl">
+                <label>歯車1 (駆動輪): <span id="t1-val" class="value-display">24</span> 枚</label>
+                <input type="range" id="teeth1" min="10" max="36" step="1" value="24">
+            </div>
+            <div class="control-group normal-ctrl">
+                <label>歯車2 (アイドル): <span id="t2-val" class="value-display">16</span> 枚</label>
+                <input type="range" id="teeth2" min="10" max="36" step="1" value="16">
+            </div>
+            <div class="control-group normal-ctrl">
+                <label>歯車3 (被動輪): <span id="t3-val" class="value-display">32</span> 枚</label>
+                <input type="range" id="teeth3" min="10" max="36" step="1" value="32">
+            </div>
+
+            <!-- 自転車用コントロール -->
+            <div class="control-group bike-ctrl" style="display: none; grid-column: span 3;">
+                <label>自転車のリアギア（シフター）</label>
+                <div class="bike-shifter">
+                    <button class="shift-btn active" data-gear="1">1段 (軽い/28枚)</button>
+                    <button class="shift-btn" data-gear="2">2段 (24枚)</button>
+                    <button class="shift-btn" data-gear="3">3段 (20枚)</button>
+                    <button class="shift-btn" data-gear="4">4段 (16枚)</button>
+                    <button class="shift-btn" data-gear="5">5段 (重い・速い/12枚)</button>
+                </div>
+            </div>
+
+            <!-- 共通スピード -->
+            <div class="control-group" style="grid-column: span 1;">
+                <label>ペダルの入力速度: <span id="speed-val" style="color:var(--text); font-weight:bold;">1.0</span>x</label>
+                <input type="range" id="speed" min="0" max="3" step="0.1" value="1">
+            </div>
+        </div>
+
+        <!-- ダッシュボード -->
+        <div class="dashboard">
+            <div class="info-panel">
+                <div class="info-title" id="info-panel-title">全体の速度伝達比</div>
+                <div class="formula-box">
+                    <div id="formula-label">歯車3 (被動輪) ÷ 歯車1 (駆動輪):</div>
+                    <div class="formula" id="total-ratio">32 ÷ 24 = 1.33</div>
+                </div>
+                <div style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>回転方向:</strong><br><span id="direction-text" style="color:var(--secondary); font-weight:bold; font-size:1.1rem;">同じ方向</span> に回ります！</p>
+                    <p id="dynamic-desc">真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。</p>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="gearCanvas" width="650" height="320"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== タブ2: ダイナモ発電 ==================== -->
+    <div id="tab-dynamo" class="tab-content">
+        <div class="explanation">
+            <strong>⚙️ 増速ギア（歯車）の役割と破損リスク</strong><br>
+            手で回すスピードは遅いため、内部の<strong>「大きな歯車」</strong>と<strong>「小さな歯車」</strong>を組み合わせて磁石を数十倍の速さで高速回転させています（増速機構）。しかし、勢いよく回しすぎると、過剰な負荷や摩擦熱によって<strong>プラスチックギアが破損してしまいます！</strong><br>一定のリズムで回して、安全かつ効率よく発電する感覚を掴みましょう。
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="dynamoCanvas" width="650" height="320"></canvas>
+        </div>
+
+        <div class="controls" style="margin-top:20px;">
+            <div class="control-group" style="grid-column: span 3;">
+                <label>手回しハンドルの回転速度（運動エネルギー）</label>
+                <div class="slider-row">
+                    <span>ゆっくり</span>
+                    <input type="range" id="speedSlider" min="0" max="12" value="2" step="0.5">
+                    <span style="color: #ef4444; font-weight: bold;">回しすぎ注意！</span>
+                </div>
+            </div>
+            <div style="grid-column: span 3; display: flex; flex-direction: column; align-items: center; width: 100%;">
+                <div class="status-display" id="generatorStatus" style="background-color: #fef3c7; color: #d97706; width: 100%; box-sizing: border-box;">
+                    発電中...
+                </div>
+                <button id="resetGearBtn" class="btn-reset" onclick="repairGear()">⚙️ 新しいギアと交換する（修理）</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== タブ3: ラジオ・電波 ==================== -->
+    <div id="tab-radio" class="tab-content">
+        <div class="explanation" style="padding: 10px; margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4;">
+            <strong>📡 音を電波に変える仕組み（AMとFMの違い）</strong><br>
+            元の音信号（青い波）を遠くまで飛ばすために、高い周波数の波と合体（変調）させます。<br>
+            <strong>AM(<ruby>Amplitude<rt>アンプリチュード</rt></ruby> <ruby>Modulation<rt>モデュレーション</rt></ruby> - 振幅変調)：</strong>音に合わせて電波の<strong>「縦の揺れの大きさ（振幅）」</strong>を変化させます。<br>障害物に強く遠くまで届きやすいですが、ノイズに弱い特徴があります。<br><br>
+            <strong>FM(<ruby>Frequency<rt>フリークエンシー</rt></ruby> <ruby>Modulation<rt>モデュレーション</rt></ruby> - 周波数変調)：</strong>音に合わせて電波の<strong>「横の波の細かさ（周波数）」</strong>を変化させます。<br>ノイズに強く音がクリアですが、電波が遠くまで届きにくい特徴があります。
+        </div>
+
+        <!-- 高さを160pxに縮小し、余白をカット -->
+        <div class="canvas-container" style="margin-bottom: 10px;">
+            <canvas id="radioCanvas" width="650" height="160" style="height: 160px; max-height: 160px;"></canvas>
+        </div>
+
+        <!-- 縦並びのまま、さらにギュッとコンパクトにして1画面に収めます -->
+        <div class="controls" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
+            
+            <!-- ステップ1: 放送方式 -->
+            <div class="control-group" style="width: 100%;">
+                <label style="font-size: 0.9rem; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+                    <span>📻</span> 1. 放送方式（変調方式）の選択
+                </label>
+                <div class="radio-options" style="display: flex; gap: 24px; padding-left: 4px;">
+                    <label class="radio-label" style="font-size: 0.95rem; font-weight: bold; cursor: pointer;">
+                        <input type="radio" name="modulation" value="AM" checked onchange="onModulationChange()" style="transform: scale(1.1); margin-right: 6px;"> AM（振幅変調）
+                    </label>
+                    <label class="radio-label" style="font-size: 0.95rem; font-weight: bold; cursor: pointer;">
+                        <input type="radio" name="modulation" value="FM" onchange="onModulationChange()" style="transform: scale(1.1); margin-right: 6px;"> FM（周波数変調）
+                    </label>
+                </div>
+            </div>
+
+            <!-- ステップ2: チューニング -->
+            <div class="control-group" style="width: 100%;">
+                <label style="font-size: 0.9rem; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+                    <span>🎛️</span> 2. 受信周波数のチューニング
+                </label>
+                <div class="slider-row" style="display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <span id="tuningMinLabel" style="font-weight: bold; color: var(--text-muted); min-width: 55px; font-size: 0.85rem;">531 kHz</span>
+                    <input type="range" id="tuningSlider" min="531" max="1400" value="666" step="9" style="flex: 1; height: 8px;">
+                    <span id="tuningVal" style="font-size: 1.1rem; font-weight: bold; color: var(--primary); min-width: 95px; text-align: center; background: #eff6ff; padding: 4px 10px; border-radius: 4px; border: 1px solid #bfdbfe;">531 kHz</span>
+                </div>
+            </div>
+
+            <!-- ステップ3: 受信ステータス -->
+            <div class="control-group" style="width: 100%;">
+                <label style="font-size: 0.9rem; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+                    <span>📊</span> 3. 現在の受信ステータス
+                </label>
+                <div class="status-display" id="radioStatus" style="background-color: #fee2e2; color: #dc2626; margin: 4px 0; border-radius: 6px; padding: 10px; font-size: 0.95rem; font-weight: bold;">
+                    電波を受信していません（チューニングをあわせてください）
+                </div>
+                <div class="station-list" id="stationListInfo" style="margin-top: 4px; padding: 8px 12px; font-size: 0.85rem; line-height: 1.5; border-radius: 6px; background-color: #f8fafc; border: 1px dashed #cbd5e1;"></div>
+            </div>
+
+        </div>
+    </div>
+
+<!-- モーダルウィンドウ -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+        <button class="close-modal-btn" id="closeModal">&times;</button>
+        <div class="modal-body">
+            <h2>💡 歯車のきほん：「ピッチ円」と「モジュール」ってなに？</h2>
+            <p>エンジニアが歯車を設計するときは、見た目の「一番外側の大きさ」ではなく、<strong>「ある仮想の円」</strong>を基準に考えています。</p>
+            
+            <h3>1. ピッチ円（Pitch Circle）とは？</h3>
+            <blockquote>「ギザギザのない、ツルツルの丸いゴム同士が押し合って回っている」と想像したときの、その仮想の円のこと。</blockquote>
+            <p>歯車同士が実際に噛み合って回転の力を伝えている、最も中心的な円の直径部分にあたります。</p>
+
+            <!-- 【追加】文字の図をスタイリッシュな「絵（CSSグラフィック）」に差し替え -->
+            <div style="background: #0f172a; padding: 20px; border-radius: 12px; margin: 15px 0; border: 1px solid #334155; color: #e2e8f0; text-align: center;">
+                <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 15px; color: #3b82f6; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
+                    <span>● ピッチ円（仮想のゴムローラー）</span>
+                    <span>● モジュール（歯のサイズ規格）</span>
+                </div>
+                
+                <!-- グラフィック表示エリア -->
+                <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px; margin: 15px 0;">
+                    
+                    <!-- 左：ピッチ円のイメージ図-->
+<div style="display: flex; flex-direction: column; align-items: center; width: 180px;">
+    <div style="position: relative; width: 170px; height: 110px;">
+        
+        <!-- 左側の大きな円 (半径35px / 直径70px、左端から10px) -->
+        <div style="position: absolute; top: 25px; left: 10px; width: 70px; height: 70px; border: 2px dashed #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.1);">
+            <span style="font-size: 10px; color: #60a5fa; font-weight: bold;">大ゴム車</span>
+        </div>
+        
+        <!-- 右側の小さな円 (半径20px / 直径40px、左端から81px) -->
+        <div style="position: absolute; top: 40px; left: 81px; width: 40px; height: 40px; border: 2px dashed #f43f5e; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(244, 63, 94, 0.1);">
+            <span style="font-size: 9px; color: #f87171; font-weight: bold;">小</span>
+        </div>
+        
+        <!-- 円と円の間の「接点ドット」 -->
+        <div style="position: absolute; top: 56px; left: 77px; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; z-index: 15;"></div>
+        
+        <!-- ドットを指し示す「引き出し線（矢印）」と「文字ラベル」 -->
+        <div style="position: absolute; top: 5px; left: 45px; width: 70px; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 10;">
+            <span style="background: #10b981; font-size: 9px; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; white-space: nowrap; line-height: 1;">
+                接点
+            </span>
+            <!-- 下向きの三角矢印（CSSで描画） -->
+            <div style="width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #10b981; margin-top: 2px;"></div>
+        </div>
+        
+    </div>
+    <span style="font-size: 11px; margin-top: 8px; color: #94a3b8; text-align: center;">接点を基準に<br>凸凹（歯）を噛み合わせる！</span>
+</div>
+
+                    <!-- 右：モジュールのイメージ図 -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                        <!-- 大きい歯 -->
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; gap: 2px;">
+                                <div style="width: 14px; height: 14px; background: #f59e0b; border-radius: 2px 2px 0 0;"></div>
+                                <div style="width: 14px; height: 14px; background: #f59e0b; border-radius: 2px 2px 0 0;"></div>
+                                <div style="width: 14px; height: 14px; background: #f59e0b; border-radius: 2px 2px 0 0;"></div>
+                            </div>
+                            <span style="font-size: 11px; color: #f59e0b; font-family: monospace;">モジュール大 (Lサイズ)</span>
+                        </div>
+                        <!-- 小さい歯 -->
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; gap: 2px;">
+                                <div style="width: 7px; height: 7px; background: #ec4899; border-radius: 1px 1px 0 0;"></div>
+                                <div style="width: 7px; height: 7px; background: #ec4899; border-radius: 1px 1px 0 0;"></div>
+                                <div style="width: 7px; height: 7px; background: #ec4899; border-radius: 1px 1px 0 0;"></div>
+                                <div style="width: 7px; height: 7px; background: #ec4899; border-radius: 1px 1px 0 0;"></div>
+                            </div>
+                            <span style="font-size: 11px; color: #ec4899; font-family: monospace;">モジュール小 (Sサイズ)</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 6px; font-size: 11px; color: #10b981; border: 1px dashed #10b981; max-width: 180px; text-align: left;">
+                            ⚠️ サイズ（モジュール）が揃った歯車同士だけが噛み合います！
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <h3>2. モジュール（Module）とは？</h3>
+            <blockquote>一言でいうと「歯のサイズ（大きさ）の共通規格」です。</blockquote>
+            <p>歯車同士がスムーズに噛み合うために、作られた世界共通の基準がモジュール（m）です。</p>
+            
+            <div style="background:#f1f5f9; padding:10px; border-radius:6px; text-align:center; font-family:monospace; font-weight:bold; margin:10px 0;">モジュール (m) ＝ ピッチ円の直径 ÷ 歯の数</div>
+        </div>
+        <button style="margin-top:25px; width:100%; background:var(--primary); color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer;" id="closeModal2">なるほど、わかった！</button>
+    </div>
+</div>
+
+<script>
+    // --- タブ＆全体ライフサイクル管理 ---
+    let activeTab = 'gear'; // 'gear', 'dynamo', 'radio'
+    let animationFrameIds = { gear: null, dynamo: null, radio: null };
+
+    function switchTab(tabName) {
+        activeTab = tabName;
+        // すべてのタブコンテンツとナビボタンを非アクティブ化
+        document.querySelectorAll('.mode-tabs > .tab-btn').forEach((btn, index) => {
+            btn.classList.remove('active');
+            // onclick ではなくクラスで判定するため、切り替え処理自体は別でハンドリング
+        });
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        // 特定のナビボタンをアクティブにする
+        const tabButtons = document.querySelectorAll('.mode-tabs > .tab-btn');
+        if (tabName === 'gear') {
+            tabButtons[0].classList.add('active');
+            document.getElementById('tab-gear').classList.add('active');
+        } else if (tabName === 'dynamo') {
+            tabButtons[1].classList.add('active');
+            document.getElementById('tab-dynamo').classList.add('active');
+        } else if (tabName === 'radio') {
+            tabButtons[2].classList.add('active');
+            document.getElementById('tab-radio').classList.add('active');
+        }
+
+        // アニメーションループの整理
+        cancelAllAnimations();
+        if (tabName === 'gear') initGear();
+        if (tabName === 'dynamo') initDynamo();
+        if (tabName === 'radio') initRadio();
+    }
+
+    function cancelAllAnimations() {
+        for (let key in animationFrameIds) {
+            if (animationFrameIds[key]) {
+                cancelAnimationFrame(animationFrameIds[key]);
+                animationFrameIds[key] = null;
+            }
+        }
+    }
+
+    // --- 💡 モーダル制御 ---
+    const modalOverlay = document.getElementById('modalOverlay');
+    document.getElementById('openModal').addEventListener('click', () => modalOverlay.classList.add('active'));
+    document.getElementById('closeModal').addEventListener('click', () => modalOverlay.classList.remove('active'));
+    document.getElementById('closeModal2').addEventListener('click', () => modalOverlay.classList.remove('active'));
+    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
+
+
+    // ==========================================
+    // ① 歯車＆自転車変速シミュレーター JS
+    // ==========================================
+    let currentGearMode = '3gear'; // '3gear' か 'bike'
+    let bikeGear = 1;
+    const bikeTeethMap = { 1: 28, 2: 24, 3: 20, 4: 16, 5: 12 };
+
+    const mode3GearBtn = document.getElementById('mode3Gear');
+    const modeBikeBtn = document.getElementById('modeBike');
+    const normalCtrls = document.querySelectorAll('.normal-ctrl');
+    const bikeCtrl = document.querySelector('.bike-ctrl');
+    const dynamicDesc = document.getElementById('dynamic-desc');
+    const formulaLabel = document.getElementById('formula-label');
+    const infoPanelTitle = document.getElementById('info-panel-title');
+    const modeExplanation = document.getElementById('mode-explanation');
+    const directionText = document.getElementById('direction-text');
+
+    mode3GearBtn.addEventListener('click', () => {
+        currentGearMode = '3gear';
+        mode3GearBtn.classList.add('active');
+        modeBikeBtn.classList.remove('active');
+        normalCtrls.forEach(el => el.style.display = 'flex');
+        bikeCtrl.style.display = 'none';
+        infoPanelTitle.textContent = "全体の速度伝達比";
+        formulaLabel.textContent = "全合成ギヤ比 (歯車1 → 歯車3):";
+        dynamicDesc.innerHTML = "真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。";
+        modeExplanation.innerHTML = `<strong>【学習のポイント：なぜアイドルギアを使うのか？】</strong><br>1. <strong>回転方向の反転：</strong> 2つの歯車を直接噛み合わせると回転方向が逆になりますが、間にもう1つ歯車を挟むことで、<strong>「元の回転方向に戻す」</strong>ことができます。<br>2. <strong>距離の調整：</strong> ギヤ比を変えることなく、離れた場所に動力を伝えたいときに非常に便利です。`;
+    });
+
+    modeBikeBtn.addEventListener('click', () => {
+        currentGearMode = 'bike';
+        modeBikeBtn.classList.add('active');
+        mode3GearBtn.classList.remove('active');
+        normalCtrls.forEach(el => el.style.display = 'none');
+        bikeCtrl.style.display = 'flex';
+        infoPanelTitle.textContent = "自転車の変速比（ギヤレシオ）";
+        formulaLabel.textContent = "変速比 (フロント歯数 ÷ リア歯数):";
+        updateBikeDescription();
+        modeExplanation.innerHTML = `
+    <strong>【学習のポイント：自転車の変速のナゾ】</strong><br>
+    1. <strong>チェーンとスプロケット（歯車）：</strong> 
+    ペダルを回す力は<strong>チェーン</strong>を伝わって、後輪にある<strong>スプロケット</strong>（金属製のギザギザした歯車）に伝わります。この歯車のサイズを切り替えるのが変速（ギアチェンジ）です。<br>
+    
+    2. <strong>スピードアップの仕組み：</strong> 
+    5段（高速ギア）にすると、後ろの<strong>スプロケットが小さく</strong>なります。ペダルを1回転させる間に、後輪が何回転も猛スピードで回るようになるからです（その代わりペダルは重くなります）。<br>
+    
+    3. <strong>坂道を登るときの仕組み：</strong> 
+    1段（軽いギア）にすると、後ろの<strong>スプロケットが大きく</strong>なります。ペダルをたくさん回す必要がありますが、小さな力でグイグイ坂道を登ることができます。
+`;
+    });
+
+    document.querySelectorAll('.shift-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            bikeGear = parseInt(e.target.getAttribute('data-gear'));
+            updateBikeDescription();
+        });
+    });
+
+    function updateBikeDescription() {
+        if(currentGearMode !== 'bike') return;
+        const frontTeeth = 40;
+        const rearTeeth = bikeTeethMap[bikeGear];
+        const ratio = frontTeeth / rearTeeth;
+        dynamicDesc.innerHTML = `<strong>現在の状態:</strong><br>ペダル（左）を <strong>1回転</strong> させると、後輪（右）は <strong style="color:var(--secondary); font-size:1.1rem;">${ratio.toFixed(2)}回転</strong> します！<br>` + 
+        (bikeGear === 5 ? "🔥 最もハイスピードですが、ペダルは一番重くなります。" : bikeGear === 1 ? "⛰️ 一番スピードは遅いですが、軽い力で回せます（坂道用）。" : "");
+    }
+
+    const gearCanvas = document.getElementById('gearCanvas');
+    const gearCtx = gearCanvas.getContext('2d');
+    const t1Input = document.getElementById('teeth1');
+    const t2Input = document.getElementById('teeth2');
+    const t3Input = document.getElementById('teeth3');
+    const speedInput = document.getElementById('speed');
+    const t1Val = document.getElementById('t1-val');
+    const t2Val = document.getElementById('t2-val');
+    const t3Val = document.getElementById('t3-val');
+    const speedVal = document.getElementById('speed-val');
+    const totalRatioFormula = document.getElementById('total-ratio');
+
+    const MODULE = 6;
+    let angle1 = 0;
+
+    function drawGearBase(ctx, x, y, radius, teeth, angle, color, name) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        const toothDepth = MODULE * 2;
+        const outerRadius = radius + toothDepth / 2;
+        const innerRadius = radius - toothDepth / 2;
+
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+
+        for (let i = 0; i < teeth; i++) {
+            const angleStep = (Math.PI * 2) / teeth;
+            const a = i * angleStep;
+            ctx.lineTo(Math.cos(a) * outerRadius, Math.sin(a) * outerRadius);
+            ctx.lineTo(Math.cos(a + angleStep * 0.4) * outerRadius, Math.sin(a + angleStep * 0.4) * outerRadius);
+            ctx.lineTo(Math.cos(a + angleStep * 0.5) * innerRadius, Math.sin(a + angleStep * 0.5) * innerRadius);
+            ctx.lineTo(Math.cos(a + angleStep * 0.9) * innerRadius, Math.sin(a + angleStep * 0.9) * innerRadius);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fillStyle = '#1e293b'; ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -radius); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+
+        ctx.restore();
+        ctx.save(); ctx.font = 'bold 12px Arial'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.fillText(name, x, y + 5); ctx.restore();
+    }
+
+    function drawChain(ctx, x1, y1, r1, x3, y3, r3) {
+        ctx.save();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1 - r1); ctx.lineTo(x3, y3 - r3);
+        ctx.moveTo(x1, y1 + r1); ctx.lineTo(x3, y3 + r3);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function initGear() {
+        function drawGear() {
+            if (activeTab !== 'gear') return;
+            const ctx = gearCtx;
+            ctx.clearRect(0, 0, gearCanvas.width, gearCanvas.height);
+            const speedMultiplier = parseFloat(speedInput.value);
+            speedVal.textContent = speedMultiplier.toFixed(1);
+
+            const baseSpeed = 0.012 * speedMultiplier;
+            angle1 += baseSpeed;
+
+            if (currentGearMode === '3gear') {
+                directionText.textContent = "同じ方向";
+                directionText.style.color = "var(--secondary)";
+                
+                const t1 = parseInt(t1Input.value);
+                const t2 = parseInt(t2Input.value);
+                const t3 = parseInt(t3Input.value);
+                t1Val.textContent = t1; t2Val.textContent = t2; t3Val.textContent = t3;
+
+                const r1 = (MODULE * t1) / 2;
+                const r2 = (MODULE * t2) / 2;
+                const r3 = (MODULE * t3) / 2;
+
+                const finalRatio = t3 / t1;
+                totalRatioFormula.textContent = `${t3} ÷ ${t1} = ${finalRatio.toFixed(2)}`;
+
+                const x1 = 120, y = gearCanvas.height / 2;
+                const x2 = x1 + r1 + r2 - 2; 
+                const x3 = x2 + r2 + r3 - 2;
+
+                const drawAngle1 = angle1;
+                const drawAngle2 = -drawAngle1 * (t1 / t2) + (Math.PI / t2);
+                const drawAngle3 = -drawAngle2 * (t2 / t3) + (Math.PI / t3);
+
+                drawGearBase(ctx, x1, y, r1, t1, drawAngle1, '#2563eb', '歯車1');
+                drawGearBase(ctx, x2, y, r2, t2, drawAngle2, '#eab308', '歯車2');
+                drawGearBase(ctx, x3, y, r3, t3, drawAngle3, '#10b981', '歯車3');
+            } else {
+                directionText.textContent = "同じ方向";
+                directionText.style.color = "var(--secondary)";
+
+                const t1 = 40;
+                const t3 = bikeTeethMap[bikeGear];
+                
+                const r1 = (MODULE * t1) / 2;
+                const r3 = (MODULE * t3) / 2;
+
+                const finalRatio = t1 / t3;
+                totalRatioFormula.textContent = `${t1} ÷ ${t3} = ${finalRatio.toFixed(2)}`;
+
+                const x1 = 160, x3 = 480, y = gearCanvas.height / 2;
+
+                const drawAngle1 = -angle1;
+                const drawAngle3 = drawAngle1 * finalRatio;
+
+                drawChain(ctx, x1, y, r1, x3, y, r3);
+                drawGearBase(ctx, x1, y, r1, t1, drawAngle1, '#2563eb', 'ペダル(前)');
+                drawGearBase(ctx, x3, y, r3, t3, drawAngle3, '#10b981', '後輪(後ろ)');
+            }
+
+            animationFrameIds.gear = requestAnimationFrame(drawGear);
+        }
+        drawGear();
+    }
+
+
+   // ==========================================
+    // ② ダイナモ発電 JS
+    // ==========================================
+    let dynamoCanvas = document.getElementById('dynamoCanvas');
+    let dynamoCtx = dynamoCanvas.getContext('2d');
+    let mainGearAngle = 0;
+    let subGearAngle = 0;
+    let isBroken = false;
+    let heatLevel = 0;
+
+    // ダイナモの状態を安全に初期化・リセットする共通関数
+    function resetDynamoState() {
+        isBroken = false;
+        heatLevel = 0;
+        mainGearAngle = 0;
+        subGearAngle = 0;
+
+        // スライダーの復活
+        const slider = document.getElementById('speedSlider');
+        if (slider) {
+            slider.value = 0;
+            slider.disabled = false;
+        }
+
+        // リセットボタンを隠す
+        const resetBtn = document.getElementById('resetGearBtn');
+        if (resetBtn) {
+            resetBtn.style.display = 'none';
+        }
+
+        // ステータス表示の初期化
+        const statusDiv = document.getElementById('generatorStatus');
+        if (statusDiv) {
+            statusDiv.textContent = 'ハンドルが止まっています（発電量: 0%）';
+            statusDiv.style.backgroundColor = '#fee2e2';
+            statusDiv.style.color = '#dc2626';
+        }
+    }
+
+    // ページ読み込み時にリセットボタンのクリックイベントを確実にバインドする
+    document.addEventListener('DOMContentLoaded', () => {
+        const resetBtn = document.getElementById('resetGearBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // 予期せぬスクロールなどの挙動を防止
+                resetDynamoState();
+            });
+        }
+    });
+
+    // タブ①の美しい歯車アルゴリズムをダイナモ用にも適用！
+    function drawDynamoGear(ctx, x, y, radius, teeth, angle, color, name) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        const MODULE_DYNAMO = radius * 2 / teeth; // 半径からモジュールを逆算して完璧に噛み合わせる
+        const toothDepth = MODULE_DYNAMO * 2;
+        const outerRadius = radius + toothDepth / 2;
+        const innerRadius = radius - toothDepth / 2;
+
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+
+        for (let i = 0; i < teeth; i++) {
+            const angleStep = (Math.PI * 2) / teeth;
+            const a = i * angleStep;
+            ctx.lineTo(Math.cos(a) * outerRadius, Math.sin(a) * outerRadius);
+            ctx.lineTo(Math.cos(a + angleStep * 0.4) * outerRadius, Math.sin(a + angleStep * 0.4) * outerRadius);
+            ctx.lineTo(Math.cos(a + angleStep * 0.5) * innerRadius, Math.sin(a + angleStep * 0.5) * innerRadius);
+            ctx.lineTo(Math.cos(a + angleStep * 0.9) * innerRadius, Math.sin(a + angleStep * 0.9) * innerRadius);
+        }
+        ctx.closePath(); 
+        ctx.fill(); 
+        ctx.stroke();
+
+        // 軸とインジケーター（回転がわかりやすいようにする白いライン）
+        ctx.beginPath(); 
+        ctx.arc(0, 0, 8, 0, Math.PI * 2); 
+        ctx.fillStyle = '#1e293b'; 
+        ctx.fill(); 
+        ctx.stroke();
+        
+        ctx.beginPath(); 
+        ctx.moveTo(0, 0); 
+        ctx.lineTo(0, -radius); 
+        ctx.strokeStyle = '#ffffff'; 
+        ctx.lineWidth = 3; 
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.save(); 
+        ctx.font = 'bold 11px Arial'; 
+        ctx.fillStyle = '#ffffff'; 
+        ctx.textAlign = 'center'; 
+        ctx.fillText(name, x, y + radius + 18); // 文字が被らないように下に配置
+        ctx.restore();
+    }
+
+    function initDynamo() {
+        // タブを開いた・切り替えたときにも、壊れた状態や熱をきれいにリセットして開始する
+        resetDynamoState();
+
+        const slider = document.getElementById('speedSlider');
+        
+        function drawDynamoLoop() {
+            if (activeTab !== 'dynamo') return;
+            const ctx = dynamoCtx;
+            const width = dynamoCanvas.width;
+            const height = dynamoCanvas.height;
+            let speed = parseFloat(slider.value);
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 背景
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, width, height);
+
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // ギアのパラメータ（綺麗に噛み合う配置）
+            const gear1X = centerX - 120;
+            const gear1R = 60; // 少し大きめにして見栄えを強化
+            const gear1Teeth = 30;
+
+            const gear2R = 20;
+            const gear2Teeth = 10;
+            // 2つの半径の合計から、少しだけ噛み合いの隙間（隙間2px）を引く
+            const gear2X = gear1X + gear1R + gear2R - 2; 
+
+            if (!isBroken) {
+                if (speed >= 10.5) {
+                    heatLevel += 1.5;
+                    if (heatLevel >= 100) {
+                        isBroken = true;
+                        speed = 0;
+                        slider.value = 0;
+                    }
+                } else {
+                    heatLevel = Math.max(0, heatLevel - 0.5);
+                }
+            } else {
+                speed = 0;
+                slider.value = 0;
+            }
+
+            if (!isBroken) {
+                mainGearAngle += speed * 0.01;
+                // 3倍速で逆回転。噛み合いを綺麗に見せるための微調整オフセット (+ Math.PI / 10)
+                subGearAngle = -mainGearAngle * (gear1Teeth / gear2Teeth) + (Math.PI / gear2Teeth); 
+            }
+
+            // 3連歯車と同じ「インボリュート風」デザインで2つのギアを描画！
+            drawDynamoGear(ctx, gear1X, centerY, gear1R, gear1Teeth, mainGearAngle, isBroken ? '#475569' : '#3b82f6', '手回し大ギヤ(30枚)');
+            drawDynamoGear(ctx, gear2X, centerY, gear2R, gear2Teeth, subGearAngle, isBroken ? '#ef4444' : '#f43f5e', '増速小ギヤ(10枚)');
+
+            // 手回しハンドル（ギアの上に重ねて描画）
+            ctx.save();
+            ctx.translate(gear1X, centerY);
+            ctx.rotate(mainGearAngle);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -gear1R + 15);
+            ctx.stroke();
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.arc(0, -gear1R + 15, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // コイルと磁石
+            const magnetX = centerX + 110;
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(magnetX, centerY, 45, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // 導線
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(magnetX, centerY - 45);
+            ctx.lineTo(magnetX, centerY - 100);
+            ctx.lineTo(centerX - 100, centerY - 100);
+            ctx.lineTo(centerX - 100, centerY - 45);
+            ctx.stroke();
+
+            // 電球のソケット
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.arc(centerX - 100, centerY - 35, 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 電球発光
+            if (speed > 0 && !isBroken) {
+                const glowGradient = ctx.createRadialGradient(centerX - 100, centerY - 35, 5, centerX - 100, centerY - 35, 15 + speed * 4);
+                glowGradient.addColorStop(0, 'rgba(253, 224, 71, 1)');
+                glowGradient.addColorStop(1, 'rgba(253, 224, 71, 0)');
+                ctx.fillStyle = glowGradient;
+                ctx.beginPath();
+                ctx.arc(centerX - 100, centerY - 35, 15 + speed * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 回転磁石（小ギヤと連動）
+            ctx.save();
+            ctx.translate(magnetX, centerY);
+            ctx.rotate(subGearAngle);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-35, -12, 35, 24);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('N', -25, 5);
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(0, -12, 35, 24);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('S', 15, 5);
+            ctx.restore();
+
+            // 接続シャフト（点線）
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(gear2X, centerY);
+            ctx.lineTo(magnetX, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 発熱メーター
+            if (heatLevel > 0) {
+                ctx.fillStyle = '#fee2e2';
+                ctx.fillRect(centerX - 60, height - 30, 120, 15);
+                ctx.fillStyle = `rgb(${150 + heatLevel}, 50, 50)`;
+                ctx.fillRect(centerX - 60, height - 30, (heatLevel / 100) * 120, 15);
+                ctx.strokeStyle = '#ffffff';
+                ctx.strokeRect(centerX - 60, height - 30, 120, 15);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(`ギアの熱: ${Math.round(heatLevel)}%`, centerX - 40, height - 18);
+            }
+
+            // UI状態更新
+            const statusDiv = document.getElementById('generatorStatus');
+            const resetBtn = document.getElementById('resetGearBtn');
+
+            if (isBroken) {
+                statusDiv.textContent = '⚠️ 警告：回しすぎです！ギア（歯車）の噛み合わせが欠けて、壊れてしまいました！';
+                statusDiv.style.backgroundColor = '#fecaca';
+                statusDiv.style.color = '#b91c1c';
+                if (resetBtn) resetBtn.style.display = 'block';
+                slider.disabled = true;
+            } else {
+                if (resetBtn) resetBtn.style.display = 'none';
+                slider.disabled = false;
+                if (speed === 0) {
+                    statusDiv.textContent = 'ハンドルが止まっています（発電量: 0%）';
+                    statusDiv.style.backgroundColor = '#fee2e2';
+                    statusDiv.style.color = '#dc2626';
+                } else if (speed >= 10.5) {
+                    statusDiv.textContent = '💥 危ない！回すのが速すぎます！このままだとギアが壊れます！';
+                    statusDiv.style.backgroundColor = '#ffedd5';
+                    statusDiv.style.color = '#ea580c';
+                } else {
+                    const voltage = Math.round(speed * 12);
+                    statusDiv.textContent = `ギア増速中！ ハンドル1回転で磁石が3倍速で回っています（発電電圧: 約${voltage}V）`;
+                    statusDiv.style.backgroundColor = '#dcfce7';
+                    statusDiv.style.color = '#15803d';
+                }
+            }
+
+            animationFrameIds.dynamo = requestAnimationFrame(drawDynamoLoop);
+        }
+        drawDynamoLoop();
+    }
+
+    // ==========================================
+    // ③ ラジオ・電波シミュレーター JS
+    // ==========================================
+    let radioCanvas = document.getElementById('radioCanvas');
+    let radioCtx = radioCanvas.getContext('2d');
+    let radioTime = 0;
+
+    const FM_STATIONS = [
+        { freq: 76.5, name: "FM COCOLO" },
+        { freq: 80.2, name: "FM802" },
+        { freq: 85.1, name: "FM大阪" },
+        { freq: 88.1, name: "NHK大阪FM" },
+        { freq: 90.6, name: "MBSラジオ (ワイド)" },
+        { freq: 91.1, name: "OBCラジオ大阪 (ワイド)" },
+        { freq: 91.9, name: "ABCラジオ (ワイド)" }
+    ];
+
+    // 【修正】大阪周辺で受信できるAM局（KBS京都、WBS和歌山）を追加して計6局に拡充
+    const AM_STATIONS = [
+        { freq: 666,  name: "NHK大阪第1" },
+        { freq: 1008, name: "ABCラジオ" },
+        { freq: 1143, name: "KBS京都" },
+        { freq: 1179, name: "MBSラジオ" },
+        { freq: 1314, name: "OBCラジオ大阪" },
+        { freq: 1431, name: "WBS和歌山放送" }
+    ];
+
+    // 特定の周波数（放送局）にダイレクト選局・チューニングする関数
+    function tuneToStation(freq, mode) {
+        const amRadio = document.querySelector('input[name="modulation"][value="AM"]');
+        const fmRadio = document.querySelector('input[name="modulation"][value="FM"]');
+        const slider = document.getElementById('tuningSlider');
+
+        // 1. まずAM/FMのモードを合わせる
+        if (mode === 'AM' && amRadio && !amRadio.checked) {
+            amRadio.checked = true;
+            onModulationChange(); // モードの初期化処理を呼ぶ
+        } else if (mode === 'FM' && fmRadio && !fmRadio.checked) {
+            fmRadio.checked = true;
+            onModulationChange(); // モードの初期化処理を呼ぶ
+        }
+
+        // 2. スライダーの値を調整する
+        if (mode === 'AM') {
+            slider.value = freq.toString();
+        } else {
+            // FMは周波数(例: 80.2)をスライダー値(802)に変換
+            slider.value = Math.round(freq * 10).toString();
+        }
+
+        // 3. UIの表示を更新する
+        updateRadioParams();
+    }
+
+    function onModulationChange() {
+        const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
+        const slider = document.getElementById('tuningSlider');
+        const minLabel = document.getElementById('tuningMinLabel');
+
+        // スライダーの範囲を1431kHz（和歌山放送）までカバーできるように、AMの最大値を1440に変更
+        if (isAM) {
+            slider.min = "531";
+            slider.max = "1440";
+            slider.step = "9"; 
+            slider.value = "666";
+            minLabel.textContent = "531 kHz";
+        } else {
+            slider.min = "760"; 
+            slider.max = "920"; 
+            slider.step = "1";   
+            slider.value = "800"; 
+            minLabel.textContent = "76.0 MHz";
+        }
+        updateRadioParams();
+    }
+
+    function updateRadioParams() {
+        const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
+        const rawVal = parseFloat(document.getElementById('tuningSlider').value);
+        const valSpan = document.getElementById('tuningVal');
+        const infoDiv = document.getElementById('stationListInfo');
+        
+        // ボタンを配置するための共通HTML生成処理
+        if (isAM) {
+            valSpan.textContent = rawVal + ' kHz';
+            
+            // AM用のボタン群を作成 (計6局。4列のグリッドで均等幅でピッタリ並ぶように配置)
+            let buttonsHTML = AM_STATIONS.map(st => {
+                const activeClass = (rawVal === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
+                return `
+                    <button onclick="tuneToStation(${st.freq}, 'AM')" style="flex: 1 1 calc(25% - 8px); min-width: 100px; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-sizing: border-box; text-align: center; ${activeClass}">
+                        📻 ${st.freq} kHz<br><span style="font-size: 9px; font-weight: normal; opacity: 0.85; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${st.name}</span>
+                    </button>
+                `;
+            }).join('');
+
+            infoDiv.innerHTML = `
+                <strong style="display: block; margin-bottom: 8px;">📍 大阪近郊のAM放送局（クリックで自動合わせ）：</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; box-sizing: border-box;">${buttonsHTML}</div>
+            `;
+        } else {
+            const mhz = (rawVal / 10).toFixed(1);
+            valSpan.textContent = mhz + ' MHz';
+            
+            // FM用のボタン群を作成 (計7局)
+            let buttonsHTML = FM_STATIONS.map(st => {
+                const currentSliderMHz = parseFloat(mhz);
+                const activeClass = (currentSliderMHz === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
+                return `
+                    <button onclick="tuneToStation(${st.freq}, 'FM')" style="flex: 1 1 calc(25% - 8px); min-width: 100px; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-sizing: border-box; text-align: center; ${activeClass}">
+                        📻 ${st.freq} MHz<br><span style="font-size: 9px; font-weight: normal; opacity: 0.85; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${st.name}</span>
+                    </button>
+                `;
+            }).join('');
+
+            infoDiv.innerHTML = `
+                <strong style="display: block; margin-bottom: 8px;">📍 大阪のFM放送局（クリックで自動合わせ）：</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; box-sizing: border-box;">${buttonsHTML}</div>
+            `;
+        }
+    }
+
+    function initRadio() {
+        document.getElementById('tuningSlider').addEventListener('input', updateRadioParams);
+        onModulationChange();
+
+        function drawRadioLoop() {
+            if (activeTab !== 'radio') return;
+            const ctx = radioCtx;
+            const width = radioCanvas.width;
+            const height = radioCanvas.height;
+            const rawTuning = parseFloat(document.getElementById('tuningSlider').value);
+            const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 背景塗りつぶし
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, width, height);
+
+            radioTime += 0.05;
+
+            // 1. 元の音の波（低周波のサイン波：青）
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let x = 0; x < width; x++) {
+                const y = height * 0.2 + Math.sin(x * 0.02 + radioTime) * 20;
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.fillStyle = '#3b82f6';
+            ctx.font = '12px Arial';
+            ctx.fillText('元の音（音声信号）', 10, 25);
+
+            // 2. 変調された電波のビジュアル
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const visualFreq = isAM ? (rawTuning / 100) : (rawTuning / 10);
+
+            for (let x = 0; x < width; x++) {
+                const soundSignal = Math.sin(x * 0.02 + radioTime); 
+                let y = height * 0.65;
+
+                if (isAM) {
+                    const amplitude = 30 + soundSignal * 15;
+                    y += Math.sin(x * (visualFreq * 0.03)) * amplitude;
+                } else {
+                    const freqModifier = (visualFreq * 0.01) + soundSignal * 0.03;
+                    y += Math.sin(x * freqModifier) * 30;
+                }
+
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '12px Arial';
+            ctx.fillText(isAM ? 'AM 電波（音の強弱で縦の振幅が変化する）' : 'FM 電波（音の強弱で横の波の密度が変化する）', 10, height * 0.45);
+
+            // 3. チューニング判定
+            const currentFreq = isAM ? rawTuning : (rawTuning / 10);
+            const stations = isAM ? AM_STATIONS : FM_STATIONS;
+            
+            let tunedStation = null;
+            let isNear = false; 
+
+            for (let station of stations) {
+                const diff = Math.abs(currentFreq - station.freq);
+                if (diff < 0.05) { 
+                    tunedStation = station;
+                    break;
+                } else if (diff < (isAM ? 20 : 0.4)) { 
+                    isNear = true;
+                }
+            }
+
+            const statusDiv = document.getElementById('radioStatus');
+
+            if (tunedStation) {
+                const unit = isAM ? 'kHz' : 'MHz';
+                statusDiv.textContent = `🎵 チューニング成功！ 【${tunedStation.freq} ${unit} - ${tunedStation.name}】 の番組をクリアに受信中！`;
+                statusDiv.style.backgroundColor = '#dcfce7';
+                statusDiv.style.color = '#15803d';
+
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath();
+                ctx.arc(width - 40, 40, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText('TUNED', width - 60, 43);
+            } else if (isNear) {
+                statusDiv.textContent = 'ザーー（雑音）... 電波がかすかに届いています。ダイヤルを少しずつ動かそう！';
+                statusDiv.style.backgroundColor = '#fef3c7';
+                statusDiv.style.color = '#d97706';
+            } else {
+                statusDiv.textContent = '受信中... ダイヤルを回して周波数を合わせてください（緑のランプが光る場所を探そう）';
+                statusDiv.style.backgroundColor = '#fee2e2';
+                statusDiv.style.color = '#dc2626';
+            }
+
+            animationFrameIds.radio = requestAnimationFrame(drawRadioLoop);
+        }
+        drawRadioLoop();
+    }
+
+    // 初期ロード
+    window.onload = function() {
+        switchTab('gear');
+    };
+</script>
+
+</body>
+</html>
