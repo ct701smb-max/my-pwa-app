@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+<title>カラーピッカー</title>
+<style>
+/* 背景色が変わる際のアニメーション */
+body {
+  transition: background-color 0.4s ease;
+  margin: 0;
+  font-family: sans-serif;
+}
+/*配置の設定*/
+.center{
+    display:flex;/*箱の中の画像を横並びに*/
+    justify-content:center;/*位置の指定*/
+    flex-wrap:wrap;/*１行に収まらない場合は自動的に下に改行する*/
+}
+/* ===== カラーコード関連のスタイル ===== */
+#colorBox {
+  width: 100%;
+  max-width: 450px;
+  height: 200px;
+  margin-top: 20px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  background-color: #ffffff;
+}
+
+input[type="text"], select, input[type="color"] {
+  padding: 5px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+#copyMessage {
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 16px;
+  min-height: 1.2em;
+  text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+}
+
+.color-tool-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.color-tool-panel,
+.color-image-panel {
+  flex: 1 1 300px;
+  max-width: 500px;
+  box-sizing: border-box;
+}
+
+.color-tool-panel {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: rgba(250, 250, 250, 0.9);
+}
+
+.color-tool-panel input[type="text"],
+.color-tool-panel select {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0 10px 0;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+
+.image-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+@media (min-width: 768px) {
+  .image-flex { flex-direction: row; }
+  .image-flex img { width: 48%; }
+}
+
+/* ===== カラーパレットのスタイル ===== */
+.palette-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto 40px auto;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 15px;
+}
+
+.palette-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.color-swatch {
+  width: 85px;
+  height: 85px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 2px #fff, -1px -1px 2px #fff, 1px -1px 2px #fff, -1px 1px 2px #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+  position: relative;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.swatch-name {
+  font-size: 10px;
+  margin-bottom: 3px;
+  text-align: center;
+  word-break: break-all;
+  padding: 0 2px;
+}
+
+/* ===== コピー完了のポップアップ（トースト） ===== */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, bottom 0.3s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+#toast.show {
+  opacity: 1;
+  visibility: visible;
+  bottom: 40px;
+}
+</style>
+</head>
+<body>
+
+<h1 style="text-align: center; padding-top: 20px; font-weight: bold; color: transparent; -webkit-text-stroke: 2px #333; letter-spacing: 3px; font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;"><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　HTMLカラーコード確認ツール</h1>
+
+<div class="color-tool-wrapper">
+  <div class="color-tool-panel">
+    <label for="colorSelect">色を選択：</label><br>
+    <select id="colorSelect" onchange="selectColor()">
+      <option value="">-- 色を選んでください --</option>
+    </select><br><br>
+
+    <label for="colorInput">カラーコードを入力：</label><br>
+    <input type="text" id="colorInput" placeholder="#rrggbb または カラー名"><br>
+
+    <div class="button-row">
+      <button onclick="updateColor()">表示</button>
+      <button onclick="copyToClipboard()">コピー</button>
+      <button onclick="resetBackground()" style="background:#eee;">背景リセット</button>
+    </div>
+
+    <br>
+    <label for="colorPicker">カラーピッカー：</label>
+    <input type="color" id="colorPicker" onchange="pickColor()">
+
+    <div id="colorBox"></div>
+    <div id="copyMessage"></div>
+  </div>
+
+  <div class="color-image-panel">
+    <div style="background: rgba(255,255,255,0.9); padding: 10px; border-radius: 8px;">
+      <h3 style="margin-top:0;">16進数カラーコードの仕組み</h3>
+      <img src="https://web-manabu.com/wp-content/uploads/2016/05/colorcode01.png" alt="解説" width="100%">
+      <div class="image-flex center" style="margin-top:10px;">
+        <img src="https://www.cc.kyoto-su.ac.jp/~shimizu/MAKE_HTML/image/ColorMixiing.png" alt="RGB" width="100%">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="palette-wrapper">
+  <h3 style="text-align:center;">カラーコード一覧（クリックで背景＆コピー）</h3>
+  <div id="paletteContainer" class="palette-container"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const colors = {
+    // --- Web標準カラー ---
+    "IndianRed": "#CD5C5C", "LightCoral": "#F08080", "Salmon": "#FA8072", "DarkSalmon": "#E9967A", "LightSalmon": "#FFA07A", "Crimson": "#DC143C", "Red": "#FF0000", "FireBrick": "#B22222", "DarkRed": "#8B0000", "Pink": "#FFC0CB", "LightPink": "#FFB6C1", "HotPink": "#FF69B4", "DeepPink": "#FF1493", "MediumVioletRed": "#C71585", "PaleVioletRed": "#DB7093", "Coral": "#FF7F50", "Tomato": "#FF6347", "OrangeRed": "#FF4500", "DarkOrange": "#FF8C00", "Orange": "#FFA500", "Gold": "#FFD700", "Yellow": "#FFFF00", "LightYellow": "#FFFFE0", "LemonChiffon": "#FFFACD", "LightGoldenrodYellow": "#FAFAD2", "PapayaWhip": "#FFEFD5", "Moccasin": "#FFE4B5", "PeachPuff": "#FFDAB9", "PaleGoldenrod": "#EEE8AA", "Khaki": "#F0E68C", "DarkKhaki": "#BDB76B", "Lavender": "#E6E6FA", "Thistle": "#D8BFD8", "Plum": "#DDA0DD", "Violet": "#EE82EE", "Orchid": "#DA70D6", "Magenta": "#FF00FF", "MediumOrchid": "#BA55D3", "MediumPurple": "#9370DB", "RebeccaPurple": "#663399", "BlueViolet": "#8A2BE2", "DarkViolet": "#9400D3", "DarkOrchid": "#9932CC", "DarkMagenta": "#8B008B", "Purple": "#800080", "Indigo": "#4B0082", "SlateBlue": "#6A5ACD", "DarkSlateBlue": "#483D8B", "GreenYellow": "#ADFF2F", "Chartreuse": "#7FFF00", "LawnGreen": "#7CFC00", "Lime": "#00FF00", "LimeGreen": "#32CD32", "PaleGreen": "#98FB98", "LightGreen": "#90EE90", "MediumSpringGreen": "#00FA9A", "SpringGreen": "#00FF7F", "MediumSeaGreen": "#3CB371", "SeaGreen": "#2E8B57", "ForestGreen": "#228B22", "Green": "#008000", "DarkGreen": "#006400", "YellowGreen": "#9ACD32", "OliveDrab": "#6B8E23", "Olive": "#808000", "DarkOliveGreen": "#556B2F", "MediumAquamarine": "#66CDAA", "DarkSeaGreen": "#8FBC8F", "LightSeaGreen": "#20B2AA", "DarkCyan": "#008B8B", "Teal": "#008080", "Cyan": "#00FFFF", "LightCyan": "#E0FFFF", "PaleTurquoise": "#AFEEEE", "Aquamarine": "#7FFFD4", "Turquoise": "#40E0D0", "MediumTurquoise": "#48D1CC", "DarkTurquoise": "#00CED1", "CadetBlue": "#5F9EA0", "SteelBlue": "#4682B4", "LightSteelBlue": "#B0C4DE", "PowderBlue": "#B0E0E6", "LightBlue": "#ADD8E6", "SkyBlue": "#87CEEB", "LightSkyBlue": "#87CEFA", "DeepSkyBlue": "#00BFFF", "DodgerBlue": "#1E90FF", "CornflowerBlue": "#6495ED", "RoyalBlue": "#4169E1", "Blue": "#0000FF", "MediumBlue": "#0000CD", "DarkBlue": "#00008B", "Navy": "#000080", "MidnightBlue": "#191970", "Cornsilk": "#FFF8DC", "BlanchedAlmond": "#FFEBCD", "Bisque": "#FFE4C4", "NavajoWhite": "#FFDEAD", "Wheat": "#F5DEB3", "BurlyWood": "#DEB887", "Tan": "#D2B48C", "RosyBrown": "#BC8F8F", "SandyBrown": "#F4A460", "Goldenrod": "#DAA520", "DarkGoldenrod": "#B8860B", "Peru": "#CD853F", "Chocolate": "#D2691E", "SaddleBrown": "#8B4513", "Sienna": "#A0522D", "Brown": "#A52A2A", "Maroon": "#800000", "White": "#FFFFFF", "Snow": "#FFFAFA", "Honeydew": "#F0FFF0", "MintCream": "#F5FFFA", "Azure": "#F0FFFF", "AliceBlue": "#F0F8FF", "GhostWhite": "#F8F8FF", "WhiteSmoke": "#F5F5F5", "Seashell": "#FFF5EE", "Beige": "#F5F5DC", "OldLace": "#FDF5E6", "FloralWhite": "#FFFAF0", "Ivory": "#FFFFF0", "AntiqueWhite": "#FAEBD7", "Linen": "#FAF0E6", "LavenderBlush": "#FFF0F5", "MistyRose": "#FFE4E1", "Gainsboro": "#DCDCDC", "LightGray": "#D3D3D3", "Silver": "#C0C0C0", "DarkGray": "#A9A9A9", "Gray": "#808080", "DimGray": "#696969", "LightSlateGray": "#778899", "SlateGray": "#708090", "DarkSlateGray": "#2F4F4F", "Black": "#000000",
+
+    // --- 日本の伝統色 ---
+    "桜色 (Sakura)": "#fef4f4", "鴇色 (Toki)": "#f4b3c2", "撫子色 (Nadeshiko)": "#eebbcb", "紅梅色 (Kobai)": "#f2a0a1", "蘇芳 (Suou)": "#9e3d3f", "茜色 (Akane)": "#b7282e", "臙脂 (Enji)": "#b94047", "紅赤 (Beniaka)": "#d9333f", "朱色 (Shu)": "#eb6101", "橙色 (Daidai)": "#ee7800", "山吹色 (Yamabuki)": "#f8b500", "黄土色 (Oudo)": "#c39143", "芥子色 (Karashi)": "#d0af4c", "抹茶色 (Matcha)": "#c5c56a", "萌黄色 (Moegi)": "#aacf53", "若草色 (Wakakusa)": "#c3d825", "鶯色 (Uguisu)": "#928c36", "常磐色 (Tokiwa)": "#007b43", "深緑 (Fukamidori)": "#00552e", "浅葱色 (Asagi)": "#00a3af", "水色 (Mizu)": "#bce2e8", "勿忘草色 (Wasurenagusa)": "#89c3eb", "空色 (Sora)": "#a0d8ef", "露草色 (Tsuyukusa)": "#38a1db", "瑠璃色 (Ruri)": "#1e50a2", "紺碧 (Konpeki)": "#007bbb", "藍色 (Ai)": "#165e83", "勝色 (Kachi)": "#4d4c61", "群青色 (Gunjo)": "#4c6cb3", "藤色 (Fuji)": "#bbbcde", "桔梗色 (Kikyo)": "#5654a2", "江戸紫 (Edomurasaki)": "#745399", "紫紺 (Shikon)": "#460e44", "小豆色 (Azuki)": "#96514d", "栗色 (Kuri)": "#762f07", "琥珀色 (Kohaku)": "#bf783a", "焦茶 (Kogecha)": "#6f4b3e", "駱駝色 (Rakuda)": "#bf794e", "銀鼠 (Ginnezumi)": "#afafb0", "漆黒 (Shikkoku)": "#0d0015",
+
+    // --- パステルカラー ---
+    "PastelRed": "#ff6961", "PastelOrange": "#ffb347", "PastelYellow": "#fdfd96", "PastelGreen": "#77dd77", "PastelBlue": "#aec6cf", "PastelPurple": "#b39eb5", "PastelPink": "#ffd1dc", "CottonCandy": "#ffbcd9", "BabyPink": "#f4c2c2", "Peach": "#ffe5b4", "PalePeach": "#ffdcb6", "Cream": "#fffdd0", "Vanilla": "#f3e5ab", "LemonIce": "#fffacd", "Mint": "#98ff98", "TeaGreen": "#d0f0c0", "Celadon": "#ace1af", "BabyBlue": "#89cff0", "Periwinkle": "#ccccff", "Lilac": "#c8a2c8",
+
+    // --- ネオン・ビビッドカラー ---
+    "NeonRed": "#ff073a", "NeonOrange": "#ff5e00", "NeonYellow": "#ccff00", "NeonGreen": "#39ff14", "NeonBlue": "#04d9ff", "NeonPurple": "#bc13fe", "NeonPink": "#ff007f", "ElectricBlue": "#7df9ff", "ElectricPurple": "#bf00ff", "LaserLemon": "#ffff66", "HotMagenta": "#ff1dce", "BrightTurq": "#08e8de", "CyberYellow": "#ffd300", "VividTang": "#ffa089", "VividLime": "#a6fd29", "VividRasp": "#ff006c",
+
+    // --- 宝石・金属・自然の色 ---
+    "RoseGold": "#b76e79", "Copper": "#b87333", "Bronze": "#cd7f32", "Brass": "#b5a642", "Platinum": "#e5e4e2", "Ruby": "#e0115f", "Emerald": "#50c878", "Sapphire": "#0f52ba", "Amethyst": "#9966cc", "Topaz": "#ffc87c", "Onyx": "#353839", "Graphite": "#594d5b", "Charcoal": "#36454f", "Slate": "#c0c2ce", "Pearl": "#eae0c8", "Alabaster": "#f2f0e6", "Champagne": "#f7e7ce", "Burgundy": "#800020", "Mahogany": "#c04000", "Taupe": "#483c32", "Ecru": "#c2b280", "Rust": "#b7410e", "Mustard": "#ffdb58", "OliveGreen": "#bab86c"
+  };
+
+  const colorSelect = document.getElementById('colorSelect');
+  const colorInput = document.getElementById('colorInput');
+  const colorBox = document.getElementById('colorBox');
+  const colorPicker = document.getElementById('colorPicker');
+  const copyMessage = document.getElementById('copyMessage');
+  const paletteContainer = document.getElementById('paletteContainer');
+  const toast = document.getElementById('toast');
+  let toastTimeout;
+
+  // HEXをHSLに変換する関数（グラデーション用）
+  function hexToHSL(hex) {
+    let r = parseInt(hex.slice(1, 3), 16) / 255;
+    let g = parseInt(hex.slice(3, 5), 16) / 255;
+    let b = parseInt(hex.slice(5, 7), 16) / 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0; // 無彩色
+    } else {
+      let d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return { h: h * 360, s: s * 100, l: l * 100 };
+  }
+
+  // カラーオブジェクトを配列に変換し、HSL情報を持たせる
+  let sortedColors = [];
+  for (let name in colors) {
+    let hex = colors[name].toUpperCase();
+    let hsl = hexToHSL(hex);
+    sortedColors.push({ name: name, hex: hex, h: hsl.h, s: hsl.s, l: hsl.l });
+  }
+
+  // ★ 色相環（グラデーション）順に並び替え
+  sortedColors.sort((a, b) => {
+    // 1. 白・黒・グレーなど（無彩色・極端に暗い/明るい色）をリストの最後に避ける
+    let isGrayA = a.s < 10 || a.l < 10 || a.l > 95;
+    let isGrayB = b.s < 10 || b.l < 10 || b.l > 95;
+    
+    if (isGrayA && !isGrayB) return 1;
+    if (!isGrayA && isGrayB) return -1;
+    // どちらも無彩色の場合は、明度順（明るい→暗い）で綺麗に並べる
+    if (isGrayA && isGrayB) return b.l - a.l;
+
+    // 2. 色相（Hue）順に並べる（赤→黄→緑→青→紫）
+    let hueDiff = a.h - b.h;
+    if (Math.abs(hueDiff) > 5) {
+      return hueDiff;
+    }
+    
+    // 3. 色相がほぼ同じ場合は、彩度（鮮やかさ）順
+    let satDiff = b.s - a.s;
+    if (Math.abs(satDiff) > 10) {
+      return satDiff;
+    }
+    
+    // 4. それでも同じなら明度順
+    return b.l - a.l;
+  });
+
+  // トースト（ポップアップ）を表示する関数
+  function showToast(text) {
+    toast.innerHTML = `<span style="color: #4CAF50;">✔</span> コピーしました: ${text}`;
+    toast.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 2000);
+  }
+
+  // 並び替えた配列をもとにパネルを生成
+  sortedColors.forEach(colorObj => {
+    const { name, hex } = colorObj;
+
+    // セレクトボックスに追加
+    const option = document.createElement('option');
+    option.value = hex;
+    option.textContent = `${name} (${hex})`;
+    colorSelect.appendChild(option);
+
+    // カラーパレットパネルの生成
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch';
+    swatch.style.backgroundColor = hex;
+    swatch.innerHTML = `<span class="swatch-name">${name}</span><span>${hex}</span>`;
+
+    // クリック時の動作
+    swatch.addEventListener('click', () => {
+      colorBox.style.backgroundColor = hex;
+      colorInput.value = hex;
+      colorPicker.value = hex;
+      colorSelect.value = hex;
+      document.body.style.backgroundColor = hex;
+
+      navigator.clipboard.writeText(hex).then(() => {
+        copyMessage.textContent = `コピー成功！: ${hex}`;
+        copyMessage.style.color = "#004d00";
+        showToast(hex);
+      }).catch(err => {
+        copyMessage.textContent = "コピーに失敗しました";
+        copyMessage.style.color = "red";
+      });
+    });
+
+    paletteContainer.appendChild(swatch);
+  });
+
+  function updateColor() {
+    const input = colorInput.value.trim();
+    if(!input) return;
+    colorBox.style.backgroundColor = input;
+    document.body.style.backgroundColor = input; 
+    colorPicker.value = isValidHex(input) ? input : "#ffffff";
+    clearCopyMessage();
+  }
+
+  function selectColor() {
+    const selected = colorSelect.value;
+    if(!selected) return;
+    colorInput.value = selected;
+    colorBox.style.backgroundColor = selected;
+    document.body.style.backgroundColor = selected; 
+    colorPicker.value = selected;
+    clearCopyMessage();
+  }
+
+  function pickColor() {
+    const picked = colorPicker.value;
+    colorInput.value = picked;
+    colorBox.style.backgroundColor = picked;
+    document.body.style.backgroundColor = picked; 
+    colorSelect.value = "";
+    clearCopyMessage();
+  }
+
+  function copyToClipboard() {
+    const text = colorInput.value.trim();
+    if (text) {
+      navigator.clipboard.writeText(text).then(() => {
+        copyMessage.textContent = `コピーしました: ${text}`;
+        copyMessage.style.color = "green";
+        showToast(text); 
+      });
+    }
+  }
+
+  function resetBackground() {
+    document.body.style.backgroundColor = "#ffffff";
+    clearCopyMessage();
+  }
+
+  function isValidHex(code) {
+    return /^#([0-9A-Fa-f]{6})$/.test(code);
+  }
+
+  function clearCopyMessage() {
+    copyMessage.textContent = "";
+  }
+
+  colorInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); updateColor(); }
+  });
+</script>
+</body>
+</html>
