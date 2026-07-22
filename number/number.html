@@ -42,7 +42,162 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
     overflow: hidden;
   }
+/* タイトルとボタンの配置 */
+.header-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
 
+.header-container h1 {
+  margin: 0;
+}
+
+/* 解説ボタンのデザイン */
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #f1f5f9;
+  color: #2563eb;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.help-btn:hover {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.help-icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-color: #2563eb;
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 18px;
+  font-size: 12px;
+}
+
+.help-btn:hover .help-icon {
+  background-color: #fff;
+  color: #2563eb;
+}
+
+/* モーダル背景（暗くする背景） */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(15, 23, 42, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+/* モーダルコンテンツ */
+.modal-content {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* 解説エリアの中身 */
+.help-section {
+  margin-bottom: 24px;
+}
+
+.help-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  color: #2563eb;
+  border-bottom: 2px solid #eff6ff;
+  padding-bottom: 4px;
+}
+
+.card {
+  background-color: #f8fafc;
+  border-left: 4px solid #3b82f6;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.card h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.card p {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.formula-box {
+  background-color: #eff6ff;
+  color: #1e40af;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 13px;
+  margin: 6px 0;
+  display: inline-block;
+}
   /* タブのスタイル */
   .tabs {
     display: grid;
@@ -62,7 +217,7 @@
     text-align: center;
     transition: all 0.2s;
     border-bottom: 2px solid transparent;
-    border-right: 1px solid var(--border-color); /* 境界線をわかりやすく（任意） */
+    border-right: 1px solid var(--border-color);
     box-sizing: border-box;
   }
 
@@ -319,7 +474,14 @@
 <body>
 
 <div class="calculator-container">
+<div class="header-container">
 <h2>　<a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　多機能電卓</h2>
+<button type="button" id="help-btn" class="help-btn" aria-label="計算方法の解説">
+    <span class="help-icon">?</span> 解説
+  </button>
+</div>
+
+
   <!-- タブ領域 -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('basic')">標準/関数</button>
@@ -476,7 +638,6 @@
   <div class="row form-group">
     <div>
       <label>変換前</label>
-      <!-- id="len-from" を "length-from" に変更 -->
       <select id="length-from" class="form-control" onchange="convertUnit('length')">
         <option value="mm">ミリメートル (mm)</option>
         <option value="cm">センチメートル (cm)</option>
@@ -487,7 +648,6 @@
     </div>
     <div>
       <label>変換後</label>
-      <!-- id="len-to" を "length-to" に変更 -->
       <select id="length-to" class="form-control" onchange="convertUnit('length')">
         <option value="mm">ミリメートル (mm)</option>
         <option value="cm" selected>センチメートル (cm)</option>
@@ -497,7 +657,6 @@
       </select>
     </div>
   </div>
-  <!-- id="len-result" を "length-result" に変更 -->
   <div id="length-result" class="result-box">100 cm</div>
 </div>
 
@@ -538,12 +697,13 @@
     <label>図形の種類</label>
     <select id="area-type" class="form-control" onchange="toggleAreaInputs()">
       <option value="rect">長方形 / 正方形</option>
-      <option value="parallelogram">平行四辺形</option>
       <option value="triangle">三角形</option>
-      <option value="regular-polygon">正多角形</option>
+      <option value="parallelogram">平行四辺形</option>
+      <option value="trapezoid">台形</option>
+      <option value="rhombus">ひし形</option>
       <option value="circle">円</option>
       <option value="sector">扇形</option>
-      <option value="trapezoid">台形</option>
+      <option value="regular-polygon">正多角形</option>
       <option value="sphere-surface">球の表面積</option>
     </select>
   </div>
@@ -552,17 +712,17 @@
   <div class="row">
     <div class="form-group" id="area-v1-group">
       <label id="area-label1">幅 (m)</label>
-      <input type="text" id="area-v1" class="form-control" value="0">
+      <input type="text" id="area-v1" class="form-control" value="50">
     </div>
 
     <div class="form-group" id="area-v2-group">
       <label id="area-label2">高さ (m)</label>
-      <input type="text" id="area-v2" class="form-control" value="0">
+      <input type="text" id="area-v2" class="form-control" value="70">
     </div>
 
     <div class="form-group" id="area-v3-group" style="display: none;">
       <label id="area-label3">高さ (m)</label>
-      <input type="text" id="area-v3" class="form-control" value="0">
+      <input type="text" id="area-v3" class="form-control" value="5">
     </div>
   </div>
 
@@ -590,8 +750,9 @@
       <option value="box">直方体 / 立方体</option>
       <option value="tri-prism">三角柱</option>
       <option value="cylinder">円柱</option>
-      <option value="cone">円錐</option>
       <option value="tri-pyramid">三角錐</option>
+      <option value="pyramid">四角錐</option>
+      <option value="cone">円錐</option>
       <option value="sphere">球</option>
     </select>
   </div>
@@ -600,17 +761,17 @@
   <div class="row">
     <div class="form-group" id="vol-v1-group">
       <label id="vol-label1">縦 (m)</label>
-      <input type="text" id="vol-v1" class="form-control" value="0">
+      <input type="text" id="vol-v1" class="form-control" value="50">
     </div>
 
     <div class="form-group" id="vol-v2-group">
       <label id="vol-label2">横 (m)</label>
-      <input type="text" id="vol-v2" class="form-control" value="0">
+      <input type="text" id="vol-v2" class="form-control" value="50">
     </div>
 
     <div class="form-group" id="vol-v3-group">
       <label id="vol-label3">高さ (m)</label>
-      <input type="text" id="vol-v3" class="form-control" value="0">
+      <input type="text" id="vol-v3" class="form-control" value="50">
     </div>
   </div>
 
@@ -628,7 +789,191 @@
   </div>
 </div>
 
+<!-- 2. モーダル本体（<body>の一番下に追加） -->
+<div id="help-modal" class="modal-overlay" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>💡 計算機能の使い方・公式ガイド</h2>
+      <button type="button" id="close-modal-btn" class="close-btn">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- 基礎知識 -->
+      <section class="help-section">
+        <h3>🌱 基本・定数</h3>
+        <div class="card">
+          <h4>円周率（π（パイ） ≒ 3.14）</h4>
+          <p>円のまわりの長さや、円の面積を計算するときに使う特別な数。</p><div class="formula-box">円周：直径 × π<br>円の面積：半径 × 半径 × π </div>
+        </div>
+        <div class="card">
+          <h4>平方根（ √（ルート））</h4>
+          <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p><div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
+        </div>
+      </section>
+
+      <!-- 微分・積分の解説と計算例 -->
+<section class="help-section">
+  <h3>🚀 微分・積分の考え方と計算例</h3>
+  
+  <div class="card">
+    <h4>微分（びぶん）＝ 瞬間の変化スピード</h4>
+    <p>
+      <strong>【例：ボールを落としたときのスピード】</strong><br>
+      ボールを落とすと、時間がたつほど加速するよ。<br>
+      時間 <i>t</i> 秒と距離 <i>y</i> m の関係は <strong>y = 5t<sup>2</sup></strong>（※約 4.9t<sup>2</sup>）で表せます。<br>
+      ここで<strong>「2秒後の“その瞬間”のスピード」</strong>を知りたいときに微分を使います！
+    </p>
+    <div class="formula-box">
+      <strong>計算式：</strong> (5t<sup>2</sup>)' = 10t<br>
+      <i>t</i> = 2 を代入 ➔ 10 × 2 = <strong>秒速20m！</strong>
+    </div>
+    <p class="tip-text">💡 <strong>電卓での使い方：</strong> 微分ボタンを押して『 <strong><code>d/dx(5x^2, 2)</code></strong> 』と入力！</p>
+  </div>
+
+  <div class="card">
+    <h4>積分（せきぶん）＝ 変化を集めた全体の量（距離・面積）</h4>
+    <p>
+      <strong>【例：加速する電車が進んだ距離】</strong><br>
+      スピードが変化する電車（スピード：10<i>t</i> m/s）が、<strong>「0秒から3秒間で進んだ合計距離」</strong>を求めたいときに積分を使います！<br>
+      細切れのスピードを足し合わせて、全体の距離（グラフの面積）を出す計算だよ。
+    </p>
+    <div class="formula-box">
+      <strong>計算式：</strong> ∫ 10t dt = 5t<sup>2</sup><br>
+      0秒〜3秒まで ➔ 5 × 3<sup>2</sup> = <strong>合計 45m！</strong>
+    </div>
+    <p class="tip-text">💡 <strong>電卓での使い方：</strong> 積分ボタンを押して『 <strong><code>∫(10x, 0, 3)</code></strong> 』と入力！</p>
+  </div>
+</section>
+
+      <!-- 面積・角度の公式一覧 -->
+      <section class="help-section">
+        <h3>📏 面積と角度の公式一覧（平面図形）</h3>
+        
+        <div class="card">
+          <h4>長方形・正方形</h4>
+          <div class="formula-box">面積 = 縦 × 横</div>
+        </div>
+
+        <div class="card">
+          <h4>三角形</h4>
+          <div class="formula-box">面積 = 底辺 × 高さ ÷ 2</div>
+        </div>
+
+        <div class="card">
+          <h4>平行四辺形</h4>
+          <div class="formula-box">面積 = 底辺 × 高さ</div>
+        </div>
+
+        <div class="card">
+          <h4>台形</h4>
+          <div class="formula-box">面積 = (上底 + 下底) × 高さ ÷ 2</div>
+        </div>
+
+        <div class="card">
+          <h4>ひし形</h4>
+          <div class="formula-box">面積 = 対角線 × 対角線 ÷ 2</div>
+        </div>
+
+        <div class="card">
+          <h4>円</h4>
+          <div class="formula-box">面積 = 半径 × 半径 × π</div>
+        </div>
+
+        <div class="card">
+          <h4>扇形（おうぎがた）</h4>
+          <div class="formula-box">面積 = 半径 × 半径 × π × (中心角 ÷ 360)</div>
+          <p>円をピザみたいに切り分けた形！「円全体の面積」に「360度中のどれだけの角度か（中心角 ÷ 360）」をかけるよ。</p>
+        </div>
+
+        <div class="card">
+          <h4>正多角形の面積</h4>
+          <div class="formula-box">面積 = (三角形1つ分の面積) × n</div>
+          <p>正 n 角形は、中心から角に線を引くと「同じ形の三角形 n 個」に分けられるんだ。1つの三角形の面積を出して n 倍すればOK！</p>
+        </div>
+
+        <div class="card">
+          <h4>多角形の内角の和・外角の和</h4>
+          <div class="formula-box">
+            内角の和 = 180° × (n - 2)<br>
+            外角の和 = どんな多角形でも 360°
+          </div>
+          <p>
+            ・<b>内角の和</b>：n 角形は「(n - 2) 個の三角形」に分けられるから 180° をかけるよ。<br>　例：四角形なら 180° × 2 = 360°<br>
+            ・<b>外角の和</b>：三角形でも十角形でも、外側の角をぜんぶ足すと<strong>必ず 360°</strong> になるよ！
+          </p>
+        </div>
+      </section>
+
+      <!-- 体積・表面積の公式一覧 -->
+      <section class="help-section">
+        <h3>📐 体積と表面積の公式一覧（立体図形）</h3>
+        
+        <div class="card">
+          <h4>直方体・立方体</h4>
+          <div class="formula-box">体積 = 縦 × 横 × 高さ</div>
+        </div>
+
+        <div class="card">
+          <h4>三角柱（すべての柱体）</h4>
+          <div class="formula-box">体積 = 底面積 × 高さ</div>
+          <p>※三角柱の場合は「(底辺 × 底面の高さ ÷ 2) × 立体の高さ」になるよ！</p>
+        </div>
+
+        <div class="card">
+          <h4>円柱</h4>
+          <div class="formula-box">体積 = (半径 × 半径 × π) × 高さ</div>
+        </div>
+
+        <div class="card">
+          <h4>三角錐・角錐（すべての錐体）</h4>
+          <div class="formula-box">体積 = 底面積 × 高さ ÷ 3</div>
+        </div>
+
+        <div class="card">
+          <h4>円錐</h4>
+          <div class="formula-box">体積 = (半径 × 半径 × π) × 高さ ÷ 3</div>
+        </div>
+
+        <div class="card">
+          <h4>球の体積・表面積</h4>
+          <div class="formula-box">
+            体積 = (4/3) × π × r<sup>3</sup><br>
+            表面積 = 4 × π × r<sup>2</sup>
+          </div>
+          <p>
+            ・体積：「身の上に心配あり（4/3 π r<sup>3</sup>）」<br>
+            ・表面積：「心配ある事情（4 π r<sup>2</sup>）」という語呂合わせで覚えると覚えやすいよ！
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+    
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const helpBtn = document.getElementById('help-btn');
+  const closeBtn = document.getElementById('close-modal-btn');
+  const modal = document.getElementById('help-modal');
+
+  // モーダルを開く
+  helpBtn.addEventListener('click', () => {
+    modal.removeAttribute('hidden');
+  });
+
+  // 閉じるボタンで閉じる
+  closeBtn.addEventListener('click', () => {
+    modal.setAttribute('hidden', '');
+  });
+
+  // 背景（黒い暗がり）をクリックしたら閉じる
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.setAttribute('hidden', '');
+    }
+  });
+});
   // --- タブ切り替え ---
   function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -782,7 +1127,6 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// 入力欄に直接打ち込まれた全角文字もリアルタイムで半角に変換し、25桁制限を適用
 display.addEventListener('input', function() {
   this.value = this.value.replace(/[０-９＋ー―＊／．（），]/g, function(s) {
     return keyReplaceMap[s] || s;
@@ -871,7 +1215,6 @@ function calculateBasic() {
       // 上のサブディスプレイに「入力した式＋補完された閉じカッコ＋ ＝」を残す
       updateFormula(rawFormula + completedBrackets + ' =');
       
-      // 下のメインディスプレイに結果を表示（有効数字・文字数を25桁以内に制御）
       let resStr = Number(result.toPrecision(15)).toString();
       if (resStr.length > MAX_LENGTH) {
         resStr = resStr.slice(0, MAX_LENGTH);
@@ -979,7 +1322,7 @@ function calcTime(mode = 'add') {
   const resM = Math.floor((absSeconds % 3600) / 60);
   const resS = absSeconds % 60;
 
-  // 分表示用の計算（小数切り捨てせず、秒もまとめた分換算）
+  // 分表示用の計算
   const totalMinutes = (absSeconds / 60).toFixed(2).replace(/\.00$/, '');
 
   const sign = isNegative ? '-' : '';
@@ -994,7 +1337,7 @@ function calcTime(mode = 'add') {
   }
 }
 
-// 時間計算の入力欄に対する自動イベント設定（フォーカス全選択・全角半角変換・Enter実行）
+// 時間計算の入力欄に対する自動イベント設定
 document.addEventListener('DOMContentLoaded', function() {
   const timeInputs = [
     document.getElementById('t1-h'),
@@ -1075,7 +1418,7 @@ function convertUnit(type) {
   const baseValue = val * rates[type][from];
   const result = baseValue / rates[type][to];
 
-  // 端数処理を行いつつ結果を表示（数値を読みやすく調整）
+  // 端数処理を行いつつ結果を表示
   const formattedResult = Number(result.toFixed(6)); 
   resultEl.innerText = `${formattedResult} ${to}`;
 }
@@ -1177,6 +1520,11 @@ function toggleAreaInputs() {
     document.getElementById('area-label1').innerText = "底辺 (m)";
     document.getElementById('area-label2').innerText = "高さ (m)";
     if (g2) g2.style.display = 'block';
+  } else if (type === 'rhombus') {
+    // 【追加】ひし形用のラベル設定
+    document.getElementById('area-label1').innerText = "対角線1 (m)";
+    document.getElementById('area-label2').innerText = "対角線2 (m)";
+    if (g2) g2.style.display = 'block';
   } else if (type === 'regular-polygon') {
     document.getElementById('area-label1').innerText = "1辺の長さ (m)";
     if (document.getElementById('area-label3')) {
@@ -1241,12 +1589,16 @@ function calcArea() {
   } else if (type === 'parallelogram') {
     resDecimal = v1 * v2;
     formulaStr = `${v1}m × ${v2}m`;
+  } else if (type === 'rhombus') {
+    // 【追加】ひし形の面積計算
+    resDecimal = (v1 * v2) / 2;
+    formulaStr = `(${v1}m × ${v2}m) ÷ 2`;
   } else if (type === 'regular-polygon') {
     isRegularPolygon = true;
     // v3が0または未入力の場合はデフォルトで 3（正三角形）扱いにする
     const rawN = parseInt(v3Input ? v3Input.value : 0);
     const n = rawN >= 3 ? rawN : 3;
-    polyN = n; // ← 【追加】ここで角数を保存
+    polyN = n;
 
     const side = v1; // 1辺の長さ (a)
     const a2 = side * side;
@@ -1304,7 +1656,6 @@ function calcArea() {
     if (isRegularPolygon) {
       resultHTML += `
         <div style="font-size: 13px; color: #4b5563; margin-bottom: 6px;">
-          <!-- 【修正】内角の和の横に計算式を追加 -->
           <div><strong>内角の和:</strong> ${interiorSum}° <span style="font-size: 12px; color: #64748b; margin-left: 4px;">(式: (${polyN} - 2) × 180°)</span></div>
           <div><strong>外角の和:</strong> ${exteriorSum}° <span style="font-size: 12px; color: #64748b; margin-left: 4px;">(常に360°)</span></div>
         </div>
@@ -1570,6 +1921,56 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.textAlign = 'left';
     ctx.fillText(`h = ${v2} m`, x1 + offset + 6, y1 + drawH / 2 + 4);
 
+  } else if (type === 'rhombus') {
+    // 【追加】ひし形のCanvas描画
+    if (v2 <= 0) return;
+
+    const maxW = Math.max(v1, 1);
+    const scaleX = (w - 80) / maxW;
+    const scaleY = (h - 80) / v2;
+    const scale = Math.min(scaleX, scaleY);
+
+    const drawW = v1 * scale;
+    const drawH = v2 * scale;
+
+    // ひし形の頂点（上、右、下、左）
+    const pTop = { x: cx, y: cy - drawH / 2 };
+    const pRight = { x: cx + drawW / 2, y: cy };
+    const pBottom = { x: cx, y: cy + drawH / 2 };
+    const pLeft = { x: cx - drawW / 2, y: cy };
+
+    // 本体描画
+    ctx.beginPath();
+    ctx.moveTo(pTop.x, pTop.y);
+    ctx.lineTo(pRight.x, pRight.y);
+    ctx.lineTo(pBottom.x, pBottom.y);
+    ctx.lineTo(pLeft.x, pLeft.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 対角線1（横方向）の赤い点線
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(pLeft.x, pLeft.y);
+    ctx.lineTo(pRight.x, pRight.y);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    // 対角線2（縦方向）の赤い点線
+    ctx.beginPath();
+    ctx.moveTo(pTop.x, pTop.y);
+    ctx.lineTo(pBottom.x, pBottom.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // テキスト表示
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'center';
+    ctx.fillText(`対角線1: ${v1} m`, cx, pBottom.y + 18);
+    ctx.textAlign = 'left';
+    ctx.fillText(`対角線2: ${v2} m`, pRight.x + 8, cy + 4);
+
   } else if (type === 'regular-polygon') {
     const n = Math.max(3, parseInt(v3) || 5);
     const radius = Math.min(w, h) / 2 - 35;
@@ -1657,35 +2058,41 @@ function toggleVolInputs() {
   const g2 = document.getElementById('vol-v2-group');
   const g3 = document.getElementById('vol-v3-group');
 
-  if (type === 'box') {
+  if (type === 'box') {//直方体／立方体
     document.getElementById('vol-label1').innerText = "縦 (m)";
     document.getElementById('vol-label2').innerText = "横 (m)";
     document.getElementById('vol-label3').innerText = "高さ (m)";
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'tri-prism') { // ★追加: 三角柱
+  } else if (type === 'tri-prism') { //三角柱
     document.getElementById('vol-label1').innerText = "底面の底辺 (m)";
     document.getElementById('vol-label2').innerText = "底面の高さ (m)";
     document.getElementById('vol-label3').innerText = "柱の高さ (m)";
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'cylinder') {
+  } else if (type === 'cylinder') {//円柱
     document.getElementById('vol-label1').innerText = "底面の半径 (m)";
     document.getElementById('vol-label3').innerText = "高さ (m)";
     if (g2) g2.style.display = 'none';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'cone') {
+  } else if (type === 'cone') {//円錐
     document.getElementById('vol-label1').innerText = "底面の半径 (m)";
     document.getElementById('vol-label3').innerText = "高さ (m)";
     if (g2) g2.style.display = 'none';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'tri-pyramid') {
+  } else if (type === 'tri-pyramid') {//三角錐
     document.getElementById('vol-label1').innerText = "底辺 (m)";
     document.getElementById('vol-label2').innerText = "底面の高さ (m)";
     document.getElementById('vol-label3').innerText = "立体の高さ (m)";
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'sphere') {
+  } else if (type === 'pyramid') {// 四角錐
+    document.getElementById('vol-label1').innerText = "底面の縦 (m)";
+    document.getElementById('vol-label2').innerText = "底面の横 (m)";
+    document.getElementById('vol-label3').innerText = "高さ (m)";
+    if (g2) g2.style.display = 'block';
+    if (g3) g3.style.display = 'block';
+  } else if (type === 'sphere') {//球
     document.getElementById('vol-label1').innerText = "半径 (m)";
     if (g2) g2.style.display = 'none';
     if (g3) g3.style.display = 'none';
@@ -1708,26 +2115,29 @@ function calcVolume() {
   let hasPi = false;
   let formulaStr = "";
 
-  if (type === 'box') {
+  if (type === 'box') {//直方体／立方体
     resDecimal = v1 * v2 * v3;
     formulaStr = `${v1}m × ${v2}m × ${v3}m`;
-  } else if (type === 'tri-prism') { // ★追加: 三角柱
+  } else if (type === 'tri-prism') { //三角柱
     resDecimal = (v1 * v2 / 2) * v3;
     formulaStr = `(${v1}m × ${v2}m ÷ 2) × ${v3}m`;
-  } else if (type === 'cylinder') {
+  } else if (type === 'cylinder') {//円柱
     hasPi = true;
     piCoefficient = v1 * v1 * v3;
     resDecimal = Math.PI * piCoefficient;
     formulaStr = `π × ${v1}m × ${v1}m × ${v3}m`;
-  } else if (type === 'cone') {
+  } else if (type === 'cone') {//円錐
     hasPi = true;
     piCoefficient = (v1 * v1 * v3) / 3;
     resDecimal = Math.PI * piCoefficient;
     formulaStr = `(π × ${v1}m × ${v1}m × ${v3}m) ÷ 3`;
-  } else if (type === 'tri-pyramid') {
+  } else if (type === 'tri-pyramid') {//三角錐
     resDecimal = (v1 * v2 / 2) * v3 / 3;
     formulaStr = `(${v1}m × ${v2}m ÷ 2) × ${v3}m ÷ 3`;
-  } else if (type === 'sphere') {
+  } else if (type === 'pyramid') {// 四角錐
+    resDecimal = (v1 * v2 * v3) / 3;
+    formulaStr = `(${v1}m × ${v2}m × ${v3}m) ÷ 3`;
+  } else if (type === 'sphere') {//球
     hasPi = true;
     piCoefficient = (4 / 3) * Math.pow(v1, 3);
     resDecimal = Math.PI * piCoefficient;
@@ -1775,28 +2185,29 @@ function drawVolShape(type, v1, v2, v3) {
   const cx = w / 2;
   const cy = h / 2;
 
+  // 共通スタイルの設定
   ctx.lineWidth = 2;
   ctx.strokeStyle = '#2563eb';
   ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
   ctx.font = '12px sans-serif';
 
-  if (type === 'box') {
+  if (type === 'box') { // 直方体・正方体
     if (v2 <= 0 || v3 <= 0) return;
     const maxDim = Math.max(v1, v2, v3);
-    const scale = Math.min((w - 100) / maxDim, (h - 100) / maxDim);
+    const scale = Math.min((w - 100) / maxDim, (h - 80) / maxDim);
 
     const dx = (v1 * scale) * 0.7;
     const dy = (v1 * scale) * 0.4;
     const drawW = v2 * scale;
     const drawH = v3 * scale;
 
+    const totalH = drawH + dy;
     const startX = cx - (drawW + dx) / 2;
-    const startY = cy + (drawH - dy) / 2;
+    const startY = cy + totalH / 2;
 
     ctx.beginPath();
     ctx.rect(startX, startY - drawH, drawW, drawH);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(startX, startY - drawH);
@@ -1804,8 +2215,7 @@ function drawVolShape(type, v1, v2, v3) {
     ctx.lineTo(startX + drawW + dx, startY - drawH - dy);
     ctx.lineTo(startX + drawW, startY - drawH);
     ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(startX + drawW, startY - drawH);
@@ -1813,141 +2223,97 @@ function drawVolShape(type, v1, v2, v3) {
     ctx.lineTo(startX + drawW + dx, startY - dy);
     ctx.lineTo(startX + drawW, startY);
     ctx.closePath();
-    ctx.fill();
+    ctx.fill(); ctx.stroke();
+
+    const centerBaseX = startX + drawW / 2 + dx / 2;
+    const centerBaseY = startY - dy / 2;
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(centerBaseX, centerBaseY);
+    ctx.lineTo(centerBaseX, centerBaseY - drawH);
+    ctx.strokeStyle = '#ef4444';
     ctx.stroke();
 
+    ctx.setLineDash([]);
     ctx.fillStyle = '#1e293b';
     ctx.textAlign = 'center';
     ctx.fillText(`横: ${v2}m`, startX + drawW / 2, startY + 16);
-    ctx.textAlign = 'right';
-    ctx.fillText(`高さ: ${v3}m`, startX - 6, startY - drawH / 2);
     ctx.textAlign = 'left';
     ctx.fillText(`縦: ${v1}m`, startX + drawW + dx / 2 + 4, startY - dy / 2 + 10);
 
-  } else if (type === 'tri-prism') { // ★三角柱描画
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'right';
+    const labelX = Math.max(10, centerBaseX - 6);
+    ctx.fillText(`h = ${v3}m`, labelX, centerBaseY - drawH / 2);
+      
+  } else if (type === 'tri-prism') { // 三角柱
     if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
+    const effectiveH = v3 + v2 * 0.35;
+    const scale = Math.min((w - 80) / v1, (h - 80) / effectiveH);
 
-    // 視点の固定角度（斜め上からの見下ろし感）
-    const depthAngle = Math.PI / 6; // 30度
+    const s1 = v1 * scale;
+    const s2 = Math.min(v2 * scale * 0.35, 25);
+    const s3 = v3 * scale;
 
-    // 3D空間上のバウンディングボックスサイズ
-    const total3DWidth = v1 + v2 * Math.cos(depthAngle);
-    const total3DHeight = v3 + v2 * Math.sin(depthAngle);
-
-    // キャンバスに収めるための統一スケール計算
-    const scale = Math.min(
-        (w - 120) / total3DWidth,
-        (h - 120) / total3DHeight
-    );
-
-    // スケール変換後の描画サイズ
-    const s1 = v1 * scale; // 底辺
-    const s2 = v2 * scale; // 底面の高さ
-    const s3 = v3 * scale; // 立体の高さ
-
-    // --- 底面（下側の三角形）の3頂点座標 (斜め投影) ---
-    const baseY = cy + s3 / 2 - (s2 * Math.sin(depthAngle)) / 2;
+    const baseY = cy + (s3 + s2) / 2;
     const baseX = cx;
 
-    const bot1 = { x: baseX - s1 / 2, y: baseY }; // 底辺の左端
-    const bot2 = { x: baseX + s1 / 2, y: baseY }; // 底辺の右端
-    const botBack = {                            // 底面の奥の点
-        x: baseX - s2 * Math.cos(depthAngle) * 0.5,
-        y: baseY - s2 * Math.sin(depthAngle)
-    };
+    const bot1 = { x: baseX - s1 / 2, y: baseY };
+    const bot2 = { x: baseX + s1 / 2, y: baseY };
+    const botBack = { x: baseX - s2 * 0.3, y: baseY - s2 };
 
-    // --- 上面（上側の三角形）の3頂点座標 (真上に s3 シフト) ---
     const top1 = { x: bot1.x, y: bot1.y - s3 };
     const top2 = { x: bot2.x, y: bot2.y - s3 };
     const topBack = { x: botBack.x, y: botBack.y - s3 };
 
-    // 底辺の中点（高さ線の足）
-    const midBotBase = { x: (bot1.x + bot2.x) / 2, y: baseY };
+    const botCenter = { x: (bot1.x + bot2.x + botBack.x) / 3, y: (bot1.y + bot2.y + botBack.y) / 3 };
+    const topCenter = { x: botCenter.x, y: botCenter.y - s3 };
 
-    // --- 1. 側面・全面の塗りつぶし ---
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
     ctx.beginPath();
-    ctx.moveTo(top1.x, top1.y);
-    ctx.lineTo(top2.x, top2.y);
-    ctx.lineTo(bot2.x, bot2.y);
-    ctx.lineTo(bot1.x, bot1.y);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(bot2.x, bot2.y); ctx.lineTo(bot1.x, bot1.y);
+    ctx.closePath(); ctx.fill();
 
-    // --- 2. 上面三角形（塗り ＋ 実線） ---
     ctx.beginPath();
-    ctx.moveTo(top1.x, top1.y);
-    ctx.lineTo(top2.x, top2.y);
-    ctx.lineTo(topBack.x, topBack.y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#1e293b';
+    ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(topBack.x, topBack.y);
+    ctx.closePath(); ctx.fill();
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(topBack.x, topBack.y); ctx.closePath(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(top1.x, top1.y); ctx.lineTo(bot1.x, bot1.y);
+    ctx.moveTo(top2.x, top2.y); ctx.lineTo(bot2.x, bot2.y);
+    ctx.moveTo(bot1.x, bot1.y); ctx.lineTo(bot2.x, bot2.y);
     ctx.stroke();
 
-    // --- 3. 手前・見えている稜線（実線） ---
     ctx.beginPath();
-    // 柱の垂直線（手前2本）
-    ctx.moveTo(top1.x, top1.y);
-    ctx.lineTo(bot1.x, bot1.y);
-    ctx.moveTo(top2.x, top2.y);
-    ctx.lineTo(bot2.x, bot2.y);
-    // 底面の手前底辺
-    ctx.moveTo(bot1.x, bot1.y);
-    ctx.lineTo(bot2.x, bot2.y);
-    ctx.stroke();
-
-    // --- 4. 奥の隠れ線（灰色点線） ---
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    // 奥の柱の垂直線
-    ctx.moveTo(topBack.x, topBack.y);
-    ctx.lineTo(botBack.x, botBack.y);
-    // 底面の奥の2辺
-    ctx.moveTo(bot1.x, bot1.y);
-    ctx.lineTo(botBack.x, botBack.y);
-    ctx.lineTo(bot2.x, bot2.y);
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.moveTo(topBack.x, topBack.y); ctx.lineTo(botBack.x, botBack.y);
+    ctx.moveTo(bot1.x, bot1.y); ctx.lineTo(botBack.x, botBack.y); ctx.lineTo(bot2.x, bot2.y);
     ctx.strokeStyle = '#94a3b8';
     ctx.stroke();
 
-    // ★★★ 5. 底面の高さ（v2）を示す【赤い点線】と直角マーク ★★★
     ctx.beginPath();
-    ctx.setLineDash([4, 3]);
-    ctx.moveTo(midBotBase.x, midBotBase.y);
-    ctx.lineTo(botBack.x, botBack.y);
-    ctx.strokeStyle = '#ef4444'; // 鮮やかな赤色
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 直角マーク
-    const sq = 6;
-    ctx.beginPath();
-    ctx.setLineDash([]);
-    ctx.moveTo(midBotBase.x - sq, midBotBase.y);
-    ctx.lineTo(midBotBase.x - sq, midBotBase.y - sq * 0.5);
-    ctx.lineTo(midBotBase.x, midBotBase.y - sq * 0.5);
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(botCenter.x, botCenter.y);
+    ctx.lineTo(topCenter.x, topCenter.y);
     ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // 設定を元に戻す
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#1e293b';
-
-    // --- 6. ラベル・数値表示 ---
-    // 底辺 (v1)
+    ctx.setLineDash([]);
     ctx.fillStyle = '#1e293b';
     ctx.textAlign = 'center';
-    ctx.fillText(`底辺: ${v1}m`, midBotBase.x, midBotBase.y + 16);
+    ctx.fillText(`底辺: ${v1}m`, (bot1.x + bot2.x) / 2, baseY + 16);
 
-    // 立体の高さ (v3)
+    ctx.fillStyle = '#ef4444';
     ctx.textAlign = 'right';
-    ctx.fillText(`高さ: ${v3}m`, bot1.x - 8, cy);
-
-    // 底面の高さ (v2) - 赤色テキスト
-    ctx.fillStyle = '#dc2626';
-    ctx.textAlign = 'left';
-    ctx.fillText(`底面の高さ: ${v2}m`, (midBotBase.x + botBack.x) / 2 + 6, (midBotBase.y + botBack.y) / 2);
-
-  } else if (type === 'cylinder') {
+    const labelX = Math.max(10, botCenter.x - 6);
+    ctx.fillText(`h = ${v3}m`, labelX, (botCenter.y + topCenter.y) / 2);
+      
+  } else if (type === 'cylinder') { // 円柱
     if (v3 <= 0) return;
     const scale = Math.min((w - 90) / (v1 * 2), (h - 90) / v3);
     const rx = v1 * scale;
@@ -1957,47 +2323,41 @@ function drawVolShape(type, v1, v2, v3) {
     const topY = cy - drawH / 2 + ry;
     const botY = topY + drawH;
 
-    ctx.beginPath();
-    ctx.rect(cx - rx, topY, rx * 2, drawH);
-    ctx.fill();
+    ctx.beginPath(); ctx.rect(cx - rx, topY, rx * 2, drawH); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx - rx, topY); ctx.lineTo(cx - rx, botY);
+    ctx.moveTo(cx + rx, topY); ctx.lineTo(cx + rx, botY); ctx.stroke();
 
-    ctx.beginPath();
-    ctx.moveTo(cx - rx, topY);
-    ctx.lineTo(cx - rx, botY);
-    ctx.moveTo(cx + rx, topY);
-    ctx.lineTo(cx + rx, botY);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.ellipse(cx, topY, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.ellipse(cx, botY, rx, ry, 0, 0, Math.PI);
-    ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx, topY, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx, botY, rx, ry, 0, 0, Math.PI); ctx.stroke();
 
     ctx.beginPath();
     ctx.setLineDash([4, 4]);
     ctx.ellipse(cx, botY, rx, ry, 0, Math.PI, Math.PI * 2);
     ctx.strokeStyle = '#94a3b8';
     ctx.stroke();
-    ctx.setLineDash([]);
 
     ctx.beginPath();
+    ctx.setLineDash([3, 3]);
     ctx.moveTo(cx, topY);
-    ctx.lineTo(cx + rx, topY);
+    ctx.lineTo(cx, botY);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([]);
+    ctx.moveTo(cx, botY);
+    ctx.lineTo(cx + rx, botY);
     ctx.strokeStyle = '#ef4444';
     ctx.stroke();
 
     ctx.fillStyle = '#ef4444';
     ctx.textAlign = 'center';
-    ctx.fillText(`r = ${v1}m`, cx + rx / 2, topY - 6);
-    ctx.fillStyle = '#1e293b';
+    ctx.fillText(`r = ${v1}m`, cx + rx / 2, botY + 16);
     ctx.textAlign = 'right';
-    ctx.fillText(`h = ${v3}m`, cx - rx - 8, topY + drawH / 2 + 4);
+    const labelX = Math.max(10, cx - 6);
+    ctx.fillText(`h = ${v3}m`, labelX, topY + drawH / 2);
 
-  } else if (type === 'cone') {
+  } else if (type === 'cone') { // 円錐
     if (v3 <= 0) return;
     const scale = Math.min((w - 90) / (v1 * 2), (h - 90) / v3);
     const rx = v1 * scale;
@@ -2008,17 +2368,12 @@ function drawVolShape(type, v1, v2, v3) {
     const botY = topY + drawH;
 
     ctx.beginPath();
-    ctx.moveTo(cx, topY);
-    ctx.lineTo(cx - rx, botY);
-    ctx.lineTo(cx + rx, botY);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(cx, topY); ctx.lineTo(cx - rx, botY); ctx.lineTo(cx + rx, botY);
+    ctx.closePath(); ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(cx, topY);
-    ctx.lineTo(cx - rx, botY);
-    ctx.moveTo(cx, topY);
-    ctx.lineTo(cx + rx, botY);
+    ctx.moveTo(cx, topY); ctx.lineTo(cx - rx, botY);
+    ctx.moveTo(cx, topY); ctx.lineTo(cx + rx, botY);
     ctx.stroke();
 
     ctx.beginPath();
@@ -2049,130 +2404,150 @@ function drawVolShape(type, v1, v2, v3) {
     ctx.textAlign = 'center';
     ctx.fillText(`r = ${v1}m`, cx + rx / 2, botY + 16);
     ctx.textAlign = 'right';
-    ctx.fillText(`h = ${v3}m`, cx - 8, topY + drawH / 2);
+    const labelX = Math.max(10, cx - 6);
+    ctx.fillText(`h = ${v3}m`, labelX, topY + drawH / 2);
 
-  } else if (type === 'tri-pyramid') {
+  } else if (type === 'tri-pyramid') { // 三角錐
     if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
 
-    // 視点の固定角度（斜め上からの見下ろし感）
-    const depthAngle = Math.PI / 6; // 30度
-    
-    // 3D空間上のバウンディングボックスサイズ
-    const total3DWidth = v1 + v2 * Math.cos(depthAngle);
-    const total3DHeight = v3 + v2 * Math.sin(depthAngle);
+    const scale = Math.min((w - 80) / v1, (h - 70) / v3);
+    const s1 = v1 * scale;
+    const s2 = Math.min(v2 * scale * 0.35, 25);
+    const s3 = v3 * scale;
 
-    // キャンバスに収めるための統一スケール計算
-    const scale = Math.min(
-        (w - 120) / total3DWidth,
-        (h - 120) / total3DHeight
-    );
-
-    // スケール変換後の描画サイズ
-    const s1 = v1 * scale; // 底辺
-    const s2 = v2 * scale; // 底面の高さ
-    const s3 = v3 * scale; // 立体の高さ
-
-    // --- 底面（三角形）の3頂点座標 (斜め投影) ---
-    const baseY = cy + s3 / 2 - (s2 * Math.sin(depthAngle)) / 2;
+    const baseY = cy + s3 / 2 - s2 / 2;
     const baseX = cx;
 
-    const p1 = { x: baseX - s1 / 2, y: baseY }; // 底辺の左端
-    const p2 = { x: baseX + s1 / 2, y: baseY }; // 底辺の右端
+    const p1 = { x: baseX - s1 / 2, y: baseY };
+    const p2 = { x: baseX + s1 / 2, y: baseY };
+    const pBack = { x: baseX - s2 * 0.3, y: baseY - s2 };
 
-    // 底面の奥の点（頂点）
-    const pBack = {
-        x: baseX - s2 * Math.cos(depthAngle) * 0.5,
-        y: baseY - s2 * Math.sin(depthAngle)
-    };
+    const botCenter = { x: (p1.x + p2.x + pBack.x) / 3, y: (p1.y + p2.y + pBack.y) / 3 };
+    const topPt = { x: botCenter.x, y: botCenter.y - s3 };
 
-    // --- 立体の頂点 (高さ v3 の分だけ真上) ---
-    const topPt = {
-        x: (p1.x + p2.x + pBack.x) / 3,
-        y: ((p1.y + p2.y + pBack.y) / 3) - s3
-    };
-
-    // 底辺の中点（底面の高さ線の足）
-    const midBase = { x: (p1.x + p2.x) / 2, y: baseY };
-
-    // --- 1. 手前の面（実線） ---
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
     ctx.beginPath();
-    ctx.moveTo(topPt.x, topPt.y);
-    ctx.lineTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#1e29ab';
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+    ctx.closePath(); ctx.fill();
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(p1.x, p1.y);
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(p2.x, p2.y);
+    ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pBack.x, pBack.y);
     ctx.stroke();
 
-    // --- 2. 奥の頂点への稜線（実線） ---
     ctx.beginPath();
-    ctx.moveTo(topPt.x, topPt.y);
-    ctx.lineTo(pBack.x, pBack.y);
-    ctx.stroke();
-
-    // --- 3. 底面の奥の隠れ線（灰色点線） ---
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(pBack.x, pBack.y);
-    ctx.lineTo(p2.x, p2.y);
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.moveTo(p1.x, p1.y); ctx.lineTo(pBack.x, pBack.y); ctx.lineTo(p2.x, p2.y);
     ctx.strokeStyle = '#94a3b8';
     ctx.stroke();
 
-    // ★★★ 4. 底面の高さ（v2）を示す【赤い点線】と直角マーク ★★★
     ctx.beginPath();
-    ctx.setLineDash([4, 3]);
-    ctx.moveTo(midBase.x, midBase.y);
-    ctx.lineTo(pBack.x, pBack.y);
-    ctx.strokeStyle = '#ef4444'; // 鮮やかな赤色
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // 直角マーク（赤色）
-    const sq = 6;
-    ctx.beginPath();
-    ctx.setLineDash([]);
-    ctx.moveTo(midBase.x - sq, midBase.y);
-    ctx.lineTo(midBase.x - sq, midBase.y - sq * 0.5);
-    ctx.lineTo(midBase.x, midBase.y - sq * 0.5);
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(botCenter.x, botCenter.y);
+    ctx.lineTo(topPt.x, topPt.y);
     ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // 線の設定を戻す
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#1e293b';
-
-    // --- 5. ラベル・数値表示 ---
-    // 底辺 (v1)
+    ctx.setLineDash([]);
     ctx.fillStyle = '#1e293b';
     ctx.textAlign = 'center';
-    ctx.fillText(`底辺: ${v1}m`, midBase.x, midBase.y + 16);
-    
-    // 立体の高さ (v3)
-    ctx.textAlign = 'right';
-    ctx.fillText(`立体の高さ: ${v3}m`, p1.x - 8, (p1.y + topPt.y) / 2);
+    ctx.fillText(`底辺: ${v1}m`, (p1.x + p2.x) / 2, baseY + 16);
 
-    // 底面の高さ (v2) - 赤色テキストで点線に対応
-    ctx.fillStyle = '#dc2626';
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'right';
+    const labelX = Math.max(10, botCenter.x - 6);
+    ctx.fillText(`h = ${v3}m`, labelX, (botCenter.y + topPt.y) / 2);
+
+  } else if (type === 'pyramid') { // 四角錐
+    if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
+
+    const maxDim = Math.max(v1, v2, v3);
+    const scale = Math.min((w - 100) / maxDim, (h - 80) / maxDim);
+
+    const drawW = v2 * scale;
+    const dx = (v1 * scale) * 0.6;
+    const dy = (v1 * scale) * 0.35;
+    const drawH = v3 * scale;
+
+    const baseY = cy + drawH / 2;
+    const startX = cx - (drawW + dx) / 2;
+
+    const pFrontLeft  = { x: startX, y: baseY };
+    const pFrontRight = { x: startX + drawW, y: baseY };
+    const pBackRight  = { x: startX + drawW + dx, y: baseY - dy };
+    const pBackLeft   = { x: startX + dx, y: baseY - dy };
+
+    const botCenter = {
+      x: startX + (drawW + dx) / 2,
+      y: baseY - dy / 2
+    };
+    const topPt = { x: botCenter.x, y: botCenter.y - drawH };
+
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
+    ctx.beginPath();
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontLeft.x, pFrontLeft.y); ctx.lineTo(pFrontRight.x, pFrontRight.y);
+    ctx.closePath(); ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontRight.x, pFrontRight.y); ctx.lineTo(pBackRight.x, pBackRight.y);
+    ctx.closePath(); ctx.fill();
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontLeft.x, pFrontLeft.y);
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontRight.x, pFrontRight.y);
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pBackRight.x, pBackRight.y);
+    ctx.moveTo(pFrontLeft.x, pFrontLeft.y); ctx.lineTo(pFrontRight.x, pFrontRight.y); ctx.lineTo(pBackRight.x, pBackRight.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pBackLeft.x, pBackLeft.y);
+    ctx.moveTo(pFrontLeft.x, pFrontLeft.y); ctx.lineTo(pBackLeft.x, pBackLeft.y); ctx.lineTo(pBackRight.x, pBackRight.y);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(botCenter.x, botCenter.y);
+    ctx.lineTo(topPt.x, topPt.y);
+    ctx.strokeStyle = '#ef4444';
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText(`横: ${v2}m`, startX + drawW / 2, baseY + 16);
     ctx.textAlign = 'left';
-    ctx.fillText(`底面の高さ: ${v2}m`, (midBase.x + pBack.x) / 2 + 6, (midBase.y + pBack.y) / 2);
-  } else if (type === 'sphere') {
+    ctx.fillText(`縦: ${v1}m`, startX + drawW + dx / 2 + 4, baseY - dy / 2 + 10);
+
+    ctx.fillStyle = '#ef4444';
+    ctx.textAlign = 'right';
+    const labelX = Math.max(10, botCenter.x - 6);
+    ctx.fillText(`h = ${v3}m`, labelX, (botCenter.y + topPt.y) / 2);
+
+  } else if (type === 'sphere') { // 球
     const radius = Math.min(w, h) / 2 - 30;
 
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
 
     ctx.beginPath();
     ctx.setLineDash([4, 4]);
     ctx.ellipse(cx, cy, radius, radius * 0.3, 0, 0, Math.PI * 2);
     ctx.strokeStyle = '#94a3b8';
     ctx.stroke();
-    ctx.setLineDash([]);
 
     ctx.beginPath();
+    ctx.setLineDash([]);
     ctx.moveTo(cx, cy);
     ctx.lineTo(cx + radius, cy);
     ctx.strokeStyle = '#ef4444';
