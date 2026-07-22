@@ -880,10 +880,17 @@
         </div>
 
         <div class="card">
-          <h4>扇形（おうぎがた）</h4>
-          <div class="formula-box">面積 = 半径 × 半径 × π × (中心角 ÷ 360)</div>
-          <p>円をピザみたいに切り分けた形！「円全体の面積」に「360度中のどれだけの角度か（中心角 ÷ 360）」をかけるよ。</p>
-        </div>
+  <h4>扇形（おうぎがた）</h4>
+  <div class="formula-box">
+    <div><strong>弧の長さ</strong> = 直径 × π × (中心角 ÷ 360)</div>
+    <div style="margin-top: 6px;"><strong>面積</strong> = 半径 × 半径 × π × (中心角 ÷ 360)</div>
+  </div>
+  <p>円をピザみたいに切り分けた形！</p>
+  <p style="margin-top: 4px;">
+    ・<strong>弧の長さ</strong>：円周（直径 × π）に中心角の割合（中心角 ÷ 360）をかけるよ。<br>
+    ・<strong>面積</strong>：円の面積（半径 × 半径 × π）に中心角の割合をかけるよ。<br>
+    ・<strong>面積</strong>：(1/2) × 半径 × 弧の長さ　でも求められるよ。  </p>
+</div>
 
         <div class="card">
           <h4>正多角形の面積</h4>
@@ -1521,7 +1528,6 @@ function toggleAreaInputs() {
     document.getElementById('area-label2').innerText = "高さ (m)";
     if (g2) g2.style.display = 'block';
   } else if (type === 'rhombus') {
-    // 【追加】ひし形用のラベル設定
     document.getElementById('area-label1').innerText = "対角線1 (m)";
     document.getElementById('area-label2').innerText = "対角線2 (m)";
     if (g2) g2.style.display = 'block';
@@ -1562,6 +1568,11 @@ function calcArea() {
   let exactFormulaResult = "";
   let polyN = 0;
     
+  let isSector = false;
+  let arcLengthDecimal = 0;
+  let arcPiCoef = 0;
+  let arcFormulaStr = "";
+
   if (type === 'rect') {
     resDecimal = v1 * v2;
     formulaStr = `${v1}m × ${v2}m`;
@@ -1576,10 +1587,18 @@ function calcArea() {
     resDecimal = Math.PI * piCoefficient;
     formulaStr = `4 × π × ${v1}m × ${v1}m`;
   } else if (type === 'sector') {
+    isSector = true;
     hasPi = true;
+
+    // 面積の計算
     piCoefficient = v1 * v1 * (v2 / 360);
     resDecimal = Math.PI * piCoefficient;
     formulaStr = `π × ${v1}m × ${v1}m × (${v2}° ÷ 360)`;
+
+    // 弧の長さの計算 (2 × π × 半径 × (中心角 ÷ 360))
+    arcPiCoef = 2 * v1 * (v2 / 360);
+    arcLengthDecimal = Math.PI * arcPiCoef;
+    arcFormulaStr = `2 × π × ${v1}m × (${v2}° ÷ 360)`;
   } else if (type === 'trapezoid') {
     resDecimal = ((v1 + v2) * v3) / 2;
     formulaStr = `((${v1}m + ${v2}m) × ${v3}m) ÷ 2`;
@@ -1590,7 +1609,7 @@ function calcArea() {
     resDecimal = v1 * v2;
     formulaStr = `${v1}m × ${v2}m`;
   } else if (type === 'rhombus') {
-    // 【追加】ひし形の面積計算
+    // ひし形の面積計算
     resDecimal = (v1 * v2) / 2;
     formulaStr = `(${v1}m × ${v2}m) ÷ 2`;
   } else if (type === 'regular-polygon') {
@@ -1644,6 +1663,7 @@ function calcArea() {
     }
   }
 
+  // --- 変更箇所2: 結果HTML出力処理 ---
   const formattedDecimal = Number(resDecimal.toFixed(2));
   const formattedPiCoef = Number(piCoefficient.toFixed(2));
 
@@ -1665,6 +1685,23 @@ function calcArea() {
         resultHTML += `<div>${labelText} (ルート表記): <strong>${exactFormulaResult}</strong> ㎡</div>`;
       }
       resultHTML += `<div style="margin-top: 2px;">${labelText} (概算): <strong>${formattedDecimal}</strong> ㎡</div>`;
+    } else if (isSector) {
+      // --- 扇形専用の表示形式 ---
+      const formattedArcDecimal = Number(arcLengthDecimal.toFixed(2));
+      const formattedArcPiCoef = Number(arcPiCoef.toFixed(2));
+
+      resultHTML += `
+        <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #e5e7eb;">
+          <div style="font-size: 13px; color: #4b5563; margin-bottom: 2px;"><strong>【弧の長さ】</strong> 式: ${arcFormulaStr}</div>
+          <div>弧の長さ (π表記): <strong>${formattedArcPiCoef}π</strong> m</div>
+          <div style="margin-top: 2px;">弧の長さ (概算): <strong>${formattedArcDecimal}</strong> m</div>
+        </div>
+        <div>
+          <div style="font-size: 13px; color: #4b5563; margin-bottom: 2px;"><strong>【面積】</strong> 式: ${formulaStr}</div>
+          <div>面積 (π表記): <strong>${formattedPiCoef}π</strong> ㎡</div>
+          <div style="margin-top: 2px;">面積 (概算): <strong>${formattedDecimal}</strong> ㎡</div>
+        </div>
+      `;
     } else if (hasPi) {
       resultHTML += `
         <div style="font-size: 13px; color: #4b5563; margin-bottom: 4px;">式: ${formulaStr}</div>
