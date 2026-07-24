@@ -2878,59 +2878,82 @@ function drawVolShape(type, v1, v2, v3) {
 
   } else if (type === 'tri-prism') {
     if (v2 <= 0 || v3 <= 0) return;
-    const effectiveH = v3 + v2 * 0.35;
-    const scale = Math.min((w - 80) / v1, (h - 80) / effectiveH);
+    
+    // スケール計算
+    const effectiveH = v3 + v2 * 0.5;
+    const scale = Math.min((w - 100) / v1, (h - 90) / effectiveH);
 
-    const s1 = v1 * scale;
-    const s2 = Math.min(v2 * scale * 0.35, 25);
-    const s3 = v3 * scale;
+    const s1 = v1 * scale;           // 底面の底辺
+    const s2 = v2 * scale * 0.4;     // 底面の高さ（奥行き）
+    const s3 = v3 * scale;           // 柱の高さ
 
     const baseY = cy + (s3 + s2) / 2;
     const baseX = cx;
 
+    // 頂点座標の定義
     const bot1 = { x: baseX - s1 / 2, y: baseY };
     const bot2 = { x: baseX + s1 / 2, y: baseY };
-    const botBack = { x: baseX - s2 * 0.3, y: baseY - s2 };
+    const botBack = { x: baseX, y: baseY - s2 };
 
     const top1 = { x: bot1.x, y: bot1.y - s3 };
     const top2 = { x: bot2.x, y: bot2.y - s3 };
     const topBack = { x: botBack.x, y: botBack.y - s3 };
 
-    const botCenter = { x: (bot1.x + bot2.x + botBack.x) / 3, y: (bot1.y + bot2.y + botBack.y) / 3 };
-    const topCenter = { x: botCenter.x, y: botCenter.y - s3 };
-
-    // 塗りつぶし
+    // --------------------------------------------------
+    // 1. 塗りつぶし
+    // --------------------------------------------------
     ctx.fillStyle = CanvasHelper.theme.fill;
+    
+    // 側面塗り
     ctx.beginPath();
     ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(bot2.x, bot2.y); ctx.lineTo(bot1.x, bot1.y);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath();
+    ctx.fill();
 
+    // 上面塗り
     ctx.beginPath();
     ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(topBack.x, topBack.y);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath();
+    ctx.fill();
 
-    // 輪郭線
+    // --------------------------------------------------
+    // 2. 実線の描画（1度だけ描画）
+    // --------------------------------------------------
     ctx.strokeStyle = CanvasHelper.theme.stroke;
+    ctx.lineWidth = 1; // 線の太さを統一
+
+    // 上面三角形
     ctx.beginPath();
-    ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(topBack.x, topBack.y); ctx.closePath(); ctx.stroke();
-    
+    ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(topBack.x, topBack.y);
+    ctx.closePath();
+    ctx.stroke();
+
+    // 手前の縦線と底辺
     CanvasHelper.drawLine(ctx, top1, bot1);
     CanvasHelper.drawLine(ctx, top2, bot2);
     CanvasHelper.drawLine(ctx, bot1, bot2);
 
-    // 奥の破線
+    // --------------------------------------------------
+    // 3. 奥の破線描画
+    // --------------------------------------------------
     CanvasHelper.drawLine(ctx, topBack, botBack, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
     CanvasHelper.drawLine(ctx, bot1, botBack, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
     CanvasHelper.drawLine(ctx, botBack, bot2, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
 
-    // 高さの点線
-    CanvasHelper.drawLine(ctx, botCenter, topCenter, { color: CanvasHelper.theme.accent, dash: [3, 3] });
+    // --------------------------------------------------
+    // 4. 補助線とラベル
+    // --------------------------------------------------
+    // 底面の高さ
+    const botMid = { x: (bot1.x + bot2.x) / 2, y: baseY };
+    CanvasHelper.drawLine(ctx, botMid, botBack, { color: CanvasHelper.theme.accent, dash: [3, 3] });
+    CanvasHelper.drawText(ctx, `底面の高さ: ${v2}m`, botMid.x + 8, baseY - s2 / 2, { color: CanvasHelper.theme.accent, align: 'left' });
 
-    // ラベル
-    CanvasHelper.drawText(ctx, `底辺: ${v1}m`, (bot1.x + bot2.x) / 2, baseY + 16);
+    // 柱の高さ
+    const labelX = CanvasHelper.getSafeLabelX(bot1.x);
+    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, bot1.y - s3 / 2, { color: CanvasHelper.theme.accent, align: 'right' });
 
-    const labelX = Math.max(10, botCenter.x - 6);
-    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, (botCenter.y + topCenter.y) / 2, { color: CanvasHelper.theme.accent, align: 'right' });
+    // 底辺ラベル
+    CanvasHelper.drawText(ctx, `底辺: ${v1}m`, botMid.x, baseY + 16);
 
   } else if (type === 'cylinder') {
     if (v3 <= 0) return;
