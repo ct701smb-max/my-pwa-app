@@ -34,24 +34,39 @@
     padding: 20px;
   }
 
-  .calculator-container {
-    background: var(--card-bg);
-    width: 100%;
-    max-width: 480px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-  }
+ .calculator-container {
+  background: var(--card-bg);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
 /* タイトルとボタンの配置 */
 .header-container {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
+  flex-wrap: wrap; /* スマホ画面で崩れないよう折り返し指定 */
 }
 
+.header-container h2,
 .header-container h1 {
   margin: 0;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 解説ボタンのグループ */
+.help-btn-group {
+  display: flex;
+  gap: 6px;
+  align-items: right;
 }
 
 /* 解説ボタンのデザイン */
@@ -62,12 +77,13 @@
   background-color: #f1f5f9;
   color: #2563eb;
   border: 1px solid #cbd5e1;
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .help-btn:hover {
@@ -77,40 +93,33 @@
 }
 
 .help-icon {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  background-color: #2563eb;
-  color: #fff;
-  border-radius: 50%;
-  text-align: center;
-  line-height: 18px;
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1;
 }
 
-.help-btn:hover .help-icon {
-  background-color: #fff;
-  color: #2563eb;
+/* ==========================================
+   モーダル全体のスタイル（修正核心部分）
+   ========================================== */
+
+/* hidden属性がついている時は最優先で非表示にする */
+.modal[hidden] {
+  display: none !important;
 }
 
-/* モーダル背景（暗くする背景） */
-.modal-overlay {
+/* モーダル背景（暗くする背景＆中央配置） */
+.modal {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background-color: rgba(15, 23, 42, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999; /* 他の要素より一番前に表示 */
   padding: 16px;
   box-sizing: border-box;
-}
-
-.modal-overlay[hidden] {
-  display: none;
 }
 
 /* モーダルコンテンツ */
@@ -120,10 +129,22 @@
   max-width: 560px;
   max-height: 85vh;
   border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: modalFadeIn 0.2s ease-out; /* 開くときのアニメーション */
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
@@ -135,7 +156,8 @@
   align-items: center;
 }
 
-.modal-header h2 {
+.modal-header h2,
+.modal-header h3 {
   margin: 0;
   font-size: 18px;
   color: #1e293b;
@@ -147,6 +169,13 @@
   font-size: 24px;
   color: #64748b;
   cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #0f172a;
 }
 
 .modal-body {
@@ -197,6 +226,13 @@
   font-size: 13px;
   margin: 6px 0;
   display: inline-block;
+  line-height: 1.5;
+}
+
+.tip-text {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  color: #2563eb !important;
 }
   /* タブのスタイル */
   .tabs {
@@ -474,12 +510,25 @@
 <body>
 
 <div class="calculator-container">
-<div class="header-container">
-<h2>　<a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　多機能電卓</h2>
-<button type="button" id="help-btn" class="help-btn" aria-label="計算方法の解説">
-    <span class="help-icon">?</span> 解説
-  </button>
-</div>
+  <div class="header-container">
+    <h2>
+      　<a href="../index.html" class="btn-real-dent" aria-label="ホーム">
+        <i class="fa fa-home" aria-hidden="true"></i>
+      </a> 多機能電卓
+    </h2>
+
+    <div class="help-btn-group">
+      <button type="button" class="help-btn" onclick="openModal('area-modal')" aria-label="公式一覧">
+        <span class="help-icon">📐</span> 公式の解説
+      </button>
+      <button type="button" class="help-btn" onclick="openModal('length-modal')" aria-label="長さの解説">
+        <span class="help-icon">📏</span> 長さの解説
+      </button>
+      <button type="button" class="help-btn" onclick="openModal('weight-modal')" aria-label="重さの解説">
+        <span class="help-icon">⚖️</span> 重さの解説
+      </button>
+    </div>
+  </div>
 
 
   <!-- タブ領域 -->
@@ -561,20 +610,108 @@
     </div>
   </div>
 
-  <!-- 3. 割合・％計算 -->
-  <div id="percent" class="panel">
+  <!-- 3. 割合・％計算 / ローン返済計算 -->
+<div id="percent" class="panel">
+  <!-- 1. 割合計算 -->
+  <div class="row">
     <div class="form-group">
       <label>数値</label>
-      <input type="number" id="pct-num" class="form-control" placeholder="1000">
+      <input type="number" id="pct-num" class="form-control" placeholder="1000" value="1000">
     </div>
     <div class="form-group">
       <label>割合 (%)</label>
-      <input type="number" id="pct-rate" class="form-control" placeholder="10">
+      <input type="number" id="pct-rate" class="form-control" placeholder="10" value="10">
     </div>
-    <button class="btn action" style="width: 100%;" onclick="calcPercent()">計算</button>
-    <div id="pct-result" class="result-box">結果がここに表示されます</div>
   </div>
 
+  <button class="btn action" style="width: 100%;" onclick="calcPercent()">計算</button>
+  <div id="pct-result" class="result-box">結果がここに表示されます</div>
+
+  <!-- 区切り線 -->
+  <hr style="margin: 20px 0; border: none; border-top: 1px dashed #cbd5e1;">
+
+ <!-- 2. ローン返済計算 -->
+<h3 style="font-size: 15px; color: #1e293b; margin: 0 0 12px 0;">🏥 ローン返済計算</h3>
+
+<div class="row">
+  <div class="form-group">
+    <label>借入金額 (円)</label>
+    <input type="number" id="loan-amount" class="form-control" placeholder="1000000" value="1000000" oninput="calcLoan()">
+  </div>
+  <div class="form-group">
+    <label>金利 (年利 %)</label>
+    <input type="number" id="loan-rate" class="form-control" placeholder="5" value="5" step="0.01" oninput="calcLoan()">
+  </div>
+</div>
+
+<div class="row">
+  <div class="form-group">
+    <label>返済期間 (ヶ月)</label>
+    <input type="number" id="loan-months" class="form-control" placeholder="6" value="6" oninput="calcLoan()">
+  </div>
+  <div class="form-group">
+    <label>金利計算方式</label>
+    <select id="loan-rate-type" class="form-control" onchange="calcLoan()">
+      <option value="compound" selected>複利 (ローン / 年利÷12)</option>
+      <option value="simple">単利 (アドオン方式)</option>
+    </select>
+  </div>
+</div>
+
+<div class="row" style="margin-top: 8px;">
+  <div class="form-group" style="width: 100%;">
+    <label>返済方式</label>
+    <select id="loan-type" class="form-control" onchange="calcLoan()">
+      <option value="equal-payment">元利均等 (毎月一定)</option>
+      <option value="equal-principal">元金均等 (初月最大)</option>
+    </select>
+  </div>
+</div>
+
+<button class="btn action" style="width: 100%; margin-top: 4px;" onclick="calcLoan()">ローン返済額を計算</button>
+<div id="loan-result" class="result-box">毎月の返済額と利息総額が表示されます</div>
+
+  <!-- 区切り線 -->
+  <hr style="margin: 20px 0; border: none; border-top: 1px dashed #cbd5e1;">
+
+  <!-- 3. 年間返済額＆金利の逆算 -->
+  <h3 style="font-size: 15px; color: #1e293b; margin: 0 0 12px 0;">📅 年間返済額と金利の逆算</h3>
+
+  <div class="row">
+    <div class="form-group">
+      <label>毎月の支払額 (円)</label>
+      <input type="number" id="annual-monthly-pay" class="form-control" placeholder="80000" value="77688">
+    </div>
+    <div class="form-group">
+      <label>ボーナス月支払額/回 (円)</label>
+      <input type="number" id="annual-bonus-pay" class="form-control" placeholder="180000" value="181162">
+    </div>
+  </div>
+
+  <button class="btn action" style="width: 100%; margin-top: 4px;" onclick="calcAnnualPayment()">年間支払額を計算</button>
+  <div id="annual-payment-result" class="result-box">年間支払額（ボーナス年2回計算）が表示されます</div>
+
+  <div class="row" style="margin-top: 12px;">
+    <div class="form-group">
+      <label>返済前の残債 (円)</label>
+      <input type="number" id="prev-balance" class="form-control" placeholder="3000000">
+    </div>
+    <div class="form-group">
+      <label>返済後の残債 (円)</label>
+      <input type="number" id="curr-balance" class="form-control" placeholder="2000000">
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 8px;">
+    <div class="form-group" style="width: 100%;">
+      <label>対象期間 (年)</label>
+      <input type="number" id="calc-years" class="form-control" placeholder="1" value="1" min="1">
+    </div>
+  </div>
+
+  <button class="btn action" style="width: 100%; margin-top: 4px;" onclick="calcReverseRate()">期間内の利息と金利を計算</button>
+  <div id="reverse-rate-result" class="result-box">期間内の返済額内訳（元金・利息）と平均金利が表示されます</div>
+</div>    
  <!-- 4. 時間計算パネル -->
 <div id="time" class="panel">
   <!-- 時間1 -->
@@ -628,68 +765,76 @@
   </div>
 </div>
 
-  <!-- 5. 長さ換算 -->
+ <!-- 5. 長さ換算 -->
 <div id="length" class="panel">
   <div class="form-group">
-    <label>値</label>
-    <!-- id="len-val" を "length-val" に変更 -->
-    <input type="number" id="length-val" class="form-control" value="1" oninput="convertUnit('length')">
-  </div>
-  <div class="row form-group">
-    <div>
-      <label>変換前</label>
-      <select id="length-from" class="form-control" onchange="convertUnit('length')">
-        <option value="mm">ミリメートル (mm)</option>
-        <option value="cm">センチメートル (cm)</option>
-        <option value="m" selected>メートル (m)</option>
-        <option value="km">キロメートル (km)</option>
-        <option value="inch">インチ (in)</option>
+    <label>値と単位</label>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <input type="number" id="length-val" class="form-control" value="1" step="any" oninput="convertUnit('length')" style="flex: 1;">
+      <select id="length-from" class="form-control" onchange="convertUnit('length')" style="width: auto; min-width: 180px;">
+        <optgroup label="メートル法（SI単位系）">
+          <option value="km">キロメートル (km)</option>
+          <option value="m" selected>メートル (m)</option>
+          <option value="cm">センチメートル (cm)</option>
+          <option value="mm">ミリメートル (mm)</option>
+          <option value="um">マイクロメートル (μm)</option>
+          <option value="nm">ナノメートル (nm)</option>
+        </optgroup>
+        <optgroup label="ヤード・ポンド法">
+          <option value="mile">マイル (mile)</option>
+          <option value="yd">ヤード (yd)</option>
+          <option value="ft">フィート (ft)</option>
+          <option value="inch">インチ (in)</option>
+        </optgroup>
+        <optgroup label="尺貫法">
+          <option value="ri">里（り）</option>
+          <option value="cho">町（ちょう）</option>
+          <option value="ken">間（けん）</option>
+          <option value="shaku">尺（しゃく）</option>
+          <option value="sun">寸（すん）</option>
+        </optgroup>
       </select>
     </div>
-    <div>
-      <label>変換後</label>
-      <select id="length-to" class="form-control" onchange="convertUnit('length')">
-        <option value="mm">ミリメートル (mm)</option>
-        <option value="cm" selected>センチメートル (cm)</option>
-        <option value="m">メートル (m)</option>
-        <option value="km">キロメートル (km)</option>
-        <option value="inch">インチ (in)</option>
-      </select>
-    </div>
   </div>
-  <div id="length-result" class="result-box">100 cm</div>
+
+  <!-- 結果を一覧表示するエリア -->
+  <div id="length-result" class="result-box" style="margin-top: 12px;"></div>
 </div>
 
-  <!-- 6. 重さ換算 -->
-  <div id="weight" class="panel">
-    <div class="form-group">
-      <label>値</label>
-      <input type="number" id="weight-val" class="form-control" value="1" oninput="convertUnit('weight')">
-    </div>
-    <div class="row form-group">
-      <div>
-        <label>変換前</label>
-        <select id="weight-from" class="form-control" onchange="convertUnit('weight')">
+<!-- 6. 重さ換算 -->
+<div id="weight" class="panel">
+  <div class="form-group">
+    <label>値と単位</label>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <input type="number" id="weight-val" class="form-control" value="1" step="any" oninput="convertUnit('weight')" style="flex: 1;">
+      <select id="weight-from" class="form-control" onchange="convertUnit('weight')" style="width: auto; min-width: 180px;">
+        <optgroup label="国際単位系（SI） / メートル法">
           <option value="mg">ミリグラム (mg)</option>
           <option value="g">グラム (g)</option>
           <option value="kg" selected>キログラム (kg)</option>
           <option value="t">トン (t)</option>
+        </optgroup>
+        <optgroup label="ヤード・ポンド法">
+          <option value="gr">グレーン (gr)</option>
+          <option value="oz">オンス (oz)</option>
           <option value="lb">ポンド (lb)</option>
-        </select>
-      </div>
-      <div>
-        <label>変換後</label>
-        <select id="weight-to" class="form-control" onchange="convertUnit('weight')">
-          <option value="mg">ミリグラム (mg)</option>
-          <option value="g" selected>グラム (g)</option>
-          <option value="kg">キログラム (kg)</option>
-          <option value="t">トン (t)</option>
-          <option value="lb">ポンド (lb)</option>
-        </select>
-      </div>
+          <option value="st">ストーン (st)</option>
+        </optgroup>
+        <optgroup label="尺貫法">
+          <option value="momme">匁（もんめ）</option>
+          <option value="kin">斤（きん）</option>
+          <option value="kan">貫（かん）</option>
+        </optgroup>
+        <optgroup label="その他の単位">
+          <option value="ct">カラット (ct)</option>
+        </optgroup>
+      </select>
     </div>
-    <div id="weight-result" class="result-box">1000 g</div>
   </div>
+
+  <!-- 結果を一覧表示するエリア -->
+  <div id="weight-result" class="result-box" style="margin-top: 12px;"></div>
+</div>
 
   <!-- 7. 面積計算 -->
 <div id="area" class="panel">
@@ -789,66 +934,68 @@
   </div>
 </div>
 
-<!-- 2. モーダル本体（<body>の一番下に追加） -->
-<div id="help-modal" class="modal-overlay" hidden>
+<!-- 1. 公式一覧モーダル本体（面積・計算ガイド） -->
+<div id="area-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
       <h2>💡 計算機能の使い方・公式ガイド</h2>
-      <button type="button" id="close-modal-btn" class="close-btn">&times;</button>
+      <button type="button" class="close-btn" onclick="closeModal('area-modal')">&times;</button>
     </div>
-    
+
     <div class="modal-body">
       <!-- 基礎知識 -->
       <section class="help-section">
         <h3>🌱 基本・定数</h3>
         <div class="card">
           <h4>円周率（π（パイ） ≒ 3.14）</h4>
-          <p>円のまわりの長さや、円の面積を計算するときに使う特別な数。</p><div class="formula-box">円周：直径 × π<br>円の面積：半径 × 半径 × π </div>
+          <p>円のまわりの長さや、円の面積を計算するときに使う特別な数。</p>
+          <div class="formula-box">円周：直径 × π<br>円の面積：半径 × 半径 × π </div>
         </div>
         <div class="card">
           <h4>平方根（ √（ルート））</h4>
-          <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p><div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
+          <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p>
+          <div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
         </div>
       </section>
 
       <!-- 微分・積分の解説と計算例 -->
-<section class="help-section">
-  <h3>🚀 微分・積分の考え方と計算例</h3>
-  
-  <div class="card">
-    <h4>微分（びぶん）＝ 瞬間の変化スピード</h4>
-    <p>
-      <strong>【例：ボールを落としたときのスピード】</strong><br>
-      ボールを落とすと、時間がたつほど加速するよ。<br>
-      時間 <i>t</i> 秒と距離 <i>y</i> m の関係は <strong>y = 5t<sup>2</sup></strong>（※約 4.9t<sup>2</sup>）で表せます。<br>
-      ここで<strong>「2秒後の“その瞬間”のスピード」</strong>を知りたいときに微分を使います！
-    </p>
-    <div class="formula-box">
-      <strong>計算式：</strong> (5t<sup>2</sup>)' = 10t<br>
-      <i>t</i> = 2 を代入 ➔ 10 × 2 = <strong>秒速20m！</strong>
-    </div>
-    <p class="tip-text">💡 <strong>電卓での使い方：</strong> 微分ボタンを押して『 <strong><code>d/dx(5x^2, 2)</code></strong> 』と入力！</p>
-  </div>
+      <section class="help-section">
+        <h3>🚀 微分・積分の考え方と計算例</h3>
 
-  <div class="card">
-    <h4>積分（せきぶん）＝ 変化を集めた全体の量（距離・面積）</h4>
-    <p>
-      <strong>【例：加速する電車が進んだ距離】</strong><br>
-      スピードが変化する電車（スピード：10<i>t</i> m/s）が、<strong>「0秒から3秒間で進んだ合計距離」</strong>を求めたいときに積分を使います！<br>
-      細切れのスピードを足し合わせて、全体の距離（グラフの面積）を出す計算だよ。
-    </p>
-    <div class="formula-box">
-      <strong>計算式：</strong> ∫ 10t dt = 5t<sup>2</sup><br>
-      0秒〜3秒まで ➔ 5 × 3<sup>2</sup> = <strong>合計 45m！</strong>
-    </div>
-    <p class="tip-text">💡 <strong>電卓での使い方：</strong> 積分ボタンを押して『 <strong><code>∫(10x, 0, 3)</code></strong> 』と入力！</p>
-  </div>
-</section>
+        <div class="card">
+          <h4>微分（びぶん）＝ 瞬間の変化スピード</h4>
+          <p>
+            <strong>【例：ボールを落としたときのスピード】</strong><br>
+            ボールを落とすと、時間がたつほど加速するよ（重力加速度 約9.8m/s<sup>2</sup>）。<br>
+            時間 <i>t</i> 秒と距離 <i>y</i> m の関係は <strong>y = 5t<sup>2</sup></strong>（※約 4.9t<sup>2</sup>）で表せます。<br>
+            ここで<strong>「2秒後の“その瞬間”のスピード」</strong>を知りたいときに微分を使います！
+          </p>
+          <div class="formula-box">
+            <strong>計算式：</strong> (5t<sup>2</sup>)' = 10t<br>
+            <i>t</i> = 2 を代入 ➔ 10 × 2 = <strong>秒速20m！</strong>
+          </div>
+          <p class="tip-text">💡 <strong>電卓での使い方：</strong> 微分ボタンを押して『 <strong><code>d/dx(5x^2, 2)</code></strong> 』と入力！</p>
+        </div>
+
+        <div class="card">
+          <h4>積分（せきぶん）＝ 変化を集めた全体の量（距離・面積）</h4>
+          <p>
+            <strong>【例：加速する電車が進んだ距離】</strong><br>
+            スピードが変化する電車（スピード：10<i>t</i> m/s）が、<strong>「0秒から3秒間で進んだ合計距離」</strong>を求めたいときに積分を使います！<br>
+            細切れのスピードを足し合わせて、全体の距離（グラフの面積）を出す計算だよ。
+          </p>
+          <div class="formula-box">
+            <strong>計算式：</strong> ∫ 10t dt = 5t<sup>2</sup><br>
+            0秒〜3秒まで ➔ 5 × 3<sup>2</sup> = <strong>合計 45m！</strong>
+          </div>
+          <p class="tip-text">💡 <strong>電卓での使い方：</strong> 積分ボタンを押して『 <strong><code>∫(10x, 0, 3)</code></strong> 』と入力！</p>
+        </div>
+      </section>
 
       <!-- 面積・角度の公式一覧 -->
       <section class="help-section">
         <h3>📏 面積と角度の公式一覧（平面図形）</h3>
-        
+
         <div class="card">
           <h4>長方形・正方形</h4>
           <div class="formula-box">面積 = 縦 × 横</div>
@@ -880,17 +1027,18 @@
         </div>
 
         <div class="card">
-  <h4>扇形（おうぎがた）</h4>
-  <div class="formula-box">
-    <div><strong>弧の長さ</strong> = 直径 × π × (中心角 ÷ 360)</div>
-    <div style="margin-top: 6px;"><strong>面積</strong> = 半径 × 半径 × π × (中心角 ÷ 360)</div>
-  </div>
-  <p>円をピザみたいに切り分けた形！</p>
-  <p style="margin-top: 4px;">
-    ・<strong>弧の長さ</strong>：円周（直径 × π）に中心角の割合（中心角 ÷ 360）をかけるよ。<br>
-    ・<strong>面積</strong>：円の面積（半径 × 半径 × π）に中心角の割合をかけるよ。<br>
-    ・<strong>面積</strong>：(1/2) × 半径 × 弧の長さ　でも求められるよ。  </p>
-</div>
+          <h4>扇形（おうぎがた）</h4>
+          <div class="formula-box">
+            <div><strong>弧の長さ</strong> = 直径 × π × (中心角 ÷ 360)</div>
+            <div style="margin-top: 6px;"><strong>面積</strong> = 半径 × 半径 × π × (中心角 ÷ 360)</div>
+          </div>
+          <p>円をピザみたいに切り分けた形！</p>
+          <p style="margin-top: 4px;">
+            ・<strong>弧の長さ</strong>：円周（直径 × π）に中心角の割合（中心角 ÷ 360）をかけるよ。<br>
+            ・<strong>面積</strong>：円の面積（半径 × 半径 × π）に中心角の割合をかけるよ。<br>
+            ・<strong>面積</strong>：(1/2) × 半径 × 弧の長さ でも求められるよ。
+          </p>
+        </div>
 
         <div class="card">
           <h4>正多角形の面積</h4>
@@ -905,7 +1053,7 @@
             外角の和 = どんな多角形でも 360°
           </div>
           <p>
-            ・<b>内角の和</b>：n 角形は「(n - 2) 個の三角形」に分けられるから 180° をかけるよ。<br>　例：四角形なら 180° × 2 = 360°<br>
+            ・<b>内角の和</b>：n 角形は「(n - 2) 個の三角形」に分けられるから 180° をかけるよ。<br> 例：四角形なら 180° × 2 = 360°<br>
             ・<b>外角の和</b>：三角形でも十角形でも、外側の角をぜんぶ足すと<strong>必ず 360°</strong> になるよ！
           </p>
         </div>
@@ -914,7 +1062,7 @@
       <!-- 体積・表面積の公式一覧 -->
       <section class="help-section">
         <h3>📐 体積と表面積の公式一覧（立体図形）</h3>
-        
+
         <div class="card">
           <h4>直方体・立方体</h4>
           <div class="formula-box">体積 = 縦 × 横 × 高さ</div>
@@ -957,28 +1105,179 @@
     </div>
   </div>
 </div>
-    
+
+<!-- 2. 長さの解説モーダル -->
+<div id="length-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>📏 長さの単位と使い分けガイド</h3>
+      <button type="button" class="close-btn" onclick="closeModal('length-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 1. メートル法 -->
+      <div class="card">
+        <h4>1. 国際単位系（SI） / メートル法</h4>
+        <div class="formula-box">
+          1 km = 1,000 m | 1 m = 100 cm | 1 cm = 10 mm<br>
+          1 μm = 0.001 mm | 1 nm = 0.000001 mm
+        </div>
+        <p>世界中で最も広く使われている長さの基準単位です。10倍・1,000倍単位で桁が変わるため計算がスムーズです。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #3b82f6; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>km（キロメートル）：</strong> マラソンの距離（42.195km）、都市間の移動距離</li>
+            <li><strong>m（メートル）：</strong> 部屋の広さや家具のサイズ、水泳のコース長</li>
+            <li><strong>cm / mm：</strong> 文房具、服のサイズ（ウエスト・着丈）、雨量（mm）</li>
+            <li><strong>μm（マイクロメートル）：</strong> 花粉（約30μm）、細胞や細菌の大きさ</li>
+            <li><strong>nm（ナノメートル）：</strong> 半導体の回路幅（3nmプロセスなど）、ウイルスの大きさ</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2. ヤード・ポンド法 -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>2. ヤード・ポンド法（欧米・スポーツ）</h4>
+        <div class="formula-box">
+          1 mile ≒ 1.609 km | 1 yd = 0.9144 m | 1 ft = 30.48 cm | 1 in = 2.54 cm
+        </div>
+        <p>アメリカやイギリスを中心に日常・スポーツ・各種規格で広く使われている単位系です。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #3b82f6; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>in（インチ）：</strong> スマホ・TVの画面サイズ（6.1インチ）、タイヤのホイール径</li>
+            <li><strong>ft（フィート）：</strong> 航空機の飛行高度（3万フィート ≒ 約9,000m）、船の長さ</li>
+            <li><strong>yd（ヤード）：</strong> ゴルフの飛距離、アメリカンフットボールのゲイン距離</li>
+            <li><strong>mile（マイル）：</strong> アメリカの道路標識・速度制限（mph）、メジャーリーグの球速</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3. 尺貫法 -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>3. 尺貫法（日本の伝統単位）</h4>
+        <div class="formula-box">
+          1 尺 ≒ 30.30 cm | 1 寸 ≒ 3.03 cm | 1 間 ≒ 1.818 m (6尺)<br>
+          1 町 ≒ 109.09 m | 1 里 ≒ 3.927 km
+        </div>
+        <p>日本の伝統的な単位系です。建築や伝統工芸、不動産業界で現在も慣習的に残っています。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #3b82f6; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>尺 / 寸：</strong> 和服（着物）の仕立てサイズ、日本刀の長さ、針の長さ</li>
+            <li><strong>間（けん）：</strong> 建築のモジュール（1間＝約1.82m。畳の長辺や押し入れの幅の基準）</li>
+            <li><strong>町 / 里：</strong> 慣用句「一歩一里」「一刀両断」、昔の街道の距離表示</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 3. 重さの解説モーダル -->
+<div id="weight-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>⚖️ 重さの単位と使い分けガイド</h3>
+      <button type="button" class="close-btn" onclick="closeModal('weight-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 1. メートル法 -->
+      <div class="card">
+        <h4>1. 国際単位系（SI） / メートル法</h4>
+        <div class="formula-box">
+          1 t = 1,000 kg | 1 kg = 1,000 g | 1 g = 1,000 mg
+        </div>
+        <p>質量（重さ）の世界的基準単位です。水1リットルの重さがちょうど「1kg」となります。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>t（トン）：</strong> 自動車・大型トラックの車両重量、船の排水量、大型貨物</li>
+            <li><strong>kg（キログラム）：</strong> 人の体重、スーパーで買う米や肉・野菜の重量</li>
+            <li><strong>g（グラム）：</strong> 料理レシピの調味料（塩・砂糖）、郵便物の定形外料金区分</li>
+            <li><strong>mg（ミリグラム）：</strong> 薬の有効成分量（「ビタミンC 1000mg配合」など）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2. ヤード・ポンド法 -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>2. ヤード・ポンド法（アメリカ・スポーツ・航空）</h4>
+        <div class="formula-box">
+          1 lb（ポンド） ≒ 453.6 g | 1 oz（オンス） ≒ 28.35 g<br>
+          1 st（ストーン） ≒ 6.35 kg | 1 gr（グレーン） ≒ 0.065 g
+        </div>
+        <p>英米圏の日常生活や特定のアウトドア・スポーツ用品で広く利用されています。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>lb（ポンド）：</strong> ボウリングの球（12ポンド等）、プロレス・ボクシングの階級</li>
+            <li><strong>oz（オンス）：</strong> ステーキの肉の大きさ（8oz ≒ 約225g）、ボクシンググローブ</li>
+            <li><strong>st（ストーン）：</strong> イギリスでの日常的な体重測定（10ストーン等）</li>
+            <li><strong>gr（グレーン）：</strong> 薬学の古風な単位、弾丸（銃弾）の重量表示</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3. 尺貫法 ＆ 特殊単位 -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>3. 尺貫法 ＆ その他の特殊単位</h4>
+        <div class="formula-box">
+          1 貫 = 3.75 kg | 1 斤 = 600 g | 1 匁 = 3.75 g<br>
+          1 ct（カラット） = 0.2 g
+        </div>
+        <p>日本の伝統的な取引や、ジュエリー・宝石業界で使用される専門単位です。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>斤（きん）：</strong> 食パンの分け方（標準規格は1斤＝340g以上ですが、元々は600gが1斤）</li>
+            <li><strong>匁（もんめ）：</strong> 真珠（パール）の国際取引単位（Momme）、5円玉の重さ（ちょうど1匁＝3.75g）</li>
+            <li><strong>貫（かん）：</strong> 昔の通貨単位や横綱の体重表現（例：「四十五貫」＝約168.75kg）</li>
+            <li><strong>ct（カラット）：</strong> ダイヤモンドなどの宝石の質量（1ct ＝ 0.2g）</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const helpBtn = document.getElementById('help-btn');
-  const closeBtn = document.getElementById('close-modal-btn');
-  const modal = document.getElementById('help-modal');
-
-  // モーダルを開く
-  helpBtn.addEventListener('click', () => {
-    modal.removeAttribute('hidden');
-  });
-
-  // 閉じるボタンで閉じる
-  closeBtn.addEventListener('click', () => {
-    modal.setAttribute('hidden', '');
-  });
-
-  // 背景（黒い暗がり）をクリックしたら閉じる
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.setAttribute('hidden', '');
+  // --- 1. グローバル関数：指定したIDのモーダルを開く ---
+  window.openModal = (modalId) => {
+    const targetModal = document.getElementById(modalId);
+    if (targetModal) {
+      targetModal.removeAttribute('hidden');
     }
+  };
+
+  // --- 2. グローバル関数：指定したIDのモーダルを閉じる ---
+  window.closeModal = (modalId) => {
+    const targetModal = document.getElementById(modalId);
+    if (targetModal) {
+      targetModal.setAttribute('hidden', '');
+    }
+  };
+
+  // --- 3. 「閉じる」ボタン（.close-btn）でモーダルを閉じる ---
+  document.querySelectorAll('.close-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const modal = e.target.closest('.modal');
+      if (modal) {
+        modal.setAttribute('hidden', '');
+      }
+    });
+  });
+
+  // --- 4. 背景（黒い暗がり）をクリックしたら閉じる ---
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.setAttribute('hidden', '');
+      }
+    });
   });
 });
   // --- タブ切り替え ---
@@ -1262,48 +1561,265 @@ function calculateBasic() {
     } catch(e) {}
   }
 
-  // --- 3. 割合計算 ---
+// --- 3. 割合・ローン返済計算 ---
+
+// 1. 割合計算
 function calcPercent() {
   const numInput = document.getElementById('pct-num');
   const rateInput = document.getElementById('pct-rate');
+  const resultBox = document.getElementById('pct-result');
 
-  const num = parseFloat(numInput.value) || 0;
-  const rate = parseFloat(rateInput.value) || 0;
+  if (!numInput || !rateInput || !resultBox) return;
+
+  const num = parseFloat(numInput.value);
+  const rate = parseFloat(rateInput.value);
+
+  if (isNaN(num) || isNaN(rate)) {
+    resultBox.innerHTML = '数値と割合を入力してください。';
+    return;
+  }
+
   const val = num * (rate / 100);
   const added = num + val;
   const subbed = num - val;
 
-  document.getElementById('pct-result').innerHTML = `
-    ${num} の ${rate}% は <b>${val}</b><br>
-    <small>加算 (+${rate}%): ${added} | 減算 (-${rate}%): ${subbed}</small>
+  resultBox.innerHTML = `
+    ${num.toLocaleString()} の ${rate}% は <b>${val.toLocaleString()}</b><br>
+    <small>加算 (+${rate}%): ${added.toLocaleString()} | 減算 (-${rate}%): ${subbed.toLocaleString()}</small>
   `;
 }
 
-// 割合計算の入力欄に対するイベント設定
+// 2. ローン返済計算
+function calcLoan() {
+  const amountEl = document.getElementById('loan-amount');
+  const rateEl = document.getElementById('loan-rate');
+  const monthsEl = document.getElementById('loan-months');
+  const rateTypeEl = document.getElementById('loan-rate-type');
+  const loanTypeEl = document.getElementById('loan-type');
+  const resultBox = document.getElementById('loan-result');
+
+  if (!amountEl || !rateEl || !monthsEl || !resultBox) return;
+
+  const amount = parseFloat(amountEl.value);
+  const annualRate = parseFloat(rateEl.value);
+  const totalMonths = parseFloat(monthsEl.value);
+    
+  const rateType = rateTypeEl ? rateTypeEl.value : 'compound';
+  const loanType = loanTypeEl ? loanTypeEl.value : 'equal-payment';
+
+  if (isNaN(amount) || isNaN(annualRate) || isNaN(totalMonths) || totalMonths <= 0 || amount <= 0) {
+    resultBox.innerHTML = 'すべての項目を正しく入力してください。';
+    return;
+  }
+
+  const rateDecimal = annualRate / 100;
+
+  // A. 単利（アドオン方式）
+  if (rateType === 'simple') {
+    const totalInterest = amount * rateDecimal * (totalMonths / 12);
+    const totalPaid = amount + totalInterest;
+    const monthlyPayment = totalPaid / totalMonths;
+
+    resultBox.innerHTML = `
+      <strong>毎月の返済額 (単利・アドオン):</strong> <b style="font-size: 16px; color: #2563eb;">${Math.round(monthlyPayment).toLocaleString()} 円</b><br>
+      <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+        <strong>返済総額 (${totalMonths}ヶ月):</strong> ${Math.round(totalPaid).toLocaleString()} 円<br>
+        <strong>利息総額:</strong> <b style="color: #dc2626;">${Math.round(totalInterest).toLocaleString()} 円</b>
+      </div>
+    `;
+    return;
+  }
+
+  // B. 複利（通常のローン：年利 ÷ 12）
+  // 外部からの計算干渉・変数混同を防ぐため局所変数名を「calcMonthlyRate」に変更
+  const calcMonthlyRate = (annualRate / 100) / 12;
+
+  if (loanType === 'equal-payment') {
+    // 【元利均等返済】
+    let rawMonthlyPayment = 0;
+    
+    if (calcMonthlyRate === 0) {
+      rawMonthlyPayment = amount / totalMonths;
+    } else {
+      const compoundFactor = Math.pow(1 + calcMonthlyRate, totalMonths);
+      rawMonthlyPayment = (amount * calcMonthlyRate * compoundFactor) / (compoundFactor - 1);
+    }
+    
+    // 1. 毎月の返済額（169,106円）
+    const monthlyPayment = Math.round(rawMonthlyPayment);
+
+    // 2. 実際に払う返済総額（169,106 × 6 = 1,014,636円）
+    const totalPaid = monthlyPayment * totalMonths;
+
+    // 3. 総額から元金を引いた利息総額（14,636円）
+    const totalInterest = totalPaid - amount;
+
+    resultBox.innerHTML = `
+      <strong>毎月の返済額 (元利均等):</strong> <b style="font-size: 16px; color: #2563eb;">${monthlyPayment.toLocaleString()} 円</b><br>
+      <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+        <strong>返済総額 (${totalMonths}ヶ月):</strong> ${totalPaid.toLocaleString()} 円<br>
+        <strong>利息総額:</strong> <b style="color: #dc2626;">${totalInterest.toLocaleString()} 円</b>
+      </div>
+    `;
+
+  } else {
+    // 【元金均等返済】
+    const principalPerMonth = amount / totalMonths;
+    const firstMonthInterest = amount * calcMonthlyRate;
+    const firstMonthTotal = principalPerMonth + firstMonthInterest;
+    
+    let totalInterest = 0;
+    for (let i = 0; i < totalMonths; i++) {
+      totalInterest += (amount - (principalPerMonth * i)) * calcMonthlyRate;
+    }
+    const totalPaid = amount + totalInterest;
+
+    resultBox.innerHTML = `
+      <strong>初回の返済額 (元金均等):</strong> <b style="font-size: 16px; color: #2563eb;">約 ${Math.round(firstMonthTotal).toLocaleString()} 円</b> <small style="color:#64748b;">(毎月減少)</small><br>
+      <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+        <strong>返済総額 (${totalMonths}ヶ月):</strong> ${Math.round(totalPaid).toLocaleString()} 円<br>
+        <strong>利息総額:</strong> <b style="color: #dc2626;">${Math.round(totalInterest).toLocaleString()} 円</b>
+      </div>
+    `;
+  }
+}
+
+// 3. 年間支払額の計算
+function calcAnnualPayment() {
+  const monthlyPayEl = document.getElementById('annual-monthly-pay');
+  const bonusPayEl = document.getElementById('annual-bonus-pay');
+  const resultBox = document.getElementById('annual-payment-result');
+
+  if (!monthlyPayEl || !resultBox) return;
+
+  const monthlyPay = parseFloat(monthlyPayEl.value) || 0;
+  const bonusPay = bonusPayEl ? (parseFloat(bonusPayEl.value) || 0) : 0;
+
+  if (monthlyPay <= 0 && bonusPay <= 0) {
+    resultBox.innerHTML = '毎月の支払額を入力してください。';
+    return;
+  }
+
+  const annualTotal = bonusPay > 0 
+    ? (monthlyPay * 10) + (bonusPay * 2)
+    : (monthlyPay * 12);
+
+  resultBox.innerHTML = `
+    <strong>年間支払額:</strong> <b>${annualTotal.toLocaleString()}</b> 円<br>
+    <small>（通常月: ${(monthlyPay * (bonusPay > 0 ? 10 : 12)).toLocaleString()}円 ＋ ボーナス月計: ${(bonusPay * 2).toLocaleString()}円）</small>
+  `;
+}
+
+// 4. 残債推移・期間から「期間内の元金/利息」と「平均金利」を計算
+function calcReverseRate() {
+  const prevBalanceEl = document.getElementById('prev-balance');
+  const currBalanceEl = document.getElementById('curr-balance');
+  const yearsEl = document.getElementById('calc-years');
+  const monthlyPayEl = document.getElementById('annual-monthly-pay');
+  const bonusPayEl = document.getElementById('annual-bonus-pay');
+  const resultBox = document.getElementById('reverse-rate-result');
+
+  if (!prevBalanceEl || !currBalanceEl || !resultBox) return;
+
+  const prevBalance = parseFloat(prevBalanceEl.value);
+  const currBalance = parseFloat(currBalanceEl.value);
+  const years = yearsEl ? (parseFloat(yearsEl.value) || 1) : 1;
+  const monthlyPay = monthlyPayEl ? (parseFloat(monthlyPayEl.value) || 0) : 0;
+  const bonusPay = bonusPayEl ? (parseFloat(bonusPayEl.value) || 0) : 0;
+
+  const annualTotal = bonusPay > 0 
+    ? (monthlyPay * 10) + (bonusPay * 2)
+    : (monthlyPay * 12);
+
+  const periodTotal = annualTotal * years;
+
+  if (isNaN(prevBalance) || isNaN(currBalance) || annualTotal <= 0 || years <= 0) {
+    resultBox.innerHTML = '残債・期間・支払額を正しく入力してください。';
+    return;
+  }
+
+  if (currBalance >= prevBalance) {
+    resultBox.innerHTML = '返済後の残債は返済前の残債より少ない金額を入力してください。';
+    return;
+  }
+
+  const principalPaid = prevBalance - currBalance;
+  const interestPaid = periodTotal - principalPaid;
+
+  if (interestPaid < 0) {
+    resultBox.innerHTML = '総支払額より元金の減少額が大きくなっています。入力値をご確認ください。';
+    return;
+  }
+
+  let averageRate = 0;
+  if (years === 1) {
+    averageRate = (interestPaid / prevBalance) * 100;
+  } else {
+    const avgBalance = (prevBalance + currBalance) / 2;
+    const annualInterest = interestPaid / years;
+    averageRate = (annualInterest / avgBalance) * 100;
+  }
+
+  const labelPeriod = years === 1 ? '年間' : `${years}年間`;
+  const labelTotalPay = years === 1 ? '年間総支払額' : `${years}年間の総支払額`;
+  const labelRate = years === 1 ? '年間実質金利' : 'その間の平均金利';
+
+  resultBox.innerHTML = `
+    <strong>${labelTotalPay}:</strong> ${periodTotal.toLocaleString()} 円<br>
+    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+      <strong>${labelPeriod}の元金充当額:</strong> ${principalPaid.toLocaleString()} 円<br>
+      <strong>${labelPeriod}の利息額:</strong> <b style="color: #dc2626;">${interestPaid.toLocaleString()} 円</b><br>
+      <strong>${labelRate}:</strong> <b style="font-size: 16px; color: #2563eb;">約 ${averageRate.toFixed(3)} %</b>
+    </div>
+  `;
+}
+
+// --- 入力欄に対するイベント設定 ---
 document.addEventListener('DOMContentLoaded', function() {
-  const pctInputs = [
+  function setupInputEvents(inputs, calcFunction) {
+    inputs.forEach(input => {
+      if (!input) return;
+      input.addEventListener('focus', function() { this.select(); });
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          calcFunction();
+        }
+      });
+    });
+  }
+
+  // 1. 割合計算
+  setupInputEvents([
     document.getElementById('pct-num'),
     document.getElementById('pct-rate')
-  ];
+  ], calcPercent);
 
-  pctInputs.forEach(input => {
-    if (!input) return;
+  // 2. ローン計算（単利/複利・元金/元利の変更も即座に反映）
+  setupInputEvents([
+    document.getElementById('loan-amount'),
+    document.getElementById('loan-rate'),
+    document.getElementById('loan-months'),
+    document.getElementById('loan-rate-type'),
+    document.getElementById('loan-type')
+  ], calcLoan);
 
-    // 1. フォーカス時に全選択
-    input.addEventListener('focus', function() {
-      this.select();
-    });
+  // 3. 年間支払額計算
+  setupInputEvents([
+    document.getElementById('annual-monthly-pay'),
+    document.getElementById('annual-bonus-pay')
+  ], calcAnnualPayment);
 
-    // 2. Enterキーで計算実行
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        calcPercent();
-      }
-    });
+  // 4. 金利計算
+  setupInputEvents([
+    document.getElementById('prev-balance'),
+    document.getElementById('curr-balance'),
+    document.getElementById('calc-years')
+  ], function() {
+    calcAnnualPayment();
+    calcReverseRate();
   });
 });
-
  // --- 4. 時間計算 ---
 function calcTime(mode = 'add') {
   // 各入力欄から値を取得（空文字や未入力は0として扱う）
@@ -1404,31 +1920,175 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// --- 5 & 6. 単位換算 ---
-const rates = {
-  length: { mm: 0.001, cm: 0.01, m: 1, km: 1000, inch: 0.0254 },
-  weight: { mg: 0.001, g: 1, kg: 1000, t: 1000000, lb: 453.592 }
+// --- 5 & 6. 単位換算設定データ ---
+
+// 換算レート（基準：lengthはメートル[m]、weightはグラム[g]）
+const unitRates = {
+  length: {
+    // メートル法
+    km: 1000,
+    m: 1,
+    cm: 0.01,
+    mm: 0.001,
+    um: 0.000001,
+    nm: 0.000000001,
+    // ヤード・ポンド法
+    mile: 1609.344,
+    yd: 0.9144,
+    ft: 0.3048,
+    inch: 0.0254,
+    // 尺貫法
+    ri: (10 / 33) * 12960,
+    cho: (10 / 33) * 360,
+    ken: (10 / 33) * 6,
+    shaku: 10 / 33,
+    sun: (10 / 33) / 10
+  },
+  weight: {
+    // 国際単位系（SI） / メートル法
+    mg: 0.001,
+    g: 1,
+    kg: 1000,
+    t: 1000000,
+    // ヤード・ポンド法
+    gr: 0.06479891,    // 1グレーン
+    oz: 28.349523125,  // 1オンス
+    lb: 453.59237,     // 1ポンド
+    st: 6350.29318,    // 1ストーン (14ポンド)
+    // 尺貫法
+    momme: 3.75,       // 1匁
+    kin: 600,          // 1斤
+    kan: 3750,         // 1貫 (1000匁)
+    // その他の単位
+    ct: 0.2            // 1カラット
+  }
+};
+
+// 単位のグループ分け・ラベル設定
+const unitGroups = {
+  length: [
+    {
+      groupName: 'メートル法（SI単位系）',
+      units: {
+        km: { name: 'キロメートル', symbol: 'km' },
+        m: { name: 'メートル', symbol: 'm' },
+        cm: { name: 'センチメートル', symbol: 'cm' },
+        mm: { name: 'ミリメートル', symbol: 'mm' },
+        um: { name: 'マイクロメートル', symbol: 'μm' },
+        nm: { name: 'ナノメートル', symbol: 'nm' }
+      }
+    },
+    {
+      groupName: 'ヤード・ポンド法',
+      units: {
+        mile: { name: 'マイル', symbol: 'mile' },
+        yd: { name: 'ヤード', symbol: 'yd' },
+        ft: { name: 'フィート', symbol: 'ft' },
+        inch: { name: 'インチ', symbol: 'in' }
+      }
+    },
+    {
+      groupName: '尺貫法',
+      units: {
+        ri: { name: '里', symbol: 'り' },
+        cho: { name: '町', symbol: 'ちょう' },
+        ken: { name: '間', symbol: 'けん' },
+        shaku: { name: '尺', symbol: 'しゃく' },
+        sun: { name: '寸', symbol: 'すん' }
+      }
+    }
+  ],
+  weight: [
+    {
+      groupName: '国際単位系（SI） / メートル法',
+      units: {
+        mg: { name: 'ミリグラム', symbol: 'mg' },
+        g: { name: 'グラム', symbol: 'g' },
+        kg: { name: 'キログラム', symbol: 'kg' },
+        t: { name: 'トン', symbol: 't' }
+      }
+    },
+    {
+      groupName: 'ヤード・ポンド法',
+      units: {
+        gr: { name: 'グレーン', symbol: 'gr' },
+        oz: { name: 'オンス', symbol: 'oz' },
+        lb: { name: 'ポンド', symbol: 'lb' },
+        st: { name: 'ストーン', symbol: 'st' }
+      }
+    },
+    {
+      groupName: '尺貫法',
+      units: {
+        momme: { name: '匁', symbol: 'もんめ' },
+        kin: { name: '斤', symbol: 'きん' },
+        kan: { name: '貫', symbol: 'かん' }
+      }
+    },
+    {
+      groupName: 'その他の単位',
+      units: {
+        ct: { name: 'カラット', symbol: 'ct' }
+      }
+    }
+  ]
 };
 
 function convertUnit(type) {
   const valEl = document.getElementById(`${type}-val`);
   const fromEl = document.getElementById(`${type}-from`);
-  const toEl = document.getElementById(`${type}-to`);
   const resultEl = document.getElementById(`${type}-result`);
 
-  if (!valEl || !fromEl || !toEl || !resultEl) return;
+  if (!valEl || !fromEl || !resultEl) return;
 
-  const val = parseFloat(valEl.value) || 0;
+  const val = parseFloat(valEl.value);
+
+  if (isNaN(val)) {
+    resultEl.innerHTML = '<div style="color: #9ca3af;">数値を入力してください</div>';
+    return;
+  }
+
   const from = fromEl.value;
-  const to = toEl.value;
+  const rates = unitRates[type];
+  const groups = unitGroups[type];
 
-  const baseValue = val * rates[type][from];
-  const result = baseValue / rates[type][to];
+  // 基準値（m または g）に換算
+  const baseValue = val * rates[from];
 
-  // 端数処理を行いつつ結果を表示
-  const formattedResult = Number(result.toFixed(6)); 
-  resultEl.innerText = `${formattedResult} ${to}`;
+  let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+
+  // カテゴリごとにループ処理して描画
+  groups.forEach(group => {
+    html += `<div>`;
+    html += `<div style="font-weight: bold; font-size: 13px; color: #3b82f6; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid #e5e7eb;">${group.groupName}</div>`;
+    html += `<div style="display: flex; flex-direction: column; gap: 6px;">`;
+
+    for (const [unitKey, labelInfo] of Object.entries(group.units)) {
+      const convertedVal = baseValue / rates[unitKey];
+      
+      // 指数表記(1e-7など)を読みやすい表記へ整形し、有効数字8桁で丸める
+      let formattedVal = Number(convertedVal.toPrecision(8)).toString();
+
+      const isSelected = (unitKey === from);
+      const bgStyle = isSelected 
+        ? 'background-color: #eff6ff; border-color: #bfdbfe;' 
+        : 'background-color: #f8fafc; border-color: #e2e8f0;';
+
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border: 1px solid; border-radius: 6px; ${bgStyle}">
+          <span style="font-size: 13px; color: #475569;">${labelInfo.name} (${labelInfo.symbol})</span>
+          <span style="font-weight: bold; color: #1e293b; font-size: 14px;">${formattedVal} <small style="font-size: 11px; color: #64748b;">${labelInfo.symbol}</small></span>
+        </div>
+      `;
+    }
+
+    html += `</div></div>`;
+  });
+
+  html += '</div>';
+  resultEl.innerHTML = html;
 }
+
 
 // 単位換算の入力欄に対するイベント設定
 document.addEventListener('DOMContentLoaded', function() {
@@ -1449,9 +2109,8 @@ document.addEventListener('DOMContentLoaded', function() {
   types.forEach(type => {
     const valInput = document.getElementById(`${type}-val`);
     const fromSelect = document.getElementById(`${type}-from`);
-    const toSelect = document.getElementById(`${type}-to`);
 
-    // --- 数値入力欄（len-val / weight-val）のイベント ---
+    // --- 数値入力欄のイベント ---
     if (valInput) {
       let isComposing = false;
 
@@ -1461,7 +2120,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       valInput.addEventListener('compositionend', function() {
         isComposing = false;
-        convertZenkaku(this);
         convertUnit(type);
       });
 
@@ -1470,23 +2128,23 @@ document.addEventListener('DOMContentLoaded', function() {
         this.select();
       });
 
-      // 2. 入力時に全角変換＋即時計算
+      // 2. 入力時は計算だけを実行（valueの上書きをしないことで「.」が打てるようになります）
       valInput.addEventListener('input', function() {
         if (!isComposing) {
-          convertZenkaku(this);
           convertUnit(type);
         }
+      });
+
+      // 3. 入力欄から外れたタイミングで全角を半角に安全変換
+      valInput.addEventListener('blur', function() {
+        convertZenkaku(this);
+        convertUnit(type);
       });
     }
 
     // --- セレクトボックス（単位変更時）のイベント ---
     if (fromSelect) {
       fromSelect.addEventListener('change', function() {
-        convertUnit(type);
-      });
-    }
-    if (toSelect) {
-      toSelect.addEventListener('change', function() {
         convertUnit(type);
       });
     }
