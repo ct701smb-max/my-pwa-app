@@ -3041,46 +3041,74 @@ function drawVolShape(type, v1, v2, v3) {
   } else if (type === 'tri-pyramid') {
     if (v2 <= 0 || v3 <= 0) return;
 
-    const scale = Math.min((w - 80) / v1, (h - 70) / v3);
-    const s1 = v1 * scale;
-    const s2 = Math.min(v2 * scale * 0.35, 25);
-    const s3 = v3 * scale;
+    // スケール計算（底面の高さも綺麗に収まるよう調整）
+    const effectiveH = v3 + v2 * 0.4;
+    const scale = Math.min((w - 100) / v1, (h - 90) / effectiveH);
 
-    const baseY = cy + s3 / 2 - s2 / 2;
+    const s1 = v1 * scale;           // 底面の底辺
+    const s2 = v2 * scale * 0.4;     // 底面の高さ（奥行き）
+    const s3 = v3 * scale;           // 立体の高さ
+
+    const baseY = cy + s3 / 2;
     const baseX = cx;
 
+    // 頂点座標の定義（底面は中央奥に頂点を配置）
     const p1 = { x: baseX - s1 / 2, y: baseY };
     const p2 = { x: baseX + s1 / 2, y: baseY };
-    const pBack = { x: baseX - s2 * 0.3, y: baseY - s2 };
+    const pBack = { x: baseX, y: baseY - s2 };
 
+    // 錐の頂点（底面の重心直上に配置）
     const botCenter = { x: (p1.x + p2.x + pBack.x) / 3, y: (p1.y + p2.y + pBack.y) / 3 };
     const topPt = { x: botCenter.x, y: botCenter.y - s3 };
 
-    // 塗りつぶし
+    // --------------------------------------------------
+    // 1. 塗りつぶし（fillのみ）
+    // --------------------------------------------------
     ctx.fillStyle = CanvasHelper.theme.fill;
+    
+    // 手前側面
     ctx.beginPath();
     ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath();
+    ctx.fill();
 
-    // 実線
+    // --------------------------------------------------
+    // 2. 実線の描画（1度だけ描画）
+    // --------------------------------------------------
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
+    ctx.lineWidth = 2;
+
     CanvasHelper.drawLine(ctx, topPt, p1);
     CanvasHelper.drawLine(ctx, topPt, p2);
     CanvasHelper.drawLine(ctx, p1, p2);
-    CanvasHelper.drawLine(ctx, topPt, pBack);
 
-    // 奥の破線
+    // --------------------------------------------------
+    // 3. 奥の破線描画
+    // --------------------------------------------------
+    CanvasHelper.drawLine(ctx, topPt, pBack, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
     CanvasHelper.drawLine(ctx, p1, pBack, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
     CanvasHelper.drawLine(ctx, pBack, p2, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
 
-    // 高さの点線
+    // --------------------------------------------------
+    // 4. 補助線とラベル
+    // --------------------------------------------------
+    // 立体の高さ（点線）
     CanvasHelper.drawLine(ctx, botCenter, topPt, { color: CanvasHelper.theme.accent, dash: [3, 3] });
+    
+    // 底面の高さ（底辺の中点から奥の頂点への垂線）
+    const botMid = { x: (p1.x + p2.x) / 2, y: baseY };
+    CanvasHelper.drawLine(ctx, botMid, pBack, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    // ラベル
-    CanvasHelper.drawText(ctx, `底辺: ${v1}m`, (p1.x + p2.x) / 2, baseY + 16);
+    // ラベル表示
+    // 底面の高さラベル
+    CanvasHelper.drawText(ctx, `底面の高さ: ${v2}m`, botMid.x + 8, baseY - s2 / 2, { color: CanvasHelper.theme.accent, align: 'left' });
 
-    const labelX = Math.max(10, botCenter.x - 6);
+    // 立体の高さラベル
+    const labelX = CanvasHelper.getSafeLabelX(botCenter.x);
     CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, (botCenter.y + topPt.y) / 2, { color: CanvasHelper.theme.accent, align: 'right' });
 
+    // 底辺ラベル
+    CanvasHelper.drawText(ctx, `底辺: ${v1}m`, botMid.x, baseY + 16);
   } else if (type === 'pyramid') {
     if (v2 <= 0 || v3 <= 0) return;
 
