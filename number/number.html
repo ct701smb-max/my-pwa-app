@@ -694,7 +694,7 @@
   <div class="row" style="margin-top: 12px;">
     <div class="form-group">
       <label>返済前の残債 (円)</label>
-      <input type="number" id="prev-balance" class="form-control" placeholder="3000000" value="35087705">
+      <input type="number" id="prev-balance" class="form-control" placeholder="3000000">
     </div>
     <div class="form-group">
       <label>返済後の残債 (円)</label>
@@ -2153,8 +2153,73 @@ document.addEventListener('DOMContentLoaded', function() {
     convertUnit(type);
   });
 });
+// ==========================================
+// Canvas描画共通ヘルパーモジュール
+// ==========================================
+const CanvasHelper = {
+  // カラーテーマ（一括変更・ダークモード対応も容易）
+  theme: {
+    stroke: '#2563eb',       // メインの線色（青）
+    fill: 'rgba(37, 99, 235, 0.08)', // 塗りつぶし色
+    subStroke: '#94a3b8',    // 不可視・奥の線色（グレー）
+    accent: '#ef4444',       // 補助線・寸法線（赤）
+    textMain: '#1e293b',     // 通常テキスト
+    textAccent: '#ef4444',   // 寸法テキスト
+    font: '12px sans-serif'
+  },
 
+  // キャンバスの初期化（クリア＆状態リセット）
+  init(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setLineDash([]);
+    ctx.lineWidth = 2;
+    ctx.font = this.theme.font;
+    return { canvas, ctx, w: canvas.width, h: canvas.height, cx: canvas.width / 2, cy: canvas.height / 2 };
+  },
+
+  // アスペクト比を維持した自動スケール計算
+  getScale(canvasW, canvasH, maxValW, maxValH, padding = 80) {
+    const scaleX = (canvasW - padding) / Math.max(maxValW, 1);
+    const scaleY = (canvasH - padding) / Math.max(maxValH, 1);
+    return Math.min(scaleX, scaleY);
+  },
+
+  // テキスト描画の共通化
+  drawText(ctx, text, x, y, options = {}) {
+    ctx.fillStyle = options.color || this.theme.textMain;
+    ctx.textAlign = options.align || 'center';
+    ctx.textBaseline = options.baseline || 'alphabetic';
+    ctx.fillText(text, x, y);
+  },
+
+  // 補助線（点線/実線）の描画共通化
+  drawLine(ctx, p1, p2, options = {}) {
+    ctx.beginPath();
+    if (options.dash) {
+      ctx.setLineDash(options.dash);
+    } else {
+      ctx.setLineDash([]);
+    }
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = options.color || this.theme.stroke;
+    ctx.lineWidth = options.width || 1;
+    ctx.stroke();
+    ctx.setLineDash([]); // リセット
+  },
+
+  // 高さ（h）ラベル表示用の安全なX座標計算（キャンバス左端へのはみ出し防止）
+  getSafeLabelX(x, fallback = 10) {
+    return Math.max(fallback, x - 6);
+  }
+};
+// ==========================================
 // --- 7. 面積計算 ---
+// ==========================================
+
 function toggleAreaInputs() {
   const type = document.getElementById('area-type').value;
   const g2 = document.getElementById('area-v2-group');
@@ -2177,11 +2242,7 @@ function toggleAreaInputs() {
     }
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'triangle') {
-    document.getElementById('area-label1').innerText = "底辺 (m)";
-    document.getElementById('area-label2').innerText = "高さ (m)";
-    if (g2) g2.style.display = 'block';
-  } else if (type === 'parallelogram') {
+  } else if (type === 'triangle' || type === 'parallelogram') {
     document.getElementById('area-label1').innerText = "底辺 (m)";
     document.getElementById('area-label2').innerText = "高さ (m)";
     if (g2) g2.style.display = 'block';
@@ -2267,53 +2328,43 @@ function calcArea() {
     resDecimal = v1 * v2;
     formulaStr = `${v1}m × ${v2}m`;
   } else if (type === 'rhombus') {
-    // ひし形の面積計算
     resDecimal = (v1 * v2) / 2;
     formulaStr = `(${v1}m × ${v2}m) ÷ 2`;
   } else if (type === 'regular-polygon') {
     isRegularPolygon = true;
-    // v3が0または未入力の場合はデフォルトで 3（正三角形）扱いにする
     const rawN = parseInt(v3Input ? v3Input.value : 0);
     const n = rawN >= 3 ? rawN : 3;
     polyN = n;
 
-    const side = v1; // 1辺の長さ (a)
+    const side = v1;
     const a2 = side * side;
 
-    // 内角の和・外角の和の計算
     interiorSum = (n - 2) * 180;
     exteriorSum = 360;
 
-    // ルート表記および面積計算
     if (n === 3) {
-      // 正三角形: (√3 / 4) * a^2
       formulaStr = `(√3 ÷ 4) × ${side}²`;
       exactFormulaResult = (a2 % 4 === 0) ? `${(a2 / 4)}√3` : `(${a2}√3) / 4`;
       resDecimal = (Math.sqrt(3) / 4) * a2;
     } else if (n === 4) {
-      // 正方形: a^2
       formulaStr = `${side}m × ${side}m`;
       exactFormulaResult = `${a2}`;
       resDecimal = a2;
     } else if (n === 5) {
-      // 正五角形: (1/4) * √(5(5+2√5)) * a^2
       formulaStr = `1/4 × √(5(5+2√5)) × ${side}²`;
       const factor = Math.sqrt(5 * (5 + 2 * Math.sqrt(5))) / 4;
       exactFormulaResult = `${a2}/4 × √(5(5+2√5))`;
       resDecimal = factor * a2;
     } else if (n === 6) {
-      // 正六角形: (3√3 / 2) * a^2
       formulaStr = `(3√3 ÷ 2) × ${side}²`;
       const num = a2 * 3;
       exactFormulaResult = (num % 2 === 0) ? `${num / 2}√3` : `(${num}√3) / 2`;
       resDecimal = ((3 * Math.sqrt(3)) / 2) * a2;
     } else if (n === 8) {
-      // 正八角形: 2(1 + √2) * a^2
       formulaStr = `2(1 + √2) × ${side}²`;
       exactFormulaResult = `${2 * a2}(1 + √2)`;
       resDecimal = 2 * (1 + Math.sqrt(2)) * a2;
     } else {
-      // その他の正多角形: (n / 4) * a^2 * cot(180° / n)
       const triHeight = ((side / 2) / Math.tan(Math.PI / n)).toFixed(2);
       formulaStr = `(${side} × ${triHeight} ÷ 2) × ${n}個`;
       exactFormulaResult = `${n}/4 × ${a2} × cot(180°/${n})`;
@@ -2321,11 +2372,10 @@ function calcArea() {
     }
   }
 
-  // --- 変更箇所2: 結果HTML出力処理 ---
+  // --- 結果HTML出力処理 ---
   const formattedDecimal = Number(resDecimal.toFixed(2));
   const formattedPiCoef = Number(piCoefficient.toFixed(2));
 
-  // 結果テキストの更新
   const resultEl = document.getElementById('area-result');
   if (resultEl) {
     const labelText = (type === 'sphere-surface') ? "表面積" : "面積";
@@ -2344,7 +2394,6 @@ function calcArea() {
       }
       resultHTML += `<div style="margin-top: 2px;">${labelText} (概算): <strong>${formattedDecimal}</strong> ㎡</div>`;
     } else if (isSector) {
-      // --- 扇形専用の表示形式 ---
       const formattedArcDecimal = Number(arcLengthDecimal.toFixed(2));
       const formattedArcPiCoef = Number(arcPiCoef.toFixed(2));
 
@@ -2379,83 +2428,63 @@ function calcArea() {
   drawAreaShape(type, v1, v2, v3);
 }
 
-// Canvasへの描画関数
+// Canvasへの描画関数 (CanvasHelperモジュールを使用)
 function drawAreaShape(type, v1, v2, v3) {
-  const canvas = document.getElementById('area-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  // キャンバスのクリア
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // 数値が0以下の場合は描画スキップ
-  if (v1 <= 0) return;
-
-  const w = canvas.width;
-  const h = canvas.height;
-  const cx = w / 2;
-  const cy = h / 2;
-
-  // スタイル設定
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#2563eb';
-  ctx.fillStyle = 'rgba(37, 99, 235, 0.1)';
-  ctx.font = '12px sans-serif';
+  const env = CanvasHelper.init('area-canvas');
+  if (!env || v1 <= 0) return;
+  const { ctx, w, h, cx, cy } = env;
 
   if (type === 'rect') {
     if (v2 <= 0) return;
-    const maxDim = Math.max(v1, v2);
-    const scale = Math.min((w - 80) / maxDim, (h - 80) / maxDim);
+    const scale = CanvasHelper.getScale(w, h, v1, v2);
     const drawW = v1 * scale;
     const drawH = v2 * scale;
     const x = (w - drawW) / 2;
     const y = (h - drawH) / 2;
 
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.rect(x, y, drawW, drawH);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${v1} m`, x + drawW / 2, y - 8);
-    ctx.textAlign = 'right';
-    ctx.fillText(`${v2} m`, x - 8, y + drawH / 2 + 4);
+    CanvasHelper.drawText(ctx, `${v1} m`, x + drawW / 2, y - 8);
+    CanvasHelper.drawText(ctx, `${v2} m`, x - 8, y + drawH / 2 + 4, { align: 'right' });
 
   } else if (type === 'circle' || type === 'sphere-surface') {
     const radius = Math.min(w, h) / 2 - 30;
 
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + radius, cy);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // 半径線
+    CanvasHelper.drawLine(ctx, { x: cx, y: cy }, { x: cx + radius, y: cy }, { color: CanvasHelper.theme.accent });
 
+    // 球面（点線楕円）
     if (type === 'sphere-surface') {
       ctx.beginPath();
       ctx.setLineDash([4, 4]);
       ctx.ellipse(cx, cy, radius, radius * 0.3, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeStyle = CanvasHelper.theme.subStroke;
       ctx.stroke();
       ctx.setLineDash([]);
     }
 
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'center';
-    ctx.fillText(`r = ${v1} m`, cx + radius / 2, cy - 8);
+    CanvasHelper.drawText(ctx, `r = ${v1} m`, cx + radius / 2, cy - 8, { color: CanvasHelper.theme.accent });
 
   } else if (type === 'sector') {
     const radius = Math.min(w, h) / 2 - 35;
     const angleRad = (v2 * Math.PI) / 180;
-    const startAngle = -Math.PI / 2; // 真上 (12時方向)
+    const startAngle = -Math.PI / 2;
     const endAngle = startAngle + angleRad;
 
-    // 扇形の本体
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, radius, startAngle, endAngle);
@@ -2463,31 +2492,21 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.fill();
     ctx.stroke();
 
-    // 中心角のアーク描画
     if (v2 > 0) {
       ctx.beginPath();
       ctx.arc(cx, cy, 25, startAngle, endAngle);
       ctx.strokeStyle = '#10b981';
       ctx.stroke();
 
-      ctx.fillStyle = '#10b981';
-      ctx.textAlign = 'center';
       const midAngle = startAngle + angleRad / 2;
-      ctx.fillText(`${v2}°`, cx + 38 * Math.cos(midAngle), cy + 38 * Math.sin(midAngle) + 4);
+      CanvasHelper.drawText(ctx, `${v2}°`, cx + 38 * Math.cos(midAngle), cy + 38 * Math.sin(midAngle) + 4, { color: '#10b981' });
     }
 
-    // r (半径) の表示位置を始点半径の外側（左側）に配置
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`r = ${v1} m`, cx - 8, cy - radius / 2);
+    CanvasHelper.drawText(ctx, `r = ${v1} m`, cx - 8, cy - radius / 2, { color: CanvasHelper.theme.accent, align: 'right', baseline: 'middle' });
 
   } else if (type === 'trapezoid') {
     if (v2 <= 0 || v3 <= 0) return;
-    const maxW = Math.max(v1, v2);
-    const scaleX = (w - 80) / maxW;
-    const scaleY = (h - 80) / v3;
-    const scale = Math.min(scaleX, scaleY);
+    const scale = CanvasHelper.getScale(w, h, Math.max(v1, v2), v3);
 
     const topW = v1 * scale;
     const botW = v2 * scale;
@@ -2500,7 +2519,8 @@ function drawAreaShape(type, v1, v2, v3) {
     const y1 = (h - drawH) / 2;
     const y2 = y1 + drawH;
 
-    // 台形の描画
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.moveTo(topX1, y1);
     ctx.lineTo(topX2, y1);
@@ -2510,33 +2530,15 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.fill();
     ctx.stroke();
 
-    // 高さを表す赤い点線
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(topX1, y1);
-    ctx.lineTo(topX1, y2);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
-    ctx.setLineDash([]);
+    CanvasHelper.drawLine(ctx, { x: topX1, y: y1 }, { x: topX1, y: y2 }, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    // テキスト表示
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`上底: ${v1} m`, w / 2, y1 - 8);
-    ctx.fillText(`下底: ${v2} m`, w / 2, y2 + 18);
-
-    // 赤い点線の右側に表示
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'left';
-    ctx.fillText(`h = ${v3} m`, topX1 + 6, y1 + drawH / 2 + 4);
+    CanvasHelper.drawText(ctx, `上底: ${v1} m`, w / 2, y1 - 8);
+    CanvasHelper.drawText(ctx, `下底: ${v2} m`, w / 2, y2 + 18);
+    CanvasHelper.drawText(ctx, `h = ${v3} m`, topX1 + 6, y1 + drawH / 2 + 4, { color: CanvasHelper.theme.accent, align: 'left' });
 
   } else if (type === 'triangle') {
     if (v2 <= 0) return;
-
-    const maxW = Math.max(v1, 1);
-    const scaleX = (w - 80) / maxW;
-    const scaleY = (h - 80) / v2;
-    const scale = Math.min(scaleX, scaleY);
+    const scale = CanvasHelper.getScale(w, h, Math.max(v1, 1), v2);
 
     const drawW = v1 * scale;
     const drawH = v2 * scale;
@@ -2548,7 +2550,8 @@ function drawAreaShape(type, v1, v2, v3) {
     const yTop = (h - drawH) / 2;
     const yBottom = yTop + drawH;
 
-    // 三角形の本体描画
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.moveTo(xTop, yTop);
     ctx.lineTo(xBaseRight, yBottom);
@@ -2557,24 +2560,10 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.fill();
     ctx.stroke();
 
-    // 高さを表す赤い点線
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(xTop, yTop);
-    ctx.lineTo(xTop, yBottom);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
-    ctx.setLineDash([]);
+    CanvasHelper.drawLine(ctx, { x: xTop, y: yTop }, { x: xTop, y: yBottom }, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    // 底辺のテキスト表示
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`底辺: ${v1} m`, w / 2, yBottom + 18);
-
-    // 高さ h の表示（赤い点線の右側に配置）
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'left';
-    ctx.fillText(`h = ${v2} m`, xTop + 6, yTop + drawH / 2 + 4);
+    CanvasHelper.drawText(ctx, `底辺: ${v1} m`, w / 2, yBottom + 18);
+    CanvasHelper.drawText(ctx, `h = ${v2} m`, xTop + 6, yTop + drawH / 2 + 4, { color: CanvasHelper.theme.accent, align: 'left' });
 
   } else if (type === 'parallelogram') {
     if (v2 <= 0) return;
@@ -2587,7 +2576,8 @@ function drawAreaShape(type, v1, v2, v3) {
     const y1 = (h - drawH) / 2;
     const y2 = y1 + drawH;
 
-    // 平行四辺形の本体描画
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.moveTo(x1 + offset, y1);
     ctx.lineTo(x1 + offset + drawW, y1);
@@ -2597,44 +2587,25 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.fill();
     ctx.stroke();
 
-    // 高さを表す赤い点線
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(x1 + offset, y1);
-    ctx.lineTo(x1 + offset, y2);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
-    ctx.setLineDash([]);
+    CanvasHelper.drawLine(ctx, { x: x1 + offset, y: y1 }, { x: x1 + offset, y: y2 }, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    // テキスト表示
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`底辺: ${v1} m`, x1 + offset + drawW / 2, y2 + 18);
-
-    // 赤い点線の右側に表示
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'left';
-    ctx.fillText(`h = ${v2} m`, x1 + offset + 6, y1 + drawH / 2 + 4);
+    CanvasHelper.drawText(ctx, `底辺: ${v1} m`, x1 + offset + drawW / 2, y2 + 18);
+    CanvasHelper.drawText(ctx, `h = ${v2} m`, x1 + offset + 6, y1 + drawH / 2 + 4, { color: CanvasHelper.theme.accent, align: 'left' });
 
   } else if (type === 'rhombus') {
-    // 【追加】ひし形のCanvas描画
     if (v2 <= 0) return;
-
-    const maxW = Math.max(v1, 1);
-    const scaleX = (w - 80) / maxW;
-    const scaleY = (h - 80) / v2;
-    const scale = Math.min(scaleX, scaleY);
+    const scale = CanvasHelper.getScale(w, h, Math.max(v1, 1), v2);
 
     const drawW = v1 * scale;
     const drawH = v2 * scale;
 
-    // ひし形の頂点（上、右、下、左）
     const pTop = { x: cx, y: cy - drawH / 2 };
     const pRight = { x: cx + drawW / 2, y: cy };
     const pBottom = { x: cx, y: cy + drawH / 2 };
     const pLeft = { x: cx - drawW / 2, y: cy };
 
-    // 本体描画
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.moveTo(pTop.x, pTop.y);
     ctx.lineTo(pRight.x, pRight.y);
@@ -2644,32 +2615,18 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.fill();
     ctx.stroke();
 
-    // 対角線1（横方向）の赤い点線
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(pLeft.x, pLeft.y);
-    ctx.lineTo(pRight.x, pRight.y);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    CanvasHelper.drawLine(ctx, pLeft, pRight, { color: CanvasHelper.theme.accent, dash: [3, 3] });
+    CanvasHelper.drawLine(ctx, pTop, pBottom, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    // 対角線2（縦方向）の赤い点線
-    ctx.beginPath();
-    ctx.moveTo(pTop.x, pTop.y);
-    ctx.lineTo(pBottom.x, pBottom.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // テキスト表示
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'center';
-    ctx.fillText(`対角線1: ${v1} m`, cx, pBottom.y + 18);
-    ctx.textAlign = 'left';
-    ctx.fillText(`対角線2: ${v2} m`, pRight.x + 8, cy + 4);
+    CanvasHelper.drawText(ctx, `対角線1: ${v1} m`, cx, pBottom.y + 18, { color: CanvasHelper.theme.accent });
+    CanvasHelper.drawText(ctx, `対角線2: ${v2} m`, pRight.x + 8, cy + 4, { color: CanvasHelper.theme.accent, align: 'left' });
 
   } else if (type === 'regular-polygon') {
     const n = Math.max(3, parseInt(v3) || 5);
     const radius = Math.min(w, h) / 2 - 35;
 
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
       const angle = (i * 2 * Math.PI) / n - Math.PI / 2;
@@ -2682,10 +2639,7 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.fill();
     ctx.stroke();
 
-    // 数値表示
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`正${n}角形 (1辺: ${v1} m)`, cx, cy + radius + 20);
+    CanvasHelper.drawText(ctx, `正${n}角形 (1辺: ${v1} m)`, cx, cy + radius + 20);
   }
 }
 
@@ -2719,12 +2673,10 @@ document.addEventListener('DOMContentLoaded', function() {
         calcArea();
       });
 
-      // フォーカス時全選択
       inputEl.addEventListener('focus', function() {
         this.select();
       });
 
-      // リアルタイム入力＆全角変換
       inputEl.addEventListener('input', function() {
         if (!isComposing) {
           convertZenkaku(this);
@@ -2732,12 +2684,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
 
-      // Enterキー押下時に計算＆フォーカス解除
       inputEl.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
           calcArea();
-          this.blur(); // キーボードを閉じる/フォーカスを外す
+          this.blur();
         }
       });
     }
@@ -2747,47 +2698,50 @@ document.addEventListener('DOMContentLoaded', function() {
   calcArea();
 });
 
+// ==========================================
 // --- 8. 体積計算 ---
+// ==========================================
+
 function toggleVolInputs() {
   const type = document.getElementById('vol-type').value;
   const g2 = document.getElementById('vol-v2-group');
   const g3 = document.getElementById('vol-v3-group');
 
-  if (type === 'box') {//直方体／立方体
+  if (type === 'box') { // 直方体／立方体
     document.getElementById('vol-label1').innerText = "縦 (m)";
     document.getElementById('vol-label2').innerText = "横 (m)";
     document.getElementById('vol-label3').innerText = "高さ (m)";
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'tri-prism') { //三角柱
+  } else if (type === 'tri-prism') { // 三角柱
     document.getElementById('vol-label1').innerText = "底面の底辺 (m)";
     document.getElementById('vol-label2').innerText = "底面の高さ (m)";
     document.getElementById('vol-label3').innerText = "柱の高さ (m)";
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'cylinder') {//円柱
+  } else if (type === 'cylinder') { // 円柱
     document.getElementById('vol-label1').innerText = "底面の半径 (m)";
     document.getElementById('vol-label3').innerText = "高さ (m)";
     if (g2) g2.style.display = 'none';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'cone') {//円錐
+  } else if (type === 'cone') { // 円錐
     document.getElementById('vol-label1').innerText = "底面の半径 (m)";
     document.getElementById('vol-label3').innerText = "高さ (m)";
     if (g2) g2.style.display = 'none';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'tri-pyramid') {//三角錐
+  } else if (type === 'tri-pyramid') { // 三角錐
     document.getElementById('vol-label1').innerText = "底辺 (m)";
     document.getElementById('vol-label2').innerText = "底面の高さ (m)";
     document.getElementById('vol-label3').innerText = "立体の高さ (m)";
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'pyramid') {// 四角錐
+  } else if (type === 'pyramid') { // 四角錐
     document.getElementById('vol-label1').innerText = "底面の縦 (m)";
     document.getElementById('vol-label2').innerText = "底面の横 (m)";
     document.getElementById('vol-label3').innerText = "高さ (m)";
     if (g2) g2.style.display = 'block';
     if (g3) g3.style.display = 'block';
-  } else if (type === 'sphere') {//球
+  } else if (type === 'sphere') { // 球
     document.getElementById('vol-label1').innerText = "半径 (m)";
     if (g2) g2.style.display = 'none';
     if (g3) g3.style.display = 'none';
@@ -2810,29 +2764,29 @@ function calcVolume() {
   let hasPi = false;
   let formulaStr = "";
 
-  if (type === 'box') {//直方体／立方体
+  if (type === 'box') {
     resDecimal = v1 * v2 * v3;
     formulaStr = `${v1}m × ${v2}m × ${v3}m`;
-  } else if (type === 'tri-prism') { //三角柱
+  } else if (type === 'tri-prism') {
     resDecimal = (v1 * v2 / 2) * v3;
     formulaStr = `(${v1}m × ${v2}m ÷ 2) × ${v3}m`;
-  } else if (type === 'cylinder') {//円柱
+  } else if (type === 'cylinder') {
     hasPi = true;
     piCoefficient = v1 * v1 * v3;
     resDecimal = Math.PI * piCoefficient;
     formulaStr = `π × ${v1}m × ${v1}m × ${v3}m`;
-  } else if (type === 'cone') {//円錐
+  } else if (type === 'cone') {
     hasPi = true;
     piCoefficient = (v1 * v1 * v3) / 3;
     resDecimal = Math.PI * piCoefficient;
     formulaStr = `(π × ${v1}m × ${v1}m × ${v3}m) ÷ 3`;
-  } else if (type === 'tri-pyramid') {//三角錐
+  } else if (type === 'tri-pyramid') {
     resDecimal = (v1 * v2 / 2) * v3 / 3;
     formulaStr = `(${v1}m × ${v2}m ÷ 2) × ${v3}m ÷ 3`;
-  } else if (type === 'pyramid') {// 四角錐
+  } else if (type === 'pyramid') {
     resDecimal = (v1 * v2 * v3) / 3;
     formulaStr = `(${v1}m × ${v2}m × ${v3}m) ÷ 3`;
-  } else if (type === 'sphere') {//球
+  } else if (type === 'sphere') {
     hasPi = true;
     piCoefficient = (4 / 3) * Math.pow(v1, 3);
     resDecimal = Math.PI * piCoefficient;
@@ -2864,29 +2818,13 @@ function calcVolume() {
   drawVolShape(type, v1, v2, v3);
 }
 
-// 体積Canvas描画関数
+// Canvasへの描画関数 (CanvasHelperモジュールを使用)
 function drawVolShape(type, v1, v2, v3) {
-  const canvas = document.getElementById('vol-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+  const env = CanvasHelper.init('vol-canvas');
+  if (!env || v1 <= 0) return;
+  const { ctx, w, h, cx, cy } = env;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.setLineDash([]);
-  
-  if (v1 <= 0) return;
-
-  const w = canvas.width;
-  const h = canvas.height;
-  const cx = w / 2;
-  const cy = h / 2;
-
-  // 共通スタイルの設定
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#2563eb';
-  ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
-  ctx.font = '12px sans-serif';
-
-  if (type === 'box') { // 直方体・正方体
+  if (type === 'box') {
     if (v2 <= 0 || v3 <= 0) return;
     const maxDim = Math.max(v1, v2, v3);
     const scale = Math.min((w - 100) / maxDim, (h - 80) / maxDim);
@@ -2900,10 +2838,15 @@ function drawVolShape(type, v1, v2, v3) {
     const startX = cx - (drawW + dx) / 2;
     const startY = cy + totalH / 2;
 
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
+
+    // 前面
     ctx.beginPath();
     ctx.rect(startX, startY - drawH, drawW, drawH);
     ctx.fill(); ctx.stroke();
 
+    // 上面
     ctx.beginPath();
     ctx.moveTo(startX, startY - drawH);
     ctx.lineTo(startX + dx, startY - drawH - dy);
@@ -2912,6 +2855,7 @@ function drawVolShape(type, v1, v2, v3) {
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
+    // 側面
     ctx.beginPath();
     ctx.moveTo(startX + drawW, startY - drawH);
     ctx.lineTo(startX + drawW + dx, startY - drawH - dy);
@@ -2920,29 +2864,20 @@ function drawVolShape(type, v1, v2, v3) {
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
+    // 高さを表す中心線
     const centerBaseX = startX + drawW / 2 + dx / 2;
     const centerBaseY = startY - dy / 2;
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(centerBaseX, centerBaseY);
-    ctx.lineTo(centerBaseX, centerBaseY - drawH);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    CanvasHelper.drawLine(ctx, { x: centerBaseX, y: centerBaseY }, { x: centerBaseX, y: centerBaseY - drawH }, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`横: ${v2}m`, startX + drawW / 2, startY + 16);
-    ctx.textAlign = 'left';
-    ctx.fillText(`縦: ${v1}m`, startX + drawW + dx / 2 + 4, startY - dy / 2 + 10);
+    // ラベル描画
+    CanvasHelper.drawText(ctx, `横: ${v2}m`, startX + drawW / 2, startY + 16);
+    CanvasHelper.drawText(ctx, `縦: ${v1}m`, startX + drawW + dx / 2 + 4, startY - dy / 2 + 10, { align: 'left' });
 
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'right';
     const labelX = Math.max(10, centerBaseX - 6);
-    ctx.fillText(`h = ${v3}m`, labelX, centerBaseY - drawH / 2);
-      
-  } else if (type === 'tri-prism') { // 三角柱
-    if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
+    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, centerBaseY - drawH / 2, { color: CanvasHelper.theme.accent, align: 'right' });
+
+  } else if (type === 'tri-prism') {
+    if (v2 <= 0 || v3 <= 0) return;
     const effectiveH = v3 + v2 * 0.35;
     const scale = Math.min((w - 80) / v1, (h - 80) / effectiveH);
 
@@ -2964,7 +2899,8 @@ function drawVolShape(type, v1, v2, v3) {
     const botCenter = { x: (bot1.x + bot2.x + botBack.x) / 3, y: (bot1.y + bot2.y + botBack.y) / 3 };
     const topCenter = { x: botCenter.x, y: botCenter.y - s3 };
 
-    ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
+    // 塗りつぶし
+    ctx.fillStyle = CanvasHelper.theme.fill;
     ctx.beginPath();
     ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(bot2.x, bot2.y); ctx.lineTo(bot1.x, bot1.y);
     ctx.closePath(); ctx.fill();
@@ -2973,42 +2909,30 @@ function drawVolShape(type, v1, v2, v3) {
     ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(topBack.x, topBack.y);
     ctx.closePath(); ctx.fill();
 
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#2563eb';
+    // 輪郭線
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y); ctx.lineTo(topBack.x, topBack.y); ctx.closePath(); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(top1.x, top1.y); ctx.lineTo(bot1.x, bot1.y);
-    ctx.moveTo(top2.x, top2.y); ctx.lineTo(bot2.x, bot2.y);
-    ctx.moveTo(bot1.x, bot1.y); ctx.lineTo(bot2.x, bot2.y);
-    ctx.stroke();
+    
+    CanvasHelper.drawLine(ctx, top1, bot1);
+    CanvasHelper.drawLine(ctx, top2, bot2);
+    CanvasHelper.drawLine(ctx, bot1, bot2);
 
-    ctx.beginPath();
-    ctx.setLineDash([4, 4]);
-    ctx.lineWidth = 1;
-    ctx.moveTo(topBack.x, topBack.y); ctx.lineTo(botBack.x, botBack.y);
-    ctx.moveTo(bot1.x, bot1.y); ctx.lineTo(botBack.x, botBack.y); ctx.lineTo(bot2.x, bot2.y);
-    ctx.strokeStyle = '#94a3b8';
-    ctx.stroke();
+    // 奥の破線
+    CanvasHelper.drawLine(ctx, topBack, botBack, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
+    CanvasHelper.drawLine(ctx, bot1, botBack, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
+    CanvasHelper.drawLine(ctx, botBack, bot2, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
 
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(botCenter.x, botCenter.y);
-    ctx.lineTo(topCenter.x, topCenter.y);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // 高さの点線
+    CanvasHelper.drawLine(ctx, botCenter, topCenter, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`底辺: ${v1}m`, (bot1.x + bot2.x) / 2, baseY + 16);
+    // ラベル
+    CanvasHelper.drawText(ctx, `底辺: ${v1}m`, (bot1.x + bot2.x) / 2, baseY + 16);
 
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'right';
     const labelX = Math.max(10, botCenter.x - 6);
-    ctx.fillText(`h = ${v3}m`, labelX, (botCenter.y + topCenter.y) / 2);
-      
-  } else if (type === 'cylinder') { // 円柱
+    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, (botCenter.y + topCenter.y) / 2, { color: CanvasHelper.theme.accent, align: 'right' });
+
+  } else if (type === 'cylinder') {
     if (v3 <= 0) return;
     const scale = Math.min((w - 90) / (v1 * 2), (h - 90) / v3);
     const rx = v1 * scale;
@@ -3018,41 +2942,36 @@ function drawVolShape(type, v1, v2, v3) {
     const topY = cy - drawH / 2 + ry;
     const botY = topY + drawH;
 
-    ctx.beginPath(); ctx.rect(cx - rx, topY, rx * 2, drawH); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(cx - rx, topY); ctx.lineTo(cx - rx, botY);
-    ctx.moveTo(cx + rx, topY); ctx.lineTo(cx + rx, botY); ctx.stroke();
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
 
+    // 胴体塗り＆縦線
+    ctx.beginPath(); ctx.rect(cx - rx, topY, rx * 2, drawH); ctx.fill();
+    CanvasHelper.drawLine(ctx, { x: cx - rx, y: topY }, { x: cx - rx, y: botY });
+    CanvasHelper.drawLine(ctx, { x: cx + rx, y: topY }, { x: cx + rx, y: botY });
+
+    // 上面・手前下面
     ctx.beginPath(); ctx.ellipse(cx, topY, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(cx, botY, rx, ry, 0, 0, Math.PI); ctx.stroke();
 
+    // 下面奥の破線
     ctx.beginPath();
     ctx.setLineDash([4, 4]);
     ctx.ellipse(cx, botY, rx, ry, 0, Math.PI, Math.PI * 2);
-    ctx.strokeStyle = '#94a3b8';
+    ctx.strokeStyle = CanvasHelper.theme.subStroke;
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(cx, topY);
-    ctx.lineTo(cx, botY);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // 高さ・半径補助線
+    CanvasHelper.drawLine(ctx, { x: cx, y: topY }, { x: cx, y: botY }, { color: CanvasHelper.theme.accent, dash: [3, 3] });
+    CanvasHelper.drawLine(ctx, { x: cx, y: botY }, { x: cx + rx, y: botY }, { color: CanvasHelper.theme.accent });
 
-    ctx.beginPath();
-    ctx.setLineDash([]);
-    ctx.moveTo(cx, botY);
-    ctx.lineTo(cx + rx, botY);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
-
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'center';
-    ctx.fillText(`r = ${v1}m`, cx + rx / 2, botY + 16);
-    ctx.textAlign = 'right';
+    // ラベル
+    CanvasHelper.drawText(ctx, `r = ${v1}m`, cx + rx / 2, botY + 16, { color: CanvasHelper.theme.accent });
+    
     const labelX = Math.max(10, cx - 6);
-    ctx.fillText(`h = ${v3}m`, labelX, topY + drawH / 2);
+    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, topY + drawH / 2, { color: CanvasHelper.theme.accent, align: 'right' });
 
-  } else if (type === 'cone') { // 円錐
+  } else if (type === 'cone') {
     if (v3 <= 0) return;
     const scale = Math.min((w - 90) / (v1 * 2), (h - 90) / v3);
     const rx = v1 * scale;
@@ -3062,48 +2981,42 @@ function drawVolShape(type, v1, v2, v3) {
     const topY = cy - drawH / 2;
     const botY = topY + drawH;
 
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
+
+    // 側面塗り
     ctx.beginPath();
     ctx.moveTo(cx, topY); ctx.lineTo(cx - rx, botY); ctx.lineTo(cx + rx, botY);
     ctx.closePath(); ctx.fill();
 
-    ctx.beginPath();
-    ctx.moveTo(cx, topY); ctx.lineTo(cx - rx, botY);
-    ctx.moveTo(cx, topY); ctx.lineTo(cx + rx, botY);
-    ctx.stroke();
+    // 母線
+    CanvasHelper.drawLine(ctx, { x: cx, y: topY }, { x: cx - rx, y: botY });
+    CanvasHelper.drawLine(ctx, { x: cx, y: topY }, { x: cx + rx, y: botY });
 
+    // 底面（手前）
     ctx.beginPath();
     ctx.ellipse(cx, botY, rx, ry, 0, 0, Math.PI);
     ctx.stroke();
 
+    // 底面（奥の破線）
     ctx.beginPath();
     ctx.setLineDash([4, 4]);
     ctx.ellipse(cx, botY, rx, ry, 0, Math.PI, Math.PI * 2);
-    ctx.strokeStyle = '#94a3b8';
+    ctx.strokeStyle = CanvasHelper.theme.subStroke;
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(cx, topY);
-    ctx.lineTo(cx, botY);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // 高さ・半径補助線
+    CanvasHelper.drawLine(ctx, { x: cx, y: topY }, { x: cx, y: botY }, { color: CanvasHelper.theme.accent, dash: [3, 3] });
+    CanvasHelper.drawLine(ctx, { x: cx, y: botY }, { x: cx + rx, y: botY }, { color: CanvasHelper.theme.accent });
 
-    ctx.beginPath();
-    ctx.setLineDash([]);
-    ctx.moveTo(cx, botY);
-    ctx.lineTo(cx + rx, botY);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // ラベル
+    CanvasHelper.drawText(ctx, `r = ${v1}m`, cx + rx / 2, botY + 16, { color: CanvasHelper.theme.accent });
 
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'center';
-    ctx.fillText(`r = ${v1}m`, cx + rx / 2, botY + 16);
-    ctx.textAlign = 'right';
     const labelX = Math.max(10, cx - 6);
-    ctx.fillText(`h = ${v3}m`, labelX, topY + drawH / 2);
+    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, topY + drawH / 2, { color: CanvasHelper.theme.accent, align: 'right' });
 
-  } else if (type === 'tri-pyramid') { // 三角錐
-    if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
+  } else if (type === 'tri-pyramid') {
+    if (v2 <= 0 || v3 <= 0) return;
 
     const scale = Math.min((w - 80) / v1, (h - 70) / v3);
     const s1 = v1 * scale;
@@ -3120,46 +3033,33 @@ function drawVolShape(type, v1, v2, v3) {
     const botCenter = { x: (p1.x + p2.x + pBack.x) / 3, y: (p1.y + p2.y + pBack.y) / 3 };
     const topPt = { x: botCenter.x, y: botCenter.y - s3 };
 
-    ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
+    // 塗りつぶし
+    ctx.fillStyle = CanvasHelper.theme.fill;
     ctx.beginPath();
     ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
     ctx.closePath(); ctx.fill();
 
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#2563eb';
-    ctx.beginPath();
-    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(p1.x, p1.y);
-    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(p2.x, p2.y);
-    ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pBack.x, pBack.y);
-    ctx.stroke();
+    // 実線
+    CanvasHelper.drawLine(ctx, topPt, p1);
+    CanvasHelper.drawLine(ctx, topPt, p2);
+    CanvasHelper.drawLine(ctx, p1, p2);
+    CanvasHelper.drawLine(ctx, topPt, pBack);
 
-    ctx.beginPath();
-    ctx.setLineDash([4, 4]);
-    ctx.lineWidth = 1;
-    ctx.moveTo(p1.x, p1.y); ctx.lineTo(pBack.x, pBack.y); ctx.lineTo(p2.x, p2.y);
-    ctx.strokeStyle = '#94a3b8';
-    ctx.stroke();
+    // 奥の破線
+    CanvasHelper.drawLine(ctx, p1, pBack, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
+    CanvasHelper.drawLine(ctx, pBack, p2, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
 
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(botCenter.x, botCenter.y);
-    ctx.lineTo(topPt.x, topPt.y);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // 高さの点線
+    CanvasHelper.drawLine(ctx, botCenter, topPt, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`底辺: ${v1}m`, (p1.x + p2.x) / 2, baseY + 16);
+    // ラベル
+    CanvasHelper.drawText(ctx, `底辺: ${v1}m`, (p1.x + p2.x) / 2, baseY + 16);
 
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'right';
     const labelX = Math.max(10, botCenter.x - 6);
-    ctx.fillText(`h = ${v3}m`, labelX, (botCenter.y + topPt.y) / 2);
+    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, (botCenter.y + topPt.y) / 2, { color: CanvasHelper.theme.accent, align: 'right' });
 
-  } else if (type === 'pyramid') { // 四角錐
-    if (v1 <= 0 || v2 <= 0 || v3 <= 0) return;
+  } else if (type === 'pyramid') {
+    if (v2 <= 0 || v3 <= 0) return;
 
     const maxDim = Math.max(v1, v2, v3);
     const scale = Math.min((w - 100) / maxDim, (h - 80) / maxDim);
@@ -3183,7 +3083,8 @@ function drawVolShape(type, v1, v2, v3) {
     };
     const topPt = { x: botCenter.x, y: botCenter.y - drawH };
 
-    ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
+    // 塗りつぶし
+    ctx.fillStyle = CanvasHelper.theme.fill;
     ctx.beginPath();
     ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontLeft.x, pFrontLeft.y); ctx.lineTo(pFrontRight.x, pFrontRight.y);
     ctx.closePath(); ctx.fill();
@@ -3192,65 +3093,50 @@ function drawVolShape(type, v1, v2, v3) {
     ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontRight.x, pFrontRight.y); ctx.lineTo(pBackRight.x, pBackRight.y);
     ctx.closePath(); ctx.fill();
 
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#2563eb';
-    ctx.beginPath();
-    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontLeft.x, pFrontLeft.y);
-    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pFrontRight.x, pFrontRight.y);
-    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pBackRight.x, pBackRight.y);
-    ctx.moveTo(pFrontLeft.x, pFrontLeft.y); ctx.lineTo(pFrontRight.x, pFrontRight.y); ctx.lineTo(pBackRight.x, pBackRight.y);
-    ctx.stroke();
+    // 実線
+    CanvasHelper.drawLine(ctx, topPt, pFrontLeft);
+    CanvasHelper.drawLine(ctx, topPt, pFrontRight);
+    CanvasHelper.drawLine(ctx, topPt, pBackRight);
+    CanvasHelper.drawLine(ctx, pFrontLeft, pFrontRight);
+    CanvasHelper.drawLine(ctx, pFrontRight, pBackRight);
 
-    ctx.beginPath();
-    ctx.setLineDash([4, 4]);
-    ctx.lineWidth = 1;
-    ctx.moveTo(topPt.x, topPt.y); ctx.lineTo(pBackLeft.x, pBackLeft.y);
-    ctx.moveTo(pFrontLeft.x, pFrontLeft.y); ctx.lineTo(pBackLeft.x, pBackLeft.y); ctx.lineTo(pBackRight.x, pBackRight.y);
-    ctx.strokeStyle = '#94a3b8';
-    ctx.stroke();
+    // 奥の破線
+    CanvasHelper.drawLine(ctx, topPt, pBackLeft, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
+    CanvasHelper.drawLine(ctx, pFrontLeft, pBackLeft, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
+    CanvasHelper.drawLine(ctx, pBackLeft, pBackRight, { color: CanvasHelper.theme.subStroke, dash: [4, 4], width: 1 });
 
-    ctx.beginPath();
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(botCenter.x, botCenter.y);
-    ctx.lineTo(topPt.x, topPt.y);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // 高さの点線
+    CanvasHelper.drawLine(ctx, botCenter, topPt, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.fillText(`横: ${v2}m`, startX + drawW / 2, baseY + 16);
-    ctx.textAlign = 'left';
-    ctx.fillText(`縦: ${v1}m`, startX + drawW + dx / 2 + 4, baseY - dy / 2 + 10);
+    // ラベル
+    CanvasHelper.drawText(ctx, `横: ${v2}m`, startX + drawW / 2, baseY + 16);
+    CanvasHelper.drawText(ctx, `縦: ${v1}m`, startX + drawW + dx / 2 + 4, baseY - dy / 2 + 10, { align: 'left' });
 
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'right';
     const labelX = Math.max(10, botCenter.x - 6);
-    ctx.fillText(`h = ${v3}m`, labelX, (botCenter.y + topPt.y) / 2);
+    CanvasHelper.drawText(ctx, `h = ${v3}m`, labelX, (botCenter.y + topPt.y) / 2, { color: CanvasHelper.theme.accent, align: 'right' });
 
-  } else if (type === 'sphere') { // 球
+  } else if (type === 'sphere') {
     const radius = Math.min(w, h) / 2 - 30;
 
+    // 外枠＆塗り
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.fill(); ctx.stroke();
 
+    // 球面赤道線（破線）
     ctx.beginPath();
     ctx.setLineDash([4, 4]);
     ctx.ellipse(cx, cy, radius, radius * 0.3, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = '#94a3b8';
+    ctx.strokeStyle = CanvasHelper.theme.subStroke;
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.setLineDash([]);
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + radius, cy);
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    // 半径線
+    CanvasHelper.drawLine(ctx, { x: cx, y: cy }, { x: cx + radius, y: cy }, { color: CanvasHelper.theme.accent });
 
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'center';
-    ctx.fillText(`r = ${v1}m`, cx + radius / 2, cy - 8);
+    // ラベル
+    CanvasHelper.drawText(ctx, `r = ${v1}m`, cx + radius / 2, cy - 8, { color: CanvasHelper.theme.accent });
   }
 }
 
@@ -3284,12 +3170,10 @@ document.addEventListener('DOMContentLoaded', function() {
         calcVolume();
       });
 
-      // フォーカス時全選択
       inputEl.addEventListener('focus', function() {
         this.select();
       });
 
-      // リアルタイム入力＆全角変換
       inputEl.addEventListener('input', function() {
         if (!isComposing) {
           convertZenkaku(this);
@@ -3297,12 +3181,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
 
-      // Enterキー押下時に計算＆フォーカス解除
       inputEl.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
           calcVolume();
-          this.blur(); // キーボードを閉じる/フォーカスを外す
+          this.blur();
         }
       });
     }
