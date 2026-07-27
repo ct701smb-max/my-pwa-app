@@ -98,7 +98,7 @@
 }
 
 /* ==========================================
-   モーダル全体のスタイル（修正核心部分）
+   モーダル全体のスタイル（修正後）
    ========================================== */
 
 /* hidden属性がついている時は最優先で非表示にする */
@@ -106,7 +106,12 @@
   display: none !important;
 }
 
-/* モーダル背景（暗くする背景＆中央配置） */
+/* モーダル表示時（hiddenがついていない時だけ flex で画面中央に配置） */
+.modal:not([hidden]) {
+  display: flex;
+}
+
+/* モーダル背景（基本スタイル） */
 .modal {
   position: fixed;
   top: 0;
@@ -114,7 +119,6 @@
   width: 100vw;
   height: 100vh;
   background-color: rgba(15, 23, 42, 0.6);
-  display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999; /* 他の要素より一番前に表示 */
@@ -143,7 +147,6 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -553,6 +556,54 @@
 }
 .toggle-btn.active svg {
   transform: scale(1.08);
+}
+.net-dim-box{
+    display: none;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334155;
+    text-align: center;
+}      
+/* 表面積表示用の別枠エリア */
+.surface-box {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #3182ce; /* ワンポイントアクセント色 */
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2d3748;
+  line-height: 1.6;
+}
+
+.surface-box .title {
+  font-weight: bold;
+  font-size: 15px;
+  color: #2b6cb0;
+  margin-bottom: 6px;
+}
+
+.surface-box .formula-step {
+  margin-left: 8px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: #4a5568;
+}
+
+.surface-box .final-result {
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #2d3748;
+  background: #edf2f7;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-block;
 }
 </style>
 </head>
@@ -1001,23 +1052,15 @@
   <canvas id="vol-canvas" width="280" height="200" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%; display: block; margin: 0 auto;"></canvas>
 
   <!-- 展開図の寸法一覧を別枠表示するエリア -->
-  <div id="net-dim-box" style="
-    display: none;
-    margin-top: 10px;
-    padding: 8px 12px;
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #334155;
-    text-align: center;
-  ">
+  <div id="net-dim-box" class="net-dim-box">
     <!-- JSから寸法一覧が挿入されます -->
   </div>
-
+<!-- 表面積・計算式用の別枠エリア -->
+<div id="surface-area-box" class="surface-box">
+<!-- JSから表計算の計算一覧が挿入されます -->
 </div>
-
+</div>
+</div>
 <!-- 1. 公式一覧モーダル本体（面積・計算ガイド） -->
 <div id="area-modal" class="modal" hidden>
   <div class="modal-content">
@@ -1039,6 +1082,35 @@
           <h4>平方根（ √（ルート））</h4>
           <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p>
           <div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
+        </div>
+        <div class="card">
+          <h4>三平方の定理（ピタゴラスの定理）</h4>
+          <p>直角三角形の斜めの長さ（斜辺 c）を求めることができる特別な公式。</p>
+          
+          <div style="display: flex; align-items: center; justify-content: start; gap: 10px; margin: 10px 0;">
+            <!-- 左側：公式ボックス -->
+            <div class="formula-box" style="padding: 8px 24px; margin: 0; font-size: 0.9em; white-space: nowrap; flex-shrink: 0;">
+              a² ＋ b² ＝ c²<br>
+              斜辺 c ＝ √(a² ＋ b²)
+            </div>
+            
+            <!-- 右側：図形 -->
+            <svg width="240" height="85" viewBox="0 0 240 85" style="background: #fff; border-radius: 6px; border: 1px solid #e0e0e0; flex-shrink: 0;">
+              
+              <!-- 直角マーク -->
+              <path d="M 60 60 L 68 60 L 68 68" fill="none" stroke="#999" stroke-width="1.5"/>
+              
+              <!-- 直角三角形 (底辺a, 高さb, 斜辺c) -->
+              <polygon points="60,68 200,68 60,15" fill="rgba(66, 133, 244, 0.1)" stroke="#4285f4" stroke-width="2"/>
+              
+              <!-- 文字ラベル (a, b, c) -->
+              <text x="130" y="79" font-size="11" font-weight="bold" fill="#333" text-anchor="middle">a (底辺)</text>
+              <text x="52" y="45" font-size="11" font-weight="bold" fill="#333" text-anchor="end">b (高さ)</text>
+              <text x="135" y="38" font-size="12" font-weight="bold" fill="#d93025">c (斜辺)</text>
+            </svg>
+          </div>
+
+          <p>※錐体の「斜高」や円錐の「母線」を求めるときに大活躍するよ！</p>
         </div>
       </section>
 
@@ -1112,15 +1184,38 @@
 
         <div class="card">
           <h4>扇形（おうぎがた）</h4>
-          <div class="formula-box">
-            <div><strong>弧の長さ</strong> = 直径 × π × (中心角 ÷ 360)</div>
-            <div style="margin-top: 6px;"><strong>面積</strong> = 半径 × 半径 × π × (中心角 ÷ 360)</div>
+          
+          <div style="display: flex; align-items: center; justify-content: start; gap: 10px; margin: 10px 0;">
+            <!-- 左側：公式ボックス（すっきり配置） -->
+            <div class="formula-box" style="margin: 0; flex: 1; padding: 10px 12px;">
+              <div><strong>弧の長さ</strong> ＝ 直径 × π × (中心角 ÷ 360)</div>
+              <div style="margin-top: 6px;"><strong>面 積</strong> ＝ 半径 × 半径 × π × (中心角 ÷ 360)</div>
+            </div>
+            
+            <!-- 右側：扇形の図形（高さと配置を最適化） -->
+            <svg width="200" height="85" viewBox="0 0 200 85" style="background: #fff; border-radius: 6px; border: 1px solid #e0e0e0; flex-shrink: 0;">
+              <!-- 扇形のベース -->
+              <path d="M 25 68 L 140 68 A 115 115 0 0 0 82 12 Z" fill="rgba(66, 133, 244, 0.1)" stroke="#4285f4" stroke-width="2"/>
+              
+              <!-- 中心角の円弧マーク -->
+              <path d="M 45 68 A 20 20 0 0 0 37 54" fill="none" stroke="#999" stroke-width="1.5"/>
+              <text x="56" y="63" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">中心角</text>
+
+              <!-- 半径（母線）のラベル -->
+              <text x="82" y="80" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">半径（母線）</text>
+              
+              
+              <!-- 弧の長さのラベル -->
+              <text x="135" y="32" font-size="11" font-weight="bold" fill="#d93025" text-anchor="middle">弧</text>
+            </svg>
           </div>
+
           <p>円をピザみたいに切り分けた形！</p>
-          <p style="margin-top: 4px;">
+          <p style="margin-top: 4px; font-size: 0.9em; line-height: 1.5;">
             ・<strong>弧の長さ</strong>：円周（直径 × π）に中心角の割合（中心角 ÷ 360）をかけるよ。<br>
-            ・<strong>面積</strong>：円の面積（半径 × 半径 × π）に中心角の割合をかけるよ。<br>
-            ・<strong>面積</strong>：(1/2) × 半径 × 弧の長さ でも求められるよ。
+            ・<strong>面 積</strong>：円の面積（半径 × 半径 × π）に中心角の割合をかけるよ。<br>
+            ・<strong>公式のコツ</strong>：円錐の側面（おうぎ形）になるときは「<strong>半径 ＝ 母線</strong>」になるよ！<br>
+            ・<strong>面積の別解</strong>：(1/2) × 半径（母線）× 弧の長さ でも求められるよ。
           </p>
         </div>
 
@@ -1144,47 +1239,74 @@
       </section>
 
       <!-- 体積・表面積の公式一覧 -->
-      <section class="help-section">
-        <h3>📐 体積と表面積の公式一覧（立体図形）</h3>
+<section class="help-section">
+  <h3>📐 体積と表面積の公式一覧（立体図形）</h3>
 
-        <div class="card">
-          <h4>直方体・立方体</h4>
-          <div class="formula-box">体積 = 縦 × 横 × 高さ</div>
-        </div>
+  <div class="card">
+    <h4>直方体・立方体</h4>
+    <div class="formula-box">
+      体積 = 縦 × 横 × 高さ<br>
+      表面積 = 2 × (縦×横 + 横×高さ + 高さ×縦)
+    </div>
+    <p>※表面積は、向かい合う3種類の長方形がそれぞれ2枚ずつあるよ！</p>
+  </div>
 
-        <div class="card">
-          <h4>三角柱（すべての柱体）</h4>
-          <div class="formula-box">体積 = 底面積 × 高さ</div>
-          <p>※三角柱の場合は「(底辺 × 底面の高さ ÷ 2) × 立体の高さ」になるよ！</p>
-        </div>
+  <div class="card">
+    <h4>三角柱（すべての柱体）</h4>
+    <div class="formula-box">
+      体積 = 底面積 × 高さ<br>
+      表面積 = 底面積 × 2 + 側面積
+    </div>
+    <p>※側面積は「(底面の周の長さ) × 立体の高さ」でまとめて計算できるよ！</p>
+  </div>
 
-        <div class="card">
-          <h4>円柱</h4>
-          <div class="formula-box">体積 = (半径 × 半径 × π) × 高さ</div>
-        </div>
+  <div class="card">
+    <h4>円柱</h4>
+    <div class="formula-box">
+      体積 = (半径 × 半径 × π) × 高さ<br>
+      表面積 = 2 × (半径 × 半径 × π) + (底周長 × 高さ)<br>
+      底周長（円周） = 2 × 半径 × π
+    </div>
+    <p>※展開図にすると「円2つ」と「大きな長方形1枚（横＝底面の周の長さ）」になるよ！</p>
+  </div>
 
-        <div class="card">
-          <h4>三角錐・角錐（すべての錐体）</h4>
-          <div class="formula-box">体積 = 底面積 × 高さ ÷ 3</div>
-        </div>
+  <div class="card">
+    <h4>三角錐・四角錐（すべての錐体）</h4>
+    <div class="formula-box">
+      体積 = 底面積 × 高さ ÷ 3<br>
+      表面積 = 底面積 + 側面積（すべての側面の合計）<br>
+      斜高 = √(立体の高さ² + 底面中心から辺までの距離²)
+    </div>
+    <p>
+      ※側面の三角形の高さ（斜高）は三平方の定理（ピタゴラスの定理）で求めるよ！<br>
+      【底面中心からの距離の目安】<br>
+      ・<strong>四角錐</strong>：反対側の辺の長さ ÷ 2<br>
+      ・<strong>三角錐</strong>：底面の高さ ÷ 3（※底辺に向かう距離）
+    </p>
+  </div>
 
-        <div class="card">
-          <h4>円錐</h4>
-          <div class="formula-box">体積 = (半径 × 半径 × π) × 高さ ÷ 3</div>
-        </div>
+  <div class="card">
+    <h4>円錐</h4>
+    <div class="formula-box">
+      体積 = (半径 × 半径 × π) × 高さ ÷ 3<br>
+      表面積 = (半径 × 半径 × π) + (母線 × 半径 × π)<br>
+      母線 = √(立体の高さ² + 半径²)
+    </div>
+    <p>※側面積（おうぎ形）は「母線 × 底面の半径 × π」で簡単に計算できるよ！</p>
+  </div>
 
-        <div class="card">
-          <h4>球の体積・表面積</h4>
-          <div class="formula-box">
-            体積 = (4/3) × π × r<sup>3</sup><br>
-            表面積 = 4 × π × r<sup>2</sup>
-          </div>
-          <p>
-            ・体積：「身の上に心配あり（4/3 π r<sup>3</sup>）」<br>
-            ・表面積：「心配ある事情（4 π r<sup>2</sup>）」という語呂合わせで覚えると覚えやすいよ！
-          </p>
-        </div>
-      </section>
+  <div class="card">
+    <h4>球の体積・表面積</h4>
+    <div class="formula-box">
+      体積 = (4/3) × π × r<sup>3</sup><br>
+      表面積 = 4 × π × r<sup>2</sup>
+    </div>
+    <p>
+      ・体積：「身の上に心配あり（4/3 π r<sup>3</sup>）」<br>
+      ・表面積：「心配ある事情（4 π r<sup>2</sup>）」という語呂合わせで覚えると覚えやすいよ！
+    </p>
+  </div>
+</section>
 
     </div>
   </div>
@@ -2914,14 +3036,18 @@ function calcVolume() {
     resultEl.innerHTML = resultHTML;
   }
 
-  // 表示モード（見取図 vs 展開図）の取得＆分岐
-  const modeEl = document.querySelector('input[name="vol-view-mode"]:checked');
-  const mode = modeEl ? modeEl.value : '3d';
+  // 表示モード（見取図 vs 展開図）の取得＆描画分岐
+  const mode = document.querySelector('input[name="vol-view-mode"]:checked')?.value || '3d';
 
   if (mode === 'net') {
     drawNetShape(type, v1, v2, v3);
   } else {
     drawVolShape(type, v1, v2, v3);
+  }
+
+  // ★【追加】表面積・計算式エリアの更新処理を呼び出す
+  if (typeof updateSurfaceArea === 'function') {
+    updateSurfaceArea(type, v1, v2, v3);
   }
 }
 
@@ -3243,23 +3369,45 @@ function drawNetShape(type, v1, v2, v3) {
 
   if (type === 'box') { // 直方体
     if (v2 <= 0 || v3 <= 0) return;
-    const totalW = v2 * 2 + v1 * 2;
-    const totalH = v3 * 2 + v1 * 2;
+
+    // 展開図全体の幅と高さ
+    // 全幅 = 左側面(v1) + 中央面(v2) + 右側面(v1) = v2 + v1 * 2
+    // 全高 = 上面(v1) + 前面(v3) + 底面(v1) + 背面(v3) = v1 * 2 + v3 * 2
+    const totalW = v2 + v1 * 2;
+    const totalH = v1 * 2 + v3 * 2;
     const scale = Math.min(availW / totalW, availH / totalH);
 
-    const dw1 = v1 * scale;
-    const dw2 = v2 * scale;
-    const dh  = v3 * scale;
+    const dw1 = v1 * scale; // 縦
+    const dw2 = v2 * scale; // 横
+    const dh  = v3 * scale; // 高さ
 
-    const startX = cx - (dw2 * 2 + dw1) / 2;
-    const startY = drawCy - (dh * 2 + dw1 * 2) / 2;
+    // 全体の描画開始位置（キャンバス中央に配置）
+    const startX = cx - totalW * scale / 2;
+    const startY = drawCy - totalH * scale / 2;
 
-    ctx.strokeRect(startX + dw2, startY, dw2, dw1); ctx.fillRect(startX + dw2, startY, dw2, dw1);
-    ctx.strokeRect(startX + dw2, startY + dw1, dw2, dh); ctx.fillRect(startX + dw2, startY + dw1, dw2, dh);
-    ctx.strokeRect(startX + dw2, startY + dw1 + dh, dw2, dw1); ctx.fillRect(startX + dw2, startY + dw1 + dh, dw2, dw1);
-    ctx.strokeRect(startX + dw2, startY + dw1 * 2 + dh, dw2, dh); ctx.fillRect(startX + dw2, startY + dw1 * 2 + dh, dw2, dh);
-    ctx.strokeRect(startX, startY + dw1, dw2, dh); ctx.fillRect(startX, startY + dw1, dw2, dh);
-    ctx.strokeRect(startX + dw2 * 2, startY + dw1, dw1, dh); ctx.fillRect(startX + dw2 * 2, startY + dw1, dw1, dh);
+    // 1. 上面（蓋） [幅: dw2, 高: dw1]
+    ctx.strokeRect(startX + dw1, startY, dw2, dw1);
+    ctx.fillRect(startX + dw1, startY, dw2, dw1);
+
+    // 2. 前面（中央） [幅: dw2, 高: dh]
+    ctx.strokeRect(startX + dw1, startY + dw1, dw2, dh);
+    ctx.fillRect(startX + dw1, startY + dw1, dw2, dh);
+
+    // 3. 底面 [幅: dw2, 高: dw1]
+    ctx.strokeRect(startX + dw1, startY + dw1 + dh, dw2, dw1);
+    ctx.fillRect(startX + dw1, startY + dw1 + dh, dw2, dw1);
+
+    // 4. 背面 [幅: dw2, 高: dh]
+    ctx.strokeRect(startX + dw1, startY + dw1 * 2 + dh, dw2, dh);
+    ctx.fillRect(startX + dw1, startY + dw1 * 2 + dh, dw2, dh);
+
+    // 5. 左側面（前面の左） [幅: dw1, 高: dh]
+    ctx.strokeRect(startX, startY + dw1, dw1, dh);
+    ctx.fillRect(startX, startY + dw1, dw1, dh);
+
+    // 6. 右側面（前面の右） [幅: dw1, 高: dh]
+    ctx.strokeRect(startX + dw1 + dw2, startY + dw1, dw1, dh);
+    ctx.fillRect(startX + dw1 + dw2, startY + dw1, dw1, dh);
 
     infoLines = [`縦: <strong>${v1}m</strong>`, `横: <strong>${v2}m</strong>`, `高さ: <strong>${v3}m</strong>`];
 
@@ -3426,20 +3574,287 @@ function drawNetShape(type, v1, v2, v3) {
     infoLines = [`底辺: <strong>${v1}m</strong>`, `底面の高さ: <strong>${v2}m</strong>`, `立体の高さ: <strong>${v3}m</strong>`];
 
   } else if (type === 'sphere') { // 球
-    CanvasHelper.drawText(ctx, "※球は平面に展開できません", cx, cy, { color: CanvasHelper.theme.accent });
-    infoLines = [`半径 r: <strong>${v1}m</strong>`];
-  }
+  // 1. 上部注意書き（少し位置を下に下げて配置）
+  CanvasHelper.drawText(ctx, "※球は完全な平面に展開できないため、", cx, cy - 63, { color: CanvasHelper.theme.accent, fontSize: 11 });
+  CanvasHelper.drawText(ctx, "連結した舟形近似図です", cx, cy - 49, { color: CanvasHelper.theme.accent, fontSize: 11 });
 
-  // --- 【寸法枠外表示の更新処理】 ---
+  const numSlices = 6;     // 舟の枚数
+  const sliceWidth = 28;   // 舟1枚の幅
+  const sliceHeight = 65;  // 舟の長さ（下部2行テキストのスペース確保のため微調整）
+  const startX = cx - (numSlices * sliceWidth) / 2;
+
+  ctx.strokeStyle = CanvasHelper.theme.primary || '#4285f4';
+  ctx.fillStyle = 'rgba(66, 133, 244, 0.1)';
+  ctx.lineWidth = 1.5;
+
+  ctx.beginPath();
+  
+  // 隣り合うパーツの端をぴったり揃えて描画
+  for (let i = 0; i < numSlices; i++) {
+    const leftX = startX + i * sliceWidth;
+    const rightX = leftX + sliceWidth;
+    const midX = leftX + sliceWidth / 2;
+    const topY = cy - sliceHeight / 2 - 8;    // 位置調整
+    const bottomY = cy + sliceHeight / 2 - 8; // 位置調整
+
+    // 各パーツの輪郭
+    ctx.moveTo(leftX, cy - 8);
+    ctx.quadraticCurveTo(leftX, topY + 8, midX, topY);
+    ctx.quadraticCurveTo(rightX, topY + 8, rightX, cy - 8);
+    ctx.quadraticCurveTo(rightX, bottomY - 8, midX, bottomY);
+    ctx.quadraticCurveTo(leftX, bottomY - 8, leftX, cy - 8);
+  }
+  
+  ctx.fill();
+  ctx.stroke();
+
+  // 中央の連結ライン（赤道線）を描画
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(66, 133, 244, 0.5)';
+  ctx.setLineDash([3, 3]); // 破線
+  ctx.moveTo(startX, cy - 8);
+  ctx.lineTo(startX + numSlices * sliceWidth, cy - 8);
+  ctx.stroke();
+  ctx.setLineDash([]); // 破線を解除
+
+  // 2. 展開図の下の補足テキスト（2行に改行）
+  CanvasHelper.drawText(
+    ctx, 
+    "※中央（赤道）で繋げた舟形展開図です。", 
+    cx, 
+    cy + 45, 
+    { color: '#666666', fontSize: 10 }
+  );
+  CanvasHelper.drawText(
+    ctx, 
+    "組み立てると球に近づきます。", 
+    cx, 
+    cy + 58, 
+    { color: '#666666', fontSize: 10 }
+  );
+
+  infoLines = [
+    `半径 r: <strong>${v1}m</strong>`
+  ];
+}
+
+  // --- 【寸法枠外表示および表面積の更新処理】 ---
   const dimBox = document.getElementById('net-dim-box');
-  if (dimBox) {
-    if (infoLines.length > 0) {
-      dimBox.innerHTML = `<strong>【寸法一覧】</strong><br>` + infoLines.join(' &nbsp;|&nbsp; ');
-      dimBox.style.display = 'block';
-    } else {
+  const surfaceBox = document.getElementById('surface-area-box');
+
+  // 現在の表示モード（'net' か '3d' か）を確認
+  const mode = document.querySelector('input[name="vol-view-mode"]:checked')?.value || '3d';
+
+  if (mode === 'net') {
+    // 【展開図モードのとき】表示する
+    if (dimBox) {
+      if (infoLines.length > 0) {
+        dimBox.innerHTML = `<strong>【寸法一覧】</strong><br>` + infoLines.join(' &nbsp;|&nbsp; ');
+        dimBox.style.display = 'block';
+      } else {
+        dimBox.style.display = 'none';
+      }
+    }
+    if (surfaceBox) {
+      surfaceBox.style.display = 'block';
+    }
+  } else {
+    // 【見取図(3D)モードのとき】両方とも非表示にする
+    if (dimBox) {
       dimBox.style.display = 'none';
     }
+    if (surfaceBox) {
+      surfaceBox.style.display = 'none';
+    }
   }
+}
+
+// 表面積と計算式を更新する関数
+function updateSurfaceArea(type, v1, v2, v3) {
+  const box = document.getElementById('surface-area-box');
+  if (!box) return;
+
+  const mode = document.querySelector('input[name="vol-view-mode"]:checked')?.value || '3d';
+  if (mode !== 'net') {
+    box.style.display = 'none';
+    return;
+  }
+
+  // 展開図（net）のときだけ表示する
+  box.style.display = 'block';
+
+  let html = `<div class="title">📐 表面積の計算</div>`;
+
+  if (type === 'box') { // 直方体・立方体
+    const area = 2 * (v1 * v2 + v2 * v3 + v3 * v1);
+    html += `
+      <div><strong>【計算式】</strong></div>
+      <div class="formula-step">① <strong>向かい合う面のペア（3種類）の面積</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;縦 × 横 ＝ ${v1} × ${v2} ＝ ${v1 * v2}</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;横 × 高さ ＝ ${v2} × ${v3} ＝ ${v2 * v3}</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;高さ × 縦 ＝ ${v3} × ${v1} ＝ ${v3 * v1}</div>
+      <div class="formula-step">② <strong>それぞれのペアを2つずつ足す</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;2 × (${v1 * v2} ＋ ${v2 * v3} ＋ ${v3 * v1}) ＝ 2 × ${v1 * v2 + v2 * v3 + v3 * v1}</div>
+      <div class="final-result">表面積 ＝ ${area} m²</div>
+    `;
+
+  } else if (type === 'cylinder') { // 円柱
+    const r = v1;
+    const h = v3;
+    const baseAreaPi = r * r;
+    const sideAreaPi = 2 * r * h;
+    const totalAreaPi = 2 * baseAreaPi + sideAreaPi;
+
+    html += `
+      <div><strong>【計算式】</strong>（円周率は π）</div>
+      <div class="formula-step">① <strong>底面積（円2つ分）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(π × ${r}²) × 2 ＝ ${baseAreaPi}π × 2 ＝ <strong>${baseAreaPi * 2}π</strong></div>
+      <div class="formula-step">② <strong>側面積（長方形）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面のまわりの長さ × 高さ ＝ (2 × π × ${r}) × ${h} ＝ <strong>${sideAreaPi}π</strong></div>
+      <div class="final-result">表面積 ＝ ${baseAreaPi * 2}π ＋ ${sideAreaPi}π ＝ ${totalAreaPi}π m²</div>
+    `;
+
+  } else if (type === 'cone') { // 円錐
+    // v1: 底面の半径, v3: 高さ
+    const r = v1;
+    const h = v3;
+    
+    // 母線 L = √(r² + h²)
+    const L = Math.sqrt(r * r + h * h);
+    const LRounded = Math.round(L * 100) / 100; // 母線
+
+    const angle = (r / L) * 360;
+    const angleRounded = Math.round(angle * 10) / 10; // 中心角
+
+    const baseAreaPi = r * r;
+    const sideAreaPi = Math.round(r * LRounded * 100) / 100;
+    const totalAreaPi = Math.round((baseAreaPi + sideAreaPi) * 100) / 100;
+
+    html += `
+      <div><strong>【計算式】</strong>（円周率は π）</div>
+      <div class="formula-step">① <strong>母線の長さ（斜めの長さ）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;√(半径² ＋ 高さ²) ＝ √(${r}² ＋ ${h}²) ≒ <strong>${LRounded} m</strong></div>
+      <div class="formula-step">② <strong>展開図（扇形）の中心角</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(半径 ÷ 母線) × 360° ＝ (${r} ÷ ${LRounded}) × 360° ≒ <strong>${angleRounded}°</strong></div>
+      <div class="formula-step">③ <strong>各面の面積</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面積（円） ＝ π × ${r}² ＝ <strong>${baseAreaPi}π</strong></div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;側面積（扇形） ＝ π × 半径 × 母線 ≒ π × ${r} × ${LRounded} ＝ <strong>${sideAreaPi}π</strong></div>
+      <div class="final-result">表面積 ＝ ${baseAreaPi}π ＋ ${sideAreaPi}π ≒ ${totalAreaPi}π m²</div>
+    `;
+
+  } else if (type === 'tri-prism') { // 三角柱
+    const a = v1, h_base = v2, h_prism = v3;
+    const baseArea = (a * h_base) / 2;
+    const totalBaseArea = baseArea * 2;
+    const sideAreaOne = a * h_prism;
+    const totalSideArea = sideAreaOne * 3;
+    const totalArea = totalBaseArea + totalSideArea;
+
+    html += `
+      <div><strong>【計算式】</strong></div>
+      <div class="formula-step">① <strong>底面積（上下2つ分）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(${a} × ${h_base} ÷ 2) × 2 ＝ <strong>${totalBaseArea}</strong></div>
+      <div class="formula-step">② <strong>側面積（長方形3つ分）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(${a} × ${h_prism}) × 3 ＝ <strong>${totalSideArea}</strong></div>
+      <div class="final-result">表面積 ＝ ${totalBaseArea} ＋ ${totalSideArea} ＝ ${totalArea} m²</div>
+    `;
+
+  } else if (type === 'tri-pyramid') { // 正三角錐
+  // v1: 底辺, v2: 底面の高さ, v3: 立体の高さ
+  const a = v1, h_base = v2, h_pyramid = v3;
+
+  // ① 底面積
+  const baseArea = (a * h_base) / 2;
+
+  // ② 底面の重心から辺までの距離 (r) と 側面の高さ/斜高 (L)
+  const r = h_base / 3;
+  const rRounded = Math.round(r * 100) / 100;
+  const L = Math.sqrt(h_pyramid * h_pyramid + r * r);
+  const LRounded = Math.round(L * 100) / 100;
+
+  // ③ 側面積（1つの面積 & 3つ分）
+  const sideAreaOne = (a * L) / 2;
+  const sideAreaOneRounded = Math.round(sideAreaOne * 100) / 100;
+  const totalSideArea = sideAreaOne * 3;
+  const totalSideAreaRounded = Math.round(totalSideArea * 100) / 100;
+
+  // ④ 合計表面積
+  const totalArea = baseArea + totalSideArea;
+  const totalAreaRounded = Math.round(totalArea * 100) / 100;
+
+  html += `
+    <div><strong>【計算式】</strong>（※正三角錐として計算）</div>
+    <div class="formula-step">① <strong>底面積（1つ）</strong>:</div>
+    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;${a} × ${h_base} ÷ 2 ＝ <strong>${Math.round(baseArea * 100) / 100} m²</strong></div>
+    
+    <div class="formula-step">② <strong>側面の三角形の高さ（斜高）</strong>:</div>
+    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面中心からの距離 r ≒ ${h_base} ÷ 3 ＝ ${rRounded} m</div>
+    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;斜高 L ＝ √(${h_pyramid}² ＋ ${rRounded}²) ≒ <strong>${LRounded} m</strong></div>
+    
+    <div class="formula-step">③ <strong>側面積（3つ分）</strong>:</div>
+    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;1つの側面 ＝ ${a} × ${LRounded} ÷ 2 ≒ ${sideAreaOneRounded} m²</div>
+    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;3つ分 ＝ ${sideAreaOneRounded} × 3 ≒ <strong>${totalSideAreaRounded} m²</strong></div>
+    
+    <div class="final-result">表面積 ＝ ${Math.round(baseArea * 100) / 100} ＋ ${totalSideAreaRounded} ≒ ${totalAreaRounded} m²</div>
+  `;
+
+  } else if (type === 'pyramid') { // 四角錐
+    // v1: 縦, v2: 横, v3: 立体の高さ
+    const w = v1, l = v2, h_pyramid = v3;
+    
+    // 底面積
+    const baseArea = w * l;
+    
+    // 横の辺(l)側の側面高さ L1 = √(h² + (w/2)²)
+    const L1 = Math.sqrt(h_pyramid * h_pyramid + (w / 2) * (w / 2));
+    const L1Rounded = Math.round(L1 * 100) / 100;
+    
+    // 縦の辺(w)側の側面高さ L2 = √(h² + (l/2)²)
+    const L2 = Math.sqrt(h_pyramid * h_pyramid + (l / 2) * (l / 2));
+    const L2Rounded = Math.round(L2 * 100) / 100;
+
+    // 各ペアの側面積
+    const sideAreaOne = (l * L1Rounded) / 2; // 横の辺側の三角形
+    const sideAreaTwo = (w * L2Rounded) / 2; // 縦の辺側の三角形
+    const totalSideArea = Math.round(((sideAreaOne * 2) + (sideAreaTwo * 2)) * 100) / 100;
+    const totalArea = Math.round((baseArea + totalSideArea) * 100) / 100;
+
+    // 縦と横が同じ長さ（正方形）の場合はスッキリ1行、異なる（長方形）場合は2行で解説
+    let heightStepHTML = "";
+    if (w === l) {
+      heightStepHTML = `&nbsp;&nbsp;&nbsp;&nbsp;√(立体の高さ² ＋ (一辺 ÷ 2)²) ＝ √(${h_pyramid}² ＋ ${w / 2}²) ≒ <strong>${L1Rounded} m</strong>`;
+    } else {
+      heightStepHTML = `
+        &nbsp;&nbsp;&nbsp;&nbsp;横辺側: √(立体の高さ² ＋ (縦 ÷ 2)²) ≒ <strong>${L1Rounded} m</strong><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;縦辺側: √(立体の高さ² ＋ (横 ÷ 2)²) ≒ <strong>${L2Rounded} m</strong>
+      `;
+    }
+
+    html += `
+      <div><strong>【計算式】</strong></div>
+      <div class="formula-step">① <strong>底面積（底面の四角形）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;${w} × ${l} ＝ <strong>${baseArea}</strong></div>
+      <div class="formula-step">② <strong>側面の三角形の高さ（斜めの高さ）</strong>:</div>
+      <div class="formula-step">${heightStepHTML}</div>
+      <div class="formula-step">③ <strong>側面積（三角形4つ分）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(${l} × ${L1Rounded} ÷ 2) × 2 ＋ (${w} × ${L2Rounded} ÷ 2) × 2 ≒ <strong>${totalSideArea}</strong></div>
+      <div class="final-result">表面積 ＝ ${baseArea} ＋ ${totalSideArea} ≒ ${totalArea} m²</div>
+    `;
+
+  } else if (type === 'sphere') { // 球
+    const r = v1;
+    const areaPi = 4 * r * r;
+
+    html += `
+      <div><strong>【計算式】</strong>（円周率は π）</div>
+      <div class="formula-step">① <strong>球の表面積の公式</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;4 × π × 半径² ＝ 4 × π × ${r}²</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;＝ 4 × π × ${r * r}</div>
+      <div class="final-result">表面積 ＝ ${areaPi}π m²</div>
+    `;
+  }
+
+  box.innerHTML = html;
 }
 
 // イベントリスナー設定
