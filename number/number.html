@@ -731,7 +731,7 @@
   <hr style="margin: 20px 0; border: none; border-top: 1px dashed #cbd5e1;">
 
  <!-- 2. ローン返済計算 -->
-<h3 style="font-size: 15px; color: #1e293b; margin: 0 0 12px 0;">🏥 ローン返済計算</h3>
+<h3 style="font-size: 15px; color: #1e293b; margin: 0 0 12px 0;">💰 ローン返済計算</h3>
 
 <div class="row">
   <div class="form-group">
@@ -744,11 +744,19 @@
   </div>
 </div>
 
+<!-- 年とヶ月を並べて入力 -->
 <div class="row">
   <div class="form-group">
-    <label>返済期間 (ヶ月)</label>
-    <input type="number" id="loan-months" class="form-control" placeholder="6" value="6" oninput="calcLoan()">
+    <label>返済期間 (年)</label>
+    <input type="number" id="loan-years" class="form-control" placeholder="0" value="0" min="0" oninput="calcLoan()">
   </div>
+  <div class="form-group">
+    <label>返済期間 (ヶ月)</label>
+    <input type="number" id="loan-months" class="form-control" placeholder="6" value="6" min="0" max="11" oninput="calcLoan()">
+  </div>
+</div>
+
+<div class="row">
   <div class="form-group">
     <label>金利計算方式</label>
     <select id="loan-rate-type" class="form-control" onchange="calcLoan()">
@@ -756,10 +764,7 @@
       <option value="simple">単利 (アドオン方式)</option>
     </select>
   </div>
-</div>
-
-<div class="row" style="margin-top: 8px;">
-  <div class="form-group" style="width: 100%;">
+  <div class="form-group">
     <label>返済方式</label>
     <select id="loan-type" class="form-control" onchange="calcLoan()">
       <option value="equal-payment">元利均等 (毎月一定)</option>
@@ -794,7 +799,7 @@
   <div class="row" style="margin-top: 12px;">
     <div class="form-group">
       <label>返済前の残債 (円)</label>
-      <input type="number" id="prev-balance" class="form-control" placeholder="3000000">
+      <input type="number" id="prev-balance" class="form-control" placeholder="3000000" value="35087705">
     </div>
     <div class="form-group">
       <label>返済後の残債 (円)</label>
@@ -1799,6 +1804,7 @@ function calcPercent() {
 function calcLoan() {
   const amountEl = document.getElementById('loan-amount');
   const rateEl = document.getElementById('loan-rate');
+  const yearsEl = document.getElementById('loan-years');   // 追加：年の要素を取得
   const monthsEl = document.getElementById('loan-months');
   const rateTypeEl = document.getElementById('loan-rate-type');
   const loanTypeEl = document.getElementById('loan-type');
@@ -1808,7 +1814,13 @@ function calcLoan() {
 
   const amount = parseFloat(amountEl.value);
   const annualRate = parseFloat(rateEl.value);
-  const totalMonths = parseFloat(monthsEl.value);
+  
+  // 年とヶ月を数値化（未入力の場合は 0 として処理）
+  const years = yearsEl ? (parseFloat(yearsEl.value) || 0) : 0;
+  const months = parseFloat(monthsEl.value) || 0;
+  
+  // 合計返済月数を算出
+  const totalMonths = (years * 12) + months;
     
   const rateType = rateTypeEl ? rateTypeEl.value : 'compound';
   const loanType = loanTypeEl ? loanTypeEl.value : 'equal-payment';
@@ -1817,6 +1829,7 @@ function calcLoan() {
     resultBox.innerHTML = 'すべての項目を正しく入力してください。';
     return;
   }
+
 
   const rateDecimal = annualRate / 100;
 
