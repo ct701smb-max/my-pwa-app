@@ -98,7 +98,7 @@
 }
 
 /* ==========================================
-   モーダル全体のスタイル（修正後）
+   モーダル全体のスタイル（修正・拡張後）
    ========================================== */
 
 /* hidden属性がついている時は最優先で非表示にする */
@@ -147,9 +147,11 @@
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
+/* ヘッダー部分 */
 .modal-header {
   padding: 16px 20px;
   background-color: #f8fafc;
@@ -166,6 +168,7 @@
   color: #1e293b;
 }
 
+/* 閉じるボタン */
 .close-btn {
   background: none;
   border: none;
@@ -181,9 +184,100 @@
   color: #0f172a;
 }
 
+/* モーダル本体（スクロール領域） */
 .modal-body {
   padding: 20px;
   overflow-y: auto;
+}
+/* モーダルヘッダー内のタイトル＆戻るボタン用グループ */
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap; /* 画面幅が狭い時に自然に折返す調整 */
+  flex: 1;
+  padding-right: 12px;
+}
+
+/* 戻るボタンのスタイリング */
+.back-btn {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.back-btn:hover {
+  background-color: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+/* ==========================================
+   解説メニュー一覧モーダル用（追加）
+   ========================================== */
+
+/* ボタン配置リスト */
+.modal-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* 各メニュー項目ボタン */
+.menu-item-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.menu-item-btn:hover {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  transform: translateY(-1px);
+}
+
+.menu-item-btn .help-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.menu-item-btn .menu-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.menu-item-btn .menu-text strong {
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.menu-item-btn .menu-text small {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.menu-item-btn .arrow {
+  font-size: 18px;
+  color: #94a3b8;
+  font-weight: bold;
 }
 
 /* 解説エリアの中身 */
@@ -219,7 +313,28 @@
   color: #475569;
   line-height: 1.5;
 }
+.card hr {
+  border: none;
+  border-top: 1px dashed #ccc;
+  margin: 12px 0;
+}
 
+.card h5 {
+  margin: 8px 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.mnemonic-list {
+  padding-left: 20px;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.mnemonic-list li {
+  margin-bottom: 6px;
+}
 .formula-box {
   background-color: #eff6ff;
   color: #1e40af;
@@ -239,46 +354,47 @@
 }
   /* タブのスタイル */
   .tabs {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4等分に並べる */
-    background: #f8fafc;
-    border-bottom: 1px solid var(--border-color);
-  }
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5等分に並べる */
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-color);
+}
 
-  .tab-btn {
-    padding: 10px 4px; /* 幅に合わせて文字が収まるようパディングを調整 */
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 13px; /* 4分割でも入りやすいフォントサイズ */
-    font-weight: 600;
-    color: #64748b;
-    text-align: center;
-    transition: all 0.2s;
-    border-bottom: 2px solid transparent;
-    border-right: 1px solid var(--border-color);
-    box-sizing: border-box;
-  }
+.tab-btn {
+  padding: 10px 2px; /* 5分割に合わせて左右パディングを少し削る */
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 11.5px; /* 5分割でも文字が収まりやすいよう少し小さめに調整 */
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  border-right: 1px solid var(--border-color);
+  box-sizing: border-box;
+  white-space: nowrap; /* 文字の意図しない改行を防止 */
+}
 
-  /* 4の倍数番目（右端）のボタンの右枠線を消す */
-  .tab-btn:nth-child(4n) {
-    border-right: none;
-  }
+/* 5の倍数番目（右端）のボタンの右枠線を消す */
+.tab-btn:nth-child(5n) {
+  border-right: none;
+}
 
-  /* 1〜4個目のボタン（上段）に下枠線をつける */
-  .tab-btn:nth-child(-n+4) {
-    border-bottom: 1px solid var(--border-color);
-  }
+/* 1〜5個目のボタン（上段）に下枠線をつける */
+.tab-btn:nth-child(-n+5) {
+  border-bottom: 1px solid var(--border-color);
+}
 
-  .tab-btn:hover {
-    color: var(--primary-color);
-  }
+.tab-btn:hover {
+  color: var(--primary-color);
+}
 
-  .tab-btn.active {
-    color: var(--primary-color);
-    background: var(--card-bg);
-    border-bottom: 2px solid var(--primary-color); /* アクティブ時の下線を表示 */
-  }
+.tab-btn.active {
+  color: var(--primary-color);
+  background: var(--card-bg);
+  border-bottom: 2px solid var(--primary-color); /* アクティブ時の下線を表示 */
+}
 
   /* パネルの基本スタイル（共通） */
   .panel {
@@ -617,18 +733,75 @@
       </a> 多機能電卓
     </h2>
 
-    <div class="help-btn-group">
-      <button type="button" class="help-btn" onclick="openModal('area-modal')" aria-label="公式一覧">
-        <span class="help-icon">📐</span> 公式の解説
-      </button>
-      <button type="button" class="help-btn" onclick="openModal('length-modal')" aria-label="長さの解説">
-        <span class="help-icon">📏</span> 長さの解説
-      </button>
-      <button type="button" class="help-btn" onclick="openModal('weight-modal')" aria-label="重さの解説">
-        <span class="help-icon">⚖️</span> 重さの解説
-      </button>
+    <!-- メイン画面のボタン -->
+<div class="help-btn-group">
+  <button type="button" class="help-btn" onclick="openModal('explanation-menu-modal')" aria-label="解説一覧を開く">
+    <span class="help-icon">💡</span> 解説一覧
+  </button>
+</div>
+</div>
+<!-- ========================================== -->
+<!-- 解説選択用モーダル（親モーダル） -->
+<!-- ========================================== -->
+<div id="explanation-menu-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>解説メニュー</h2>
+      <button type="button" class="close-btn" aria-label="閉じる">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">確認したい解説を選択してください。</p>
+      
+      <div class="modal-menu-list">
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'area-modal')">
+          <span class="help-icon">📐</span>
+          <div class="menu-text">
+            <strong>公式の解説</strong>
+            <small>面積や各公式の一覧</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'length-modal')">
+          <span class="help-icon">📏</span>
+          <div class="menu-text">
+            <strong>長さの解説</strong>
+            <small>メートル法・ヤードポンド法など</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'weight-modal')">
+          <span class="help-icon">⚖️</span>
+          <div class="menu-text">
+            <strong>重さの解説</strong>
+            <small>グラム・オンス・貫など</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+          <!-- explanation-menu-modal の .modal-menu-list の中に追加 -->
+
+<button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'size-modal')">
+  <span class="help-icon">🏡</span>
+  <div class="menu-text">
+    <strong>広さの解説</strong>
+    <small>平方メートル・坪・畳・エーカーなど</small>
+  </div>
+  <span class="arrow">›</span>
+</button>
+
+<button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'capacity-modal')">
+  <span class="help-icon">🫗</span>
+  <div class="menu-text">
+    <strong>容量の解説</strong>
+    <small>リットル・ガロン・合・一升瓶など</small>
+  </div>
+  <span class="arrow">›</span>
+</button>
+      </div>
     </div>
   </div>
+</div>
 
 
   <!-- タブ領域 -->
@@ -636,11 +809,13 @@
     <button class="tab-btn active" onclick="switchTab('basic')">標準/関数</button>
     <button class="tab-btn" onclick="switchTab('baseN')">進数変換</button>
     <button class="tab-btn" onclick="switchTab('percent')">％・割合</button>
+    <button class="tab-btn" onclick="switchTab('area')">面積</button>
+    <button class="tab-btn" onclick="switchTab('volume')">体積</button>
     <button class="tab-btn" onclick="switchTab('time')">時間</button>
     <button class="tab-btn" onclick="switchTab('length')">長さ</button>
     <button class="tab-btn" onclick="switchTab('weight')">重さ</button>
-    <button class="tab-btn" onclick="switchTab('area')">面積</button>
-    <button class="tab-btn" onclick="switchTab('volume')">体積</button>
+    <button class="tab-btn" onclick="switchTab('size')">広さ</button>
+    <button class="tab-btn" onclick="switchTab('capacity')">容量</button>
   </div>
 
   <!-- 1. 標準・関数電卓 -->
@@ -816,8 +991,135 @@
 
   <button class="btn action" style="width: 100%; margin-top: 4px;" onclick="calcReverseRate()">期間内の利息と金利を計算</button>
   <div id="reverse-rate-result" class="result-box">期間内の返済額内訳（元金・利息）と平均金利が表示されます</div>
-</div>    
- <!-- 4. 時間計算パネル -->
+</div>  
+
+  <!-- 4. 面積計算 -->
+<div id="area" class="panel">
+  <div class="form-group">
+    <label>図形の種類</label>
+    <select id="area-type" class="form-control" onchange="toggleAreaInputs()">
+      <option value="rect">長方形 / 正方形</option>
+      <option value="triangle">三角形</option>
+      <option value="parallelogram">平行四辺形</option>
+      <option value="trapezoid">台形</option>
+      <option value="rhombus">ひし形</option>
+      <option value="circle">円</option>
+      <option value="sector">扇形</option>
+      <option value="regular-polygon">正多角形</option>
+      <option value="sphere-surface">球の表面積</option>
+    </select>
+  </div>
+
+  <!-- 入力項目を横並びにするコンテナ (.row) -->
+  <div class="row">
+    <div class="form-group" id="area-v1-group">
+      <label id="area-label1">幅 (m)</label>
+      <input type="text" id="area-v1" class="form-control" value="5">
+    </div>
+
+    <div class="form-group" id="area-v2-group">
+      <label id="area-label2">高さ (m)</label>
+      <input type="text" id="area-v2" class="form-control" value="10">
+    </div>
+
+    <div class="form-group" id="area-v3-group" style="display: none;">
+      <label id="area-label3">高さ (m)</label>
+      <input type="text" id="area-v3" class="form-control" value="10">
+    </div>
+  </div>
+
+  <button class="btn action" style="width:100%; margin-top:5px;" onclick="calcArea()">計算</button>
+
+  <!-- 結果表示領域 -->
+  <div id="area-result" class="result-box" style="margin-top: 15px; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-family: sans-serif;">
+    <div style="font-size: 13px; color: #94a3b8; text-align: center;">
+      数値を入力をすると計算結果が表示されます
+    </div>
+  </div>
+
+  <!-- 図形描画用キャンバス領域 -->
+  <div style="margin-top: 15px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">【形状イメージ】</div>
+    <canvas id="area-canvas" width="280" height="200" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%;"></canvas>
+  </div>
+</div>
+
+<!-- 5. 体積計算 -->
+<div id="volume" class="panel">
+  <div class="form-group">
+    <label>立体の種類</label>
+    <select id="vol-type" class="form-control" onchange="toggleVolInputs()">
+      <option value="box">直方体 / 立方体</option>
+      <option value="tri-prism">三角柱</option>
+      <option value="cylinder">円柱</option>
+      <option value="tri-pyramid">三角錐</option>
+      <option value="pyramid">四角錐</option>
+      <option value="cone">円錐</option>
+      <option value="sphere">球</option>
+    </select>
+  </div>
+
+  <!-- 入力項目を横並びにするコンテナ (.row) -->
+  <div class="row">
+    <div class="form-group" id="vol-v1-group">
+      <label id="vol-label1">縦 (m)</label>
+      <input type="text" id="vol-v1" class="form-control" value="10">
+    </div>
+
+    <div class="form-group" id="vol-v2-group">
+      <label id="vol-label2">横 (m)</label>
+      <input type="text" id="vol-v2" class="form-control" value="10">
+    </div>
+
+    <div class="form-group" id="vol-v3-group">
+      <label id="vol-label3">高さ (m)</label>
+      <input type="text" id="vol-v3" class="form-control" value="10">
+    </div>
+  </div>
+
+  <button class="btn action" style="width:100%; margin-top:5px;" onclick="calcVolume()">計算</button>
+
+  <!-- 結果表示領域 -->
+<div id="vol-result" class="result-box" style="margin-top: 15px;">
+  <!-- 式と結果が表示されます -->
+</div>
+
+<!-- 立体イメージ描画用キャンバス領域 -->
+<div style="margin-top: 15px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+  
+  <!-- 表示切り替えボタン -->
+<div class="toggle-container">
+  <label class="toggle-btn active" id="label-3d">
+    <input type="radio" name="vol-view-mode" value="3d" checked onchange="handleViewChange(this)" style="display: none;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+    </svg>
+    <span>見取図 (3D)</span>
+  </label>
+  <label class="toggle-btn" id="label-net">
+    <input type="radio" name="vol-view-mode" value="net" onchange="handleViewChange(this)" style="display: none;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 3v18M3 12h18M5 5l14 14M19 5L5 19"></path>
+    </svg>
+    <span>展開図 (2D)</span>
+  </label>
+</div>
+
+  <!-- 描画キャンバス -->
+  <canvas id="vol-canvas" width="280" height="200" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%; display: block; margin: 0 auto;"></canvas>
+
+  <!-- 展開図の寸法一覧を別枠表示するエリア -->
+  <div id="net-dim-box" class="net-dim-box">
+    <!-- JSから寸法一覧が挿入されます -->
+  </div>
+<!-- 表面積・計算式用の別枠エリア -->
+<div id="surface-area-box" class="surface-box">
+<!-- JSから表計算の計算一覧が挿入されます -->
+</div>
+</div>
+</div>
+    
+ <!-- 6. 時間計算パネル -->
 <div id="time" class="panel">
   <!-- 時間1 -->
   <div class="time-input-card">
@@ -870,7 +1172,7 @@
   </div>
 </div>
 
- <!-- 5. 長さ換算 -->
+ <!-- 7. 長さ換算 -->
 <div id="length" class="panel">
   <div class="form-group">
     <label>値と単位</label>
@@ -906,7 +1208,7 @@
   <div id="length-result" class="result-box" style="margin-top: 12px;"></div>
 </div>
 
-<!-- 6. 重さ換算 -->
+<!-- 8. 重さ換算 -->
 <div id="weight" class="panel">
   <div class="form-group">
     <label>値と単位</label>
@@ -941,153 +1243,110 @@
   <div id="weight-result" class="result-box" style="margin-top: 12px;"></div>
 </div>
 
-  <!-- 7. 面積計算 -->
-<div id="area" class="panel">
+<!-- 9. 広さ換算 -->
+<div id="size" class="panel">
   <div class="form-group">
-    <label>図形の種類</label>
-    <select id="area-type" class="form-control" onchange="toggleAreaInputs()">
-      <option value="rect">長方形 / 正方形</option>
-      <option value="triangle">三角形</option>
-      <option value="parallelogram">平行四辺形</option>
-      <option value="trapezoid">台形</option>
-      <option value="rhombus">ひし形</option>
-      <option value="circle">円</option>
-      <option value="sector">扇形</option>
-      <option value="regular-polygon">正多角形</option>
-      <option value="sphere-surface">球の表面積</option>
-    </select>
-  </div>
-
-  <!-- 入力項目を横並びにするコンテナ (.row) -->
-  <div class="row">
-    <div class="form-group" id="area-v1-group">
-      <label id="area-label1">幅 (m)</label>
-      <input type="text" id="area-v1" class="form-control" value="50">
-    </div>
-
-    <div class="form-group" id="area-v2-group">
-      <label id="area-label2">高さ (m)</label>
-      <input type="text" id="area-v2" class="form-control" value="70">
-    </div>
-
-    <div class="form-group" id="area-v3-group" style="display: none;">
-      <label id="area-label3">高さ (m)</label>
-      <input type="text" id="area-v3" class="form-control" value="5">
+    <label>値と単位</label>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <input type="number" id="size-val" class="form-control" value="1" step="any" oninput="convertUnit('size')" style="flex: 1;">
+      <select id="size-from" class="form-control" onchange="convertUnit('size')" style="width: auto; min-width: 180px;">
+        <optgroup label="メートル法">
+          <option value="cm2">平方センチメートル (cm²)</option>
+          <option value="m2" selected>平方メートル (㎡ / 平米)</option>
+          <option value="a">アール (a)</option>
+          <option value="ha">ヘクタール (ha)</option>
+          <option value="km2">平方キロメートル (㎢)</option>
+        </optgroup>
+        <optgroup label="日本の伝統単位（畳・尺貫法）">
+          <option value="jo">畳 (中京間 / 1.62㎡)</option>
+          <option value="tsubo">坪 (つぼ)</option>
+          <option value="se">畝 (せ)</option>
+          <option value="tan">反 (たん)</option>
+          <option value="cho">町 (ちょう)</option>
+        </optgroup>
+        <optgroup label="ヤード・ポンド法">
+          <option value="sqin">平方インチ (sq in)</option>
+          <option value="sqft">平方フィート (sq ft)</option>
+          <option value="acre">エーカー (acre)</option>
+        </optgroup>
+      </select>
     </div>
   </div>
 
-  <button class="btn action" style="width:100%; margin-top:5px;" onclick="calcArea()">計算</button>
-
-  <!-- 結果表示領域 -->
-  <div id="area-result" class="result-box" style="margin-top: 15px; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-family: sans-serif;">
-    <div style="font-size: 13px; color: #94a3b8; text-align: center;">
-      数値を入力をすると計算結果が表示されます
-    </div>
-  </div>
-
-  <!-- 図形描画用キャンバス領域 -->
-  <div style="margin-top: 15px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
-    <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">【形状イメージ】</div>
-    <canvas id="area-canvas" width="280" height="200" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%;"></canvas>
-  </div>
+  <!-- 結果を一覧表示するエリア -->
+  <div id="size-result" class="result-box" style="margin-top: 12px;"></div>
 </div>
 
-<!-- 8. 体積計算 -->
-<div id="volume" class="panel">
+<!-- 10. 容量（容積・液体）換算 -->
+<div id="capacity" class="panel">
   <div class="form-group">
-    <label>立体の種類</label>
-    <select id="vol-type" class="form-control" onchange="toggleVolInputs()">
-      <option value="box">直方体 / 立方体</option>
-      <option value="tri-prism">三角柱</option>
-      <option value="cylinder">円柱</option>
-      <option value="tri-pyramid">三角錐</option>
-      <option value="pyramid">四角錐</option>
-      <option value="cone">円錐</option>
-      <option value="sphere">球</option>
-    </select>
-  </div>
-
-  <!-- 入力項目を横並びにするコンテナ (.row) -->
-  <div class="row">
-    <div class="form-group" id="vol-v1-group">
-      <label id="vol-label1">縦 (m)</label>
-      <input type="text" id="vol-v1" class="form-control" value="50">
-    </div>
-
-    <div class="form-group" id="vol-v2-group">
-      <label id="vol-label2">横 (m)</label>
-      <input type="text" id="vol-v2" class="form-control" value="50">
-    </div>
-
-    <div class="form-group" id="vol-v3-group">
-      <label id="vol-label3">高さ (m)</label>
-      <input type="text" id="vol-v3" class="form-control" value="50">
+    <label>値と単位</label>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <input type="number" id="capacity-val" class="form-control" value="1" step="any" oninput="convertUnit('capacity')" style="flex: 1;">
+      <select id="capacity-from" class="form-control" onchange="convertUnit('capacity')" style="width: auto; min-width: 180px;">
+        <optgroup label="メートル法（液体・容積）">
+          <option value="ml">ミリリットル (mL / cc)</option>
+          <option value="dl">デシリットル (dL)</option>
+          <option value="l" selected>リットル (L)</option>
+          <option value="kl">キロリットル (kL)</option>
+          <option value="cm3">立方センチメートル (cm³)</option>
+          <option value="m3">立方メートル (m³)</option>
+        </optgroup>
+        <optgroup label="尺貫法">
+          <option value="go">合（ごう）</option>
+          <option value="sho">升（しょう）</option>
+          <option value="to">斗（と）</option>
+          <option value="koku">石（こく）</option>
+        </optgroup>
+        <optgroup label="ヤード・ポンド法（米国液量）">
+          <option value="floz">液量オンス (fl oz)</option>
+          <option value="pnt">パイント (pt)</option>
+          <option value="qt">クォート (qt)</option>
+          <option value="gal">ガロン (gal)</option>
+        </optgroup>
+      </select>
     </div>
   </div>
 
-  <button class="btn action" style="width:100%; margin-top:5px;" onclick="calcVolume()">計算</button>
-
-  <!-- 結果表示領域 -->
-<div id="vol-result" class="result-box" style="margin-top: 15px;">
-  <!-- 式と結果が表示されます -->
+  <!-- 結果を一覧表示するエリア -->
+  <div id="capacity-result" class="result-box" style="margin-top: 12px;"></div>
 </div>
 
-<!-- 立体イメージ描画用キャンバス領域 -->
-<div style="margin-top: 15px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
-  
-  <!-- 表示切り替えボタン -->
-<div class="toggle-container">
-  <label class="toggle-btn active" id="label-3d">
-    <input type="radio" name="vol-view-mode" value="3d" checked onchange="handleViewChange(this)" style="display: none;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-    </svg>
-    <span>見取図 (3D)</span>
-  </label>
-  <label class="toggle-btn" id="label-net">
-    <input type="radio" name="vol-view-mode" value="net" onchange="handleViewChange(this)" style="display: none;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 3v18M3 12h18M5 5l14 14M19 5L5 19"></path>
-    </svg>
-    <span>展開図 (2D)</span>
-  </label>
-</div>
-
-  <!-- 描画キャンバス -->
-  <canvas id="vol-canvas" width="280" height="200" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%; display: block; margin: 0 auto;"></canvas>
-
-  <!-- 展開図の寸法一覧を別枠表示するエリア -->
-  <div id="net-dim-box" class="net-dim-box">
-    <!-- JSから寸法一覧が挿入されます -->
-  </div>
-<!-- 表面積・計算式用の別枠エリア -->
-<div id="surface-area-box" class="surface-box">
-<!-- JSから表計算の計算一覧が挿入されます -->
-</div>
-</div>
-</div>
 <!-- 1. 公式一覧モーダル本体（面積・計算ガイド） -->
 <div id="area-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
-      <h2>💡 計算機能の使い方・公式ガイド</h2>
+      <div class="modal-title-group">
+        <h2>💡 計算機能の使い方・公式ガイド</h2>
+        <button type="button" class="back-btn" onclick="switchModal('area-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
       <button type="button" class="close-btn" onclick="closeModal('area-modal')">&times;</button>
     </div>
-
     <div class="modal-body">
       <!-- 基礎知識 -->
       <section class="help-section">
         <h3>🌱 基本・定数</h3>
         <div class="card">
-          <h4>円周率（π（パイ） ≒ 3.14）</h4>
-          <p>円のまわりの長さや、円の面積を計算するときに使う特別な数。</p>
-          <div class="formula-box">円周：直径 × π<br>円の面積：半径 × 半径 × π </div>
-        </div>
-        <div class="card">
-          <h4>平方根（ √（ルート））</h4>
-          <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p>
-          <div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
-        </div>
+  <h4>円周率（π（パイ） ≒ 3.14）</h4>
+  <p>円のまわりの長さや、円の面積を計算するときに使う特別な数。</p>
+  <div class="formula-box">円周：直径 × π<br>円の面積：半径 × 半径 × π</div>
+</div>
+<div class="card">
+  <h4>平方根（ √（ルート））</h4>
+  <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p>
+  <div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
+
+  <hr>
+
+  <h5>【よく使うルートの語呂合わせ】</h5>
+  <ul class="mnemonic-list">
+    <li><strong>√2 ≒ 1.41421356</strong><br>「一夜一夜に人見頃（ひとよひとよにひとみごろ）」</li>
+    <li><strong>√3 ≒ 1.7320508</strong><br>「人並みに奢れや（ひとなみにおごれや）」</li>
+    <li><strong>√5 ≒ 2.2360679</strong><br>「富士山麓オウム鳴く（ふじさんろくおうむなく）」</li>
+  </ul>
+</div>
         <div class="card">
           <h4>三平方の定理（ピタゴラスの定理）</h4>
           <p>直角三角形の斜めの長さ（斜辺 c）を求めることができる特別な公式。</p>
@@ -1321,7 +1580,12 @@
 <div id="length-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
-      <h3>📏 長さの単位と使い分けガイド</h3>
+      <div class="modal-title-group">
+        <h3>📏 長さの単位と使い分けガイド</h3>
+        <button type="button" class="back-btn" onclick="switchModal('length-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
       <button type="button" class="close-btn" onclick="closeModal('length-modal')">&times;</button>
     </div>
     <div class="modal-body">
@@ -1390,7 +1654,12 @@
 <div id="weight-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
-      <h3>⚖️ 重さの単位と使い分けガイド</h3>
+      <div class="modal-title-group">
+        <h3>⚖️ 重さの単位と使い分けガイド</h3>
+        <button type="button" class="back-btn" onclick="switchModal('weight-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
       <button type="button" class="close-btn" onclick="closeModal('weight-modal')">&times;</button>
     </div>
     <div class="modal-body">
@@ -1454,6 +1723,174 @@
     </div>
   </div>
 </div>
+    <!-- 広さの解説モーダル -->
+<div id="size-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h3>🏡 広さ（面積）の単位と使い分けガイド</h3>
+        <button type="button" class="back-btn" onclick="switchModal('size-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('size-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 1. メートル法・公制単位 -->
+      <div class="card">
+        <h4>1. メートル法・公制単位</h4>
+        <div class="formula-box">
+          1 ㎢ = 100 ha | 1 ha = 100 a | 1 a = 100 ㎡ | 1 ㎡ = 10,000 ㎠
+        </div>
+        <p>国際的に使用される面積の標準単位です。1㎡は一辺が1メートルの正方形の広さを表します。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>㎢（平方キロメートル）：</strong> 市区町村・都道府県や国の面積、湖の大きさ</li>
+            <li><strong>ha（ヘクタール）：</strong> ゴルフ場の敷地面積、大きめの公園、大型商業施設の敷地</li>
+            <li><strong>a（アール）：</strong> 農家が管理する畑や田んぼの区画単位</li>
+            <li><strong>㎡（平方メートル/平米）：</strong> 賃貸マンションの専有面積、部屋・土地の広さ表記</li>
+            <li><strong>㎠（平方センチメートル）：</strong> 折り紙のサイズ、ノートやスマホ画面の面積</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2. ヤード・ポンド法 -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>2. ヤード・ポンド法（アメリカ・英米圏）</h4>
+        <div class="formula-box">
+          1 acre（エーカー） ≒ 4,047 ㎡ | 1 sq yd ≒ 0.836 ㎡<br>
+          1 sq ft ≒ 0.093 ㎡ | 1 sq in ≒ 6.45 ㎠
+        </div>
+        <p>アメリカやイギリスの不動産・土地・スポーツ施設等で頻繁に使われます。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>acre（エーカー）：</strong> アメリカの農場・牧場の広さ（1エーカー≒サッカー場1面分強）</li>
+            <li><strong>sq ft（平方フィート）：</strong> 海外不動産の部屋の広さ表記（例：1,000 sq ft ≒ 約93㎡・約28坪）</li>
+            <li><strong>sq yd（平方ヤード）：</strong> アメフトやゴルフのグラウンド関連、絨毯（カーペット）の取引</li>
+            <li><strong>sq in（平方インチ）：</strong> ディスプレイの画素密度（ppi）やピザの面積計算</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3. 日本独自・尺貫法 -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>3. 日本独自 ＆ 尺貫法</h4>
+        <div class="formula-box">
+          1 坪 ≒ 3.306 ㎡ | 1 畳（中京間） = 1.62 ㎡<br>
+          1 町 ≒ 9,917 ㎡ | 1 反 ≒ 991.7 ㎡ | 1 畝 ≒ 99.17 ㎡
+        </div>
+        <p>日本の建築・不動産・農地取引で現在も深く根付いている伝統的な単位です。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>坪（つぼ）：</strong> 戸建て住宅の敷地面積・建築面積（「30坪の家」など）、建売住宅の坪単価</li>
+            <li><strong>畳（じょう）：</strong> 部屋の広さ（「6畳間」「LDK 15畳」など、不動産広告では1畳＝1.62㎡以上で計算）</li>
+            <li><strong>反（たん）・畝（せ）：</strong> 農業における田畑の単位（「1反の田んぼ」≒約1,000㎡＝約300坪）</li>
+            <li><strong>町（ちょう）：</strong> 山林や広大な農地の面積単位（「1町歩」≒約1ヘクタール）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 4. よく使われる広さの例え・比較（★新しく追加） -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>4. 日常でよく使われる広さの例え（換算目安）</h4>
+        <div class="formula-box">
+          東京ドーム ≒ 4.77 ha（46,755 ㎡ / 約14,143坪）<br>
+          サッカー場 ≒ 0.71 ha（7,140 ㎡）| テニスコート ≒ 260 ㎡
+        </div>
+        <p>大きな敷地や公園、施設などの広さをイメージしやすくするための定番の表現です。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 覚えておくと便利な目安：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>東京ドーム1個分：</strong> 約 4.7 ヘクタール（建築面積は約 3.7 ヘクタール）</li>
+            <li><strong>サッカー場（国際規格）：</strong> 約 7,140 ㎡（東京ドームの約1/6の広さ）</li>
+            <li><strong>テニスコート（一面）：</strong> 約 260 ㎡（約78.8坪・約160畳分）</li>
+            <li><strong>25mプール（コース含む）：</strong> 約 325 ㎡（幅13mの場合・約98坪）</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 容量の解説モーダル -->
+<div id="capacity-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title-group">
+      <h3>🫗 容量（体積・液量）の単位と使い分けガイド</h3>
+      <button type="button" class="back-btn" onclick="switchModal('capacity-modal', 'explanation-menu-modal')">
+      ‹ メニューへ戻る
+    </button>
+  </div>
+      <button type="button" class="close-btn" onclick="closeModal('capacity-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 1. メートル法（容積・液体） -->
+      <div class="card">
+        <h4>1. メートル法（容積・液体）</h4>
+        <div class="formula-box">
+          1 ㎥ = 1,000 L | 1 kL = 1,000 L | 1 L = 10 dL = 1,000 mL<br>
+          ※ 1 mL = 1 cm³ = 1 cc（すべて同じ体積）
+        </div>
+        <p>液体や気体の量、空間の容積を表す世界共通の単位です。1Lは10cm×10cm×10cmの立方体の容積です。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>㎥（立方メートル）：</strong> 水道使用量のメーター表示、部屋の換気量・土砂の搬出量</li>
+            <li><strong>L（リットル）：</strong> 牛乳パック（1L）、ペットボトル、車のガソリンタンク容量、冷蔵庫の容量</li>
+            <li><strong>dL（デシリットル）：</strong> 小学校の算数の授業、医療における血液検査値（「100mLあたり」の意味で表記）</li>
+            <li><strong>mL / cm³：</strong> 缶ジュース（350mL）、エンジンの排気量（「50cc」「1,500cc」は1,500cm³のこと）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2. ヤード・ポンド法（米国） -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>2. ヤード・ポンド法（米国・液量単位）</h4>
+        <div class="formula-box">
+          1 gal（ガロン） ≒ 3.785 L | 1 qt（クォート） ≒ 0.946 L<br>
+          1 pt（パイント） ≒ 0.473 L | 1 fl oz（液量オンス） ≒ 29.57 mL
+        </div>
+        <p>アメリカで使われる液体の単位です。イギリスのガロン（英ガロン≒4.546L）とは量が異なるため注意が必要です。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>gal（ガロン）：</strong> アメリカのガソリンスタンド（$/ガロン表記）、コストコなどで売られている牛乳タンク</li>
+            <li><strong>pt（パイント）：</strong> パブや居酒屋でのクラフトビール（「1パイント」≒約473mL、英パイントは約568mL）</li>
+            <li><strong>fl oz（液量オンス）：</strong> スタバなど海外発カフェのカップサイズ（Short=8oz, Tall=12oz, Grande=16oz等）、香水</li>
+            <li><strong>qt（クォート）：</strong> エンジンオイルの缶、海外のアイスクリームの容器サイズ</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3. 尺貫法（液体・穀物） -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>3. 尺貫法（お酒・お米・神事）</h4>
+        <div class="formula-box">
+          1 石 = 10 斗 = 100 升 = 1,000 合 ≒ 180.39 L<br>
+          1 合 ≒ 180.39 mL（お米1合は質量約150g）
+        </div>
+        <p>日本酒やお米の計算、伝統行事や歴史的表記で現在も生きている日本の伝統単位です。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #10b981; margin-top:8px; font-size:13px;">
+          <strong>💡 具体的な使用例：</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li><strong>合（ごう）：</strong> 炊飯器で炊くお米の量（「お米2合」）、日本酒の注文（「熱燗一合」）</li>
+            <li><strong>升（しょう）：</strong> 日本酒の一升瓶（1.8L）、お祝いの「一升餅（いっしょうもち）」</li>
+            <li><strong>斗（と）：</strong> 灯油缶（ポリタンク）の別名「一斗缶（いっとかん＝約18L）」、醤油や味噌の大容量取引</li>
+            <li><strong>石（こく）：</strong> 歴史上の加賀百万石などの「石高（こくだか）」、酒造メーカーの年間製造能力（「酒蔵の石数」）</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // --- 1. グローバル関数：指定したIDのモーダルを開く ---
@@ -1472,7 +1909,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // --- 3. 「閉じる」ボタン（.close-btn）でモーダルを閉じる ---
+  // --- 3. グローバル関数：モーダルを切り替える（解説メニュー → 各解説へ） ---
+  window.switchModal = (fromModalId, toModalId) => {
+    window.closeModal(fromModalId);
+    window.openModal(toModalId);
+  };
+
+  // --- 4. 「閉じる」ボタン（.close-btn）でモーダルを閉じる ---
   document.querySelectorAll('.close-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const modal = e.target.closest('.modal');
@@ -1482,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- 4. 背景（黒い暗がり）をクリックしたら閉じる ---
+  // --- 5. 背景（黒い暗がり）をクリックしたら閉じる ---
   document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -1492,15 +1935,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
   // --- タブ切り替え ---
-  function switchTab(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
-    
-    event.currentTarget.classList.add('active');
-    document.getElementById(tabId).classList.add('active');
+function switchTab(tabId) {
+  // 1. 全ボタンから active を外す
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  
+  // 2. 全パネル（コンテンツ）から active を外して非表示にする
+  // (panel と tab-content の両方に対応させます)
+  const panels = document.querySelectorAll('.panel, .tab-content');
+  panels.forEach(panel => {
+    panel.classList.remove('active');
+    panel.style.display = 'none'; // 明示的に非表示
+  });
+
+  // 3. クリックされたボタンに active を付与
+  if (window.event && window.event.currentTarget) {
+    window.event.currentTarget.classList.add('active');
   }
 
- // --- 1. 標準/関数電卓 ---
+  // 4. IDの指定方法（'size' でも 'tab-size' であっても探せるように対応）
+  let target = document.getElementById(tabId) || document.getElementById('tab-' + tabId);
+
+  if (target) {
+    target.classList.add('active');
+    target.style.display = 'block'; // 明示的に表示
+
+    // 5. タブを開いた時に自動で初回の計算を実行（広さ・容量）
+    if (tabId === 'size' && typeof convertSize === 'function') convertSize();
+    if (tabId === 'capacity' && typeof convertCapacity === 'function') convertCapacity();
+  }
+}
+
+// ==========================================
+// --- 1. 標準/関数電卓 ---
+// ==========================================
 const display = document.getElementById('basic-display');
 const formulaDisplay = document.getElementById('basic-formula');
 
@@ -1742,8 +2209,9 @@ function calculateBasic() {
     display.value = 'エラー';
   }
 }
-
-  // --- 2. 進数変換 ---
+// ==========================================
+// --- 2. 進数変換 ---
+// ==========================================
   function convertBase(source) {
     const dec = document.getElementById('dec-input');
     const bin = document.getElementById('bin-input');
@@ -1772,8 +2240,10 @@ function calculateBasic() {
     } catch(e) {}
   }
 
+// ==========================================
 // --- 3. 割合・ローン返済計算 ---
-
+// ==========================================
+    
 // 1. 割合計算
 function calcPercent() {
   const numInput = document.getElementById('pct-num');
@@ -2039,339 +2509,7 @@ document.addEventListener('DOMContentLoaded', function() {
     calcReverseRate();
   });
 });
- // --- 4. 時間計算 ---
-function calcTime(mode = 'add') {
-  // 各入力欄から値を取得（空文字や未入力は0として扱う）
-  const h1 = parseInt(document.getElementById('t1-h').value) || 0;
-  const m1 = parseInt(document.getElementById('t1-m').value) || 0;
-  const s1 = parseInt(document.getElementById('t1-s').value) || 0;
 
-  const h2 = parseInt(document.getElementById('t2-h').value) || 0;
-  const m2 = parseInt(document.getElementById('t2-m').value) || 0;
-  const s2 = parseInt(document.getElementById('t2-s').value) || 0;
-
-  // すべて「秒」単位に換算して計算
-  const total1Seconds = h1 * 3600 + m1 * 60 + s1;
-  const total2Seconds = h2 * 3600 + m2 * 60 + s2;
-  
-  let diffSeconds = mode === 'add' ? total1Seconds + total2Seconds : total1Seconds - total2Seconds;
-
-  const isNegative = diffSeconds < 0;
-  const absSeconds = Math.abs(diffSeconds);
-
-  // 時間・分・秒への逆算
-  const resH = Math.floor(absSeconds / 3600);
-  const resM = Math.floor((absSeconds % 3600) / 60);
-  const resS = absSeconds % 60;
-
-  // 分表示用の計算
-  const totalMinutes = (absSeconds / 60).toFixed(2).replace(/\.00$/, '');
-
-  const sign = isNegative ? '-' : '';
-
-  // 結果表示の出力
-  const resultEl = document.getElementById('time-result');
-  if (resultEl) {
-    resultEl.innerHTML = `
-      <b>${sign}${resH} 時間 ${resM} 分 ${resS} 秒</b><br>
-      <small>（合計 ${sign}${totalMinutes.toLocaleString()} 分 / ${sign}${absSeconds.toLocaleString()} 秒）</small>
-    `;
-  }
-}
-
-// 時間計算の入力欄に対する自動イベント設定
-document.addEventListener('DOMContentLoaded', function() {
-  const timeInputs = [
-    document.getElementById('t1-h'),
-    document.getElementById('t1-m'),
-    document.getElementById('t1-s'),
-    document.getElementById('t2-h'),
-    document.getElementById('t2-m'),
-    document.getElementById('t2-s')
-  ];
-
-  // 全角→半角変換用マップ
-  const zenToHanMap = {
-    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
-    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9'
-  };
-
-  function convertZenkaku(inputEl) {
-    inputEl.value = inputEl.value.replace(/[０-９]/g, function(s) {
-      return zenToHanMap[s] || s;
-    });
-  }
-
-  timeInputs.forEach(input => {
-    if (!input) return;
-
-    let isComposing = false;
-
-    // 日本語入力（IME）の状態管理
-    input.addEventListener('compositionstart', function() {
-      isComposing = true;
-    });
-
-    input.addEventListener('compositionend', function() {
-      isComposing = false;
-      convertZenkaku(this);
-    });
-
-    // 1. フォーカス時に全選択
-    input.addEventListener('focus', function() {
-      this.select();
-    });
-
-    // 2. Enterキー押下で計算（加算）を実行
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !isComposing && !e.isComposing) {
-        e.preventDefault();
-        calcTime('add');
-      }
-    });
-
-    // 3. 入力時のリアルタイム半角自動変換
-    input.addEventListener('input', function() {
-      if (!isComposing) {
-        convertZenkaku(this);
-      }
-    });
-  });
-});
-
-// --- 5 & 6. 単位換算設定データ ---
-
-// 換算レート（基準：lengthはメートル[m]、weightはグラム[g]）
-const unitRates = {
-  length: {
-    // メートル法
-    km: 1000,
-    m: 1,
-    cm: 0.01,
-    mm: 0.001,
-    um: 0.000001,
-    nm: 0.000000001,
-    // ヤード・ポンド法
-    mile: 1609.344,
-    yd: 0.9144,
-    ft: 0.3048,
-    inch: 0.0254,
-    // 尺貫法
-    ri: (10 / 33) * 12960,
-    cho: (10 / 33) * 360,
-    ken: (10 / 33) * 6,
-    shaku: 10 / 33,
-    sun: (10 / 33) / 10
-  },
-  weight: {
-    // 国際単位系（SI） / メートル法
-    mg: 0.001,
-    g: 1,
-    kg: 1000,
-    t: 1000000,
-    // ヤード・ポンド法
-    gr: 0.06479891,    // 1グレーン
-    oz: 28.349523125,  // 1オンス
-    lb: 453.59237,     // 1ポンド
-    st: 6350.29318,    // 1ストーン (14ポンド)
-    // 尺貫法
-    momme: 3.75,       // 1匁
-    kin: 600,          // 1斤
-    kan: 3750,         // 1貫 (1000匁)
-    // その他の単位
-    ct: 0.2            // 1カラット
-  }
-};
-
-// 単位のグループ分け・ラベル設定
-const unitGroups = {
-  length: [
-    {
-      groupName: 'メートル法（SI単位系）',
-      units: {
-        km: { name: 'キロメートル', symbol: 'km' },
-        m: { name: 'メートル', symbol: 'm' },
-        cm: { name: 'センチメートル', symbol: 'cm' },
-        mm: { name: 'ミリメートル', symbol: 'mm' },
-        um: { name: 'マイクロメートル', symbol: 'μm' },
-        nm: { name: 'ナノメートル', symbol: 'nm' }
-      }
-    },
-    {
-      groupName: 'ヤード・ポンド法',
-      units: {
-        mile: { name: 'マイル', symbol: 'mile' },
-        yd: { name: 'ヤード', symbol: 'yd' },
-        ft: { name: 'フィート', symbol: 'ft' },
-        inch: { name: 'インチ', symbol: 'in' }
-      }
-    },
-    {
-      groupName: '尺貫法',
-      units: {
-        ri: { name: '里', symbol: 'り' },
-        cho: { name: '町', symbol: 'ちょう' },
-        ken: { name: '間', symbol: 'けん' },
-        shaku: { name: '尺', symbol: 'しゃく' },
-        sun: { name: '寸', symbol: 'すん' }
-      }
-    }
-  ],
-  weight: [
-    {
-      groupName: '国際単位系（SI） / メートル法',
-      units: {
-        mg: { name: 'ミリグラム', symbol: 'mg' },
-        g: { name: 'グラム', symbol: 'g' },
-        kg: { name: 'キログラム', symbol: 'kg' },
-        t: { name: 'トン', symbol: 't' }
-      }
-    },
-    {
-      groupName: 'ヤード・ポンド法',
-      units: {
-        gr: { name: 'グレーン', symbol: 'gr' },
-        oz: { name: 'オンス', symbol: 'oz' },
-        lb: { name: 'ポンド', symbol: 'lb' },
-        st: { name: 'ストーン', symbol: 'st' }
-      }
-    },
-    {
-      groupName: '尺貫法',
-      units: {
-        momme: { name: '匁', symbol: 'もんめ' },
-        kin: { name: '斤', symbol: 'きん' },
-        kan: { name: '貫', symbol: 'かん' }
-      }
-    },
-    {
-      groupName: 'その他の単位',
-      units: {
-        ct: { name: 'カラット', symbol: 'ct' }
-      }
-    }
-  ]
-};
-
-function convertUnit(type) {
-  const valEl = document.getElementById(`${type}-val`);
-  const fromEl = document.getElementById(`${type}-from`);
-  const resultEl = document.getElementById(`${type}-result`);
-
-  if (!valEl || !fromEl || !resultEl) return;
-
-  const val = parseFloat(valEl.value);
-
-  if (isNaN(val)) {
-    resultEl.innerHTML = '<div style="color: #9ca3af;">数値を入力してください</div>';
-    return;
-  }
-
-  const from = fromEl.value;
-  const rates = unitRates[type];
-  const groups = unitGroups[type];
-
-  // 基準値（m または g）に換算
-  const baseValue = val * rates[from];
-
-  let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
-
-  // カテゴリごとにループ処理して描画
-  groups.forEach(group => {
-    html += `<div>`;
-    html += `<div style="font-weight: bold; font-size: 13px; color: #3b82f6; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid #e5e7eb;">${group.groupName}</div>`;
-    html += `<div style="display: flex; flex-direction: column; gap: 6px;">`;
-
-    for (const [unitKey, labelInfo] of Object.entries(group.units)) {
-      const convertedVal = baseValue / rates[unitKey];
-      
-      // 指数表記(1e-7など)を読みやすい表記へ整形し、有効数字8桁で丸める
-      let formattedVal = Number(convertedVal.toPrecision(8)).toString();
-
-      const isSelected = (unitKey === from);
-      const bgStyle = isSelected 
-        ? 'background-color: #eff6ff; border-color: #bfdbfe;' 
-        : 'background-color: #f8fafc; border-color: #e2e8f0;';
-
-      html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border: 1px solid; border-radius: 6px; ${bgStyle}">
-          <span style="font-size: 13px; color: #475569;">${labelInfo.name} (${labelInfo.symbol})</span>
-          <span style="font-weight: bold; color: #1e293b; font-size: 14px;">${formattedVal} <small style="font-size: 11px; color: #64748b;">${labelInfo.symbol}</small></span>
-        </div>
-      `;
-    }
-
-    html += `</div></div>`;
-  });
-
-  html += '</div>';
-  resultEl.innerHTML = html;
-}
-
-
-// 単位換算の入力欄に対するイベント設定
-document.addEventListener('DOMContentLoaded', function() {
-  const types = ['length', 'weight'];
-
-  const zenToHanMap = {
-    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
-    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9',
-    '．':'.'
-  };
-
-  function convertZenkaku(inputEl) {
-    inputEl.value = inputEl.value.replace(/[０-９．]/g, function(s) {
-      return zenToHanMap[s] || s;
-    });
-  }
-
-  types.forEach(type => {
-    const valInput = document.getElementById(`${type}-val`);
-    const fromSelect = document.getElementById(`${type}-from`);
-
-    // --- 数値入力欄のイベント ---
-    if (valInput) {
-      let isComposing = false;
-
-      valInput.addEventListener('compositionstart', function() {
-        isComposing = true;
-      });
-
-      valInput.addEventListener('compositionend', function() {
-        isComposing = false;
-        convertUnit(type);
-      });
-
-      // 1. フォーカス時全選択
-      valInput.addEventListener('focus', function() {
-        this.select();
-      });
-
-      // 2. 入力時は計算だけを実行（valueの上書きをしないことで「.」が打てるようになります）
-      valInput.addEventListener('input', function() {
-        if (!isComposing) {
-          convertUnit(type);
-        }
-      });
-
-      // 3. 入力欄から外れたタイミングで全角を半角に安全変換
-      valInput.addEventListener('blur', function() {
-        convertZenkaku(this);
-        convertUnit(type);
-      });
-    }
-
-    // --- セレクトボックス（単位変更時）のイベント ---
-    if (fromSelect) {
-      fromSelect.addEventListener('change', function() {
-        convertUnit(type);
-      });
-    }
-
-    // 初回読み込み時に初期計算を実行
-    convertUnit(type);
-  });
-});
 // ==========================================
 // Canvas描画共通ヘルパーモジュール
 // ==========================================
@@ -2436,7 +2574,7 @@ const CanvasHelper = {
   }
 };
 // ==========================================
-// --- 7. 面積計算 ---
+// --- 4. 面積計算 ---
 // ==========================================
 
 function toggleAreaInputs() {
@@ -2811,9 +2949,13 @@ function drawAreaShape(type, v1, v2, v3) {
     CanvasHelper.drawText(ctx, `底辺: ${v1} m`, x1 + offset + drawW / 2, y2 + 18);
     CanvasHelper.drawText(ctx, `h = ${v2} m`, x1 + offset + 6, y1 + drawH / 2 + 4, { color: CanvasHelper.theme.accent, align: 'left' });
 
-  } else if (type === 'rhombus') {
+  } else if (type === 'rhombus') { // ひし形
     if (v2 <= 0) return;
-    const scale = CanvasHelper.getScale(w, h, Math.max(v1, 1), v2);
+
+    // 左右・上下の文字スペース（マージン）をあらかじめしっかり確保
+    const padX = 80; // 左右の余白（文字が外に出るため少し広めに）
+    const padY = 50; // 上下の余白
+    const scale = Math.min((w - padX) / Math.max(v1, 1), (h - padY) / Math.max(v2, 1));
 
     const drawW = v1 * scale;
     const drawH = v2 * scale;
@@ -2834,11 +2976,24 @@ function drawAreaShape(type, v1, v2, v3) {
     ctx.fill();
     ctx.stroke();
 
+    // 対角線の描画（破線）
     CanvasHelper.drawLine(ctx, pLeft, pRight, { color: CanvasHelper.theme.accent, dash: [3, 3] });
     CanvasHelper.drawLine(ctx, pTop, pBottom, { color: CanvasHelper.theme.accent, dash: [3, 3] });
 
-    CanvasHelper.drawText(ctx, `対角線1: ${v1} m`, cx, pBottom.y + 18, { color: CanvasHelper.theme.accent });
-    CanvasHelper.drawText(ctx, `対角線2: ${v2} m`, pRight.x + 8, cy + 4, { color: CanvasHelper.theme.accent, align: 'left' });
+    // --- テキスト配置の調整 ---
+    // 対角線1（横）：下側に表示
+    CanvasHelper.drawText(ctx, `対角線1: ${v1} m`, cx, pBottom.y + 16, { color: CanvasHelper.theme.accent, align: 'center' });
+
+    // 対角線2（縦）：右端 (pRight.x) から画面右端までの余裕を計算
+    const rightMargin = w - pRight.x;
+
+    // 文字列の概算幅（約90px）に対して画面右端の余裕が足りない場合は、縦対角線のすぐ右（内側）に配置
+    if (rightMargin < 95) {
+      CanvasHelper.drawText(ctx, `対角線2: ${v2} m`, cx + 8, cy - drawH / 4, { color: CanvasHelper.theme.accent, align: 'left' });
+    } else {
+      // 余裕がある場合は右頂点の外側に配置
+      CanvasHelper.drawText(ctx, `対角線2: ${v2} m`, pRight.x + 8, cy, { color: CanvasHelper.theme.accent, align: 'left' });
+    }
 
   } else if (type === 'regular-polygon') {
     const n = Math.max(3, parseInt(v3) || 5);
@@ -2918,7 +3073,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ==========================================
-// --- 8. 体積計算 ---
+// --- 5. 体積計算 ---
 // ==========================================
 
 function toggleVolInputs() {
@@ -3470,14 +3625,20 @@ function drawNetShape(type, v1, v2, v3) {
     CanvasHelper.drawLine(ctx, { x: cx, y: startY - r }, { x: cx + r, y: startY - r }, { color: CanvasHelper.theme.accent });
     CanvasHelper.drawText(ctx, `r = ${v1}m`, cx + r / 2, startY - r - 6, { color: CanvasHelper.theme.accent });
 
-    const widthCalc = (v1 * 2 * Math.PI).toFixed(2);
-    // 見取図と表記を統一（半径・高さ・底周長）
-    infoLines = [`底面半径 r: <strong>${v1}m</strong>`, `高さ h: <strong>${v3}m</strong>`, `底周長 (2πr): <strong>約 ${widthCalc}m</strong>`];
+    // 【修正】概算数値 (toFixed) ではなく π 表記で統一
+    infoLines = [
+      `底面半径 r: <strong>${v1}m</strong>`, 
+      `高さ h: <strong>${v3}m</strong>`, 
+      `底周長: <strong>${2 * v1}π m</strong>`
+    ];
 
   } else if (type === 'cone') { // 円錐
     if (v3 <= 0) return;
 
-    const L_real = Math.sqrt(v1 * v1 + v3 * v3);
+    const lSq = v1 * v1 + v3 * v3; // 二乗の値
+    const L_real = Math.sqrt(lSq);
+    const LStr = simplifySquareRoot(lSq); // √表記に変換
+
     const thetaRad = Math.min(Math.PI * 1.95, (v1 / L_real) * Math.PI * 2);
     const thetaDeg = ((v1 / L_real) * 360).toFixed(1);
 
@@ -3527,40 +3688,119 @@ function drawNetShape(type, v1, v2, v3) {
     CanvasHelper.drawLine(ctx, { x: cx, y: circleCenterY }, { x: cx + r, y: circleCenterY }, { color: CanvasHelper.theme.accent });
     CanvasHelper.drawText(ctx, `r = ${v1}m`, cx + r / 2, circleCenterY - 6, { color: CanvasHelper.theme.accent });
 
+    // 【修正】母線を √ 表記に変更（概算なし）
     infoLines = [
       `底面半径 r: <strong>${v1}m</strong>`,
       `高さ h: <strong>${v3}m</strong>`,
-      `母線 L: <strong>約 ${L_real.toFixed(2)}m</strong>`,
+      `母線 L: <strong>${LStr}m</strong>`,
       `中心角 θ: <strong>${thetaDeg}°</strong>`
     ];
 
   } else if (type === 'pyramid') { // 四角錐
     if (v2 <= 0 || v3 <= 0) return;
-    const maxH = Math.sqrt(Math.pow(v1 / 2, 2) + v3 * v3);
-    const maxW = Math.sqrt(Math.pow(v2 / 2, 2) + v3 * v3);
+    
+    // 斜高 L の厳密計算（ルート表記）
+    // 上下用の側面高さ maxH (底辺 v2 に対する高さ)
+    // 左右用の側面高さ maxW (底辺 v1 に対する高さ)
+    const maxH = Math.sqrt(Math.pow(v1 / 2, 2) + v3 * v3); // 上下三角形の高さ
+    const maxW = Math.sqrt(Math.pow(v2 / 2, 2) + v3 * v3); // 左右三角形の高さ
 
-    const scale = Math.min(availW / (v2 + maxW * 2), availH / (v1 + maxH * 2));
+    const lSq4 = v1 * v1 + 4 * v3 * v3; 
+    let LStr = "";
+    const lSqStr = simplifySquareRoot(lSq4);
+    if (lSqStr.includes('√')) {
+      const match = lSqStr.match(/^(\d*)√(\d+)$/);
+      if (match) {
+        const outer = match[1] ? parseInt(match[1], 10) : 1;
+        const inner = match[2];
+        LStr = outer % 2 === 0 ? `${outer / 2}√${inner}` : `(${outer}√${inner})/2`;
+      } else {
+        LStr = `√(${lSq4}/4)`;
+      }
+    } else {
+      LStr = `${Number(lSqStr) / 2}`;
+    }
 
-    const sw = v2 * scale;
-    const sh = v1 * scale;
-    const triH_v = maxH * scale;
-    const triH_h = maxW * scale;
+    // 展開図全体が収まるようにスケール調整（上下: v1 + maxH*2, 左右: v2 + maxW*2）
+    const scale = Math.min(availW / (v2 + maxW * 2), availH / (v1 + maxH * 2)) * 0.9;
+
+    const sw = v2 * scale;      // 底面の横幅
+    const sh = v1 * scale;      // 底面の縦幅
+    const triH_v = maxH * scale; // 上下三角形の高さ
+    const triH_h = maxW * scale; // 左右三角形の高さ
 
     const startX = cx - sw / 2;
     const startY = drawCy - sh / 2;
 
-    ctx.strokeRect(startX, startY, sw, sh);
+    ctx.fillStyle = CanvasHelper.theme.fill;
+    ctx.strokeStyle = CanvasHelper.theme.stroke;
+
+    // 1. 中央の底面（長方形）
     ctx.fillRect(startX, startY, sw, sh);
+    ctx.strokeRect(startX, startY, sw, sh);
 
-    ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(startX + sw, startY); ctx.lineTo(cx, startY - triH_v); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(startX, startY + sh); ctx.lineTo(startX + sw, startY + sh); ctx.lineTo(cx, startY + sh + triH_v); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(startX, startY + sh); ctx.lineTo(startX - triH_h, drawCy); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(startX + sw, startY); ctx.lineTo(startX + sw, startY + sh); ctx.lineTo(startX + sw + triH_h, drawCy); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // 2. 上の側面（三角形）
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(startX + sw, startY);
+    ctx.lineTo(cx, startY - triH_v);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
-    infoLines = [`底面: <strong>縦 ${v1}m × 横 ${v2}m</strong>`, `高さ: <strong>${v3}m</strong>`, `側面高さ: <strong>約 ${maxH.toFixed(2)}m</strong>`];
+    // 3. 下の側面（三角形）
+    ctx.beginPath();
+    ctx.moveTo(startX, startY + sh);
+    ctx.lineTo(startX + sw, startY + sh);
+    ctx.lineTo(cx, startY + sh + triH_v);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 4. 左の側面（三角形）
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(startX, startY + sh);
+    ctx.lineTo(startX - triH_h, drawCy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 5. 右の側面（三角形）
+    ctx.beginPath();
+    ctx.moveTo(startX + sw, startY);
+    ctx.lineTo(startX + sw, startY + sh);
+    ctx.lineTo(startX + sw + triH_h, drawCy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 寸法一覧（概算なし、√表記）
+    infoLines = [
+      `底面: <strong>縦 ${v1}m × 横 ${v2}m</strong>`, 
+      `高さ h: <strong>${v3}m</strong>`, 
+      `斜高 L: <strong>${LStr}m</strong>`
+    ];
 
   } else if (type === 'tri-pyramid') { // 三角錐
     if (v2 <= 0 || v3 <= 0) return;
+
+    // 斜高 L の厳密計算 L^2 = (9*h_pyr^2 + h_base^2) / 9
+    const numSq = 9 * v3 * v3 + v2 * v2;
+    const numSqrtStr = simplifySquareRoot(numSq);
+    let LStr = "";
+    if (numSqrtStr.includes('√')) {
+      const match = numSqrtStr.match(/^(\d*)√(\d+)$/);
+      if (match) {
+        const outer = match[1] ? parseInt(match[1], 10) : 1;
+        const inner = match[2];
+        LStr = outer % 3 === 0 ? `${outer / 3}√${inner}` : `(${outer}√${inner})/3`;
+      } else {
+        LStr = `√(${numSq}/9)`;
+      }
+    } else {
+      LStr = `${Math.round((Number(numSqrtStr) / 3) * 100) / 100}`;
+    }
 
     const scale = Math.min(availW / (v1 * 1.5 + v3 * 0.7), availH / (v2 + v3 * 1.2));
 
@@ -3584,7 +3824,13 @@ function drawNetShape(type, v1, v2, v3) {
     ctx.beginPath(); ctx.moveTo(pTop.x, pTop.y); ctx.lineTo(pRight.x, pRight.y); ctx.lineTo(cx + baseW / 2 + pyrH * 0.5, shiftedCy - pyrH * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(pLeft.x, pLeft.y); ctx.lineTo(pRight.x, pRight.y); ctx.lineTo(cx, shiftedCy + baseH / 2 + pyrH); ctx.closePath(); ctx.fill(); ctx.stroke();
 
-    infoLines = [`底辺: <strong>${v1}m</strong>`, `底面の高さ: <strong>${v2}m</strong>`, `立体の高さ: <strong>${v3}m</strong>`];
+    // 【修正】斜高 L（√表記）を追加（概算なし）
+    infoLines = [
+      `底辺: <strong>${v1}m</strong>`, 
+      `底面の高さ: <strong>${v2}m</strong>`, 
+      `立体の高さ: <strong>${v3}m</strong>`,
+      `斜高 L: <strong>${LStr}m</strong>`
+    ];
 
   } else if (type === 'sphere') { // 球
   // 1. 上部注意書き（少し位置を下に下げて配置）
@@ -3682,6 +3928,31 @@ function drawNetShape(type, v1, v2, v3) {
   }
 }
 
+// √n を「a√b」または「a」の文字列に変換する関数 (n は整数)
+function simplifySquareRoot(n) {
+  if (n <= 0) return '0';
+  
+  // 整数にぴったりなる場合（例: √25 => 5）
+  const sqrtN = Math.sqrt(n);
+  if (Number.isInteger(sqrtN)) {
+    return `${sqrtN}`;
+  }
+
+  let outer = 1; // 外に出る数 a
+  let inner = n; // ルートの中に残る数 b
+
+  for (let i = Math.floor(Math.sqrt(n)); i >= 2; i--) {
+    if (n % (i * i) === 0) {
+      outer = i;
+      inner = n / (i * i);
+      break;
+    }
+  }
+
+  // 例: √20 -> 2√5
+  return outer === 1 ? `√${inner}` : `${outer}√${inner}`;
+}
+    
 // 表面積と計算式を更新する関数
 function updateSurfaceArea(type, v1, v2, v3) {
   const box = document.getElementById('surface-area-box');
@@ -3695,6 +3966,28 @@ function updateSurfaceArea(type, v1, v2, v3) {
 
   // 展開図（net）のときだけ表示する
   box.style.display = 'block';
+
+  // 1. ルート簡素化のヘルパー関数（関数内部に定義してエラーを防止）
+  function simplifySqrt(n) {
+    if (n <= 0) return '0';
+    const sqrtN = Math.sqrt(n);
+    if (Number.isInteger(sqrtN)) return `${sqrtN}`;
+
+    if (Number.isInteger(n)) {
+      let outer = 1;
+      let inner = n;
+      for (let i = Math.floor(Math.sqrt(n)); i >= 2; i--) {
+        if (n % (i * i) === 0) {
+          outer = i;
+          inner = n / (i * i);
+          break;
+        }
+      }
+      return outer === 1 ? `√${inner}` : `${outer}√${inner}`;
+    }
+
+    return `${Math.round(sqrtN * 100) / 100}`;
+  }
 
   let html = `<div class="title">📐 表面積の計算</div>`;
 
@@ -3714,45 +4007,99 @@ function updateSurfaceArea(type, v1, v2, v3) {
   } else if (type === 'cylinder') { // 円柱
     const r = v1;
     const h = v3;
-    const baseAreaPi = r * r;
+    const baseAreaOnePi = r * r;
+    const baseAreaTwoPi = baseAreaOnePi * 2;
     const sideAreaPi = 2 * r * h;
-    const totalAreaPi = 2 * baseAreaPi + sideAreaPi;
+    const totalAreaPi = baseAreaTwoPi + sideAreaPi;
+
+    // 数値計算（概算用：π ≒ Math.PI）
+    const baseAreaTwoVal = baseAreaTwoPi * Math.PI;
+    const baseAreaTwoRounded = Math.round(baseAreaTwoVal * 100) / 100;
+
+    const sideAreaVal = sideAreaPi * Math.PI;
+    const sideAreaRounded = Math.round(sideAreaVal * 100) / 100;
+
+    const totalAreaVal = totalAreaPi * Math.PI;
+    const totalAreaRounded = Math.round(totalAreaVal * 100) / 100;
 
     html += `
       <div><strong>【計算式】</strong>（円周率は π）</div>
       <div class="formula-step">① <strong>底面積（円2つ分）</strong>:</div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(π × ${r}²) × 2 ＝ ${baseAreaPi}π × 2 ＝ <strong>${baseAreaPi * 2}π</strong></div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(π × ${r}²) × 2 ＝ ${baseAreaOnePi}π × 2 ＝ <strong>${baseAreaTwoPi}π m²</strong>（≒ ${baseAreaTwoRounded} m²）</div>
       <div class="formula-step">② <strong>側面積（長方形）</strong>:</div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面のまわりの長さ × 高さ ＝ (2 × π × ${r}) × ${h} ＝ <strong>${sideAreaPi}π</strong></div>
-      <div class="final-result">表面積 ＝ ${baseAreaPi * 2}π ＋ ${sideAreaPi}π ＝ ${totalAreaPi}π m²</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面のまわりの長さ × 高さ ＝ (2 × π × ${r}) × ${h} ＝ <strong>${sideAreaPi}π m²</strong>（≒ ${sideAreaRounded} m²）</div>
+      <div class="final-result">表面積 ＝ ${baseAreaTwoPi}π ＋ ${sideAreaPi}π ＝ <strong>${totalAreaPi}π m²</strong>（≒ ${totalAreaRounded} m²）</div>
     `;
 
-  } else if (type === 'cone') { // 円錐
-    // v1: 底面の半径, v3: 高さ
+ } else if (type === 'cone') { // 円錐
     const r = v1;
     const h = v3;
     
-    // 母線 L = √(r² + h²)
-    const L = Math.sqrt(r * r + h * h);
-    const LRounded = Math.round(L * 100) / 100; // 母線
+    const lSq = r * r + h * h;
+    const LVal = Math.sqrt(lSq);
+    const LStr = simplifySqrt(lSq);
+    const LRounded = Math.round(LVal * 100) / 100;
 
-    const angle = (r / L) * 360;
-    const angleRounded = Math.round(angle * 10) / 10; // 中心角
-
+    const angle = (r / LVal) * 360;
+    const angleRounded = Math.round(angle * 10) / 10;
     const baseAreaPi = r * r;
-    const sideAreaPi = Math.round(r * LRounded * 100) / 100;
-    const totalAreaPi = Math.round((baseAreaPi + sideAreaPi) * 100) / 100;
+
+    // 数値計算（概算用：π ≒ Math.PI）
+    const totalAreaVal = (baseAreaPi + r * LVal) * Math.PI;
+    const totalAreaRounded = Math.round(totalAreaVal * 100) / 100;
+    
+    const sideAreaVal = r * LVal * Math.PI;
+    const sideAreaRounded = Math.round(sideAreaVal * 100) / 100;
+
+    // 母線 L の表示形式
+    const lDisplay = LStr.includes('√') ? `${LStr} m（≒ ${LRounded} m）` : `${LStr} m`;
+
+    // 側面積の π 表記処理
+    let sideAreaPiStr = "";
+    if (LStr.includes('√')) {
+      // 例: r=5, L="5√2" の場合 -> "25√2π" や "5·5√2π" を整える
+      const match = LStr.match(/^(\d*)√(\d+)$/);
+      if (match) {
+        const outerCoef = match[1] ? parseInt(match[1], 10) : 1;
+        const innerSqrt = match[2];
+        const coef = r * outerCoef;
+        sideAreaPiStr = `${coef}√${innerSqrt}π`;
+      } else {
+        sideAreaPiStr = `${r}·${LStr}π`;
+      }
+    } else {
+      const numL = Number(LStr);
+      sideAreaPiStr = `${r * numL}π`;
+    }
+
+    // 表面積の π 表記処理
+    let totalAreaPiStr = "";
+    if (LStr.includes('√')) {
+      totalAreaPiStr = `${baseAreaPi}π ＋ ${sideAreaPiStr}`;
+    } else {
+      const numL = Number(LStr);
+      totalAreaPiStr = `${baseAreaPi + r * numL}π`;
+    }
+
+    // 表示用組み立て
+    const sideAreaHTML = LStr.includes('√')
+      ? `&nbsp;&nbsp;&nbsp;&nbsp;側面積（扇形） ＝ π × 半径 × 母線 ＝ π × ${r} × ${LStr} ＝ <strong>${sideAreaPiStr} m²</strong>（≒ ${sideAreaRounded} m²）`
+      : `&nbsp;&nbsp;&nbsp;&nbsp;側面積（扇形） ＝ π × 半径 × 母线 ＝ π × ${r} × ${LStr} ＝ <strong>${sideAreaPiStr} m²</strong>`;
+
+    const finalResultHTML = LStr.includes('√')
+      ? `表面積 ＝ <strong>${totalAreaPiStr} m²</strong>（≒ ${totalAreaRounded} m²）`
+      : `表面積 ＝ <strong>${totalAreaPiStr} m²</strong>（≒ ${totalAreaRounded} m²）`;
 
     html += `
       <div><strong>【計算式】</strong>（円周率は π）</div>
       <div class="formula-step">① <strong>母線の長さ（斜めの長さ）</strong>:</div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;√(半径² ＋ 高さ²) ＝ √(${r}² ＋ ${h}²) ≒ <strong>${LRounded} m</strong></div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;√(半径² ＋ 高さ²) ＝ √(${r}² ＋ ${h}²) ＝ √${lSq} ＝ <strong>${lDisplay}</strong></div>
       <div class="formula-step">② <strong>展開図（扇形）の中心角</strong>:</div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(半径 ÷ 母線) × 360° ＝ (${r} ÷ ${LRounded}) × 360° ≒ <strong>${angleRounded}°</strong></div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(半径 ÷ 母線) × 360° ＝ (${r} ÷ ${LStr}) × 360° ≒ <strong>${angleRounded}°</strong></div>
       <div class="formula-step">③ <strong>各面の面積</strong>:</div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面積（円） ＝ π × ${r}² ＝ <strong>${baseAreaPi}π</strong></div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;側面積（扇形） ＝ π × 半径 × 母線 ≒ π × ${r} × ${LRounded} ＝ <strong>${sideAreaPi}π</strong></div>
-      <div class="final-result">表面積 ＝ ${baseAreaPi}π ＋ ${sideAreaPi}π ≒ ${totalAreaPi}π m²</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面積（円） ＝ π × ${r}² ＝ <strong>${baseAreaPi}π m²</strong></div>
+      <div class="formula-step">${sideAreaHTML}</div>
+      <div class="final-result">${finalResultHTML}</div>
     `;
 
   } else if (type === 'tri-prism') { // 三角柱
@@ -3772,98 +4119,223 @@ function updateSurfaceArea(type, v1, v2, v3) {
       <div class="final-result">表面積 ＝ ${totalBaseArea} ＋ ${totalSideArea} ＝ ${totalArea} m²</div>
     `;
 
-  } else if (type === 'tri-pyramid') { // 正三角錐
-  // v1: 底辺, v2: 底面の高さ, v3: 立体の高さ
-  const a = v1, h_base = v2, h_pyramid = v3;
+ } else if (type === 'tri-pyramid') { // 正三角錐
+    const a = v1, h_base = v2, h_pyramid = v3;
 
-  // ① 底面積
-  const baseArea = (a * h_base) / 2;
+    // ① 底面積
+    const baseArea = (a * h_base) / 2;
+    const baseAreaRounded = Math.round(baseArea * 100) / 100;
 
-  // ② 底面の重心から辺までの距離 (r) と 側面の高さ/斜高 (L)
-  const r = h_base / 3;
-  const rRounded = Math.round(r * 100) / 100;
-  const L = Math.sqrt(h_pyramid * h_pyramid + r * r);
-  const LRounded = Math.round(L * 100) / 100;
+    // ② 斜高 L の計算（分数のまま正確に二乗を計算）
+    // r = h_base / 3 より、 r^2 = h_base^2 / 9
+    // L^2 = h_pyramid^2 + (h_base^2 / 9) = (9 * h_pyramid^2 + h_base^2) / 9
+    const numSq = 9 * h_pyramid * h_pyramid + h_base * h_base; // 分子の値
+    const denSq = 9; // 分母の値 (3^2)
 
-  // ③ 側面積（1つの面積 & 3つ分）
-  const sideAreaOne = (a * L) / 2;
-  const sideAreaOneRounded = Math.round(sideAreaOne * 100) / 100;
-  const totalSideArea = sideAreaOne * 3;
-  const totalSideAreaRounded = Math.round(totalSideArea * 100) / 100;
+    // 斜高の実数値（近似値計算用）
+    const LVal = Math.sqrt(numSq / denSq);
+    const LRounded = Math.round(LVal * 100) / 100;
 
-  // ④ 合計表面積
-  const totalArea = baseArea + totalSideArea;
-  const totalAreaRounded = Math.round(totalArea * 100) / 100;
+    // 数値での側面積と表面積（概算用）
+    const totalSideAreaVal = (a * LVal / 2) * 3; // = (3 * a * LVal) / 2
+    const totalAreaVal = baseArea + totalSideAreaVal;
+    const totalSideAreaRounded = Math.round(totalSideAreaVal * 100) / 100;
+    const totalAreaRounded = Math.round(totalAreaVal * 100) / 100;
 
-  html += `
-    <div><strong>【計算式】</strong>（※正三角錐として計算）</div>
-    <div class="formula-step">① <strong>底面積（1つ）</strong>:</div>
-    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;${a} × ${h_base} ÷ 2 ＝ <strong>${Math.round(baseArea * 100) / 100} m²</strong></div>
-    
-    <div class="formula-step">② <strong>側面の三角形の高さ（斜高）</strong>:</div>
-    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面中心からの距離 r ≒ ${h_base} ÷ 3 ＝ ${rRounded} m</div>
-    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;斜高 L ＝ √(${h_pyramid}² ＋ ${rRounded}²) ≒ <strong>${LRounded} m</strong></div>
-    
-    <div class="formula-step">③ <strong>側面積（3つ分）</strong>:</div>
-    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;1つの側面 ＝ ${a} × ${LRounded} ÷ 2 ≒ ${sideAreaOneRounded} m²</div>
-    <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;3つ分 ＝ ${sideAreaOneRounded} × 3 ≒ <strong>${totalSideAreaRounded} m²</strong></div>
-    
-    <div class="final-result">表面積 ＝ ${Math.round(baseArea * 100) / 100} ＋ ${totalSideAreaRounded} ≒ ${totalAreaRounded} m²</div>
-  `;
+    // --- ルートの厳密計算 (3面分の側面積) ---
+    // 側面積(3面) = 3 × (a × L / 2) = (3 * a / 2) * (√numSq / 3) = (a / 2) * √numSq
+    // したがって、分子の √numSq を simplifySqrt で整数×√K に分解する
+    const numSqrtStr = simplifySqrt(numSq); // 例: 325 -> "5√13" または "15" など
+
+    let sideExpress = ""; // ルート表記の側面積文字列
+    let LStr = "";        // ルート表記の斜高文字列
+
+    // 斜高 L の表示形式（分母 3 で割る）
+    if (numSqrtStr.includes('√')) {
+      const match = numSqrtStr.match(/^(\d*)√(\d+)$/);
+      if (match) {
+        const outerCoef = match[1] ? parseInt(match[1], 10) : 1;
+        const innerSqrt = match[2];
+
+        // L = (outerCoef / 3) √innerSqrt
+        if (outerCoef % 3 === 0) {
+          LStr = `${outerCoef / 3}√${innerSqrt}`;
+        } else {
+          LStr = `(${outerCoef}√${innerSqrt})/3`;
+        }
+
+        // 側面積(3面) ＝ (a / 2) × outerCoef × √innerSqrt
+        const sideCoefNum = a * outerCoef;
+        if (sideCoefNum % 2 === 0) {
+          sideExpress = `${sideCoefNum / 2}√${innerSqrt}`;
+        } else {
+          sideExpress = `${sideCoefNum}/2√${innerSqrt}`;
+        }
+      } else {
+        LStr = `√( ${numSq}/9 )`;
+        sideExpress = `${Math.round(totalSideAreaVal * 100) / 100}`;
+      }
+    } else {
+      // √numSq が綺麗に整数になる場合
+      const numInt = Number(numSqrtStr);
+      const LNum = numInt / 3;
+      LStr = `${Math.round(LNum * 100) / 100}`;
+      const sideVal = (a * numInt) / 2;
+      sideExpress = `${sideVal}`;
+    }
+
+    const lDisplay = LStr.includes('√') || LStr.includes('/') ? `${LStr} m（≒ ${LRounded} m）` : `${LStr} m`;
+    const rRounded = Math.round((h_base / 3) * 100) / 100;
+
+    let sideAreaHTML = "";
+    let finalResultHTML = "";
+
+    if (sideExpress.includes('√')) {
+      sideAreaHTML = `&nbsp;&nbsp;&nbsp;&nbsp;(${a} × ${LStr} ÷ 2) × 3 ＝ <strong>${sideExpress} m²</strong>（≒ ${totalSideAreaRounded} m²）`;
+      finalResultHTML = `表面積 ＝ <strong>${baseAreaRounded} ＋ ${sideExpress} m²</strong>（≒ ${totalAreaRounded} m²）`;
+    } else {
+      sideAreaHTML = `&nbsp;&nbsp;&nbsp;&nbsp;(${a} × ${LStr} ÷ 2) × 3 ＝ <strong>${sideExpress} m²</strong>`;
+      finalResultHTML = `表面積 ＝ ${baseAreaRounded} ＋ ${sideExpress} ＝ <strong>${totalAreaVal} m²</strong>`;
+    }
+
+    html += `
+      <div><strong>【計算式】</strong>（※正三角錐として計算）</div>
+      <div class="formula-step">① <strong>底面積（1つ）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;${a} × ${h_base} ÷ 2 ＝ <strong>${baseAreaRounded} m²</strong></div>
+      
+      <div class="formula-step">② <strong>側面の三角形の高さ（斜高）</strong>:</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;底面中心からの距離 r ＝ ${h_base} ÷ 3 ≒ ${rRounded} m</div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;斜高 L ＝ √(${h_pyramid}² ＋ (${h_base}/3)²) ＝ <strong>${lDisplay}</strong></div>
+      
+      <div class="formula-step">③ <strong>側面積（3つ分）</strong>:</div>
+      <div class="formula-step">${sideAreaHTML}</div>
+      
+      <div class="final-result">${finalResultHTML}</div>
+    `;
 
   } else if (type === 'pyramid') { // 四角錐
-    // v1: 縦, v2: 横, v3: 立体の高さ
     const w = v1, l = v2, h_pyramid = v3;
     
     // 底面積
     const baseArea = w * l;
     
-    // 横の辺(l)側の側面高さ L1 = √(h² + (w/2)²)
-    const L1 = Math.sqrt(h_pyramid * h_pyramid + (w / 2) * (w / 2));
-    const L1Rounded = Math.round(L1 * 100) / 100;
+    // 横の辺(l)側の側面高さ L1 の二乗: h^2 + (w/2)^2
+    const l1Sq = h_pyramid * h_pyramid + (w / 2) * (w / 2);
+    const L1Val = Math.sqrt(l1Sq);
+    const L1Str = simplifySqrt(l1Sq);
+    const L1Rounded = Math.round(L1Val * 100) / 100;
     
-    // 縦の辺(w)側の側面高さ L2 = √(h² + (l/2)²)
-    const L2 = Math.sqrt(h_pyramid * h_pyramid + (l / 2) * (l / 2));
-    const L2Rounded = Math.round(L2 * 100) / 100;
+    // 縦の辺(w)側の側面高さ L2 の二乗: h^2 + (l/2)^2
+    const l2Sq = h_pyramid * h_pyramid + (l / 2) * (l / 2);
+    const L2Val = Math.sqrt(l2Sq);
+    const L2Str = simplifySqrt(l2Sq);
+    const L2Rounded = Math.round(L2Val * 100) / 100;
 
-    // 各ペアの側面積
-    const sideAreaOne = (l * L1Rounded) / 2; // 横の辺側の三角形
-    const sideAreaTwo = (w * L2Rounded) / 2; // 縦の辺側の三角形
-    const totalSideArea = Math.round(((sideAreaOne * 2) + (sideAreaTwo * 2)) * 100) / 100;
-    const totalArea = Math.round((baseArea + totalSideArea) * 100) / 100;
+    // 数値での側面積と表面積
+    const sideAreaOneVal = (l * L1Val) / 2;
+    const sideAreaTwoVal = (w * L2Val) / 2;
+    const totalSideAreaVal = (sideAreaOneVal * 2) + (sideAreaTwoVal * 2);
+    const totalAreaVal = baseArea + totalSideAreaVal;
 
-    // 縦と横が同じ長さ（正方形）の場合はスッキリ1行、異なる（長方形）場合は2行で解説
+    const totalSideAreaRounded = Math.round(totalSideAreaVal * 100) / 100;
+    const totalAreaRounded = Math.round(totalAreaVal * 100) / 100;
+
+    // ルート表記から「係数」と「ルートの中身」を取り出すヘルパー関数
+    function parseSqrtStr(str, baseEdge) {
+      if (!str.includes('√')) {
+        return { isSqrt: false, val: baseEdge * Number(str), str: `${baseEdge * Number(str)}` };
+      }
+      const match = str.match(/^(\d*)√(\d+)$/);
+      if (match) {
+        const outerCoef = match[1] ? parseInt(match[1], 10) : 1;
+        const innerSqrt = parseInt(match[2], 10);
+        // 面2つ分の面積 = (baseEdge * outerCoef * √innerSqrt / 2) * 2 = (baseEdge * outerCoef) * √innerSqrt
+        const totalCoef = baseEdge * outerCoef;
+        return { isSqrt: true, coef: totalCoef, inner: innerSqrt, str: `${totalCoef}√${innerSqrt}` };
+      }
+      return { isSqrt: false, val: baseEdge * Math.sqrt(eval(str)), str: `${baseEdge}×${str}` };
+    }
+
+    // それぞれのペア（2面分ずつ）の側面積をルート形式で取得
+    const side1 = parseSqrtStr(L1Str, l); // 横辺側の2面
+    const side2 = parseSqrtStr(L2Str, w); // 縦辺側の2面
+
     let heightStepHTML = "";
-    if (w === l) {
-      heightStepHTML = `&nbsp;&nbsp;&nbsp;&nbsp;√(立体の高さ² ＋ (一辺 ÷ 2)²) ＝ √(${h_pyramid}² ＋ ${w / 2}²) ≒ <strong>${L1Rounded} m</strong>`;
-    } else {
+    let sideAreaHTML = "";
+    let finalResultHTML = "";
+
+    if (w === l) { // 正四角錐（正方形）
+      const l1Display = L1Str.includes('√') ? `${L1Str} m（≒ ${L1Rounded} m）` : `${L1Str} m`;
+      heightStepHTML = `&nbsp;&nbsp;&nbsp;&nbsp;√(${h_pyramid}² ＋ (${w}/2)²) ＝ √${l1Sq} ＝ <strong>${l1Display}</strong>`;
+
+      if (L1Str.includes('√')) {
+        sideAreaHTML = `&nbsp;&nbsp;&nbsp;&nbsp;(${l} × ${L1Str} ÷ 2) × 4 ＝ <strong>${side1.str} m²</strong>（≒ ${totalSideAreaRounded} m²）`;
+        finalResultHTML = `表面積 ＝ <strong>${baseArea} ＋ ${side1.str} m²</strong>（≒ ${totalAreaRounded} m²）`;
+      } else {
+        sideAreaHTML = `&nbsp;&nbsp;&nbsp;&nbsp;(${l} × ${L1Str} ÷ 2) × 4 ＝ <strong>${totalSideAreaVal} m²</strong>`;
+        finalResultHTML = `表面積 ＝ ${baseArea} ＋ ${totalSideAreaVal} ＝ <strong>${totalAreaVal} m²</strong>`;
+      }
+
+    } else { // 長方形
+      const l1Display = L1Str.includes('√') ? `${L1Str} m（≒ ${L1Rounded} m）` : `${L1Str} m`;
+      const l2Display = L2Str.includes('√') ? `${L2Str} m（≒ ${L2Rounded} m）` : `${L2Str} m`;
+
       heightStepHTML = `
-        &nbsp;&nbsp;&nbsp;&nbsp;横辺側: √(立体の高さ² ＋ (縦 ÷ 2)²) ≒ <strong>${L1Rounded} m</strong><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;縦辺側: √(立体の高さ² ＋ (横 ÷ 2)²) ≒ <strong>${L2Rounded} m</strong>
+        &nbsp;&nbsp;&nbsp;&nbsp;横辺側: √(${h_pyramid}² ＋ (${w}/2)²) ＝ √${l1Sq} ＝ <strong>${l1Display}</strong><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;縦辺側: √(${h_pyramid}² ＋ (${l}/2)²) ＝ √${l2Sq} ＝ <strong>${l2Display}</strong>
       `;
+
+      // 側面積の合成表記処理
+      let sideExpress = "";
+      if (side1.isSqrt && side2.isSqrt) {
+        if (side1.inner === side2.inner) { // ルートの中身が同じならまとめられる（例: 24√2 + 10√2 = 34√2）
+          sideExpress = `${side1.coef + side2.coef}√${side1.inner}`;
+        } else { // ルートの中身が違う場合（例: 24√2 + 10√3）
+          sideExpress = `${side1.str} ＋ ${side2.str}`;
+        }
+      } else if (!side1.isSqrt && !side2.isSqrt) { // どちらも整数
+        sideExpress = `${side1.val + side2.val}`;
+      } else { // 片方が整数、片方がルート（例: 20 + 10√2）
+        const numPart = side1.isSqrt ? side2.val : side1.val;
+        const sqrtPart = side1.isSqrt ? side1.str : side2.str;
+        sideExpress = `${numPart} ＋ ${sqrtPart}`;
+      }
+
+      // ルートが含まれるかどうかで表記を分ける
+      if (side1.isSqrt || side2.isSqrt) {
+        sideAreaHTML = `&nbsp;&nbsp;&nbsp;&nbsp;(${l} × ${L1Str} ÷ 2) × 2 ＋ (${w} × ${L2Str} ÷ 2) × 2 ＝ <strong>${sideExpress} m²</strong>（≒ ${totalSideAreaRounded} m²）`;
+        finalResultHTML = `表面積 ＝ <strong>${baseArea} ＋ ${sideExpress} m²</strong>（≒ ${totalAreaRounded} m²）`;
+      } else {
+        sideAreaHTML = `&nbsp;&nbsp;&nbsp;&nbsp;(${l} × ${L1Str} ÷ 2) × 2 ＋ (${w} × ${L2Str} ÷ 2) × 2 ＝ <strong>${totalSideAreaVal} m²</strong>`;
+        finalResultHTML = `表面積 ＝ ${baseArea} ＋ ${totalSideAreaVal} ＝ <strong>${totalAreaVal} m²</strong>`;
+      }
     }
 
     html += `
       <div><strong>【計算式】</strong></div>
       <div class="formula-step">① <strong>底面積（底面の四角形）</strong>:</div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;${w} × ${l} ＝ <strong>${baseArea}</strong></div>
+      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;${w} × ${l} ＝ <strong>${baseArea} m²</strong></div>
       <div class="formula-step">② <strong>側面の三角形の高さ（斜めの高さ）</strong>:</div>
       <div class="formula-step">${heightStepHTML}</div>
       <div class="formula-step">③ <strong>側面積（三角形4つ分）</strong>:</div>
-      <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;(${l} × ${L1Rounded} ÷ 2) × 2 ＋ (${w} × ${L2Rounded} ÷ 2) × 2 ≒ <strong>${totalSideArea}</strong></div>
-      <div class="final-result">表面積 ＝ ${baseArea} ＋ ${totalSideArea} ≒ ${totalArea} m²</div>
+      <div class="formula-step">${sideAreaHTML}</div>
+      <div class="final-result">${finalResultHTML}</div>
     `;
 
   } else if (type === 'sphere') { // 球
     const r = v1;
     const areaPi = 4 * r * r;
 
+    // 数値計算（概算用：π ≒ Math.PI）
+    const totalAreaVal = areaPi * Math.PI;
+    const totalAreaRounded = Math.round(totalAreaVal * 100) / 100;
+
     html += `
       <div><strong>【計算式】</strong>（円周率は π）</div>
       <div class="formula-step">① <strong>球の表面積の公式</strong>:</div>
       <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;4 × π × 半径² ＝ 4 × π × ${r}²</div>
       <div class="formula-step">&nbsp;&nbsp;&nbsp;&nbsp;＝ 4 × π × ${r * r}</div>
-      <div class="final-result">表面積 ＝ ${areaPi}π m²</div>
+      <div class="final-result">表面積 ＝ <strong>${areaPi}π m²</strong>（≒ ${totalAreaRounded} m²）</div>
     `;
   }
 
@@ -3917,6 +4389,442 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 初期計算
   calcVolume();
+});
+
+// ==========================================
+// --- 6. 時間計算 ---
+// ==========================================
+function calcTime(mode = 'add') {
+  // 各入力欄から値を取得（空文字や未入力は0として扱う）
+  const h1 = parseInt(document.getElementById('t1-h').value) || 0;
+  const m1 = parseInt(document.getElementById('t1-m').value) || 0;
+  const s1 = parseInt(document.getElementById('t1-s').value) || 0;
+
+  const h2 = parseInt(document.getElementById('t2-h').value) || 0;
+  const m2 = parseInt(document.getElementById('t2-m').value) || 0;
+  const s2 = parseInt(document.getElementById('t2-s').value) || 0;
+
+  // すべて「秒」単位に換算して計算
+  const total1Seconds = h1 * 3600 + m1 * 60 + s1;
+  const total2Seconds = h2 * 3600 + m2 * 60 + s2;
+  
+  let diffSeconds = mode === 'add' ? total1Seconds + total2Seconds : total1Seconds - total2Seconds;
+
+  const isNegative = diffSeconds < 0;
+  const absSeconds = Math.abs(diffSeconds);
+
+  // 時間・分・秒への逆算
+  const resH = Math.floor(absSeconds / 3600);
+  const resM = Math.floor((absSeconds % 3600) / 60);
+  const resS = absSeconds % 60;
+
+  // 分表示用の計算
+  const totalMinutes = (absSeconds / 60).toFixed(2).replace(/\.00$/, '');
+
+  const sign = isNegative ? '-' : '';
+
+  // 結果表示の出力
+  const resultEl = document.getElementById('time-result');
+  if (resultEl) {
+    resultEl.innerHTML = `
+      <b>${sign}${resH} 時間 ${resM} 分 ${resS} 秒</b><br>
+      <small>（合計 ${sign}${totalMinutes.toLocaleString()} 分 / ${sign}${absSeconds.toLocaleString()} 秒）</small>
+    `;
+  }
+}
+
+// 時間計算の入力欄に対する自動イベント設定
+document.addEventListener('DOMContentLoaded', function() {
+  const timeInputs = [
+    document.getElementById('t1-h'),
+    document.getElementById('t1-m'),
+    document.getElementById('t1-s'),
+    document.getElementById('t2-h'),
+    document.getElementById('t2-m'),
+    document.getElementById('t2-s')
+  ];
+
+  // 全角→半角変換用マップ
+  const zenToHanMap = {
+    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
+    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9'
+  };
+
+  function convertZenkaku(inputEl) {
+    inputEl.value = inputEl.value.replace(/[０-９]/g, function(s) {
+      return zenToHanMap[s] || s;
+    });
+  }
+
+  timeInputs.forEach(input => {
+    if (!input) return;
+
+    let isComposing = false;
+
+    // 日本語入力（IME）の状態管理
+    input.addEventListener('compositionstart', function() {
+      isComposing = true;
+    });
+
+    input.addEventListener('compositionend', function() {
+      isComposing = false;
+      convertZenkaku(this);
+    });
+
+    // 1. フォーカス時に全選択
+    input.addEventListener('focus', function() {
+      this.select();
+    });
+
+    // 2. Enterキー押下で計算（加算）を実行
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !isComposing && !e.isComposing) {
+        e.preventDefault();
+        calcTime('add');
+      }
+    });
+
+    // 3. 入力時のリアルタイム半角自動変換
+    input.addEventListener('input', function() {
+      if (!isComposing) {
+        convertZenkaku(this);
+      }
+    });
+  });
+});
+
+// ==========================================
+// --- 7 ~ 10. 単位換算設定データ ---
+// ==========================================
+
+// 換算レート（基準：lengthは[m]、weightは[g]、sizeは[㎡]、capacityは[L]）
+const unitRates = {
+  length: {
+    // メートル法
+    km: 1000,
+    m: 1,
+    cm: 0.01,
+    mm: 0.001,
+    um: 0.000001,
+    nm: 0.000000001,
+    // ヤード・ポンド法
+    mile: 1609.344,
+    yd: 0.9144,
+    ft: 0.3048,
+    inch: 0.0254,
+    // 尺貫法
+    ri: (10 / 33) * 12960,
+    cho: (10 / 33) * 360,
+    ken: (10 / 33) * 6,
+    shaku: 10 / 33,
+    sun: (10 / 33) / 10
+  },
+  weight: {
+    // 国際単位系（SI） / メートル法
+    mg: 0.001,
+    g: 1,
+    kg: 1000,
+    t: 1000000,
+    // ヤード・ポンド法
+    gr: 0.06479891,    // 1グレーン
+    oz: 28.349523125,  // 1オンス
+    lb: 453.59237,     // 1ポンド
+    st: 6350.29318,    // 1ストーン (14ポンド)
+    // 尺貫法
+    momme: 3.75,       // 1匁
+    kin: 600,          // 1斤
+    kan: 3750,         // 1貫 (1000匁)
+    // その他の単位
+    ct: 0.2            // 1カラット
+  },
+  size: {
+    // メートル法・公制単位
+    mm2: 0.000001,
+    cm2: 0.0001,
+    m2: 1,
+    a: 100,
+    ha: 10000,
+    km2: 1000000,
+    // 尺貫法・日本独自
+    jo: 1.62,            // 1畳(中京間) = 1.62㎡
+    tsubo: 400 / 121,    // 1坪 ≒ 3.305785㎡
+    se: 4000 / 121,      // 1畝 = 30坪
+    tan: 40000 / 121,    // 1反 = 300坪
+    cho_size: 400000 / 121, // 1町 = 3000坪
+    // ヤード・ポンド法
+    sqin: 0.00064516,
+    sqft: 0.09290304,
+    sqyd: 0.83612736,
+    acre: 4046.8564224
+  },
+  capacity: {
+    // メートル法（容積・液体）
+    ml: 0.001,
+    cm3: 0.001,      // 立方センチメートル (1cm³ = 1mL = 0.001L)
+    dl: 0.1,
+    l: 1,
+    kl: 1000,
+    m3: 1000,
+    // ヤード・ポンド法（米）
+    floz: 0.0295735,
+    pnt: 0.473176,
+    qt: 0.946353,
+    gal: 3.78541,
+    // 尺貫法
+    go: 0.18039,
+    sho: 1.8039,
+    to: 18.039,
+    koku: 180.39
+  }
+};
+
+// 単位のグループ分け・ラベル設定
+const unitGroups = {
+  length: [
+    {
+      groupName: 'メートル法（SI単位系）',
+      units: {
+        km: { name: 'キロメートル', symbol: 'km' },
+        m: { name: 'メートル', symbol: 'm' },
+        cm: { name: 'センチメートル', symbol: 'cm' },
+        mm: { name: 'ミリメートル', symbol: 'mm' },
+        um: { name: 'マイクロメートル', symbol: 'μm' },
+        nm: { name: 'ナノメートル', symbol: 'nm' }
+      }
+    },
+    {
+      groupName: 'ヤード・ポンド法',
+      units: {
+        mile: { name: 'マイル', symbol: 'mile' },
+        yd: { name: 'ヤード', symbol: 'yd' },
+        ft: { name: 'フィート', symbol: 'ft' },
+        inch: { name: 'インチ', symbol: 'in' }
+      }
+    },
+    {
+      groupName: '尺貫法',
+      units: {
+        ri: { name: '里', symbol: 'り' },
+        cho: { name: '町', symbol: 'ちょう' },
+        ken: { name: '間', symbol: 'けん' },
+        shaku: { name: '尺', symbol: 'しゃく' },
+        sun: { name: '寸', symbol: 'すん' }
+      }
+    }
+  ],
+  weight: [
+    {
+      groupName: '国際単位系（SI） / メートル法',
+      units: {
+        mg: { name: 'ミリグラム', symbol: 'mg' },
+        g: { name: 'グラム', symbol: 'g' },
+        kg: { name: 'キログラム', symbol: 'kg' },
+        t: { name: 'トン', symbol: 't' }
+      }
+    },
+    {
+      groupName: 'ヤード・ポンド法',
+      units: {
+        gr: { name: 'グレーン', symbol: 'gr' },
+        oz: { name: 'オンス', symbol: 'oz' },
+        lb: { name: 'ポンド', symbol: 'lb' },
+        st: { name: 'ストーン', symbol: 'st' }
+      }
+    },
+    {
+      groupName: '尺貫法',
+      units: {
+        momme: { name: '匁', symbol: 'もんめ' },
+        kin: { name: '斤', symbol: 'きん' },
+        kan: { name: '貫', symbol: 'かん' }
+      }
+    },
+    {
+      groupName: 'その他の単位',
+      units: {
+        ct: { name: 'カラット', symbol: 'ct' }
+      }
+    }
+  ],
+  size: [
+    {
+      groupName: 'メートル法・公制単位',
+      units: {
+        cm2: { name: '平方センチメートル', symbol: '㎠' },
+        m2: { name: '平方メートル（平米）', symbol: '㎡' },
+        a: { name: 'アール', symbol: 'a' },
+        ha: { name: 'ヘクタール', symbol: 'ha' },
+        km2: { name: '平方キロメートル', symbol: '㎢' }
+      }
+    },
+    {
+      groupName: 'ヤード・ポンド法',
+      units: {
+        sqin: { name: '平方インチ', symbol: 'sq in' },
+        sqft: { name: '平方フィート', symbol: 'sq ft' },
+        sqyd: { name: '平方ヤード', symbol: 'sq yd' },
+        acre: { name: 'エーカー', symbol: 'acre' }
+      }
+    },
+    {
+      groupName: '日本独自・尺貫法',
+      units: {
+        jo: { name: '畳（中京間）', symbol: '畳' },
+        tsubo: { name: '坪', symbol: 'つぼ' },
+        se: { name: '畝', symbol: 'せ' },
+        tan: { name: '反', symbol: 'たん' },
+        cho_size: { name: '町', symbol: 'ちょう' }
+      }
+    }
+  ],
+  capacity: [
+    {
+      groupName: 'メートル法（容積・液体）',
+      units: {
+        ml: { name: 'ミリリットル (cc)', symbol: 'mL' },
+        dl: { name: 'デシリットル', symbol: 'dL' },
+        l: { name: 'リットル', symbol: 'L' },
+        kl: { name: 'キロリットル', symbol: 'kL' },
+        cm3: { name: '立方センチメートル', symbol: 'cm³' },
+        m3: { name: '立方メートル', symbol: 'm³' }
+      }
+    },
+    {
+      groupName: 'ヤード・ポンド法（米国）',
+      units: {
+        floz: { name: '液量オンス', symbol: 'fl oz' },
+        pnt: { name: 'パイント', symbol: 'pt' },
+        qt: { name: 'クォート', symbol: 'qt' },
+        gal: { name: 'ガロン', symbol: 'gal' }
+      }
+    },
+    {
+      groupName: '尺貫法',
+      units: {
+        go: { name: '合', symbol: 'ごう' },
+        sho: { name: '升', symbol: 'しょう' },
+        to: { name: '斗', symbol: 'と' },
+        koku: { name: '石', symbol: 'こく' }
+      }
+    }
+  ]
+};
+
+// 共通の単位換算計算処理
+function convertUnit(type) {
+  const valEl = document.getElementById(`${type}-val`);
+  const fromEl = document.getElementById(`${type}-from`);
+  const resultEl = document.getElementById(`${type}-result`);
+
+  if (!valEl || !fromEl || !resultEl) return;
+
+  const val = parseFloat(valEl.value);
+
+  if (isNaN(val)) {
+    resultEl.innerHTML = '<div style="color: #9ca3af;">数値を入力してください</div>';
+    return;
+  }
+
+  const from = fromEl.value;
+  const rates = unitRates[type];
+  const groups = unitGroups[type];
+
+  if (!rates || !groups || !rates[from]) return;
+
+  // 基準値に一次換算
+  const baseValue = val * rates[from];
+
+  let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+
+  // カテゴリごとにループ処理して結果描画
+  groups.forEach(group => {
+    html += `<div>`;
+    html += `<div style="font-weight: bold; font-size: 13px; color: #3b82f6; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid #e5e7eb;">${group.groupName}</div>`;
+    html += `<div style="display: flex; flex-direction: column; gap: 6px;">`;
+
+    for (const [unitKey, labelInfo] of Object.entries(group.units)) {
+      const convertedVal = baseValue / rates[unitKey];
+
+      // 指数表記(1e-7など)を読みやすい表記へ整形し、有効数字8桁で丸める
+      let formattedVal = Number(convertedVal.toPrecision(8)).toString();
+
+      const isSelected = (unitKey === from);
+      const bgStyle = isSelected 
+        ? 'background-color: #eff6ff; border-color: #bfdbfe;' 
+        : 'background-color: #f8fafc; border-color: #e2e8f0;';
+
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border: 1px solid; border-radius: 6px; ${bgStyle}">
+          <span style="font-size: 13px; color: #475569;">${labelInfo.name} (${labelInfo.symbol})</span>
+          <span style="font-weight: bold; color: #1e293b; font-size: 14px;">${formattedVal} <small style="font-size: 11px; color: #64748b;">${labelInfo.symbol}</small></span>
+        </div>
+      `;
+    }
+
+    html += `</div></div>`;
+  });
+
+  html += '</div>';
+  resultEl.innerHTML = html;
+}
+
+// 初期化・イベントリスナー設定
+document.addEventListener('DOMContentLoaded', function() {
+  const types = ['length', 'weight', 'size', 'capacity'];
+
+  const zenToHanMap = {
+    '０':'0', '１':'1', '２':'2', '３':'3', '４':'4',
+    '５':'5', '６':'6', '７':'7', '８':'8', '９':'9',
+    '．':'.'
+  };
+
+  function convertZenkaku(inputEl) {
+    inputEl.value = inputEl.value.replace(/[０-９．]/g, function(s) {
+      return zenToHanMap[s] || s;
+    });
+  }
+
+  types.forEach(type => {
+    const valInput = document.getElementById(`${type}-val`);
+    const fromSelect = document.getElementById(`${type}-from`);
+
+    if (valInput) {
+      let isComposing = false;
+
+      valInput.addEventListener('compositionstart', function() {
+        isComposing = true;
+      });
+
+      valInput.addEventListener('compositionend', function() {
+        isComposing = false;
+        convertUnit(type);
+      });
+
+      valInput.addEventListener('focus', function() {
+        this.select();
+      });
+
+      valInput.addEventListener('input', function() {
+        if (!isComposing) {
+          convertUnit(type);
+        }
+      });
+
+      valInput.addEventListener('blur', function() {
+        convertZenkaku(this);
+        convertUnit(type);
+      });
+    }
+
+    if (fromSelect) {
+      fromSelect.addEventListener('change', function() {
+        convertUnit(type);
+      });
+    }
+
+    // 初回読み込み時に計算実行
+    convertUnit(type);
+  });
 });
 </script>
 
