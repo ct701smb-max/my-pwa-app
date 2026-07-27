@@ -2158,27 +2158,183 @@ function funcStrReplacer(str) {
 }
 
 // 計算実行関数
+// --- 多項式展開ロジック ( (ax+b)(cx+d) や (ax+b)^2 などの展開 ) ---
+function expandPolynomial(expr) {
+  // 空白を除去し、小文字のxに統一
+  expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
+
+  // 1. (ax+b)^2 の形を展開形 (ax+b)(ax+b) に変換
+  expr = expr.replace(/\(([^)]+)\)\^2/g, '($1)($1)');
+
+  // 2. (ax+b)(cx+d) を検出（間に * があってもなくても対応）
+  const poly2Pattern = /^\(([^)]+)\)\*?\(([^)]+)\)$/;
+  const match = expr.match(poly2Pattern);
+
+  if (!match) return null; // 2項の掛け合わせ以外（複雑すぎる式など）は通常処理へ
+
+  // ax + b の形式から a (xの係数) と b (定数項) を抽出する関数
+  function parseLinear(str) {
+    let a = 0, b = 0;
+    // + や - で項を分解
+    const terms = str.match(/[+-]?[^+-]+/g) || [];
+    terms.forEach(term => {
+      if (term.includes('x')) {
+        const coefStr = term.replace('x', '');
+        if (coefStr === '' || coefStr === '+') a += 1;
+        else if (coefStr === '-') a -= 1;
+        else a += parseFloat(coefStr);
+      } else {
+        b += parseFloat(term);
+      }
+    });
+    return { a, b };
+  }
+
+  const p1 = parseLinear(match[1]); // 1つ目のカッコ
+  const p2 = parseLinear(match[2]); // 2つ目のカッコ
+
+  // (a1*x + b1)(a2*x + b2) = (a1*a2)x^2 + (a1*b2 + a2*b1)x + (b1*b2)
+  const A = p1.a * p2.a;             // x^2 の係数
+  const B = p1.a * p2.b + p1.b * p2.a; // x の係数
+  const C = p1.b * p2.b;             // 定数項
+
+  // 係数がすべて0の場合は "0"
+  if (A === 0 && B === 0 && C === 0) return '0';
+
+  // 結果の文字列を組み立て
+  let result = '';
+
+  // x^2 項
+  if (A !== 0) {
+    if (A === 1) result += 'x^2';
+    else if (A === -1) result += '-x^2';
+    else result += `${A}x^2`;
+  }
+
+  // x 項
+  if (B !== 0) {
+    if (B > 0 && result !== '') result += '+';
+    if (B === 1) result += 'x';
+    else if (B === -1) result += '-x';
+    else result += `${B}x`;
+  }
+
+  // 定数項
+  if (C !== 0 || result === '') {
+    if (C > 0 && result !== '') result += '+';
+    result += C;
+  }
+
+  return result;
+}
+
+
+// --- 最大公約数を求めるヘルパー関数 ---
+function gcd(a, b) {
+  return b === 0 ? Math.abs(a) : gcd(b, a % b);
+}
+
+// --- 2次式の因数分解ロジック ( ax^2 + bx + c ➔ (px+q)(rx+s) ) ---
+function factorPolynomial(expr) {
+  expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
+
+  // ax^2 + bx + c のパターンを検出
+  // 例: 6x^2+16x+8, x^2-5x+6, 2x^2+4x など
+  const poly2Pattern = /^([+-]?\d*)x\^2([+-]?\d*x)?([+-]?\d+)?$/;
+  const match = expr.match(poly2Pattern);
+
+  if (!match) return null; // 2次式でない場合は通常処理へ
+
+  // a (x^2の係数)
+  let aStr = match[1];
+  let a = 1;
+  if (aStr === '-') a = -1;
+  else if (aStr !== '' && aStr !== '+') a = parseFloat(aStr);
+
+  // b (xの係数)
+  let bStr = match[2] ? match[2].replace('x', '') : '';
+  let b = 0;
+  if (bStr === '+') b = 1;
+  else if (bStr === '-') b = -1;
+  else if (bStr !== '') b = parseFloat(bStr);
+
+  // c (定数項)
+  let c = match[3] ? parseFloat(match[3]) : 0;
+
+  // 整数係数でない場合は判定スキップ
+  if (!Number.isInteger(a) || !Number.isInteger(b) || !Number.isInteger(c)) return null;
+
+  // 1. 共通因数 (全体を割れる最大の数 g) を抽出
+  let g = gcd(a, gcd(b, c));
+  if (a < 0) g = -g; // 先頭の係数を正にする
+
+  let a2 = a / g;
+  let b2 = b / g;
+  let c2 = c / g;
+
+  // 2. たすき掛けの組み合わせを探索 (a2*x^2 + b2*x + c2)
+  // (p*x + q)(r*x + s)
+  let foundP = null, foundQ = null, foundR = null, foundS = null;
+
+  for (let p = 1; p <= Math.abs(a2); p++) {
+    if (a2 % p !== 0) continue;
+    let r = a2 / p;
+
+    // c2が0の場合
+    if (c2 === 0) {
+      foundP = p; foundQ = 0;
+      foundR = r; foundS = b2;
+      break;
+    }
+
+    for (let q = -Math.abs(c2); q <= Math.abs(c2); q++) {
+      if (q === 0 || c2 % q !== 0) continue;
+      let s = c2 / q;
+
+      if (p * s + q * r === b2) {
+        foundP = p; foundQ = q;
+        foundR = r; foundS = s;
+        break;
+      }
+    }
+    if (foundP !== null) break;
+  }
+
+  // 因数分解できなかった（虚数解や無理数解の）場合
+  if (foundP === null) return null;
+
+  // 3. 共通因数 g をカッコに分配（(3x+2)(2x+4) のように定数倍を戻すため）
+  // ユーザーの例 (3x+2)(2x+4) に合わせ、gを片方のカッコへ乗算
+  foundR *= g;
+  foundS *= g;
+
+  // カッコ文字列を整形するヘルパー
+  function formatFactor(p, q) {
+    let pStr = '';
+    if (p === 1) pStr = 'x';
+    else if (p === -1) pStr = '-x';
+    else pStr = `${p}x`;
+
+    let qStr = '';
+    if (q > 0) qStr = `+${q}`;
+    else if (q < 0) qStr = `${q}`;
+
+    return `(${pStr}${qStr})`;
+  }
+
+  return `${formatFactor(foundP, foundQ)}${formatFactor(foundR, foundS)}`;
+}
+
+
+// --- 計算実行関数 (多項式展開 & 因数分解 対応版) ---
 function calculateBasic() {
   try {
-    const rawFormula = display.value; // 計算前のテキストを保存
+    let rawFormula = display.value;
 
-    let expr = display.value;
+    rawFormula = rawFormula.replace(/ｘ/g, 'x').replace(/Ｘ/g, 'x');
+    let expr = rawFormula;
 
-    // --- 1. ルート(√) や 定数(π) の前に数字がある場合の乗算 (* ) 自動補完 ---
-    expr = expr.replace(/(\d|\)|Math\.PI|x)(√|π)/g, '$1*$2');
-    
-    // --- 2. √ や π や ** への置き換え ---
-    expr = expr.replace(/π/g, 'Math.PI')
-               .replace(/√\(/g, 'Math.sqrt(')
-               .replace(/√(\d+(\.\d+)?)/g, 'Math.sqrt($1)')
-               .replace(/\^/g, '**');
-
-    // --- 3. カッコ・定数(π)・変数(x) 周りの乗算省略 (* ) を自動補完 ---
-    expr = expr.replace(/\)\(/g, ')*(');
-    expr = expr.replace(/(\d|Math\.PI)(\(|Math\.PI|x)/g, '$1*$2');
-    expr = expr.replace(/(\)|Math\.PI|x)(\d|Math\.PI)/g, '$1*$2');
-
-    // --- 4. 閉じカッコの自動補完 ---
+    // 閉じカッコの自動補完
     const openBrackets = (expr.match(/\(/g) || []).length;
     const closeBrackets = (expr.match(/\)/g) || []).length;
     let completedBrackets = '';
@@ -2187,18 +2343,45 @@ function calculateBasic() {
       expr += completedBrackets;
     }
 
-    // --- 5. 微分・積分の評価 ---
+    // --- 文字 'x' が含まれる場合の処理 ---
+    if (expr.includes('x')) {
+      // パターン1: (ax+b)(cx+d) や (ax+b)^2 ➔ 多項式展開 (6x^2+16x+8)
+      const expanded = expandPolynomial(expr);
+      if (expanded !== null) {
+        updateFormula(rawFormula + completedBrackets + ' =');
+        display.value = expanded;
+        return;
+      }
+
+      // パターン2: ax^2+bx+c ➔ 因数分解 ((3x+2)(2x+4))
+      const factored = factorPolynomial(expr);
+      if (factored !== null) {
+        updateFormula(rawFormula + ' =');
+        display.value = factored;
+        return;
+      }
+    }
+
+    // --- 通常の数値計算（xが含まれない、または式変換対象外） ---
+    expr = expr.replace(/π/g, 'Math.PI')
+               .replace(/√\(/g, 'Math.sqrt(')
+               .replace(/√(\d+(\.\d+)?)/g, 'Math.sqrt($1)')
+               .replace(/\^/g, '**');
+
+    expr = expr.replace(/\)\s*\(/g, ')*(');
+    expr = expr.replace(/(\d|Math\.PI|x|\))\s*\(/g, '$1*(');
+    expr = expr.replace(/\)\s*(\d|Math\.PI|x)/g, ')*$1');
+    expr = expr.replace(/(\d)\s*(x|Math\.PI)/g, '$1*$2');
+    expr = expr.replace(/(x)\s*(\d|Math\.PI)/g, '$1*$2');
+
     expr = evalCalculus(expr);
 
-    // 計算実行
     let result = eval(expr);
 
     if (!isFinite(result)) {
       display.value = 'エラー';
     } else {
-      // 上のサブディスプレイに「入力した式＋補完された閉じカッコ＋ ＝」を残す
       updateFormula(rawFormula + completedBrackets + ' =');
-      
       let resStr = Number(result.toPrecision(15)).toString();
       if (resStr.length > MAX_LENGTH) {
         resStr = resStr.slice(0, MAX_LENGTH);
