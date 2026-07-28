@@ -2598,8 +2598,6 @@ const MAX_LENGTH = 25;
 
 // 値（数字や記号）を追加する処理
 function appendBasic(val) {
-  const operators = ['+', '-', '*', '/', '^', ','];
-
   if (display.value === 'エラー') {
     display.value = '';
   }
@@ -2608,8 +2606,6 @@ function appendBasic(val) {
   if (display.value.length >= MAX_LENGTH) return;
 
   if (display.value === '0') {
-    // 演算子のうち「+ * / ^ ,」や小数点のときは 0 の後ろに付ける (例: "0.")
-    // マイナス符号 "-" や数字、変数 "x" などの場合は 0 を消去して上書きする
     if (['+', '*', '/', '^', ','].includes(val) || val === '.') {
       display.value = '0' + val;
     } else {
@@ -2619,14 +2615,11 @@ function appendBasic(val) {
     display.value += val;
   }
   
-  // リアルタイムで上の式表示に反映
   updateFormula(display.value);
 }
 
 function insertMath(func) {
   if (display.value === '0' || display.value === 'エラー') display.value = '';
-  
-  // 追加後に25桁を超える場合は制限
   if ((display.value + func).length > MAX_LENGTH) return;
 
   display.value += func;
@@ -2635,8 +2628,6 @@ function insertMath(func) {
 
 function insertConstant(c) {
   if (display.value === '0' || display.value === 'エラー') display.value = '';
-  
-  // 追加後に25桁を超える場合は制限
   if ((display.value + c).length > MAX_LENGTH) return;
 
   display.value += c;
@@ -2693,7 +2684,6 @@ display.addEventListener('input', function() {
     return keyReplaceMap[s] || s;
   });
 
-  // 25文字を超えた分をカット
   if (this.value.length > MAX_LENGTH) {
     this.value = this.value.slice(0, MAX_LENGTH);
   }
@@ -2702,63 +2692,92 @@ display.addEventListener('input', function() {
 });
 
 // --- 微分・積分を数値計算する処理 ---
+function funcStrReplacer(str) {
+  if (!str) return '';
+  return str
+    .replace(/\s+/g, '')                       // 余計な空白を削除
+    .replace(/π/g, 'Math.PI')                   // π を Math.PI に変換
+    .replace(/√\(/g, 'Math.sqrt(')              // √( を Math.sqrt( に変換
+    .replace(/√(\d+(\.\d+)?|x)/g, 'Math.sqrt($1)') // √9 や √x などの単体ルートに対応
+    .replace(/\^/g, '**')                       // ^ を **（べき乗）に変換
+    // --- 省略された掛け算(*)の補完 ---
+    .replace(/(\d)\s*([a-zA-Z\(])/g, '$1*$2')   // 5x -> 5*x, 5(x) -> 5*(x)
+    .replace(/\)\s*(\d|[a-zA-Z])/g, ')*$1')     // (x)5 -> (x)*5, (x)x -> (x)*x
+    .replace(/([a-zA-Z])\s*(\d)/g, '$1*$2');    // x2 -> x*2
+}
+
 function evalCalculus(expr) {
+  // 微分: d/dx(関数, xの値)
   expr = expr.replace(/d\/dx\(([^,]+),([^)]+)\)/g, (match, funcStr, xValStr) => {
-    const xVal = parseFloat(eval(funcStrReplacer(xValStr)));
-    const h = 0.00001;
-    const f = (x) => eval(funcStrReplacer(funcStr).replace(/x/g, `(${x})`));
-    const df = (f(xVal + h) - f(xVal - h)) / (2 * h);
-    return Math.abs(df) < 1e-9 ? 0 : df.toFixed(4);
+    try {
+      const parsedFunc = funcStrReplacer(funcStr);
+      const xVal = parseFloat(eval(funcStrReplacer(xValStr)));
+      const h = 0.00001;
+      
+      const f = (val) => {
+        const execStr = parsedFunc.replace(/\bx\b/g, `(${val})`);
+        return eval(execStr);
+      };
+
+      const df = (f(xVal + h) - f(xVal - h)) / (2 * h);
+      const res = Math.abs(df) < 1e-9 ? 0 : Number(df.toFixed(4));
+      return isNaN(res) ? match : res;
+    } catch (e) {
+      return match;
+    }
   });
 
+  // 積分: ∫(関数, a, b)
   expr = expr.replace(/∫\(([^,]+),([^,]+),([^)]+)\)/g, (match, funcStr, aStr, bStr) => {
-    const a = parseFloat(eval(funcStrReplacer(aStr)));
-    const b = parseFloat(eval(funcStrReplacer(bStr)));
-    const n = 1000;
-    const h = (b - a) / n;
-    const f = (x) => eval(funcStrReplacer(funcStr).replace(/x/g, `(${x})`));
-    
-    let sum = f(a) + f(b);
-    for (let i = 1; i < n; i++) {
-      let x = a + i * h;
-      sum += (i % 2 === 0 ? 2 : 4) * f(x);
+    try {
+      const parsedFunc = funcStrReplacer(funcStr);
+      const a = parseFloat(eval(funcStrReplacer(aStr)));
+      const b = parseFloat(eval(funcStrReplacer(bStr)));
+      const n = 1000;
+      const h = (b - a) / n;
+
+      const f = (val) => {
+        const execStr = parsedFunc.replace(/\bx\b/g, `(${val})`);
+        return eval(execStr);
+      };
+
+      let sum = f(a) + f(b);
+      for (let i = 1; i < n; i++) {
+        let x = a + i * h;
+        sum += (i % 2 === 0 ? 2 : 4) * f(x);
+      }
+      const result = (h / 3) * sum;
+      const res = Math.abs(result) < 1e-9 ? 0 : Number(result.toFixed(4));
+      return isNaN(res) ? match : res;
+    } catch (e) {
+      return match;
     }
-    const result = (h / 3) * sum;
-    return Math.abs(result) < 1e-9 ? 0 : result.toFixed(4);
   });
 
   return expr;
-}
-
-function funcStrReplacer(str) {
-  return str.replace(/π/g, 'Math.PI').replace(/√\(/g, 'Math.sqrt(').replace(/\^/g, '**');
 }
 
 // --- 共通ヘルパー関数: 係数 A(x^3), B(x^2), C(x), D(定数) から数式文字列を生成 ---
 function buildPolyResult(A, B, C, D) {
   let result = '';
 
-  // x^3 項
   if (A !== 0) {
     if (A === 1) result += 'x^3';
     else if (A === -1) result += '-x^3';
     else result += `${A}x^3`;
   }
-  // x^2 項
   if (B !== 0) {
     if (B > 0 && result !== '') result += '+';
     if (B === 1) result += 'x^2';
     else if (B === -1) result += '-x^2';
     else result += `${B}x^2`;
   }
-  // x 項
   if (C !== 0) {
     if (C > 0 && result !== '') result += '+';
     if (C === 1) result += 'x';
     else if (C === -1) result += '-x';
     else result += `${C}x`;
   }
-  // 定数項
   if (D !== 0 || result === '') {
     if (D > 0 && result !== '') result += '+';
     result += D;
@@ -2766,7 +2785,6 @@ function buildPolyResult(A, B, C, D) {
   return result;
 }
 
-// --- 最大公約数を求めるヘルパー関数 ---
 function gcd(a, b) {
   return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
@@ -2782,7 +2800,6 @@ function simplifyPolynomial(expr) {
     formattedExpr = '+' + formattedExpr;
   }
 
-  // 符号付きの各項に分割（負の係数にも対応）
   const terms = formattedExpr.match(/[+-](?:[0-9.]*x(?:\^[0-9]+)?|[0-9.]+|x(?:\^[0-9]+)?)/g);
   if (!terms) return null;
 
@@ -2816,12 +2833,10 @@ function simplifyPolynomial(expr) {
 function expandPolynomial(expr) {
   expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
 
-  // (ax+b)^2 ➔ (ax+b)(ax+b)
   expr = expr.replace(/\(([^)]+)\)\^2/g, '($1)($1)');
 
   if (!expr.includes('(')) return null;
 
-  // カッコ内の 1次式 (ax+b) をパースするヘルパー
   function parseLinear(str) {
     let a = 0, b = 0;
     let formatted = str;
@@ -2840,7 +2855,6 @@ function expandPolynomial(expr) {
     return { a, b };
   }
 
-  // 外側の単項式 (例: "-5x", "2x^2", "-x", "5") を解析するヘルパー
   function parseMonomial(str) {
     if (!str || str === '') return { coef: 1, deg: 0 };
     let coef = 1, deg = 0;
@@ -2864,36 +2878,32 @@ function expandPolynomial(expr) {
     return { coef, deg };
   }
 
-  // --- パターン①： 単項式 × (1次式) × (1次式) (例: -2x(x+1)(x+2)) ---
   const tripleMatch = expr.match(/^([+-]?\d*(?:\.\d+)?(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)\*?\(([^)]+)\)$/);
   if (tripleMatch) {
-  const mono = parseMonomial(tripleMatch[1]);
-  const p1 = parseLinear(tripleMatch[2]);
-  const p2 = parseLinear(tripleMatch[3]);
+    const mono = parseMonomial(tripleMatch[1]);
+    const p1 = parseLinear(tripleMatch[2]);
+    const p2 = parseLinear(tripleMatch[3]);
 
-  // (p1.a*x + p1.b)(p2.a*x + p2.b) = A*x^2 + B*x + C
-  const A = p1.a * p2.a;
-  const B = p1.a * p2.b + p1.b * p2.a;
-  const C = p1.b * p2.b;
+    const A = p1.a * p2.a;
+    const B = p1.a * p2.b + p1.b * p2.a;
+    const C = p1.b * p2.b;
 
-  let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
+    let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
 
-  // mono.coef * (A*x^2 + B*x + C) * x^(mono.deg) を各次数に加算
-  const addTerm = (coef, deg) => {
-    if (deg === 3) coefX3 += coef;
-    else if (deg === 2) coefX2 += coef;
-    else if (deg === 1) coefX += coef;
-    else if (deg === 0) constVal += coef;
-  };
+    const addTerm = (coef, deg) => {
+      if (deg === 3) coefX3 += coef;
+      else if (deg === 2) coefX2 += coef;
+      else if (deg === 1) coefX += coef;
+      else if (deg === 0) constVal += coef;
+    };
 
-  addTerm(mono.coef * A, mono.deg + 2);
-  addTerm(mono.coef * B, mono.deg + 1);
-  addTerm(mono.coef * C, mono.deg + 0);
+    addTerm(mono.coef * A, mono.deg + 2);
+    addTerm(mono.coef * B, mono.deg + 1);
+    addTerm(mono.coef * C, mono.deg + 0);
 
-  return buildPolyResult(coefX3, coefX2, coefX, constVal);
-}
+    return buildPolyResult(coefX3, coefX2, coefX, constVal);
+  }
 
-  // --- パターン②： 単項式 × (多項式) (例: -5x(x+3)) ---
   const singleMatch = expr.match(/^([+-]?\d*(?:\.\d+)?(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)$/);
   if (singleMatch) {
     const mono = parseMonomial(singleMatch[1]);
@@ -2938,7 +2948,6 @@ function expandPolynomial(expr) {
     return buildPolyResult(coefX3, coefX2, coefX, constVal);
   }
 
-  // --- パターン③： (多項式) × (多項式) (例: (x+1)(x+2)) ---
   const match = expr.match(/^\(([^)]+)\)\*?\(([^)]+)\)$/);
   if (match) {
     const p1 = parseLinear(match[1]);
@@ -2954,7 +2963,6 @@ function expandPolynomial(expr) {
   return null;
 }
 
-// --- 因数分解ヘルパー (一次式文字列生成) ---
 function formatFactor(p, q) {
   let pStr = '';
   if (p === 1) pStr = 'x';
@@ -2972,7 +2980,6 @@ function formatFactor(p, q) {
 function factorPolynomial(expr) {
   expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
 
-  // 1. 3次式パターン: ax^3 + bx^2 + cx
   const poly3Pattern = /^([+-]?\d*)x\^3([+-]?\d*x\^2)?([+-]?\d*x)?$/;
   const match3 = expr.match(poly3Pattern);
 
@@ -3034,7 +3041,6 @@ function factorPolynomial(expr) {
     return `${outerStr}${formatFactor(foundP, foundQ)}${formatFactor(foundR, foundS)}`;
   }
 
-  // 2. 2次式パターン: ax^2 + bx + c
   const poly2Pattern = /^([+-]?\d*)x\^2([+-]?\d*x)?([+-]?\d+)?$/;
   const match2 = expr.match(poly2Pattern);
 
@@ -3081,16 +3087,13 @@ function factorPolynomial(expr) {
     if (foundP !== null) break;
   }
 
- let outerStr = (g === 1) ? '' : ((g === -1) ? '-' : `${g}`);
+  let outerStr = (g === 1) ? '' : ((g === -1) ? '-' : `${g}`);
 
-  // 1次式×1次式への分解が見つからなかった場合
   if (foundP === null) {
-    // 共通因数 g が取り出せる場合（例: 5x^2+5x+5 ➔ 5(x^2+x+1)）
     if (g !== 1) {
       const innerPoly = buildPolyResult(0, a2, b2, c2);
       return `${outerStr}(${innerPoly})`;
     }
-    // これ以上共通因数も括りだせない場合は null
     return null;
   }
 
@@ -3111,6 +3114,7 @@ function calculateBasic() {
     rawFormula = rawFormula.replace(/ｘ/g, 'x').replace(/Ｘ/g, 'x');
     let expr = rawFormula;
 
+    // 閉じカッコの補完
     const openBrackets = (expr.match(/\(/g) || []).length;
     const closeBrackets = (expr.match(/\)/g) || []).length;
     let completedBrackets = '';
@@ -3119,7 +3123,12 @@ function calculateBasic() {
       expr += completedBrackets;
     }
 
-    // --- 文字 'x' が含まれる場合の処理 ---
+    // 【修正箇所】★ 1. まず先に微分・積分の計算を優先して数数値化する ★
+    if (typeof evalCalculus === 'function') {
+      expr = evalCalculus(expr);
+    }
+
+    // --- 微分・積分が解決された後でも文字 'x' が残っている場合の多項式処理 ---
     if (expr.includes('x')) {
       // パターン1: 展開 (例: -2x(x+1) ➔ -2x^2-2x)
       const expanded = expandPolynomial(expr);
@@ -3147,20 +3156,22 @@ function calculateBasic() {
     }
 
     // --- 通常の数値計算 ---
+    // 省略された掛け算（例: 9√9 -> 9*√9, 9(3) -> 9*(3) など）を補完
+    expr = expr.replace(/(\d|Math\.PI|x|\))\s*(?=√)/g, '$1*');
+    expr = expr.replace(/(√(?:\([^)]+\)|\d+(?:\.\d+)?))\s*(?=\d|\(|x|Math\.PI)/g, '$1*');
+
+    // √ や π、^ を JavaScript の関数・演算子に置換
     expr = expr.replace(/π/g, 'Math.PI')
                .replace(/√\(/g, 'Math.sqrt(')
                .replace(/√(\d+(\.\d+)?)/g, 'Math.sqrt($1)')
                .replace(/\^/g, '**');
 
+    // その他のカッコや変数間の省略された掛け算を補完
     expr = expr.replace(/\)\s*\(/g, ')*(');
     expr = expr.replace(/(\d|Math\.PI|x|\))\s*\(/g, '$1*(');
     expr = expr.replace(/\)\s*(\d|Math\.PI|x)/g, ')*$1');
     expr = expr.replace(/(\d)\s*(x|Math\.PI)/g, '$1*$2');
     expr = expr.replace(/(x)\s*(\d|Math\.PI)/g, '$1*$2');
-
-    if (typeof evalCalculus === 'function') {
-      expr = evalCalculus(expr);
-    }
 
     let result = eval(expr);
 
