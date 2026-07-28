@@ -98,7 +98,7 @@
 }
 
 /* ==========================================
-   モーダル全体のスタイル（修正・拡張後）
+   モーダル全体のスタイル
    ========================================== */
 
 /* hidden属性がついている時は最優先で非表示にする */
@@ -532,7 +532,132 @@
     flex: 1;
   }
 
-  /* --- 時間計算パネル専用スタイル --- */
+/* ==========================================
+   進数変換のスタイル
+   ========================================== */      
+/* 入力フォームと +/- ボタンのグループ化 */
+.input-step-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-step {
+  width: 40px;
+  height: 38px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s;
+}
+
+.btn-step:hover {
+  background-color: #e0e0e0;
+}
+
+.btn-step:active {
+  background-color: #d0d0d0;
+}
+
+/* ビジュアルコンテナ */
+.bit-visualizer-container,
+.binary-calc-container {
+  margin-top: 15px;
+  padding: 12px;
+  background: #f9f9fb;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.bit-visualizer-container label,
+.binary-calc-container label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* 電球コンテナ：画面幅に関わらず常に1段8個（1バイト）で右詰め配置 */
+.bit-bulbs {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr); /* 常に横8等分 */
+  gap: 6px; /* 隙間をコンパクトに設定 */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 電球カードのデザイン（スマホでも潰れない調整） */
+/* 電球カード内のレイアウト調整 */
+.bulb-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 6px 2px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  min-width: 0;
+  transition: transform 0.1s, background-color 0.1s;
+  user-select: none;
+}
+
+.bulb-item:hover {
+  transform: translateY(-2px);
+  background-color: #f0f7ff;
+}
+
+/* 電球アイコン */
+.bulb-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* 2の累乗表記 (2⁰, 2¹, 2²...) */
+.bulb-power {
+  font-size: 10px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ビット値 (0 または 1) */
+.bulb-bit-val {
+  font-size: 12px;
+  font-weight: bold;
+  color: #2b6cb0;
+  margin: 1px 0;
+}
+
+/* 電球枠下部の「2の累乗の値」(1, 2, 4, 8, 16...) */
+.bulb-place-val {
+  font-size: 11px;
+  font-weight: bold;
+  color: #333;
+  background: #edf2f7;
+  width: 100%;
+  text-align: center;
+  border-radius: 0 0 4px 4px;
+  padding: 2px 0;
+  margin-top: 2px;
+}
+
+/* 累乗計算テキスト */
+.calc-detail {
+  font-family: monospace, monospace;
+  font-size: 14px;
+  color: #2b6cb0;
+  line-height: 1.6;
+  word-break: break-all;
+}
+/* ==========================================
+   時間計算パネル専用スタイル
+   ========================================== */      
   .time-input-card {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -624,6 +749,141 @@
     color: #15803d;
     margin-top: 4px;
   }
+
+ /* 小学生向け 時計パネル全体デザイン */
+.clock-card-kids {
+  background: #fff9e6;
+  border: 3px solid #ffe066;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.kids-card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #d97706;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.clock-container-kids {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+@media (min-width: 520px) {
+  .clock-container-kids {
+    flex-direction: row;
+    justify-content: space-evenly;
+  }
+}
+
+/* 時計盤の文字 */
+.clock-num {
+  font-size: 15px;
+  font-weight: bold;
+  fill: #2f3542;
+  font-family: sans-serif;
+}
+
+/* デジタル入力・ボタンエリア */
+.digital-clock-controls-kids {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.kids-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.input-unit-kids {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.unit-hour {
+  border: 2px solid #ff4757; /* 赤色の枠線 */
+}
+
+.unit-min {
+  border: 2px solid #1e90ff; /* 青色の枠線 */
+}
+
+.input-unit-kids input {
+  width: 50px;
+  height: 36px;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.unit-label-kids {
+  font-size: 16px;
+  font-weight: bold;
+  color: #4b5563;
+  margin-left: 4px;
+}
+
+/* 針の凡例 */
+.hand-legend {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: bold;
+}
+.legend-item.red { color: #ff4757; }
+.legend-item.blue { color: #1e90ff; }
+
+/* プラス・マイナスボタン */
+.step-btn-group-kids {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.btn-kids {
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+}
+
+.btn-kids:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+/* マイナスボタン（薄いオレンジ） */
+.btn-kids.sub {
+  background-color: #ffabe1;
+  color: #800040;
+}
+.btn-kids.sub:hover { background-color: #ff85d0; }
+
+/* プラスボタン（きみどり） */
+.btn-kids.add {
+  background-color: #7bed9f;
+  color: #005c20;
+}
+.btn-kids.add:hover { background-color: #2ed573; }  
     /* 切り替えコンテナ */
 .toggle-container {
   display: inline-flex;
@@ -635,6 +895,20 @@
   margin-bottom: 15px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
 }
+/* リセットボタン（黄色） */
+.btn-kids.reset {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #ffd166;
+  color: #7d4e00;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.btn-kids.reset:hover {
+  background-color: #ffca3a;
+}
+
 
 /* 各ボタンのデザイン */
 .toggle-btn {
@@ -723,6 +997,7 @@
 }
 </style>
 </head>
+
 <body>
 
 <div class="calculator-container">
@@ -751,53 +1026,87 @@
     </div>
     <div class="modal-body">
       <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">確認したい解説を選択してください。</p>
-      
+
       <div class="modal-menu-list">
-        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'area-modal')">
-          <span class="help-icon">📐</span>
+        <!-- 1. 計算方法 -->
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'calc-modal')">
+          <span class="help-icon">🧮</span>
           <div class="menu-text">
-            <strong>公式の解説</strong>
-            <small>面積や各公式の一覧</small>
+            <strong>計算方法の解説</strong>
+            <small>四則演算・割合・パーセント計算など</small>
           </div>
           <span class="arrow">›</span>
         </button>
 
+        <!-- 2. 進数 -->
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'radix-modal')">
+          <span class="help-icon">💡</span>
+          <div class="menu-text">
+            <strong>進数の解説</strong>
+            <small>2進数・10進数・16進数やビット計算</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+
+        <!-- 3. ローン -->
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'loan-modal')">
+          <span class="help-icon">🏦</span>
+          <div class="menu-text">
+            <strong>ローンの解説</strong>
+            <small>元利均等・元金均等・金利計算など</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+
+        <!-- 4. 面積・体積の公式 -->
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'area-modal')">
+          <span class="help-icon">📐</span>
+          <div class="menu-text">
+            <strong>面積・体積の公式</strong>
+            <small>三角形・円・立体図形などの公式一覧</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+
+        <!-- 5. 長さ -->
         <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'length-modal')">
           <span class="help-icon">📏</span>
           <div class="menu-text">
             <strong>長さの解説</strong>
-            <small>メートル法・ヤードポンド法など</small>
+            <small>メートル法・ヤードポンド法・尺貫法など</small>
           </div>
           <span class="arrow">›</span>
         </button>
 
+        <!-- 6. 重さ -->
         <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'weight-modal')">
           <span class="help-icon">⚖️</span>
           <div class="menu-text">
             <strong>重さの解説</strong>
-            <small>グラム・オンス・貫など</small>
+            <small>グラム・オンス・ポンド・貫など</small>
           </div>
           <span class="arrow">›</span>
         </button>
-          <!-- explanation-menu-modal の .modal-menu-list の中に追加 -->
 
-<button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'size-modal')">
-  <span class="help-icon">🏡</span>
-  <div class="menu-text">
-    <strong>広さの解説</strong>
-    <small>平方メートル・坪・畳・エーカーなど</small>
-  </div>
-  <span class="arrow">›</span>
-</button>
+        <!-- 7. 広さ -->
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'size-modal')">
+          <span class="help-icon">🏡</span>
+          <div class="menu-text">
+            <strong>広さの解説</strong>
+            <small>平方メートル・坪・畳・エーカーなど</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
 
-<button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'capacity-modal')">
-  <span class="help-icon">🫗</span>
-  <div class="menu-text">
-    <strong>容量の解説</strong>
-    <small>リットル・ガロン・合・一升瓶など</small>
-  </div>
-  <span class="arrow">›</span>
-</button>
+        <!-- 8. 容量 -->
+        <button type="button" class="menu-item-btn" onclick="switchModal('explanation-menu-modal', 'capacity-modal')">
+          <span class="help-icon">🫗</span>
+          <div class="menu-text">
+            <strong>容量の解説</strong>
+            <small>リットル・ガロン・合・一升瓶など</small>
+          </div>
+          <span class="arrow">›</span>
+        </button>
       </div>
     </div>
   </div>
@@ -869,21 +1178,50 @@
   </div>
 </div>
 
-  <!-- 2. 進数変換・計算 -->
-  <div id="baseN" class="panel">
-    <div class="form-group">
-      <label>10進数 (Decimal)</label>
+<!-- 2. 進数変換・計算 -->
+<div id="baseN" class="panel">
+  <!-- 10進数 -->
+  <div class="form-group">
+    <label>10進数 (Decimal)</label>
+    <div class="input-step-group">
+      <button type="button" class="btn-step" onclick="stepValue(-1)">－</button>
       <input type="number" id="dec-input" class="form-control" oninput="convertBase('dec')" placeholder="例: 255">
-    </div>
-    <div class="form-group">
-      <label>2進数 (Binary)</label>
-      <input type="text" id="bin-input" class="form-control" oninput="convertBase('bin')" placeholder="例: 11111111">
-    </div>
-    <div class="form-group">
-      <label>16進数 (Hexadecimal)</label>
-      <input type="text" id="hex-input" class="form-control" oninput="convertBase('hex')" placeholder="例: FF">
+      <button type="button" class="btn-step" onclick="stepValue(1)">＋</button>
     </div>
   </div>
+
+  <!-- 2進数 -->
+  <div class="form-group">
+    <label>2進数 (Binary)</label>
+    <div class="input-step-group">
+      <button type="button" class="btn-step" onclick="stepValue(-1)">－</button>
+      <input type="text" id="bin-input" class="form-control" oninput="convertBase('bin')" placeholder="例: 11111111">
+      <button type="button" class="btn-step" onclick="stepValue(1)">＋</button>
+    </div>
+  </div>
+
+  <!-- 16進数 -->
+  <div class="form-group">
+    <label>16進数 (Hexadecimal)</label>
+    <div class="input-step-group">
+      <button type="button" class="btn-step" onclick="stepValue(-1)">－</button>
+      <input type="text" id="hex-input" class="form-control" oninput="convertBase('hex')" placeholder="例: FF">
+      <button type="button" class="btn-step" onclick="stepValue(1)">＋</button>
+    </div>
+  </div>
+
+  <!-- 電球（ビット）ビジュアル領域 -->
+  <div class="bit-visualizer-container">
+    <label>2進数のビジュアル表現 (電球 ON/OFF)</label>
+    <div id="bit-bulbs" class="bit-bulbs"></div>
+  </div>
+
+  <!-- 2進数の計算（累乗の足し算）エリア -->
+  <div class="binary-calc-container">
+    <label>2進数の計算（累乗の足し算）</label>
+    <div id="binary-calc-detail" class="calc-detail">0</div>
+  </div>
+</div>
 
   <!-- 3. 割合・％計算 / ローン返済計算 -->
 <div id="percent" class="panel">
@@ -1170,6 +1508,100 @@
     <b>0 時間 0 分 0 秒</b><br>
     <small>（合計 0 分 / 0 秒）</small>
   </div>
+
+    <!-- アナログ＆デジタル連動時計UI -->
+  <div class="time-input-card clock-card-kids" style="margin-top: 15px;">
+    <div class="kids-card-title">⏰ とけい</div>
+    
+    <div class="clock-container-kids">
+      <!-- アナログ時計 (SVG) -->
+      <div class="analog-clock-wrapper">
+        <svg id="analog-clock" viewBox="0 0 220 220" width="180" height="180">
+          <!-- 時計盤背景 -->
+          <circle cx="110" cy="110" r="100" fill="#fffdf0" stroke="#ffd166" stroke-width="6"/>
+          <!-- 目盛り（分・時） -->
+          <g id="clock-ticks"></g>
+          
+          <!-- 時計盤の数字 (1〜12) -->
+          <text x="110" y="32" text-anchor="middle" class="clock-num">12</text>
+          <text x="152" y="43" text-anchor="middle" class="clock-num">1</text>
+          <text x="180" y="72" text-anchor="middle" class="clock-num">2</text>
+          <text x="190" y="115" text-anchor="middle" class="clock-num">3</text>
+          <text x="180" y="157" text-anchor="middle" class="clock-num">4</text>
+          <text x="152" y="186" text-anchor="middle" class="clock-num">5</text>
+          <text x="110" y="196" text-anchor="middle" class="clock-num">6</text>
+          <text x="68"  y="186" text-anchor="middle" class="clock-num">7</text>
+          <text x="40"  y="157" text-anchor="middle" class="clock-num">8</text>
+          <text x="30"  y="115" text-anchor="middle" class="clock-num">9</text>
+          <text x="40"  y="72"  text-anchor="middle" class="clock-num">10</text>
+          <text x="68"  y="43"  text-anchor="middle" class="clock-num">11</text>
+          
+          <!-- 針 -->
+          <!-- みじかいはり（赤・じかん） -->
+          <line id="hour-hand" x1="110" y1="110" x2="110" y2="58" stroke="#ff4757" stroke-width="8" stroke-linecap="round"/>
+          <!-- ながいはり（青・ふん） -->
+          <line id="minute-hand" x1="110" y1="110" x2="110" y2="30" stroke="#1e90ff" stroke-width="5" stroke-linecap="round"/>
+          <!-- 真ん中のまる -->
+          <circle cx="110" cy="110" r="7" fill="#2f3542"/>
+          <circle cx="110" cy="110" r="3" fill="#ffffff"/>
+        </svg>
+      </div>
+
+      <!-- デジタル操作・表示エリア -->
+      <div class="digital-clock-controls-kids">
+        <!-- 数字入力 -->
+        <!-- 「じ」と「ふん」の入力欄部分 -->
+<div class="kids-inputs">
+  <div class="input-unit-kids unit-hour">
+    <input 
+      type="number" 
+      id="clock-h" 
+      value="0" 
+      min="0" 
+      max="23" 
+      onfocus="this.select()" 
+      oninput="onClockInputChange()" 
+      onkeyup="onClockInputChange()"
+    >
+    <span class="unit-label-kids">じ</span>
+  </div>
+
+  <div class="input-unit-kids unit-min">
+    <input 
+      type="number" 
+      id="clock-m" 
+      value="0" 
+      min="0" 
+      max="59" 
+      onfocus="this.select()" 
+      oninput="onClockInputChange()" 
+      onkeyup="onClockInputChange()"
+    >
+    <span class="unit-label-kids">ふん</span>
+  </div>
+</div>
+
+        <!-- 針のマーク凡例 -->
+        <div class="hand-legend">
+          <span class="legend-item red">● みじかいはり（じ）</span>
+          <span class="legend-item blue">● ながいはり（ふん）</span>
+        </div>
+
+        <!-- ボタン操作グループ -->
+        <div class="kids-btn-wrapper">
+          <div class="step-btn-group-kids">
+            <button type="button" class="btn-kids sub" onclick="adjustClockMinute(-10)">-10ふん</button>
+            <button type="button" class="btn-kids sub" onclick="adjustClockMinute(-1)">-1ふん</button>
+            <button type="button" class="btn-kids add" onclick="adjustClockMinute(1)">+1ふん</button>
+            <button type="button" class="btn-kids add" onclick="adjustClockMinute(10)">+10ふん</button>
+          </div>
+            <div style="margin-top: 8px; text-align: center;">
+    <button type="button" class="btn-kids reset" onclick="resetClock()">↺ 0じ 0ふんに もどす</button>
+  </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
  <!-- 7. 長さ換算 -->
@@ -1257,17 +1689,17 @@
           <option value="ha">ヘクタール (ha)</option>
           <option value="km2">平方キロメートル (㎢)</option>
         </optgroup>
+        <optgroup label="ヤード・ポンド法">
+          <option value="sqin">平方インチ (sq in)</option>
+          <option value="sqft">平方フィート (sq ft)</option>
+          <option value="acre">エーカー (acre)</option>
+        </optgroup>
         <optgroup label="日本の伝統単位（畳・尺貫法）">
           <option value="jo">畳 (中京間 / 1.62㎡)</option>
           <option value="tsubo">坪 (つぼ)</option>
           <option value="se">畝 (せ)</option>
           <option value="tan">反 (たん)</option>
           <option value="cho">町 (ちょう)</option>
-        </optgroup>
-        <optgroup label="ヤード・ポンド法">
-          <option value="sqin">平方インチ (sq in)</option>
-          <option value="sqft">平方フィート (sq ft)</option>
-          <option value="acre">エーカー (acre)</option>
         </optgroup>
       </select>
     </div>
@@ -1292,17 +1724,17 @@
           <option value="cm3">立方センチメートル (cm³)</option>
           <option value="m3">立方メートル (m³)</option>
         </optgroup>
-        <optgroup label="尺貫法">
-          <option value="go">合（ごう）</option>
-          <option value="sho">升（しょう）</option>
-          <option value="to">斗（と）</option>
-          <option value="koku">石（こく）</option>
-        </optgroup>
         <optgroup label="ヤード・ポンド法（米国液量）">
           <option value="floz">液量オンス (fl oz)</option>
           <option value="pnt">パイント (pt)</option>
           <option value="qt">クォート (qt)</option>
           <option value="gal">ガロン (gal)</option>
+        </optgroup>
+        <optgroup label="尺貫法">
+          <option value="go">合（ごう）</option>
+          <option value="sho">升（しょう）</option>
+          <option value="to">斗（と）</option>
+          <option value="koku">石（こく）</option>
         </optgroup>
       </select>
     </div>
@@ -1312,62 +1744,54 @@
   <div id="capacity-result" class="result-box" style="margin-top: 12px;"></div>
 </div>
 
-<!-- 1. 公式一覧モーダル本体（面積・計算ガイド） -->
-<div id="area-modal" class="modal" hidden>
+<div id="calc-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
       <div class="modal-title-group">
-        <h2>💡 計算機能の使い方・公式ガイド</h2>
-        <button type="button" class="back-btn" onclick="switchModal('area-modal', 'explanation-menu-modal')">
+        <h3>🧮 計算方法の解説</h3>
+        <button type="button" class="back-btn" onclick="switchModal('calc-modal', 'explanation-menu-modal')">
           ‹ メニューへ戻る
         </button>
       </div>
-      <button type="button" class="close-btn" onclick="closeModal('area-modal')">&times;</button>
+      <button type="button" class="close-btn" onclick="closeModal('calc-modal')">&times;</button>
     </div>
     <div class="modal-body">
-      <!-- 基礎知識 -->
       <section class="help-section">
         <h3>🌱 基本・定数</h3>
         <div class="card">
-  <h4>円周率（π（パイ） ≒ 3.14）</h4>
-  <p>円のまわりの長さや、円の面積を計算するときに使う特別な数。</p>
-  <div class="formula-box">円周：直径 × π<br>円の面積：半径 × 半径 × π</div>
-</div>
-<div class="card">
-  <h4>平方根（ √（ルート））</h4>
-  <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p>
-  <div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
+          <h4>円周率（π（パイ） ≒ 3.14）</h4>
+          <p>円のまわりの長さや、円の面積を計算するときに使う特別な数。</p>
+          <div class="formula-box">円周：直径 × π<br>円の面積：半径 × 半径 × π</div>
+        </div>
+        <div class="card">
+          <h4>平方根（ √（ルート））</h4>
+          <p>「2乗（同じ数を2回かける）するとその数になる元の数」のこと。</p>
+          <div class="formula-box">例：√9 = 3 （3 × 3 = 9 だから）</div>
 
-  <hr>
+          <hr>
 
-  <h5>【よく使うルートの語呂合わせ】</h5>
-  <ul class="mnemonic-list">
-    <li><strong>√2 ≒ 1.41421356</strong><br>「一夜一夜に人見頃（ひとよひとよにひとみごろ）」</li>
-    <li><strong>√3 ≒ 1.7320508</strong><br>「人並みに奢れや（ひとなみにおごれや）」</li>
-    <li><strong>√5 ≒ 2.2360679</strong><br>「富士山麓オウム鳴く（ふじさんろくおうむなく）」</li>
-  </ul>
-</div>
+          <h5>【よく使うルートの語呂合わせ】</h5>
+          <ul class="mnemonic-list">
+            <li><strong>√2 ≒ 1.41421356</strong><br>「一夜一夜に人見頃（ひとよひとよにひとみごろ）」</li>
+            <li><strong>√3 ≒ 1.7320508</strong><br>「人並みに奢れや（ひとなみにおごれや）」</li>
+            <li><strong>√5 ≒ 2.2360679</strong><br>「富士山麓オウム鳴く（ふじさんろくおうむなく）」</li>
+          </ul>
+        </div>
         <div class="card">
           <h4>三平方の定理（ピタゴラスの定理）</h4>
           <p>直角三角形の斜めの長さ（斜辺 c）を求めることができる特別な公式。</p>
           
           <div style="display: flex; align-items: center; justify-content: start; gap: 10px; margin: 10px 0;">
-            <!-- 左側：公式ボックス -->
             <div class="formula-box" style="padding: 8px 24px; margin: 0; font-size: 0.9em; white-space: nowrap; flex-shrink: 0;">
               a² ＋ b² ＝ c²<br>
               斜辺 c ＝ √(a² ＋ b²)
             </div>
             
-            <!-- 右側：図形 -->
             <svg width="240" height="85" viewBox="0 0 240 85" style="background: #fff; border-radius: 6px; border: 1px solid #e0e0e0; flex-shrink: 0;">
-              
-              <!-- 直角マーク -->
               <path d="M 60 60 L 68 60 L 68 68" fill="none" stroke="#999" stroke-width="1.5"/>
               
-              <!-- 直角三角形 (底辺a, 高さb, 斜辺c) -->
               <polygon points="60,68 200,68 60,15" fill="rgba(66, 133, 244, 0.1)" stroke="#4285f4" stroke-width="2"/>
               
-              <!-- 文字ラベル (a, b, c) -->
               <text x="130" y="79" font-size="11" font-weight="bold" fill="#333" text-anchor="middle">a (底辺)</text>
               <text x="52" y="45" font-size="11" font-weight="bold" fill="#333" text-anchor="end">b (高さ)</text>
               <text x="135" y="38" font-size="12" font-weight="bold" fill="#d93025">c (斜辺)</text>
@@ -1376,9 +1800,34 @@
 
           <p>※錐体の「斜高」や円錐の「母線」を求めるときに大活躍するよ！</p>
         </div>
+
+        <div class="card">
+          <h4>分配法則・展開・因数分解</h4>
+          <p>カッコを外すこと（展開）と、共通のものや公式でカッコにくくること（因数分解）は表裏一体の関係です。</p>
+          
+          <h5>1. 分配法則と「展開」</h5>
+          <p>カッコの外にある数を、中のすべてに順番にかける計算ルール（分配法則）。カッコを外して単項式の和にすることを<strong>「展開」</strong>といいます。</p>
+          <div class="formula-box">
+            <strong>【分配法則の基本】</strong> a(b + c) = ab + ac<br>
+            <strong>【展開の例】</strong> 3x(x + 2) ➔ <strong>3x² + 6x</strong><br>
+            <strong>【多項式の展開】</strong> (x + 2)(x + 3) ➔ x² + 3x + 2x + 6 ➔ <strong>x² + 5x + 6</strong>
+          </div>
+<p class="tip-text">💡 <strong>電卓での使い方：</strong> 『 <strong><code>x^2+3x+2x+2+4</code></strong> 』<strong>(x²はx^2)</strong>と入力！</p>
+          <hr>
+
+          <h5>2. 「因数分解」</h5>
+          <p>展開の逆で、式を掛け算の形（カッコの形）に戻す計算のこと。</p>
+          <div class="formula-box">
+            <strong>【共通因数をくくる】</strong> 3x² + 6x ➔ <strong>3x(x + 2)</strong><br>
+            <strong>【公式を使う】</strong> x² + 5x + 6 ➔ <strong>(x + 2)(x + 3)</strong><br>
+            <small style="color: #666;">※「たして 5、かけて 6」になる組み合わせ（2 と 3）を見つける！</small>
+          </div>
+
+          <p class="tip-text">💡 <strong>関係性：</strong> (x + 2)(x + 3) ➔ 【展開】 ➔ x² + 5x + 6 ➔ 【因数分解】 ➔ (x + 2)(x + 3)</p>
+        </div>
+
       </section>
 
-      <!-- 微分・積分の解説と計算例 -->
       <section class="help-section">
         <h3>🚀 微分・積分の考え方と計算例</h3>
 
@@ -1411,8 +1860,166 @@
           <p class="tip-text">💡 <strong>電卓での使い方：</strong> 積分ボタンを押して『 <strong><code>∫(10x, 0, 3)</code></strong> 』と入力！</p>
         </div>
       </section>
+    </div>
+  </div>
+</div>
 
-      <!-- 面積・角度の公式一覧 -->
+<div id="radix-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h3>💡 進数の解説</h3>
+        <button type="button" class="back-btn" onclick="switchModal('radix-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('radix-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="card">
+        <h4>1. 進数とは？（数の数え方のルール）</h4>
+        <p>普段私たちが使っているのは「10進数（0〜9の数字を使い、10で桁上がりする）」です。コンピュータの世界では「2進数（0と1のみ）」や「16進数（0〜9とA〜F）」が使われます。</p>
+        <div class="formula-box">
+          ・10進数： 0, 1, 2 ... 8, 9 ➔ 10<br>
+          ・2進数  ： 0, 1 ➔ 10 (10進数の2)<br>
+          ・16進数 ： 0 ... 9, A(10), B(11) ... F(15) ➔ 10 (10進数の16)
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 12px;">
+        <h4>2. 2進数とビット（Bit）の仕組み</h4>
+        <p>スイッチの「OFF(0)」と「ON(1)」の集まりで数を表現します。右端の桁（2⁰＝1）から左に向かって2倍（2¹＝2, 2²＝4, 2³＝8...）ずつ大きくなります。</p>
+        <div class="example-box" style="background:#f8fafc; padding:8px 12px; border-left:3px solid #3b82f6; margin-top:8px; font-size:13px;">
+          <strong>💡 10進数「13」を2進数にする例：</strong>
+          <p style="margin:4px 0 0 0;">8(ON) + 4(ON) + 2(OFF) + 1(ON) ➔ <b>1101</b></p>
+        </div>
+      </div>
+
+      <!-- ↓↓↓ ここから追加したカード ↓↓↓ -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>3. ビット（bit）とバイト（Byte）〜 データの単位</h4>
+        <p>データの最小単位が<strong>ビット（bit）</strong>です。これが8個集まると<strong>バイト（Byte）</strong>になり、英数字1文字分などのデータを表せます。</p>
+        
+        <div class="formula-box">
+          ・<strong>1 bit</strong> ＝ ON/OFF（0か1）の1桁<br>
+          ・<strong>1 Byte（B）</strong> ＝ 8 bits（2進数8桁 ＝ 2⁸ ＝ 256通りの情報）
+        </div>
+
+        <hr style="margin: 10px 0;">
+
+        <p style="margin-bottom: 6px;"><strong>【単位の広がり（1,024 ≒ 2¹⁰ 倍ずつ増加）】</strong></p>
+        <p style="font-size: 0.85em; color: #666; margin-top: 0; line-height: 1.4;">
+    ※内部処理（2進数）では <strong>1,024（2¹⁰）倍</strong>で繰り上がりますが、市販のHDD・SDカードの容量表記や一般的な店舗では、キリの良い <strong>1,000（10³）倍</strong> で計算・表記されることが多くなっています（例：1 KB = 1,000 B）。
+  </p>
+  
+  <div class="formula-box" style="font-size: 0.9em; line-height: 1.6;">
+    ・<strong>KB</strong>（キロバイト） ＝ 1,024 B<br>
+    ・<strong>MB</strong>（メガバイト） ＝ 1,024 KB（写真1枚程度）<br>
+    ・<strong>GB</strong>（ギガバイト） ＝ 1,024 MB（スマホの容量でおなじみ）<br>
+    ・<strong>TB</strong>（テラバイト） ＝ 1,024 GB（外付けHDDなど）<br>
+    ・<strong>PB</strong>（ペタバイト） ＝ 1,024 TB（大型データセンター級）<br>
+    ・<strong>EB</strong>（エクサバイト） ＝ 1,024 PB（世界規模のクラウドや素粒子実験データなど）<br>
+    ・<strong>ZB</strong>（ゼタバイト） ＝ 1,024 EB（全世界の年間データ通信量規模）<br>
+    ・<strong>YB</strong>（ヨタバイト） ＝ 1,024 ZB（現在定義されている最大級の単位）
+  </div>
+      </div>
+
+      <div class="card" style="margin-top: 12px;">
+        <h4>4. 16進数が使われる理由</h4>
+        <p>2進数は桁数が長くなりやすいため、2進数4桁分（0000〜1111＝0〜15）をぴったり1文字で表せる16進数がWEBデザイン（カラーコード #FF0000 など）やプログラミングで重宝されます。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="loan-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h3>🏦 ローンの解説</h3>
+        <button type="button" class="back-btn" onclick="switchModal('loan-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('loan-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="card">
+        <h4>1. 返済方式の違い（元利均等 vs 元金均等）</h4>
+        <div class="formula-box">
+          <strong>【元利均等返済】</strong> 毎月の支払額（元金＋利息）が一定<br>
+          ・メリット：毎月いくら払うか決まっていて返済計画が立てやすい<br>
+          ・デメリット：初期は利息の割合が多く、元金が減りにくい
+        </div>
+        <div class="formula-box" style="margin-top: 8px;">
+          <strong>【元金均等返済】</strong> 毎月返す「元金」が一定<br>
+          ・メリット：元金が早く減るため、総返済額（総利息）が少なく済む<br>
+          ・デメリット：返済開始直後の毎月の支払額が一番高くなる
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 12px;">
+        <h4>2. 金利タイプ（固定金利と変動金利）</h4>
+        <p>・<b>固定金利</b>：返済終了まで金利が変わらない。将来の金利上昇リスクを回避したい人向け。<br>
+           ・<b>変動金利</b>：定期的に金利が見直される。固定より金利が低く設定されていることが多いが、将来上昇するリスクがある。</p>
+      </div>
+
+      <!-- ↓↓↓ 拡充したカード ↓↓↓ -->
+      <div class="card" style="margin-top: 12px;">
+        <h4>3. 金利計算の基本（単利と複利）</h4>
+          <div class="formula-box">
+          利息 ＝ 借りた金額（残高） × 年利 × 期間
+        </div>
+        <p>金利のつき方には「単利」と「複利」の2種類があります。</p>
+        
+        <div class="formula-box">
+          ・<strong>単利（たんり）</strong>：最初の元金に対してのみ利息がつく仕組み<br>
+          ・<strong>複利（ふくり）</strong>：ついた利息を元の金（元金）に組み入れて、利息が利息を生む仕組み
+        </div>
+
+
+        <div class="example-box" style="background:#f8fafc; padding:10px 12px; border-left:3px solid #f59e0b; margin-top:10px; font-size:13px;">
+          <strong>💡 違いがわかる具体例（100万円を年利5%で運用・借入した場合）</strong>
+          
+          <ul style="margin:6px 0 0 18px; padding:0; line-height: 1.6;">
+            <li><strong>1年目：</strong><br>
+              ・単利：利息 5万円 ➔ 合計 105万円<br>
+              ・複利：利息 5万円 ➔ 合計 105万円（1年目は同じ）
+            </li>
+            <li><strong>2年目：</strong><br>
+              ・単利：100万円に5% ➔ 利息 5万円（合計 110万円）<br>
+              ・複利：105万円に5% ➔ 利息 5.25万円（合計 <strong>110.25万円</strong>）
+            </li>
+            <li><strong>3年目：</strong><br>
+              ・単利：100万円に5% ➔ 利息 5万円（合計 115万円）<br>
+              ・複利：110.25万円に5% ➔ 利息 約5.51万円（合計 <strong>115.76万円</strong>）
+            </li>
+            <li><strong>10年後：</strong><br>
+              ・単利：100万円 ＋ (5万円 × 10年) ＝ <strong>150万円</strong><br>
+              ・複利：100万円 × (1.05)¹⁰ ＝ <strong>約162.9万円</strong>（約13万円の差！）
+            </li>
+          </ul>
+        </div>
+
+        <p style="margin-top: 8px; font-size: 0.85em; color: #666;">※ローン（借入）の場合は複利や月割り計算により利息が増えやすくなり、資産運用の場合は複利効果で雪だるま式にお金が増えていきます。住宅ローンなどは残りの元金（残高）に対して毎月日割り・月割りで計算されます。</p>
+      </div>
+      <!-- ↑↑↑ 拡充完了 ↑↑↑ -->
+    </div>
+  </div>
+</div>
+
+<div id="area-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h3>📐 面積・体積の公式</h3>
+        <button type="button" class="back-btn" onclick="switchModal('area-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('area-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
       <section class="help-section">
         <h3>📏 面積と角度の公式一覧（平面図形）</h3>
 
@@ -1450,26 +2057,19 @@
           <h4>扇形（おうぎがた）</h4>
           
           <div style="display: flex; align-items: center; justify-content: start; gap: 10px; margin: 10px 0;">
-            <!-- 左側：公式ボックス（すっきり配置） -->
             <div class="formula-box" style="margin: 0; flex: 1; padding: 10px 12px;">
               <div><strong>弧の長さ</strong> ＝ 直径 × π × (中心角 ÷ 360)</div>
               <div style="margin-top: 6px;"><strong>面 積</strong> ＝ 半径 × 半径 × π × (中心角 ÷ 360)</div>
             </div>
             
-            <!-- 右側：扇形の図形（高さと配置を最適化） -->
             <svg width="200" height="85" viewBox="0 0 200 85" style="background: #fff; border-radius: 6px; border: 1px solid #e0e0e0; flex-shrink: 0;">
-              <!-- 扇形のベース -->
               <path d="M 25 68 L 140 68 A 115 115 0 0 0 82 12 Z" fill="rgba(66, 133, 244, 0.1)" stroke="#4285f4" stroke-width="2"/>
               
-              <!-- 中心角の円弧マーク -->
               <path d="M 45 68 A 20 20 0 0 0 37 54" fill="none" stroke="#999" stroke-width="1.5"/>
               <text x="56" y="63" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">中心角</text>
 
-              <!-- 半径（母線）のラベル -->
               <text x="82" y="80" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">半径（母線）</text>
               
-              
-              <!-- 弧の長さのラベル -->
               <text x="135" y="32" font-size="11" font-weight="bold" fill="#d93025" text-anchor="middle">弧</text>
             </svg>
           </div>
@@ -1502,81 +2102,78 @@
         </div>
       </section>
 
-      <!-- 体積・表面積の公式一覧 -->
-<section class="help-section">
-  <h3>📐 体積と表面積の公式一覧（立体図形）</h3>
+      <section class="help-section">
+        <h3>📐 体積と表面積の公式一覧（立体図形）</h3>
 
-  <div class="card">
-    <h4>直方体・立方体</h4>
-    <div class="formula-box">
-      体積 = 縦 × 横 × 高さ<br>
-      表面積 = 2 × (縦×横 + 横×高さ + 高さ×縦)
-    </div>
-    <p>※表面積は、向かい合う3種類の長方形がそれぞれ2枚ずつあるよ！</p>
-  </div>
+        <div class="card">
+          <h4>直方体・立方体</h4>
+          <div class="formula-box">
+            体積 = 縦 × 横 × 高さ<br>
+            表面積 = 2 × (縦×横 + 横×高さ + 高さ×縦)
+          </div>
+          <p>※表面積は、向かい合う3種類の長方形がそれぞれ2枚ずつあるよ！</p>
+        </div>
 
-  <div class="card">
-    <h4>三角柱（すべての柱体）</h4>
-    <div class="formula-box">
-      体積 = 底面積 × 高さ<br>
-      表面積 = 底面積 × 2 + 側面積
-    </div>
-    <p>※側面積は「(底面の周の長さ) × 立体の高さ」でまとめて計算できるよ！</p>
-  </div>
+        <div class="card">
+          <h4>三角柱（すべての柱体）</h4>
+          <div class="formula-box">
+            体積 = 底面積 × 高さ<br>
+            表面積 = 底面積 × 2 + 側面積
+          </div>
+          <p>※側面積は「(底面の周の長さ) × 立体の高さ」でまとめて計算できるよ！</p>
+        </div>
 
-  <div class="card">
-    <h4>円柱</h4>
-    <div class="formula-box">
-      体積 = (半径 × 半径 × π) × 高さ<br>
-      表面積 = 2 × (半径 × 半径 × π) + (底周長 × 高さ)<br>
-      底周長（円周） = 2 × 半径 × π
-    </div>
-    <p>※展開図にすると「円2つ」と「大きな長方形1枚（横＝底面の周の長さ）」になるよ！</p>
-  </div>
+        <div class="card">
+          <h4>円柱</h4>
+          <div class="formula-box">
+            体積 = (半径 × 半径 × π) × 高さ<br>
+            表面積 = 2 × (半径 × 半径 × π) + (底周長 × 高さ)<br>
+            底周長（円周） = 2 × 半径 × π
+          </div>
+          <p>※展開図にすると「円2つ」と「大きな長方形1枚（横＝底面の周の長さ）」になるよ！</p>
+        </div>
 
-  <div class="card">
-    <h4>三角錐・四角錐（すべての錐体）</h4>
-    <div class="formula-box">
-      体積 = 底面積 × 高さ ÷ 3<br>
-      表面積 = 底面積 + 側面積（すべての側面の合計）<br>
-      斜高 = √(立体の高さ² + 底面中心から辺までの距離²)
-    </div>
-    <p>
-      ※側面の三角形の高さ（斜高）は三平方の定理（ピタゴラスの定理）で求めるよ！<br>
-      【底面中心からの距離の目安】<br>
-      ・<strong>四角錐</strong>：反対側の辺の長さ ÷ 2<br>
-      ・<strong>三角錐</strong>：底面の高さ ÷ 3（※底辺に向かう距離）
-    </p>
-  </div>
+        <div class="card">
+          <h4>三角錐・四角錐（すべての錐体）</h4>
+          <div class="formula-box">
+            体積 = 底面積 × 高さ ÷ 3<br>
+            表面積 = 底面積 + 側面積（すべての側面の合計）<br>
+            斜高 = √(立体の高さ² + 底面中心から辺までの距離²)
+          </div>
+          <p>
+            ※側面の三角形の高さ（斜高）は三平方の定理（ピタゴラスの定理）で求めるよ！<br>
+            【底面中心からの距離の目安】<br>
+            ・<strong>四角錐</strong>：反対側の辺の長さ ÷ 2<br>
+            ・<strong>三角錐</strong>：底面の高さ ÷ 3（※底辺に向かう距離）
+          </p>
+        </div>
 
-  <div class="card">
-    <h4>円錐</h4>
-    <div class="formula-box">
-      体積 = (半径 × 半径 × π) × 高さ ÷ 3<br>
-      表面積 = (半径 × 半径 × π) + (母線 × 半径 × π)<br>
-      母線 = √(立体の高さ² + 半径²)
-    </div>
-    <p>※側面積（おうぎ形）は「母線 × 底面の半径 × π」で簡単に計算できるよ！</p>
-  </div>
+        <div class="card">
+          <h4>円錐</h4>
+          <div class="formula-box">
+            体積 = (半径 × 半径 × π) × 高さ ÷ 3<br>
+            表面積 = (半径 × 半径 × π) + (母線 × 半径 × π)<br>
+            母線 = √(立体の高さ² + 半径²)
+          </div>
+          <p>※側面積（おうぎ形）は「母線 × 底面の半径 × π」で簡単に計算できるよ！</p>
+        </div>
 
-  <div class="card">
-    <h4>球の体積・表面積</h4>
-    <div class="formula-box">
-      体積 = (4/3) × π × r<sup>3</sup><br>
-      表面積 = 4 × π × r<sup>2</sup>
-    </div>
-    <p>
-      ・体積：「身の上に心配あり（4/3 π r<sup>3</sup>）」<br>
-      ・表面積：「心配ある事情（4 π r<sup>2</sup>）」という語呂合わせで覚えると覚えやすいよ！
-    </p>
-  </div>
-</section>
-
+        <div class="card">
+          <h4>球の体積・表面積</h4>
+          <div class="formula-box">
+            体積 = (4/3) × π × r<sup>3</sup><br>
+            表面積 = 4 × π × r<sup>2</sup>
+          </div>
+          <p>
+            ・体積：「身の上に心配あり（4/3 π r<sup>3</sup>）」<br>
+            ・表面積：「心配ある事情（4 π r<sup>2</sup>）」という語呂合わせで覚えると覚えやすいよ！
+          </p>
+        </div>
+      </section>
     </div>
   </div>
 </div>
 
-<!-- 2. 長さの解説モーダル -->
 <div id="length-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
@@ -1589,8 +2186,6 @@
       <button type="button" class="close-btn" onclick="closeModal('length-modal')">&times;</button>
     </div>
     <div class="modal-body">
-
-      <!-- 1. メートル法 -->
       <div class="card">
         <h4>1. 国際単位系（SI） / メートル法</h4>
         <div class="formula-box">
@@ -1610,7 +2205,6 @@
         </div>
       </div>
 
-      <!-- 2. ヤード・ポンド法 -->
       <div class="card" style="margin-top: 12px;">
         <h4>2. ヤード・ポンド法（欧米・スポーツ）</h4>
         <div class="formula-box">
@@ -1628,7 +2222,6 @@
         </div>
       </div>
 
-      <!-- 3. 尺貫法 -->
       <div class="card" style="margin-top: 12px;">
         <h4>3. 尺貫法（日本の伝統単位）</h4>
         <div class="formula-box">
@@ -1645,12 +2238,10 @@
           </ul>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- 3. 重さの解説モーダル -->
 <div id="weight-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
@@ -1663,8 +2254,6 @@
       <button type="button" class="close-btn" onclick="closeModal('weight-modal')">&times;</button>
     </div>
     <div class="modal-body">
-
-      <!-- 1. メートル法 -->
       <div class="card">
         <h4>1. 国際単位系（SI） / メートル法</h4>
         <div class="formula-box">
@@ -1682,7 +2271,6 @@
         </div>
       </div>
 
-      <!-- 2. ヤード・ポンド法 -->
       <div class="card" style="margin-top: 12px;">
         <h4>2. ヤード・ポンド法（アメリカ・スポーツ・航空）</h4>
         <div class="formula-box">
@@ -1701,7 +2289,6 @@
         </div>
       </div>
 
-      <!-- 3. 尺貫法 ＆ 特殊単位 -->
       <div class="card" style="margin-top: 12px;">
         <h4>3. 尺貫法 ＆ その他の特殊単位</h4>
         <div class="formula-box">
@@ -1719,11 +2306,10 @@
           </ul>
         </div>
       </div>
-
     </div>
   </div>
 </div>
-    <!-- 広さの解説モーダル -->
+
 <div id="size-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
@@ -1736,8 +2322,6 @@
       <button type="button" class="close-btn" onclick="closeModal('size-modal')">&times;</button>
     </div>
     <div class="modal-body">
-
-      <!-- 1. メートル法・公制単位 -->
       <div class="card">
         <h4>1. メートル法・公制単位</h4>
         <div class="formula-box">
@@ -1756,7 +2340,6 @@
         </div>
       </div>
 
-      <!-- 2. ヤード・ポンド法 -->
       <div class="card" style="margin-top: 12px;">
         <h4>2. ヤード・ポンド法（アメリカ・英米圏）</h4>
         <div class="formula-box">
@@ -1775,7 +2358,6 @@
         </div>
       </div>
 
-      <!-- 3. 日本独自・尺貫法 -->
       <div class="card" style="margin-top: 12px;">
         <h4>3. 日本独自 ＆ 尺貫法</h4>
         <div class="formula-box">
@@ -1794,7 +2376,6 @@
         </div>
       </div>
 
-      <!-- 4. よく使われる広さの例え・比較（★新しく追加） -->
       <div class="card" style="margin-top: 12px;">
         <h4>4. 日常でよく使われる広さの例え（換算目安）</h4>
         <div class="formula-box">
@@ -1812,26 +2393,22 @@
           </ul>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- 容量の解説モーダル -->
 <div id="capacity-modal" class="modal" hidden>
   <div class="modal-content">
     <div class="modal-header">
       <div class="modal-title-group">
-      <h3>🫗 容量（体積・液量）の単位と使い分けガイド</h3>
-      <button type="button" class="back-btn" onclick="switchModal('capacity-modal', 'explanation-menu-modal')">
-      ‹ メニューへ戻る
-    </button>
-  </div>
+        <h3>🫗 容量（体積・液量）の単位と使い分けガイド</h3>
+        <button type="button" class="back-btn" onclick="switchModal('capacity-modal', 'explanation-menu-modal')">
+          ‹ メニューへ戻る
+        </button>
+      </div>
       <button type="button" class="close-btn" onclick="closeModal('capacity-modal')">&times;</button>
     </div>
     <div class="modal-body">
-
-      <!-- 1. メートル法（容積・液体） -->
       <div class="card">
         <h4>1. メートル法（容積・液体）</h4>
         <div class="formula-box">
@@ -1850,7 +2427,6 @@
         </div>
       </div>
 
-      <!-- 2. ヤード・ポンド法（米国） -->
       <div class="card" style="margin-top: 12px;">
         <h4>2. ヤード・ポンド法（米国・液量単位）</h4>
         <div class="formula-box">
@@ -1869,7 +2445,6 @@
         </div>
       </div>
 
-      <!-- 3. 尺貫法（液体・穀物） -->
       <div class="card" style="margin-top: 12px;">
         <h4>3. 尺貫法（お酒・お米・神事）</h4>
         <div class="formula-box">
@@ -1887,7 +2462,6 @@
           </ul>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -2157,25 +2731,91 @@ function funcStrReplacer(str) {
   return str.replace(/π/g, 'Math.PI').replace(/√\(/g, 'Math.sqrt(').replace(/\^/g, '**');
 }
 
-// 計算実行関数
-// --- 多項式展開ロジック ( (ax+b)(cx+d) や (ax+b)^2 などの展開 ) ---
-function expandPolynomial(expr) {
-  // 空白を除去し、小文字のxに統一
+// --- 共通ヘルパー関数: 係数 A(x^3), B(x^2), C(x), D(定数) から数式文字列を生成 ---
+function buildPolyResult(A, B, C, D) {
+  let result = '';
+
+  // x^3 項
+  if (A !== 0) {
+    if (A === 1) result += 'x^3';
+    else if (A === -1) result += '-x^3';
+    else result += `${A}x^3`;
+  }
+  // x^2 項
+  if (B !== 0) {
+    if (B > 0 && result !== '') result += '+';
+    if (B === 1) result += 'x^2';
+    else if (B === -1) result += '-x^2';
+    else result += `${B}x^2`;
+  }
+  // x 項
+  if (C !== 0) {
+    if (C > 0 && result !== '') result += '+';
+    if (C === 1) result += 'x';
+    else if (C === -1) result += '-x';
+    else result += `${C}x`;
+  }
+  // 定数項
+  if (D !== 0 || result === '') {
+    if (D > 0 && result !== '') result += '+';
+    result += D;
+  }
+  return result;
+}
+
+// --- 同類項の整理ロジック (3次式まで対応) ---
+// --- 同類項の整理ロジック (3次式まで対応・修正版) ---
+function simplifyPolynomial(expr) {
   expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
 
-  // 1. (ax+b)^2 の形を展開形 (ax+b)(ax+b) に変換
+  if (expr.includes('(') || expr.includes(')')) return null;
+
+  let formattedExpr = expr;
+  if (!formattedExpr.startsWith('+') && !formattedExpr.startsWith('-')) {
+    formattedExpr = '+' + formattedExpr;
+  }
+  
+  const terms = formattedExpr.match(/[+-][^+-]+/g);
+  if (!terms) return null;
+
+  let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
+
+  for (let term of terms) {
+    if (term.includes('x^3')) {
+      const cStr = term.replace('x^3', '');
+      if (cStr === '+') coefX3 += 1;
+      else if (cStr === '-') coefX3 -= 1;
+      else coefX3 += parseFloat(cStr);
+    } else if (term.includes('x^2')) {
+      const cStr = term.replace('x^2', '');
+      if (cStr === '+') coefX2 += 1;
+      else if (cStr === '-') coefX2 -= 1;
+      else coefX2 += parseFloat(cStr);
+    } else if (term.includes('x')) {
+      const cStr = term.replace('x', '');
+      if (cStr === '+') coefX += 1;
+      else if (cStr === '-') coefX -= 1;
+      else coefX += parseFloat(cStr);
+    } else {
+      constVal += parseFloat(term);
+    }
+  }
+
+  return buildPolyResult(coefX3, coefX2, coefX, constVal);
+}
+
+// --- 多項式展開ロジック (次数無制限・複数カッコ対応版) ---
+function expandPolynomial(expr) {
+  expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
+
+  // (ax+b)^2 ➔ (ax+b)(ax+b)
   expr = expr.replace(/\(([^)]+)\)\^2/g, '($1)($1)');
 
-  // 2. (ax+b)(cx+d) を検出（間に * があってもなくても対応）
-  const poly2Pattern = /^\(([^)]+)\)\*?\(([^)]+)\)$/;
-  const match = expr.match(poly2Pattern);
+  if (!expr.includes('(')) return null;
 
-  if (!match) return null; // 2項の掛け合わせ以外（複雑すぎる式など）は通常処理へ
-
-  // ax + b の形式から a (xの係数) と b (定数項) を抽出する関数
+  // カッコ内の 1次式 (ax+b) をパースするヘルパー
   function parseLinear(str) {
     let a = 0, b = 0;
-    // + や - で項を分解
     const terms = str.match(/[+-]?[^+-]+/g) || [];
     terms.forEach(term => {
       if (term.includes('x')) {
@@ -2190,97 +2830,259 @@ function expandPolynomial(expr) {
     return { a, b };
   }
 
-  const p1 = parseLinear(match[1]); // 1つ目のカッコ
-  const p2 = parseLinear(match[2]); // 2つ目のカッコ
+  // --- 外側の単項式 (例: "2x^2", "-x", "5") の係数と次数を解析するヘルパー ---
+  function parseMonomial(str) {
+    if (!str || str === '') return { coef: 1, deg: 0 };
+    let coef = 1, deg = 0;
 
-  // (a1*x + b1)(a2*x + b2) = (a1*a2)x^2 + (a1*b2 + a2*b1)x + (b1*b2)
-  const A = p1.a * p2.a;             // x^2 の係数
-  const B = p1.a * p2.b + p1.b * p2.a; // x の係数
-  const C = p1.b * p2.b;             // 定数項
-
-  // 係数がすべて0の場合は "0"
-  if (A === 0 && B === 0 && C === 0) return '0';
-
-  // 結果の文字列を組み立て
-  let result = '';
-
-  // x^2 項
-  if (A !== 0) {
-    if (A === 1) result += 'x^2';
-    else if (A === -1) result += '-x^2';
-    else result += `${A}x^2`;
+    if (str.includes('x^3')) {
+      deg = 3;
+      const c = str.replace('x^3', '');
+      if (c === '+') coef = 1; else if (c === '-') coef = -1; else if (c !== '') coef = parseFloat(c);
+    } else if (str.includes('x^2')) {
+      deg = 2;
+      const c = str.replace('x^2', '');
+      if (c === '+') coef = 1; else if (c === '-') coef = -1; else if (c !== '') coef = parseFloat(c);
+    } else if (str.includes('x')) {
+      deg = 1;
+      const c = str.replace('x', '');
+      if (c === '+') coef = 1; else if (c === '-') coef = -1; else if (c !== '') coef = parseFloat(c);
+    } else {
+      deg = 0;
+      if (str === '+') coef = 1; else if (str === '-') coef = -1; else coef = parseFloat(str);
+    }
+    return { coef, deg };
   }
 
-  // x 項
-  if (B !== 0) {
-    if (B > 0 && result !== '') result += '+';
-    if (B === 1) result += 'x';
-    else if (B === -1) result += '-x';
-    else result += `${B}x`;
+  // --- パターン①： 2x(x+1)(x+2) などの「単項式 × (多項式) × (多項式)」 ---
+  const tripleMatch = expr.match(/^([+-]?\d*(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)\*?\(([^)]+)\)$/);
+  if (tripleMatch) {
+    const mono = parseMonomial(tripleMatch[1]);
+    const p1 = parseLinear(tripleMatch[2]);
+    const p2 = parseLinear(tripleMatch[3]);
+
+    // (p1.a*x + p1.b)(p2.a*x + p2.b) = A*x^2 + B*x + C
+    const A = p1.a * p2.a;
+    const B = p1.a * p2.b + p1.b * p2.a;
+    const C = p1.b * p2.b;
+
+    let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
+
+    // 外側の項と掛け合わせる (係数は積、次数は和)
+    if (mono.deg + 2 === 3) coefX3 += mono.coef * A;
+    if (mono.deg + 1 === 3) coefX3 += mono.coef * B; else if (mono.deg + 1 === 2) coefX2 += mono.coef * B;
+    if (mono.deg === 3) coefX3 += mono.coef * C; else if (mono.deg === 2) coefX2 += mono.coef * C; else if (mono.deg === 1) coefX += mono.coef * C; else constVal += mono.coef * C;
+
+    return buildPolyResult(coefX3, coefX2, coefX, constVal);
   }
 
-  // 定数項
-  if (C !== 0 || result === '') {
-    if (C > 0 && result !== '') result += '+';
-    result += C;
+  // --- パターン②： 2x^2(x+3) などの「単項式 × (多項式)」 ---
+  const singleMatch = expr.match(/^([+-]?\d*(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)$/);
+  if (singleMatch) {
+    const mono = parseMonomial(singleMatch[1]);
+    const innerStr = singleMatch[2];
+
+    let formattedInner = innerStr;
+    if (!formattedInner.startsWith('+') && !formattedInner.startsWith('-')) {
+      formattedInner = '+' + formattedInner;
+    }
+    const innerTerms = formattedInner.match(/[+-][^+-]+/g) || [];
+
+    let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
+
+    innerTerms.forEach(term => {
+      let coef = 0, deg = 0;
+      if (term.includes('x^3')) {
+        deg = 3;
+        const cStr = term.replace('x^3', '');
+        coef = (cStr === '+' || cStr === '') ? 1 : (cStr === '-' ? -1 : parseFloat(cStr));
+      } else if (term.includes('x^2')) {
+        deg = 2;
+        const cStr = term.replace('x^2', '');
+        coef = (cStr === '+' || cStr === '') ? 1 : (cStr === '-' ? -1 : parseFloat(cStr));
+      } else if (term.includes('x')) {
+        deg = 1;
+        const cStr = term.replace('x', '');
+        coef = (cStr === '+' || cStr === '') ? 1 : (cStr === '-' ? -1 : parseFloat(cStr));
+      } else {
+        deg = 0;
+        coef = parseFloat(term);
+      }
+
+      const resCoef = mono.coef * coef;
+      const resDeg = mono.deg + deg;
+
+      if (resDeg === 3) coefX3 += resCoef;
+      else if (resDeg === 2) coefX2 += resCoef;
+      else if (resDeg === 1) coefX += resCoef;
+      else if (resDeg === 0) constVal += resCoef;
+    });
+
+    return buildPolyResult(coefX3, coefX2, coefX, constVal);
   }
 
-  return result;
+  // --- パターン③： (x+1)(x+2) などの「(多項式) × (多項式)」 ---
+  const match = expr.match(/^\(([^)]+)\)\*?\(([^)]+)\)$/);
+  if (match) {
+    const p1 = parseLinear(match[1]);
+    const p2 = parseLinear(match[2]);
+
+    const B = p1.a * p2.a;
+    const C = p1.a * p2.b + p1.b * p2.a;
+    const D = p1.b * p2.b;
+
+    return buildPolyResult(0, B, C, D);
+  }
+
+  return null;
 }
-
 
 // --- 最大公約数を求めるヘルパー関数 ---
 function gcd(a, b) {
   return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
 
-// --- 2次式の因数分解ロジック ( ax^2 + bx + c ➔ (px+q)(rx+s) ) ---
+// --- 2次式・3次式の因数分解ロジック (2x^3+6x^2 などのx^2括り出しに対応) ---
 function factorPolynomial(expr) {
   expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
 
-  // ax^2 + bx + c のパターンを検出
-  // 例: 6x^2+16x+8, x^2-5x+6, 2x^2+4x など
+  // 1. 3次式パターン: ax^3 + bx^2 + cx
+  const poly3Pattern = /^([+-]?\d*)x\^3([+-]?\d*x\^2)?([+-]?\d*x)?$/;
+  const match3 = expr.match(poly3Pattern);
+
+  if (match3) {
+    let aStr = match3[1];
+    let a = 1;
+    if (aStr === '-') a = -1;
+    else if (aStr !== '' && aStr !== '+') a = parseFloat(aStr);
+
+    let bStr = match3[2] ? match3[2].replace('x^2', '') : '';
+    let b = 0;
+    if (bStr === '+') b = 1;
+    else if (bStr === '-') b = -1;
+    else if (bStr !== '') b = parseFloat(bStr);
+
+    let cStr = match3[3] ? match3[3].replace('x', '') : '';
+    let c = 0;
+    if (cStr === '+') c = 1;
+    else if (cStr === '-') c = -1;
+    else if (cStr !== '') c = parseFloat(cStr);
+
+    if (!Number.isInteger(a) || !Number.isInteger(b) || !Number.isInteger(c)) return null;
+
+    // ★ c (xの係数) が 0 の場合 ➔ x^2(ax + b) の形に因数分解 (例: 2x^3 + 6x^2 ➔ 2x^2(x+3))
+    if (c === 0) {
+      if (b === 0) return null; // 2x^3 単項式の場合は分解不要
+
+      let g = gcd(a, b);
+      if (a < 0) g = -g;
+
+      let a2 = a / g;
+      let b2 = b / g;
+
+      // 外側の項 (g * x^2)
+      let outerStr = '';
+      if (g === 1) outerStr = 'x^2';
+      else if (g === -1) outerStr = '-x^2';
+      else outerStr = `${g}x^2`;
+
+      // カッコ内の 1次式 (a2*x + b2)
+      let pStr = '';
+      if (a2 === 1) pStr = 'x';
+      else if (a2 === -1) pStr = '-x';
+      else pStr = `${a2}x`;
+
+      let qStr = '';
+      if (b2 > 0) qStr = `+${b2}`;
+      else if (b2 < 0) qStr = `${b2}`;
+
+      return `${outerStr}(${pStr}${qStr})`;
+    }
+
+    // ★ c (xの係数) が 0 でない場合 ➔ x(ax^2 + bx + c) をさらに因数分解 (例: 2x^3 + 6x^2 + 4x ➔ 2x(x+1)(x+2))
+    let g = gcd(a, gcd(b, c));
+    if (a < 0) g = -g;
+
+    let a2 = a / g;
+    let b2 = b / g;
+    let c2 = c / g;
+
+    let foundP = null, foundQ = null, foundR = null, foundS = null;
+
+    for (let p = 1; p <= Math.abs(a2); p++) {
+      if (a2 % p !== 0) continue;
+      let r = a2 / p;
+
+      for (let q = -Math.abs(c2); q <= Math.abs(c2); q++) {
+        if (q === 0 || c2 % q !== 0) continue;
+        let s = c2 / q;
+
+        if (p * s + q * r === b2) {
+          foundP = p; foundQ = q;
+          foundR = r; foundS = s;
+          break;
+        }
+      }
+      if (foundP !== null) break;
+    }
+
+    if (foundP === null) return null;
+
+    let outerStr = '';
+    if (g === 1) outerStr = 'x';
+    else if (g === -1) outerStr = '-x';
+    else outerStr = `${g}x`;
+
+    function formatFactor(p, q) {
+      let pStr = '';
+      if (p === 1) pStr = 'x';
+      else if (p === -1) pStr = '-x';
+      else pStr = `${p}x`;
+
+      let qStr = '';
+      if (q > 0) qStr = `+${q}`;
+      else if (q < 0) qStr = `${q}`;
+
+      return `(${pStr}${qStr})`;
+    }
+
+    return `${outerStr}${formatFactor(foundP, foundQ)}${formatFactor(foundR, foundS)}`;
+  }
+
+  // 2. 2次式パターン: ax^2 + bx + c
   const poly2Pattern = /^([+-]?\d*)x\^2([+-]?\d*x)?([+-]?\d+)?$/;
-  const match = expr.match(poly2Pattern);
+  const match2 = expr.match(poly2Pattern);
 
-  if (!match) return null; // 2次式でない場合は通常処理へ
+  if (!match2) return null;
 
-  // a (x^2の係数)
-  let aStr = match[1];
+  let aStr = match2[1];
   let a = 1;
   if (aStr === '-') a = -1;
   else if (aStr !== '' && aStr !== '+') a = parseFloat(aStr);
 
-  // b (xの係数)
-  let bStr = match[2] ? match[2].replace('x', '') : '';
+  let bStr = match2[2] ? match2[2].replace('x', '') : '';
   let b = 0;
   if (bStr === '+') b = 1;
   else if (bStr === '-') b = -1;
   else if (bStr !== '') b = parseFloat(bStr);
 
-  // c (定数項)
-  let c = match[3] ? parseFloat(match[3]) : 0;
+  let c = match2[3] ? parseFloat(match2[3]) : 0;
 
-  // 整数係数でない場合は判定スキップ
   if (!Number.isInteger(a) || !Number.isInteger(b) || !Number.isInteger(c)) return null;
 
-  // 1. 共通因数 (全体を割れる最大の数 g) を抽出
   let g = gcd(a, gcd(b, c));
-  if (a < 0) g = -g; // 先頭の係数を正にする
+  if (a < 0) g = -g;
 
   let a2 = a / g;
   let b2 = b / g;
   let c2 = c / g;
 
-  // 2. たすき掛けの組み合わせを探索 (a2*x^2 + b2*x + c2)
-  // (p*x + q)(r*x + s)
   let foundP = null, foundQ = null, foundR = null, foundS = null;
 
   for (let p = 1; p <= Math.abs(a2); p++) {
     if (a2 % p !== 0) continue;
     let r = a2 / p;
 
-    // c2が0の場合
     if (c2 === 0) {
       foundP = p; foundQ = 0;
       foundR = r; foundS = b2;
@@ -2300,15 +3102,11 @@ function factorPolynomial(expr) {
     if (foundP !== null) break;
   }
 
-  // 因数分解できなかった（虚数解や無理数解の）場合
   if (foundP === null) return null;
 
-  // 3. 共通因数 g をカッコに分配（(3x+2)(2x+4) のように定数倍を戻すため）
-  // ユーザーの例 (3x+2)(2x+4) に合わせ、gを片方のカッコへ乗算
   foundR *= g;
   foundS *= g;
 
-  // カッコ文字列を整形するヘルパー
   function formatFactor(p, q) {
     let pStr = '';
     if (p === 1) pStr = 'x';
@@ -2325,8 +3123,7 @@ function factorPolynomial(expr) {
   return `${formatFactor(foundP, foundQ)}${formatFactor(foundR, foundS)}`;
 }
 
-
-// --- 計算実行関数 (多項式展開 & 因数分解 対応版) ---
+// --- 計算実行関数 ---
 function calculateBasic() {
   try {
     let rawFormula = display.value;
@@ -2334,7 +3131,6 @@ function calculateBasic() {
     rawFormula = rawFormula.replace(/ｘ/g, 'x').replace(/Ｘ/g, 'x');
     let expr = rawFormula;
 
-    // 閉じカッコの自動補完
     const openBrackets = (expr.match(/\(/g) || []).length;
     const closeBrackets = (expr.match(/\)/g) || []).length;
     let completedBrackets = '';
@@ -2345,7 +3141,7 @@ function calculateBasic() {
 
     // --- 文字 'x' が含まれる場合の処理 ---
     if (expr.includes('x')) {
-      // パターン1: (ax+b)(cx+d) や (ax+b)^2 ➔ 多項式展開 (6x^2+16x+8)
+      // パターン1: 展開 (例: 2x(x+1)(x+2) ➔ 2x^3+6x^2+4x)
       const expanded = expandPolynomial(expr);
       if (expanded !== null) {
         updateFormula(rawFormula + completedBrackets + ' =');
@@ -2353,16 +3149,24 @@ function calculateBasic() {
         return;
       }
 
-      // パターン2: ax^2+bx+c ➔ 因数分解 ((3x+2)(2x+4))
+      // パターン2: 因数分解 (例: 2x^3+6x^2+4x ➔ 2x(x+1)(x+2))
       const factored = factorPolynomial(expr);
       if (factored !== null) {
         updateFormula(rawFormula + ' =');
         display.value = factored;
         return;
       }
+
+      // パターン3: 同類項整理
+      const simplified = simplifyPolynomial(expr);
+      if (simplified !== null && simplified !== '') {
+        updateFormula(rawFormula + ' =');
+        display.value = simplified;
+        return;
+      }
     }
 
-    // --- 通常の数値計算（xが含まれない、または式変換対象外） ---
+    // --- 通常の数値計算 ---
     expr = expr.replace(/π/g, 'Math.PI')
                .replace(/√\(/g, 'Math.sqrt(')
                .replace(/√(\d+(\.\d+)?)/g, 'Math.sqrt($1)')
@@ -2395,33 +3199,138 @@ function calculateBasic() {
 // ==========================================
 // --- 2. 進数変換 ---
 // ==========================================
-  function convertBase(source) {
-    const dec = document.getElementById('dec-input');
-    const bin = document.getElementById('bin-input');
-    const hex = document.getElementById('hex-input');
+// 進数変換関数
+function convertBase(source) {
+  const decInput = document.getElementById('dec-input');
+  const binInput = document.getElementById('bin-input');
+  const hexInput = document.getElementById('hex-input');
 
-    try {
-      let val;
-      if (source === 'dec' && dec.value !== '') {
-        val = parseInt(dec.value, 10);
-      } else if (source === 'bin' && bin.value !== '') {
-        val = parseInt(bin.value, 2);
-      } else if (source === 'hex' && hex.value !== '') {
-        val = parseInt(hex.value, 16);
-      } else {
-        if (source === 'dec') { bin.value = ''; hex.value = ''; }
-        if (source === 'bin') { dec.value = ''; hex.value = ''; }
-        if (source === 'hex') { dec.value = ''; bin.value = ''; }
-        return;
-      }
+  let decValue = 0;
 
-      if (isNaN(val)) return;
-
-      if (source !== 'dec') dec.value = val.toString(10);
-      if (source !== 'bin') bin.value = val.toString(2);
-      if (source !== 'hex') hex.value = val.toString(16).toUpperCase();
-    } catch(e) {}
+  if (source === 'dec') {
+    const val = decInput.value.trim();
+    if (val === '') { clearAllBaseInputs(); return; }
+    decValue = parseInt(val, 10);
+  } else if (source === 'bin') {
+    const val = binInput.value.trim().replace(/[^01]/g, '');
+    if (val === '') { clearAllBaseInputs(); return; }
+    decValue = parseInt(val, 2);
+  } else if (source === 'hex') {
+    const val = hexInput.value.trim();
+    if (val === '') { clearAllBaseInputs(); return; }
+    decValue = parseInt(val, 16);
   }
+
+  if (isNaN(decValue) || decValue < 0) {
+    return;
+  }
+
+  // 入力欄の同期
+  if (source !== 'dec') decInput.value = decValue;
+  if (source !== 'bin') binInput.value = decValue.toString(2);
+  if (source !== 'hex') hexInput.value = decValue.toString(16).toUpperCase();
+
+  // ビジュアル表示更新
+  updateBitVisualizer(decValue);
+}
+
+// クリア処理
+function clearAllBaseInputs() {
+  document.getElementById('dec-input').value = '';
+  document.getElementById('bin-input').value = '';
+  document.getElementById('hex-input').value = '';
+  document.getElementById('bit-bulbs').innerHTML = '';
+  document.getElementById('binary-calc-detail').innerHTML = '0';
+}
+
+// ＋/－ ボタン処理
+function stepValue(delta) {
+  const decInput = document.getElementById('dec-input');
+  let currentVal = parseInt(decInput.value, 10);
+  if (isNaN(currentVal)) currentVal = 0;
+
+  let newVal = currentVal + delta;
+  if (newVal < 0) newVal = 0;
+
+  decInput.value = newVal;
+  convertBase('dec');
+}
+
+// 電球描画 & 累乗計算更新関数
+function updateBitVisualizer(decVal) {
+  const bulbsContainer = document.getElementById('bit-bulbs');
+  const calcContainer = document.getElementById('binary-calc-detail');
+
+  if (isNaN(decVal) || decVal < 0) {
+    bulbsContainer.innerHTML = '';
+    calcContainer.innerHTML = '0';
+    return;
+  }
+
+  const binStr = decVal.toString(2);
+  
+  // 常に最小8ビット（1バイト）、8を超える場合は8の倍数に拡張
+  const bitCount = Math.max(8, Math.ceil(binStr.length / 8) * 8);
+
+  let bulbsHtml = '';
+  let termsPower = [];
+  let termsValue = [];
+
+  // 右端（2^0）から順に生成
+  for (let power = 0; power < bitCount; power++) {
+    const binStrIndex = binStr.length - 1 - power;
+    const bit = binStrIndex >= 0 ? binStr[binStrIndex] : '0';
+    
+    const placeValue = Math.pow(2, power); // 2の累乗の値 (1, 2, 4, 8...)
+    const isOn = bit === '1';
+    const icon = isOn ? '💡' : '⚪';
+
+    // 先頭に追加することで、2^0 が右端に来る
+    bulbsHtml = `
+      <div class="bulb-item" onclick="toggleBit(${power})" title="2^${power} (${placeValue}) を切替">
+        <span class="bulb-icon">${icon}</span>
+        <span class="bulb-power">2<sup>${power}</sup></span>
+        <span class="bulb-bit-val">${bit}</span>
+        <!-- 電球枠の下部に「2の累乗の値」を配置 -->
+        <span class="bulb-place-val">${placeValue}</span>
+      </div>
+    ` + bulbsHtml;
+
+    if (power < binStr.length) {
+      termsPower.push(`${bit}×2<sup>${power}</sup>`);
+      termsValue.push(isOn ? placeValue : 0);
+    }
+  }
+
+  bulbsContainer.innerHTML = bulbsHtml;
+
+ // 累乗計算テキストの組み立て
+  if (decVal === 0) {
+    calcContainer.innerHTML = '0 = 0';
+  } else {
+    // 画面の見た目（左側が上位桁・大きい値）に合わせて配列を逆転させる
+    const sumValExpr = [...termsValue].reverse().join(' + ');
+    const sumPowerExpr = [...termsPower].reverse().join(' + ');
+
+    calcContainer.innerHTML = `
+      <div><strong>値の和:</strong> ${sumValExpr} = <strong>${decVal}</strong></div>
+      <div style="margin-top: 4px; color: #666; font-size: 13px;">
+        <strong>展開式:</strong> (${sumPowerExpr}) = ${decVal}
+      </div>
+    `;
+  }
+}
+
+// ビットの反転（トグル）処理
+function toggleBit(power) {
+  const decInput = document.getElementById('dec-input');
+  let currentVal = parseInt(decInput.value, 10);
+  if (isNaN(currentVal)) currentVal = 0;
+
+  const newVal = currentVal ^ (1 << power);
+  decInput.value = newVal;
+  convertBase('dec');
+}
 
 // ==========================================
 // --- 3. 割合・ローン返済計算 ---
@@ -3396,7 +4305,7 @@ function calcVolume() {
     drawVolShape(type, v1, v2, v3);
   }
 
-  // ★【追加】表面積・計算式エリアの更新処理を呼び出す
+  // 表面積・計算式エリアの更新処理を呼び出す
   if (typeof updateSurfaceArea === 'function') {
     updateSurfaceArea(type, v1, v2, v3);
   }
@@ -3410,6 +4319,23 @@ function drawVolShape(type, v1, v2, v3) {
   if (!env || v1 <= 0) return;
   const { ctx, w, h, cx, cy } = env;
 
+  // -------------------------------------------------------------
+  // 表示モードによる寸法一覧の切替
+  // -------------------------------------------------------------
+  const mode = document.querySelector('input[name="vol-view-mode"]:checked')?.value || '3d';
+  const dimBox = document.getElementById('net-dim-box');
+
+  if (mode === 'net') {
+    // 展開図モードの場合：寸法一覧を表示・更新する
+    if (typeof updateNetDimensionBox === 'function') {
+      updateNetDimensionBox(type, v1, v2, v3);
+    }
+  } else {
+    // 見取図(3D)モードの場合：展開図の寸法一覧を非表示にする
+    if (dimBox) {
+      dimBox.style.display = 'none';
+    }
+  }
   if (type === 'box') {
     if (v2 <= 0 || v3 <= 0) return;
     const maxDim = Math.max(v1, v2, v3);
@@ -3704,6 +4630,11 @@ function drawNetShape(type, v1, v2, v3) {
   if (!env || v1 <= 0) return;
   const { ctx, w, h, cx, cy } = env;
 
+  // 展開図の寸法一覧テキストを更新・表示する
+  if (typeof updateNetDimensionBox === 'function') {
+    updateNetDimensionBox(type, v1, v2, v3);
+  }
+
   // 上部タイトル
   CanvasHelper.drawText(ctx, "展開図", cx, 15, { font: 'bold 14px sans-serif' });
 
@@ -3808,7 +4739,7 @@ function drawNetShape(type, v1, v2, v3) {
     CanvasHelper.drawLine(ctx, { x: cx, y: startY - r }, { x: cx + r, y: startY - r }, { color: CanvasHelper.theme.accent });
     CanvasHelper.drawText(ctx, `r = ${v1}m`, cx + r / 2, startY - r - 6, { color: CanvasHelper.theme.accent });
 
-    // 【修正】概算数値 (toFixed) ではなく π 表記で統一
+    //  π 表記で統一
     infoLines = [
       `底面半径 r: <strong>${v1}m</strong>`, 
       `高さ h: <strong>${v3}m</strong>`, 
@@ -3871,7 +4802,7 @@ function drawNetShape(type, v1, v2, v3) {
     CanvasHelper.drawLine(ctx, { x: cx, y: circleCenterY }, { x: cx + r, y: circleCenterY }, { color: CanvasHelper.theme.accent });
     CanvasHelper.drawText(ctx, `r = ${v1}m`, cx + r / 2, circleCenterY - 6, { color: CanvasHelper.theme.accent });
 
-    // 【修正】母線を √ 表記に変更（概算なし）
+    // 母線を √ 表記（概算なし）
     infoLines = [
       `底面半径 r: <strong>${v1}m</strong>`,
       `高さ h: <strong>${v3}m</strong>`,
@@ -3904,7 +4835,6 @@ function drawNetShape(type, v1, v2, v3) {
       LStr = `${Number(lSqStr) / 2}`;
     }
 
-    // 展開図全体が収まるようにスケール調整（上下: v1 + maxH*2, 左右: v2 + maxW*2）
     const scale = Math.min(availW / (v2 + maxW * 2), availH / (v1 + maxH * 2)) * 0.9;
 
     const sw = v2 * scale;      // 底面の横幅
@@ -4016,13 +4946,13 @@ function drawNetShape(type, v1, v2, v3) {
     ];
 
   } else if (type === 'sphere') { // 球
-  // 1. 上部注意書き（少し位置を下に下げて配置）
+  // 1. 上部注意書き
   CanvasHelper.drawText(ctx, "※球は完全な平面に展開できないため、", cx, cy - 63, { color: CanvasHelper.theme.accent, fontSize: 11 });
   CanvasHelper.drawText(ctx, "連結した舟形近似図です", cx, cy - 49, { color: CanvasHelper.theme.accent, fontSize: 11 });
 
   const numSlices = 6;     // 舟の枚数
   const sliceWidth = 28;   // 舟1枚の幅
-  const sliceHeight = 65;  // 舟の長さ（下部2行テキストのスペース確保のため微調整）
+  const sliceHeight = 65;  // 舟の長さ
   const startX = cx - (numSlices * sliceWidth) / 2;
 
   ctx.strokeStyle = CanvasHelper.theme.primary || '#4285f4';
@@ -4150,7 +5080,7 @@ function updateSurfaceArea(type, v1, v2, v3) {
   // 展開図（net）のときだけ表示する
   box.style.display = 'block';
 
-  // 1. ルート簡素化のヘルパー関数（関数内部に定義してエラーを防止）
+  // 1. ルート簡素化のヘルパー関数
   function simplifySqrt(n) {
     if (n <= 0) return '0';
     const sqrtN = Math.sqrt(n);
@@ -4675,7 +5605,136 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+//================
+//子ども用時計
+//================
+// 時計の初期化
+document.addEventListener('DOMContentLoaded', () => {
+  initClockTicksKids();
+  updateClockUI(); // 初期描画
+});
 
+// 時計盤の目盛り（60本の分の線 ＋ 5分ごとの太線）を生成
+function initClockTicksKids() {
+  const ticksGroup = document.getElementById('clock-ticks');
+  if (!ticksGroup) return;
+
+  for (let i = 0; i < 60; i++) {
+    const angle = i * 6 * (Math.PI / 180);
+    const isFiveMin = i % 5 === 0;
+
+    // 5分刻みは長めの線、1分刻みは短い線
+    const r1 = isFiveMin ? 84 : 88;
+    const r2 = 92;
+
+    const x1 = 110 + r1 * Math.sin(angle);
+    const y1 = 110 - r1 * Math.cos(angle);
+    const x2 = 110 + r2 * Math.sin(angle);
+    const y2 = 110 - r2 * Math.cos(angle);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', isFiveMin ? '#ffa502' : '#ced6e0');
+    line.setAttribute('stroke-width', isFiveMin ? '3' : '1');
+
+    ticksGroup.appendChild(line);
+  }
+}
+
+// 時間の取得
+function getClockTime() {
+  const hInput = document.getElementById('clock-h');
+  const mInput = document.getElementById('clock-m');
+
+  let h = parseInt(hInput.value, 10) || 0;
+  let m = parseInt(mInput.value, 10) || 0;
+
+  return { h, m };
+}
+
+// ＋・−ボタンを押した時の処理（分・時の自動繰り上がり/繰り下がり）
+function adjustClockMinute(delta) {
+  let { h, m } = getClockTime();
+
+  m += delta;
+
+  // 分の計算（60分を超えたら時を増やす、0分未満になったら時を減らす）
+  if (m >= 60) {
+    h += Math.floor(m / 60);
+    m = (m % 60 + 60) % 60;
+  } else if (m < 0) {
+    const subHours = Math.ceil(Math.abs(m) / 60);
+    h -= subHours;
+    m = (m % 60 + 60) % 60;
+  }
+
+  // 24時間表示のループ処理
+  h = (h % 24 + 24) % 24;
+
+  document.getElementById('clock-h').value = h;
+  document.getElementById('clock-m').value = m;
+
+  updateClockUI();
+}
+
+// デジタル数値の直接入力時
+// 数字が入力・変更されたときにすぐに呼ばれる関数
+function onClockInputChange() {
+  const hInput = document.getElementById('clock-h');
+  const mInput = document.getElementById('clock-m');
+
+  // 空欄の場合は一時的に 0 として計算（入力中のエラー防止）
+  let h = parseInt(hInput.value, 10);
+  let m = parseInt(mInput.value, 10);
+
+  if (isNaN(h)) h = 0;
+  if (isNaN(m)) m = 0;
+
+  // 59分や23時を超えた場合の範囲補正（フォーカスが外れた時や確定時に丸める）
+  if (m >= 60) m = 59;
+  if (h >= 24) h = 23;
+
+  // 時計の針を即時更新
+  updateClockUIWithValues(h, m);
+}
+
+// 針の回転位置を更新する専用処理
+function updateClockUIWithValues(h, m) {
+  // 長針（青）: 1分 = 6度
+  const minuteAngle = m * 6;
+
+  // 短針（赤）: 1時間 = 30度 ＋ 分の進み具合（0.5度 / 1分）
+  const hourAngle = ((h % 12) * 30) + (m * 0.5);
+
+  const hourHand = document.getElementById('hour-hand');
+  const minuteHand = document.getElementById('minute-hand');
+
+  if (hourHand && minuteHand) {
+    hourHand.setAttribute('transform', `rotate(${hourAngle}, 110, 110)`);
+    minuteHand.setAttribute('transform', `rotate(${minuteAngle}, 110, 110)`);
+  }
+}
+// 0時0分にリセットする関数
+function resetClock() {
+  const hInput = document.getElementById('clock-h');
+  const mInput = document.getElementById('clock-m');
+
+  // 値を 0 に設定
+  hInput.value = 0;
+  mInput.value = 0;
+
+  // 時計の針を12時ちょうどの位置に戻す
+  updateClockUIWithValues(0, 0);
+}
+// updateClockUI も新しい共通処理を使うように変更
+function updateClockUI() {
+  const { h, m } = getClockTime();
+  updateClockUIWithValues(h, m);
+}
+    
 // ==========================================
 // --- 7 ~ 10. 単位換算設定データ ---
 // ==========================================
