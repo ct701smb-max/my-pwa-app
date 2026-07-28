@@ -1803,29 +1803,46 @@
         </div>
 
         <div class="card">
-          <h4>分配法則・展開・因数分解</h4>
-          <p>カッコを外すこと（展開）と、共通のものや公式でカッコにくくること（因数分解）は表裏一体の関係です。</p>
-          
-          <h5>1. 分配法則と「展開」</h5>
-          <p>カッコの外にある数を、中のすべてに順番にかける計算ルール（分配法則）。カッコを外して単項式の和にすることを<strong>「展開」</strong>といいます。</p>
-          <div class="formula-box">
-            <strong>【分配法則の基本】</strong> a(b + c) = ab + ac<br>
-            <strong>【展開の例】</strong> 3x(x + 2) ➔ <strong>3x² + 6x</strong><br>
-            <strong>【多項式の展開】</strong> (x + 2)(x + 3) ➔ x² + 3x + 2x + 6 ➔ <strong>x² + 5x + 6</strong>
-          </div>
-<p class="tip-text">💡 <strong>電卓での使い方：</strong> 『 <strong><code>x^2+3x+2x+2+4</code></strong> 』<strong>(x²はx^2)</strong>と入力！</p>
-          <hr>
+  <h4>数の分解・展開・因数分解・方程式</h4>
+  <p>数や式を掛け算の形に分解すること、カッコを外す（展開）こと、そして方程式を解くことはすべて深く関連しています。</p>
 
-          <h5>2. 「因数分解」</h5>
-          <p>展開の逆で、式を掛け算の形（カッコの形）に戻す計算のこと。</p>
-          <div class="formula-box">
-            <strong>【共通因数をくくる】</strong> 3x² + 6x ➔ <strong>3x(x + 2)</strong><br>
-            <strong>【公式を使う】</strong> x² + 5x + 6 ➔ <strong>(x + 2)(x + 3)</strong><br>
-            <small style="color: #666;">※「たして 5、かけて 6」になる組み合わせ（2 と 3）を見つける！</small>
-          </div>
+  <h5>1. 「素因数分解」</h5>
+  <p><strong>自然数(0を含まない正の整数)</strong>を「<strong>これ以上割れない素数（2, 3, 5, 7…）</strong>」の掛け算の形に分解することです。</p>
+  <div class="formula-box">
+    <strong>【素因数分解の例】</strong> 60 ➔ 2 × 2 × 3 × 5 ➔ <strong>2² × 3 × 5</strong><br>
+    <small style="color: #666;">※因数分解（文字式）の数バージョンです。</small>
+  </div>
+  <hr>
 
-          <p class="tip-text">💡 <strong>関係性：</strong> (x + 2)(x + 3) ➔ 【展開】 ➔ x² + 5x + 6 ➔ 【因数分解】 ➔ (x + 2)(x + 3)</p>
-        </div>
+  <h5>2. 分配法則と「展開」</h5>
+  <p>カッコの外にある数を、中のすべてに順番にかける計算ルール（分配法則）。カッコを外して単項式の和にすることを<strong>「展開」</strong>といいます。</p>
+  <div class="formula-box">
+    <strong>【分配法則の基本】</strong> a(b + c) = ab + ac<br>
+    <strong>【展開の例】</strong> 3x(x + 2) ➔ <strong>3x² + 6x</strong><br>
+    <strong>【多項式の展開】</strong> (x + 2)(x + 3) ➔ x² + 3x + 2x + 6 ➔ <strong>x² + 5x + 6</strong>
+  </div>
+  <p class="tip-text">💡 <strong>電卓での使い方：</strong> 『 <strong><code>x^2+3x+2x+2+4</code></strong> 』<strong>(x²はx^2)</strong>と入力！</p>
+  <hr>
+
+  <h5>3. 「因数分解」</h5>
+  <p>展開の逆で、式を掛け算の形（カッコの形）に戻す計算のこと。</p>
+  <div class="formula-box">
+    <strong>【共通因数をくくる】</strong> 3x² + 6x ➔ <strong>3x(x + 2)</strong><br>
+    <strong>【公式を使う】</strong> x² + 5x + 6 ➔ <strong>(x + 2)(x + 3)</strong><br>
+    <small style="color: #666;">※「たして 5、かけて 6」になる組み合わせ（2 と 3）を見つける！</small>
+  </div>
+  <p class="tip-text">💡 <strong>関係性：</strong> (x + 2)(x + 3) ➔ 【展開】 ➔ x² + 5x + 6 ➔ 【因数分解】 ➔ (x + 2)(x + 3)</p>
+  <hr>
+
+  <h5>4. 2次方程式の「解の公式」</h5>
+  <p>因数分解が難しい2次方程式 <code>ax² + bx + c = 0</code> でも、確実に解（xの値）を求められる公式です。</p>
+  <div class="formula-box">
+    <strong>【解の公式】</strong> x = <strong>(-b ± √(b² - 4ac)) / (2a)</strong><br>
+    <strong>【計算例】</strong> x² - 3x + 1 = 0 の場合（a=1, b=-3, c=1）<br>
+    x = (3 ± √((-3)² - 4×1×1)) / (2×1) ➔ <strong>(3 ± √5) / 2</strong><br>結果：<strong>(3 ＋ √5) / 2</strong>　と　<strong>(3 ー √5) / 2</strong>の２つが解となる
+  </div>
+  <p class="tip-text">💡 <strong>電卓での使い方：</strong> 分子全体をカッコで囲って『 <strong><code>(3+√(5))/2</code></strong> 』や『 <strong><code>(3-√(5))/2</code></strong> 』と入力！</p>
+</div>
 
       </section>
 
