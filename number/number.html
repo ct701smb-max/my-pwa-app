@@ -2608,7 +2608,9 @@ function appendBasic(val) {
   if (display.value.length >= MAX_LENGTH) return;
 
   if (display.value === '0') {
-    if (operators.includes(val) || val === '.') {
+    // 演算子のうち「+ * / ^ ,」や小数点のときは 0 の後ろに付ける (例: "0.")
+    // マイナス符号 "-" や数字、変数 "x" などの場合は 0 を消去して上書きする
+    if (['+', '*', '/', '^', ','].includes(val) || val === '.') {
       display.value = '0' + val;
     } else {
       display.value = val;
@@ -2764,8 +2766,12 @@ function buildPolyResult(A, B, C, D) {
   return result;
 }
 
+// --- 最大公約数を求めるヘルパー関数 ---
+function gcd(a, b) {
+  return b === 0 ? Math.abs(a) : gcd(b, a % b);
+}
+
 // --- 同類項の整理ロジック (3次式まで対応) ---
-// --- 同類項の整理ロジック (3次式まで対応・修正版) ---
 function simplifyPolynomial(expr) {
   expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
 
@@ -2775,8 +2781,9 @@ function simplifyPolynomial(expr) {
   if (!formattedExpr.startsWith('+') && !formattedExpr.startsWith('-')) {
     formattedExpr = '+' + formattedExpr;
   }
-  
-  const terms = formattedExpr.match(/[+-][^+-]+/g);
+
+  // 符号付きの各項に分割（負の係数にも対応）
+  const terms = formattedExpr.match(/[+-](?:[0-9.]*x(?:\^[0-9]+)?|[0-9.]+|x(?:\^[0-9]+)?)/g);
   if (!terms) return null;
 
   let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
@@ -2805,7 +2812,7 @@ function simplifyPolynomial(expr) {
   return buildPolyResult(coefX3, coefX2, coefX, constVal);
 }
 
-// --- 多項式展開ロジック (次数無制限・複数カッコ対応版) ---
+// --- 多項式展開ロジック (3次まで対応) ---
 function expandPolynomial(expr) {
   expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
 
@@ -2817,11 +2824,13 @@ function expandPolynomial(expr) {
   // カッコ内の 1次式 (ax+b) をパースするヘルパー
   function parseLinear(str) {
     let a = 0, b = 0;
-    const terms = str.match(/[+-]?[^+-]+/g) || [];
+    let formatted = str;
+    if (!formatted.startsWith('+') && !formatted.startsWith('-')) formatted = '+' + formatted;
+    const terms = formatted.match(/[+-][^+-]+/g) || [];
     terms.forEach(term => {
       if (term.includes('x')) {
         const coefStr = term.replace('x', '');
-        if (coefStr === '' || coefStr === '+') a += 1;
+        if (coefStr === '+') a += 1;
         else if (coefStr === '-') a -= 1;
         else a += parseFloat(coefStr);
       } else {
@@ -2831,7 +2840,7 @@ function expandPolynomial(expr) {
     return { a, b };
   }
 
-  // --- 外側の単項式 (例: "2x^2", "-x", "5") の係数と次数を解析するヘルパー ---
+  // 外側の単項式 (例: "-5x", "2x^2", "-x", "5") を解析するヘルパー
   function parseMonomial(str) {
     if (!str || str === '') return { coef: 1, deg: 0 };
     let coef = 1, deg = 0;
@@ -2855,30 +2864,37 @@ function expandPolynomial(expr) {
     return { coef, deg };
   }
 
-  // --- パターン①： 2x(x+1)(x+2) などの「単項式 × (多項式) × (多項式)」 ---
-  const tripleMatch = expr.match(/^([+-]?\d*(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)\*?\(([^)]+)\)$/);
+  // --- パターン①： 単項式 × (1次式) × (1次式) (例: -2x(x+1)(x+2)) ---
+  const tripleMatch = expr.match(/^([+-]?\d*(?:\.\d+)?(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)\*?\(([^)]+)\)$/);
   if (tripleMatch) {
-    const mono = parseMonomial(tripleMatch[1]);
-    const p1 = parseLinear(tripleMatch[2]);
-    const p2 = parseLinear(tripleMatch[3]);
+  const mono = parseMonomial(tripleMatch[1]);
+  const p1 = parseLinear(tripleMatch[2]);
+  const p2 = parseLinear(tripleMatch[3]);
 
-    // (p1.a*x + p1.b)(p2.a*x + p2.b) = A*x^2 + B*x + C
-    const A = p1.a * p2.a;
-    const B = p1.a * p2.b + p1.b * p2.a;
-    const C = p1.b * p2.b;
+  // (p1.a*x + p1.b)(p2.a*x + p2.b) = A*x^2 + B*x + C
+  const A = p1.a * p2.a;
+  const B = p1.a * p2.b + p1.b * p2.a;
+  const C = p1.b * p2.b;
 
-    let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
+  let coefX3 = 0, coefX2 = 0, coefX = 0, constVal = 0;
 
-    // 外側の項と掛け合わせる (係数は積、次数は和)
-    if (mono.deg + 2 === 3) coefX3 += mono.coef * A;
-    if (mono.deg + 1 === 3) coefX3 += mono.coef * B; else if (mono.deg + 1 === 2) coefX2 += mono.coef * B;
-    if (mono.deg === 3) coefX3 += mono.coef * C; else if (mono.deg === 2) coefX2 += mono.coef * C; else if (mono.deg === 1) coefX += mono.coef * C; else constVal += mono.coef * C;
+  // mono.coef * (A*x^2 + B*x + C) * x^(mono.deg) を各次数に加算
+  const addTerm = (coef, deg) => {
+    if (deg === 3) coefX3 += coef;
+    else if (deg === 2) coefX2 += coef;
+    else if (deg === 1) coefX += coef;
+    else if (deg === 0) constVal += coef;
+  };
 
-    return buildPolyResult(coefX3, coefX2, coefX, constVal);
-  }
+  addTerm(mono.coef * A, mono.deg + 2);
+  addTerm(mono.coef * B, mono.deg + 1);
+  addTerm(mono.coef * C, mono.deg + 0);
 
-  // --- パターン②： 2x^2(x+3) などの「単項式 × (多項式)」 ---
-  const singleMatch = expr.match(/^([+-]?\d*(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)$/);
+  return buildPolyResult(coefX3, coefX2, coefX, constVal);
+}
+
+  // --- パターン②： 単項式 × (多項式) (例: -5x(x+3)) ---
+  const singleMatch = expr.match(/^([+-]?\d*(?:\.\d+)?(?:x(?:\^\d+)?)?)\*?\(([^)]+)\)$/);
   if (singleMatch) {
     const mono = parseMonomial(singleMatch[1]);
     const innerStr = singleMatch[2];
@@ -2922,7 +2938,7 @@ function expandPolynomial(expr) {
     return buildPolyResult(coefX3, coefX2, coefX, constVal);
   }
 
-  // --- パターン③： (x+1)(x+2) などの「(多項式) × (多項式)」 ---
+  // --- パターン③： (多項式) × (多項式) (例: (x+1)(x+2)) ---
   const match = expr.match(/^\(([^)]+)\)\*?\(([^)]+)\)$/);
   if (match) {
     const p1 = parseLinear(match[1]);
@@ -2938,12 +2954,21 @@ function expandPolynomial(expr) {
   return null;
 }
 
-// --- 最大公約数を求めるヘルパー関数 ---
-function gcd(a, b) {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
+// --- 因数分解ヘルパー (一次式文字列生成) ---
+function formatFactor(p, q) {
+  let pStr = '';
+  if (p === 1) pStr = 'x';
+  else if (p === -1) pStr = '-x';
+  else pStr = `${p}x`;
+
+  let qStr = '';
+  if (q > 0) qStr = `+${q}`;
+  else if (q < 0) qStr = `${q}`;
+
+  return `(${pStr}${qStr})`;
 }
 
-// --- 2次式・3次式の因数分解ロジック (2x^3+6x^2 などのx^2括り出しに対応) ---
+// --- 因数分解ロジック (2次式・3次式対応) ---
 function factorPolynomial(expr) {
   expr = expr.replace(/\s+/g, '').replace(/Ｘ/g, 'x').replace(/ｘ/g, 'x');
 
@@ -2952,28 +2977,18 @@ function factorPolynomial(expr) {
   const match3 = expr.match(poly3Pattern);
 
   if (match3) {
-    let aStr = match3[1];
-    let a = 1;
-    if (aStr === '-') a = -1;
-    else if (aStr !== '' && aStr !== '+') a = parseFloat(aStr);
+    let a = match3[1] === '-' ? -1 : (match3[1] && match3[1] !== '+' ? parseFloat(match3[1]) : 1);
 
     let bStr = match3[2] ? match3[2].replace('x^2', '') : '';
-    let b = 0;
-    if (bStr === '+') b = 1;
-    else if (bStr === '-') b = -1;
-    else if (bStr !== '') b = parseFloat(bStr);
+    let b = bStr === '+' ? 1 : (bStr === '-' ? -1 : (bStr !== '' ? parseFloat(bStr) : 0));
 
     let cStr = match3[3] ? match3[3].replace('x', '') : '';
-    let c = 0;
-    if (cStr === '+') c = 1;
-    else if (cStr === '-') c = -1;
-    else if (cStr !== '') c = parseFloat(cStr);
+    let c = cStr === '+' ? 1 : (cStr === '-' ? -1 : (cStr !== '' ? parseFloat(cStr) : 0));
 
     if (!Number.isInteger(a) || !Number.isInteger(b) || !Number.isInteger(c)) return null;
 
-    // ★ c (xの係数) が 0 の場合 ➔ x^2(ax + b) の形に因数分解 (例: 2x^3 + 6x^2 ➔ 2x^2(x+3))
     if (c === 0) {
-      if (b === 0) return null; // 2x^3 単項式の場合は分解不要
+      if (b === 0) return null;
 
       let g = gcd(a, b);
       if (a < 0) g = -g;
@@ -2981,26 +2996,12 @@ function factorPolynomial(expr) {
       let a2 = a / g;
       let b2 = b / g;
 
-      // 外側の項 (g * x^2)
-      let outerStr = '';
-      if (g === 1) outerStr = 'x^2';
-      else if (g === -1) outerStr = '-x^2';
-      else outerStr = `${g}x^2`;
+      let outerStr = (g === 1) ? 'x^2' : ((g === -1) ? '-x^2' : `${g}x^2`);
+      let innerStr = formatFactor(a2, b2).replace(/^\(/, '').replace(/\)$/, '');
 
-      // カッコ内の 1次式 (a2*x + b2)
-      let pStr = '';
-      if (a2 === 1) pStr = 'x';
-      else if (a2 === -1) pStr = '-x';
-      else pStr = `${a2}x`;
-
-      let qStr = '';
-      if (b2 > 0) qStr = `+${b2}`;
-      else if (b2 < 0) qStr = `${b2}`;
-
-      return `${outerStr}(${pStr}${qStr})`;
+      return `${outerStr}(${innerStr})`;
     }
 
-    // ★ c (xの係数) が 0 でない場合 ➔ x(ax^2 + bx + c) をさらに因数分解 (例: 2x^3 + 6x^2 + 4x ➔ 2x(x+1)(x+2))
     let g = gcd(a, gcd(b, c));
     if (a < 0) g = -g;
 
@@ -3029,24 +3030,7 @@ function factorPolynomial(expr) {
 
     if (foundP === null) return null;
 
-    let outerStr = '';
-    if (g === 1) outerStr = 'x';
-    else if (g === -1) outerStr = '-x';
-    else outerStr = `${g}x`;
-
-    function formatFactor(p, q) {
-      let pStr = '';
-      if (p === 1) pStr = 'x';
-      else if (p === -1) pStr = '-x';
-      else pStr = `${p}x`;
-
-      let qStr = '';
-      if (q > 0) qStr = `+${q}`;
-      else if (q < 0) qStr = `${q}`;
-
-      return `(${pStr}${qStr})`;
-    }
-
+    let outerStr = (g === 1) ? 'x' : ((g === -1) ? '-x' : `${g}x`);
     return `${outerStr}${formatFactor(foundP, foundQ)}${formatFactor(foundR, foundS)}`;
   }
 
@@ -3056,16 +3040,10 @@ function factorPolynomial(expr) {
 
   if (!match2) return null;
 
-  let aStr = match2[1];
-  let a = 1;
-  if (aStr === '-') a = -1;
-  else if (aStr !== '' && aStr !== '+') a = parseFloat(aStr);
+  let a = match2[1] === '-' ? -1 : (match2[1] && match2[1] !== '+' ? parseFloat(match2[1]) : 1);
 
   let bStr = match2[2] ? match2[2].replace('x', '') : '';
-  let b = 0;
-  if (bStr === '+') b = 1;
-  else if (bStr === '-') b = -1;
-  else if (bStr !== '') b = parseFloat(bStr);
+  let b = bStr === '+' ? 1 : (bStr === '-' ? -1 : (bStr !== '' ? parseFloat(bStr) : 0));
 
   let c = match2[3] ? parseFloat(match2[3]) : 0;
 
@@ -3103,25 +3081,26 @@ function factorPolynomial(expr) {
     if (foundP !== null) break;
   }
 
-  if (foundP === null) return null;
+ let outerStr = (g === 1) ? '' : ((g === -1) ? '-' : `${g}`);
 
-  foundR *= g;
-  foundS *= g;
-
-  function formatFactor(p, q) {
-    let pStr = '';
-    if (p === 1) pStr = 'x';
-    else if (p === -1) pStr = '-x';
-    else pStr = `${p}x`;
-
-    let qStr = '';
-    if (q > 0) qStr = `+${q}`;
-    else if (q < 0) qStr = `${q}`;
-
-    return `(${pStr}${qStr})`;
+  // 1次式×1次式への分解が見つからなかった場合
+  if (foundP === null) {
+    // 共通因数 g が取り出せる場合（例: 5x^2+5x+5 ➔ 5(x^2+x+1)）
+    if (g !== 1) {
+      const innerPoly = buildPolyResult(0, a2, b2, c2);
+      return `${outerStr}(${innerPoly})`;
+    }
+    // これ以上共通因数も括りだせない場合は null
+    return null;
   }
 
-  return `${formatFactor(foundP, foundQ)}${formatFactor(foundR, foundS)}`;
+  if (c2 === 0) {
+    let pFactor = (foundP === 1) ? 'x' : `${foundP}x`;
+    let innerStr = formatFactor(foundR, foundS).replace(/^\(/, '').replace(/\)$/, '');
+    return `${outerStr}${pFactor}(${innerStr})`;
+  }
+
+  return `${outerStr}${formatFactor(foundP, foundQ)}${formatFactor(foundR, foundS)}`;
 }
 
 // --- 計算実行関数 ---
@@ -3142,7 +3121,7 @@ function calculateBasic() {
 
     // --- 文字 'x' が含まれる場合の処理 ---
     if (expr.includes('x')) {
-      // パターン1: 展開 (例: 2x(x+1)(x+2) ➔ 2x^3+6x^2+4x)
+      // パターン1: 展開 (例: -2x(x+1) ➔ -2x^2-2x)
       const expanded = expandPolynomial(expr);
       if (expanded !== null) {
         updateFormula(rawFormula + completedBrackets + ' =');
@@ -3150,7 +3129,7 @@ function calculateBasic() {
         return;
       }
 
-      // パターン2: 因数分解 (例: 2x^3+6x^2+4x ➔ 2x(x+1)(x+2))
+      // パターン2: 因数分解 (例: -9x^2-3x ➔ -3x(3x+1))
       const factored = factorPolynomial(expr);
       if (factored !== null) {
         updateFormula(rawFormula + ' =');
@@ -3158,7 +3137,7 @@ function calculateBasic() {
         return;
       }
 
-      // パターン3: 同類項整理
+      // パターン3: 同類項整理 (例: -5x ➔ -5x, -3x+2x ➔ -x)
       const simplified = simplifyPolynomial(expr);
       if (simplified !== null && simplified !== '') {
         updateFormula(rawFormula + ' =');
@@ -3179,7 +3158,9 @@ function calculateBasic() {
     expr = expr.replace(/(\d)\s*(x|Math\.PI)/g, '$1*$2');
     expr = expr.replace(/(x)\s*(\d|Math\.PI)/g, '$1*$2');
 
-    expr = evalCalculus(expr);
+    if (typeof evalCalculus === 'function') {
+      expr = evalCalculus(expr);
+    }
 
     let result = eval(expr);
 
@@ -3188,7 +3169,7 @@ function calculateBasic() {
     } else {
       updateFormula(rawFormula + completedBrackets + ' =');
       let resStr = Number(result.toPrecision(15)).toString();
-      if (resStr.length > MAX_LENGTH) {
+      if (typeof MAX_LENGTH !== 'undefined' && resStr.length > MAX_LENGTH) {
         resStr = resStr.slice(0, MAX_LENGTH);
       }
       display.value = resStr;
