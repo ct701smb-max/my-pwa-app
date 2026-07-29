@@ -177,15 +177,15 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">画像toPDF</p>
             </a>
 
-<!-- 12. カラーピッカー -->
-<a href="./color/color.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
-    <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
-        <!-- Font Awesomeのスポイトアイコン (fa-eye-dropper) に変更し、色を調整 -->
-        <i class="fas fa-eye-dropper text-4xl sm:text-5xl text-indigo-500"></i>
-    </div>
-    <p class="text-sm font-medium text-center truncate w-full px-1">カラーピッカー</p>
-</a>
-            
+            <!-- 12. カラーピッカー -->
+            <a href="./color/color.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
+                <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
+                    <!-- Font Awesomeのスポイトアイコン (fa-eye-dropper) に変更し、色を調整 -->
+                    <i class="fas fa-eye-dropper text-4xl sm:text-5xl text-indigo-500"></i>
+                </div>
+                <p class="text-sm font-medium text-center truncate w-full px-1">カラーピッカー</p>
+            </a>
+                
             <!-- 13. CADアイコン (余白を削りサイズを他のアイコンと統一) -->
             <a href="./CAD/cad.html" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
@@ -223,7 +223,7 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">CAD</p>
             </a>
 
-<!-- 14. 歯車シミュレーター -->
+            <!-- 14. 歯車シミュレーター -->
             <a href="./gear/radio-gear.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-cogs text-4xl sm:text-5xl text-gray-600"></i>
@@ -232,60 +232,56 @@
             </a>
 
             <!-- 15. 電卓 -->
-<a href="./number/number.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
-    <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
-        <i class="fas fa-calculator text-4xl sm:text-5xl text-sky-500"></i>
-    </div>
-    <p class="text-sm font-medium text-center truncate w-full px-1">電卓</p>
-</a>
+            <a href="./number/number.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
+                <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
+                    <i class="fas fa-calculator text-4xl sm:text-5xl text-sky-500"></i>
+                </div>
+                <p class="text-sm font-medium text-center truncate w-full px-1">電卓</p>
+            </a>
 
-             <!-- 16. Webエディタ -->
+            <!-- 16. Webエディタ (サイズを修正) -->
             <a href="./editor/editor.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
-                    <!-- SVGアイコン: コードブラケット (< >) -->
-                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="100%" height="100%">
-  <defs>
-    <!-- グラデーション定義 -->
-    <linearGradient id="primary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1976D2" />
-      <stop offset="100%" stop-color="#2E7D32" />
-    </linearGradient>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-10 h-10 sm:w-12 sm:h-12">
+                        <defs>
+                            <!-- グラデーション定義 -->
+                            <linearGradient id="primary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#1976D2" />
+                                <stop offset="100%" stop-color="#2E7D32" />
+                            </linearGradient>
 
-    <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#2E7D32" />
-      <stop offset="100%" stop-color="#ED6C02" />
-    </linearGradient>
+                            <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#2E7D32" />
+                                <stop offset="100%" stop-color="#ED6C02" />
+                            </linearGradient>
 
-    <!-- ドロップシャドウ -->
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
-    </filter>
-  </defs>
+                            <!-- ドロップシャドウ -->
+                            <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
+                            </filter>
+                        </defs>
 
-  <!-- アイコン部分：スケールを0.8に縮小（80px×80px）し、上下中央（y=20）に配置 -->
-  <g transform="translate(10, 20) scale(0.8)">
-    <!-- シンボルマーク背景アイコン（丸角グラデーション） -->
-    <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#primary-grad)" filter="url(#shadow)" />
+                        <!-- シンボルマーク背景アイコン（丸角グラデーション） -->
+                        <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#primary-grad)" filter="url(#shadow)" />
 
-    <!-- コード ＆ Web ノードシンボル -->
-    <!-- 左ブラケット < -->
-    <path d="M 36 34 L 22 50 L 36 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <!-- コード ＆ Web ノードシンボル -->
+                        <!-- 左ブラケット < -->
+                        <path d="M 36 34 L 22 50 L 36 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
 
-    <!-- 右ブラケット > -->
-    <path d="M 64 34 L 78 50 L 64 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <!-- 右ブラケット > -->
+                        <path d="M 64 34 L 78 50 L 64 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
 
-    <!-- スラッシュ / （スタジオの創造性を表すアクセントカラー） -->
-    <path d="M 57 30 L 43 70" fill="none" stroke="url(#accent-grad)" stroke-width="6" stroke-linecap="round" />
+                        <!-- スラッシュ / -->
+                        <path d="M 57 30 L 43 70" fill="none" stroke="url(#accent-grad)" stroke-width="6" stroke-linecap="round" />
 
-    <!-- Webノード（コネクションポイント） -->
-    <circle cx="50" cy="20" r="3.5" fill="#FFFFFF" />
-    <circle cx="20" cy="50" r="3.5" fill="#FFFFFF" />
-    <circle cx="80" cy="50" r="3.5" fill="#FFFFFF" />
-    <circle cx="50" cy="80" r="3.5" fill="#FFFFFF" />
-    
-    <line x1="50" y1="20" x2="50" y2="28" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
-    <line x1="50" y1="72" x2="50" y2="80" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
-  </g>
+                        <!-- Webノード（コネクションポイント） -->
+                        <circle cx="50" cy="20" r="3.5" fill="#FFFFFF" />
+                        <circle cx="20" cy="50" r="3.5" fill="#FFFFFF" />
+                        <circle cx="80" cy="50" r="3.5" fill="#FFFFFF" />
+                        <circle cx="50" cy="80" r="3.5" fill="#FFFFFF" />
+                        
+                        <line x1="50" y1="20" x2="50" y2="28" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
+                        <line x1="50" y1="72" x2="50" y2="80" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
                     </svg>
                 </div>
                 <p class="text-sm font-medium text-center truncate w-full px-1">Webエディタ</p>
