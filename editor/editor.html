@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Code Editor - Multi Media & PDF Support</title>
+  
+  <!-- FontAwesome (Icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- CodeMirror CSS & Themes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh; /* モバイルブラウザのアドレスバー考慮 */
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+      overflow: hidden; /* 画面全体のスクロールを強制固定 */
+    }
+
+    /* Toolbar Header */
+    header {
+      background: #181825;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #313244;
+      z-index: 20;
+      flex-shrink: 0; /* ヘッダーの高さを固定 */
+    }
+    .brand {
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #cba6f7;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    /* モバイル用トグルボタン（PCでは隠す） */
+    .sidebar-toggle-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      color: #cdd6f4;
+      font-size: 1.2rem;
+      padding: 4px;
+      cursor: pointer;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    button {
+      background: #313244;
+      color: #cdd6f4;
+      border: 1px solid #45475a;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    button:hover {
+      background: #45475a;
+      color: #fff;
+    }
+    button.btn-primary {
+      background: #89b4fa;
+      color: #11111b;
+      font-weight: bold;
+      border: none;
+    }
+    button.btn-primary:hover {
+      background: #b4befe;
+    }
+
+    /* Main Container Layout */
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      min-height: 0; /* Flex要素の溢れを防ぐ必須プロパティ */
+    }
+
+    /* Sidebar - File Explorer & Tag Inserter */
+    .sidebar {
+      width: 260px;
+      background: #181825;
+      border-right: 1px solid #313244;
+      display: flex;
+      flex-direction: column;
+      z-index: 15;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-header {
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #a6adc8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #313244;
+      background: #11111b;
+    }
+
+    /* カテゴリー分けコンテナ */
+    .category-container {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .category-group {
+      border-bottom: 1px solid #282936;
+    }
+    .category-title {
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #89b4fa;
+      background: #181825;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      border-top: 1px solid #313244;
+    }
+    .category-title:hover {
+      background: #1e1e2e;
+    }
+    .category-title i.chevron {
+      transition: transform 0.2s ease;
+      font-size: 0.7rem;
+    }
+    .category-group.collapsed .category-title i.chevron {
+      transform: rotate(-90deg);
+    }
+    .category-group.collapsed .file-list,
+    .category-group.collapsed .tag-list-container {
+      display: none;
+    }
+
+    .file-list {
+      list-style: none;
+    }
+    .file-item {
+      padding: 6px 14px 6px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #a6adc8;
+      user-select: none;
+    }
+    .file-item .file-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-item:hover {
+      background: #313244;
+      color: #cdd6f4;
+    }
+    .file-item.active {
+      background: #45475a;
+      color: #89b4fa;
+      font-weight: bold;
+    }
+    .file-item .delete-btn {
+      opacity: 0;
+      color: #f38ba8;
+      transition: opacity 0.2s;
+      padding: 2px 4px;
+    }
+    .file-item:hover .delete-btn {
+      opacity: 1;
+    }
+
+    /* タグ一覧用スタイル */
+    .tag-list-container {
+      padding: 8px;
+    }
+    .tag-sub-group {
+      margin-bottom: 8px;
+    }
+    .tag-sub-title {
+      font-size: 0.7rem;
+      color: #f9e2af;
+      font-weight: bold;
+      padding: 4px 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tag-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 4px 2px;
+    }
+    .tag-chip {
+      background: #313244;
+      color: #cdd6f4;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.75rem;
+      padding: 3px 7px;
+      border-radius: 4px;
+      border: 1px solid #45475a;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15 ease;
+    }
+    .tag-chip:hover {
+      background: #89b4fa;
+      color: #11111b;
+      border-color: #89b4fa;
+      font-weight: bold;
+    }
+
+    /* Mobile Overlay */
+    .sidebar-overlay {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 14;
+    }
+
+    /* Editor Area */
+    .editor-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      min-width: 0;
+      min-height: 0; /* スクロール枠計算のために必須 */
+    }
+    
+    /* Search Bar Style */
+    .search-bar {
+      background: #11111b;
+      padding: 8px 16px;
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid #313244;
+      align-items: center;
+      flex-shrink: 0; /* 検索バーの高さを固定 */
+    }
+    .search-input-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      max-width: 300px;
+    }
+    .search-input-group i {
+      position: absolute;
+      left: 10px;
+      color: #6c7086;
+    }
+    .search-bar input {
+      width: 100%;
+      background: #313244;
+      border: 1px solid #45475a;
+      color: #cdd6f4;
+      padding: 6px 10px 6px 35px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .search-bar input:focus {
+      border-color: #89b4fa;
+    }
+    .search-counter {
+      font-size: 0.85rem;
+      color: #a6adc8;
+      margin-left: 10px;
+      min-width: 60px;
+    }
+
+    /* Editor Wrapper & CodeMirror Adjustment */
+    #editor-wrapper {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    .CodeMirror {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100% !important;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 14px;
+    }
+
+    /* Media Preview Container */
+    .media-preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: #11111b;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .media-preview img, .media-preview video {
+      max-width: 90%;
+      max-height: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      object-fit: contain;
+    }
+    .media-preview audio {
+      margin-top: 10px;
+      width: 80%;
+      max-width: 500px;
+    }
+    /* PDF表示を画面いっぱいに広げる設定 */
+    .media-preview embed {
+      border: 1px solid #313244;
+      border-radius: 4px;
+      background: #ffffff;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* クリック可能なファイル名テキストスタイル */
+    .media-info {
+      margin-bottom: 8px;
+      color: #a6adc8;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: #181825;
+      padding: 4px 12px;
+      border-radius: 16px;
+      border: 1px solid #313244;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      user-select: none;
+      z-index: 2;
+    }
+    .media-info:hover {
+      background: #313244;
+      color: #89b4fa;
+      border-color: #89b4fa;
+    }
+
+    /* トースト通知 */
+    .toast {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #a6e3a1;
+      color: #11111b;
+      font-weight: bold;
+      padding: 8px 16px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    
+    .cm-custom-search-match {
+      background-color: #f9e2af !important;
+      color: #11111b !important;
+      border-radius: 2px;
+    }
+
+    .cm-custom-search-match-active {
+      background-color: #fab387 !important;
+      color: #11111b !important;
+      font-weight: bold !important;
+      border-radius: 2px;
+      box-shadow: 0 0 4px #fab387;
+    }
+
+    /* Hidden Elements */
+    #file-input { display: none; }
+
+    /* レスポンシブスタイル */
+    @media (max-width: 768px) {
+      .sidebar-toggle-btn {
+        display: inline-block;
+      }
+
+      .brand span {
+        display: none;
+      }
+
+      .sidebar {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 260px;
+        transform: translateX(-100%);
+        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay.open {
+        display: block;
+      }
+
+      .toolbar-actions button .btn-text {
+        display: none;
+      }
+
+      .toolbar-actions button {
+        padding: 6px 8px;
+      }
+
+      .file-item .delete-btn {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header / Navigation -->
+  <header>
+    <div class="brand">
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="ファイル一覧">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <i class="fa-solid fa-code"></i>
+      <span>Web Code Studio</span>
+    </div>
+    <div class="toolbar-actions">
+      <button onclick="undo()" title="元に戻す (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+      <button onclick="redo()" title="やり直す (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+      <div style="width: 1px; height: 20px; background: #45475a; margin: 0 2px;"></div>
+      <button onclick="triggerLoadFile()"><i class="fa-solid fa-folder-open"></i><span class="btn-text"> 読み込み</span></button>
+      <button onclick="saveCurrentFile()"><i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> 保存</span></button>
+      <button class="btn-primary" onclick="openInBrowser()" title="実際のブラウザで開く">
+        <i class="fa-solid fa-globe"></i><span class="btn-text"> ブラウザで開く</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      
+      <div class="category-container">
+        <!-- ファイルセクションヘッダー -->
+        <div class="sidebar-header">
+          <span>ファイル一覧</span>
+          <button onclick="addNewFile()" style="padding: 2px 6px;"><i class="fa-solid fa-plus"></i></button>
+        </div>
+
+        <!-- カテゴリー1: Webソースコード (collapsedを追加) -->
+        <div class="category-group collapsed" id="group-web">
+          <div class="category-title" onclick="toggleCategory('group-web')">
+            <span><i class="fa-solid fa-code" style="margin-right:6px;"></i>Webソースコード</span>
+            <i class="fa-solid fa-chevron-down chevron"></i>
+          </div>
+          <ul class="file-list" id="file-list-web"></ul>
+        </div>
+
+        <!-- カテゴリー2: メディア・アセット (collapsedを追加) -->
+        <div class="category-group collapsed" id="group-media">
+          <div class="category-title" onclick="toggleCategory('group-media')">
+            <span><i class="fa-solid fa-photo-film" style="margin-right:6px;"></i>アセット / メディア</span>
+            <i class="fa-solid fa-chevron-down chevron"></i>
+          </div>
+          <ul class="file-list" id="file-list-media"></ul>
+        </div>
+
+        <!-- タグ挿入セクションヘッダー -->
+        <div class="sidebar-header" style="margin-top: 10px;">
+          <span>スニペット / タグ挿入</span>
+        </div>
+
+        <!-- カテゴリー3: HTMLタグ (collapsedを追加) -->
+        <div class="category-group collapsed" id="group-tag-html">
+          <div class="category-title" onclick="toggleCategory('group-tag-html')">
+            <span><i class="fa-brands fa-html5" style="margin-right:6px; color:#e34f26;"></i>HTML タグ</span>
+            <i class="fa-solid fa-chevron-down chevron"></i>
+          </div>
+          <div class="tag-list-container">
+            <div class="tag-sub-group">
+              <div class="tag-sub-title"><i class="fa-solid fa-layer-group"></i> 構造・レイアウト</div>
+              <div class="tag-grid">
+                <span class="tag-chip" onclick="insertTag('<div class=&quot;&quot;>\n  $0\n</div>')" title="div要素">div</span>
+                <span class="tag-chip" onclick="insertTag('<section>\n  $0\n</section>')" title="section要素">section</span>
+                <span class="tag-chip" onclick="insertTag('<header>\n  $0\n</header>')" title="header要素">header</span>
+                <span class="tag-chip" onclick="insertTag('<footer>\n  $0\n</footer>')" title="footer要素">footer</span>
+                <span class="tag-chip" onclick="insertTag('<main>\n  $0\n</main>')" title="main要素">main</span>
+              </div>
+            </div>
+            <div class="tag-sub-group">
+              <div class="tag-sub-title"><i class="fa-solid fa-font"></i> テキスト・コンテンツ</div>
+              <div class="tag-grid">
+                <span class="tag-chip" onclick="insertTag('<h1>$0</h1>')" title="h1見出し">h1</span>
+                <span class="tag-chip" onclick="insertTag('<h2>$0</h2>')" title="h2見出し">h2</span>
+                <span class="tag-chip" onclick="insertTag('<p>$0</p>')" title="段落">p</span>
+                <span class="tag-chip" onclick="insertTag('<a href=&quot;$0&quot;>テキスト</a>')" title="リンク">a</span>
+                <span class="tag-chip" onclick="insertTag('<span class=&quot;$0&quot;></span>')" title="span要素">span</span>
+              </div>
+            </div>
+            <div class="tag-sub-group">
+              <div class="tag-sub-title"><i class="fa-solid fa-list"></i> リスト・フォーム</div>
+              <div class="tag-grid">
+                <span class="tag-chip" onclick="insertTag('<ul>\n  <li>$0</li>\n</ul>')" title="箇条書きリスト">ul</span>
+                <span class="tag-chip" onclick="insertTag('<li>$0</li>')" title="リスト項目">li</span>
+                <span class="tag-chip" onclick="insertTag('<button type=&quot;button&quot;>$0</button>')" title="ボタン">button</span>
+                <span class="tag-chip" onclick="insertTag('<input type=&quot;text&quot; placeholder=&quot;$0&quot;>')" title="入力フォーム">input</span>
+                <span class="tag-chip" onclick="insertTag('<img src=&quot;画像アドレス$0&quot; width=&quot;200&quot; height=&quot;200&quot; alt=&quot;説明文&quot;>')" title="画像">img</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- カテゴリー4: CSSプロパティ (collapsedを追加) -->
+        <div class="category-group collapsed" id="group-tag-css">
+          <div class="category-title" onclick="toggleCategory('group-tag-css')">
+            <span><i class="fa-brands fa-css3-alt" style="margin-right:6px; color:#1572b6;"></i>CSS スタイル</span>
+            <i class="fa-solid fa-chevron-down chevron"></i>
+          </div>
+          <div class="tag-list-container">
+            <div class="tag-sub-group">
+              <div class="tag-sub-title"><i class="fa-solid fa-arrows-alt"></i> 構造・レイアウト</div>
+              <div class="tag-grid">
+                <span class="tag-chip" onclick="insertTag('body{\n$0\n}')" title="bodyレイアウト">body</span>
+                <span class="tag-chip" onclick="insertTag('h1{\n$0\n}')" title="h1レイアウト">h1</span>
+                <span class="tag-chip" onclick="insertTag('.class{\n$0\n}')" title="クラス">クラス</span>
+                <span class="tag-chip" onclick="insertTag('#ID{\n$0\n}')" title="ID">ID</span>
+              </div>
+            </div>
+              
+            <div class="tag-sub-group">
+              <div class="tag-sub-title"><i class="fa-solid fa-arrows-alt"></i> Flexbox・レイアウト</div>
+              <div class="tag-grid">
+                <span class="tag-chip" onclick="insertTag('display: flex;\njustify-content: center;\nalign-items: center;')" title="Flexbox中央揃え">flex-center</span>
+                <span class="tag-chip" onclick="insertTag('display: grid;\ngrid-template-columns: repeat($0, 1fr);')" title="Gridレイアウト">grid</span>
+                <span class="tag-chip" onclick="insertTag('margin: $0;')" title="マージン">margin</span>
+                <span class="tag-chip" onclick="insertTag('padding: $0;')" title="パディング">padding</span>
+              </div>
+            </div>
+            <div class="tag-sub-group">
+              <div class="tag-sub-title"><i class="fa-solid fa-palette"></i> 装飾・テキスト</div>
+              <div class="tag-grid">
+                <span class="tag-chip" onclick="insertTag('color: $0;')" title="文字色">color</span>
+                <span class="tag-chip" onclick="insertTag('background-color: $0;')" title="背景色">bg-color</span>
+                <span class="tag-chip" onclick="insertTag('font-size: $0px;')" title="フォントサイズ">font-size</span>
+                <span class="tag-chip" onclick="insertTag('border: 1px solid $0;')" title="枠線">border</span>
+                <span class="tag-chip" onclick="insertTag('border-radius: $0px;')" title="角丸">border-radius</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- カテゴリー5: JSコードスニペット (collapsedを追加) -->
+        <div class="category-group collapsed" id="group-tag-js">
+          <div class="category-title" onclick="toggleCategory('group-tag-js')">
+            <span><i class="fa-brands fa-js" style="margin-right:6px; color:#f7df1e;"></i>JavaScript</span>
+            <i class="fa-solid fa-chevron-down chevron"></i>
+          </div>
+          <div class="tag-list-container">
+            <div class="tag-sub-group">
+              <div class="tag-sub-title"><i class="fa-solid fa-terminal"></i> 構文・基本操作</div>
+              <div class="tag-grid">
+                <span class="tag-chip" onclick="insertTag('console.log($0);')" title="コンソール出力">log</span>
+                <span class="tag-chip" onclick="insertTag('const $0 = ;')" title="定数定義">const</span>
+                <span class="tag-chip" onclick="insertTag('let $0 = ;')" title="変数定義">let</span>
+                <span class="tag-chip" onclick="insertTag('function $0() {\n  \n}')" title="関数定義">function</span>
+                <span class="tag-chip" onclick="insertTag('document.querySelector(&quot;$0&quot;)')" title="要素取得">querySelector</span>
+                <span class="tag-chip" onclick="insertTag('$0.addEventListener(&quot;click&quot;, (e) => {\n  \n});')" title="イベントリスナー">addEventListener</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- モバイル背景オーバーレイ -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Editor Area -->
+    <div class="editor-section">
+      <!-- Search Bar -->
+      <div class="search-bar" id="search-bar">
+        <div class="search-input-group">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="search-input" placeholder="検索..." oninput="startSearch(true)" onkeydown="handleSearchKey(event)">
+        </div>
+        <button onclick="findPrev()" title="前へ"><i class="fa-solid fa-chevron-up"></i></button>
+        <button onclick="findNext()" title="次へ"><i class="fa-solid fa-chevron-down"></i></button>
+        <div class="search-counter" id="search-counter">0 / 0</div>
+      </div>
+      
+      <div id="editor-wrapper">
+        <textarea id="code-editor"></textarea>
+      </div>
+      
+      <!-- Media View (Hidden by default) -->
+      <div id="media-view" class="media-preview" style="display: none;">
+        <div id="media-info" class="media-info" title="クリックしてファイル名をコピー" onclick="copyCurrentFileName()">
+        </div>
+        <div id="media-content" style="width:100%; flex: 1; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow: hidden;"></div>
+      </div>
+
+      <!-- トースト通知 -->
+      <div id="toast" class="toast">ファイル名をコピーしました！</div>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" onchange="loadFile(event)" accept="*">
+
+  <!-- CodeMirror Main & Modes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
+  <!-- 検索カーソル機能用スクリプト -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
+
+  <script>
+    // ---Core State---
+let files = JSON.parse(localStorage.getItem('web_studio_files_v3')) || {
+  "index.html": `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <title>Media Test</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <h1>メディア連携テスト</h1>\n  <!-- PDF埋め込み例 -->\n  <!-- <embed src="プログラミング.pdf" width="100%" height="600px"> -->\n  <script src="script.js"><\/script>\n</body>\n</html>`,
+  "style.css": `body {\n  font-family: sans-serif;\n  background-color: #f0f4f8;\n  color: #333;\n  padding: 20px;\n}`,
+  "script.js": `console.log("Web Studio Initialized!");`
+};
+let activeFileName = "index.html";
+
+// ---Search State---
+let searchOverlay = null;
+let searchMatches = [];
+let currentMatchIndex = -1;
+let activeMarker = null;
+
+// ---ファイル形式判定ヘルパー---
+function isImageFile(fileName) { return /\.(png|jpe?g|gif|svg|webp|avif|bmp|ico)$/i.test(fileName); }
+function isAudioFile(fileName) { return /\.(mp3|wav|ogg|m4a|aac)$/i.test(fileName); }
+function isVideoFile(fileName) { return /\.(mp4|webm|ogv)$/i.test(fileName); }
+function isPdfFile(fileName) { return /\.pdf$/i.test(fileName); }
+
+function isBinaryMediaFile(fileName) {
+  return isImageFile(fileName) || isAudioFile(fileName) || isVideoFile(fileName) || isPdfFile(fileName);
+}
+
+// ---Initialize CodeMirror---
+const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+  lineNumbers: true,
+  theme: "dracula",
+  mode: "htmlmixed",
+  undoDepth: 200,
+  lineWrapping: true,
+  extraKeys: {
+    "Ctrl-F": function(cm) { document.getElementById('search-input').focus(); },
+    "Cmd-F": function(cm) { document.getElementById('search-input').focus(); },
+    "Tab": function(cm) {
+      if (cm.somethingSelected()) {
+        cm.indentSelection("add");
+      } else {
+        cm.replaceSelection("  ", "end");
+      }
+    }
+  }
+});
+
+// ---Events---
+editor.on("change", () => {
+  if (!isBinaryMediaFile(activeFileName)) {
+    files[activeFileName] = editor.getValue();
+    saveToLocalStorage();
+    if (document.getElementById('search-input').value) {
+      startSearch(false);
+    }
+  }
+});
+
+// ---Sidebar Mobile Operations---
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.remove('open');
+  overlay.classList.remove('open');
+}
+
+// ---File Management---
+function saveToLocalStorage() { localStorage.setItem('web_studio_files_v3', JSON.stringify(files)); }
+
+function toggleCategory(groupId) {
+  const group = document.getElementById(groupId);
+  if (group) group.classList.toggle('collapsed');
+}
+
+function renderFileList() {
+  const webListEl = document.getElementById('file-list-web');
+  const mediaListEl = document.getElementById('file-list-media');
+  
+  webListEl.innerHTML = '';
+  mediaListEl.innerHTML = '';
+
+  Object.keys(files).forEach(fileName => {
+    const li = document.createElement('li');
+    li.className = `file-item ${fileName === activeFileName ? 'active' : ''}`;
+    li.onclick = () => {
+      switchFile(fileName);
+      if (window.innerWidth <= 768) closeSidebar();
+    };
+
+    let icon = 'fa-file-code';
+    if (fileName.endsWith('.html')) icon = 'fa-html5';
+    else if (fileName.endsWith('.css')) icon = 'fa-css3-alt';
+    else if (fileName.endsWith('.js')) icon = 'fa-js';
+    else if (isImageFile(fileName)) icon = 'fa-image';
+    else if (isAudioFile(fileName)) icon = 'fa-file-audio';
+    else if (isVideoFile(fileName)) icon = 'fa-file-video';
+    else if (isPdfFile(fileName)) icon = 'fa-file-pdf';
+    
+    const isBrand = icon.includes('html5') || icon.includes('css3') || icon.includes('js');
+    const iconClass = isBrand ? `fa-brands ${icon}` : `fa-solid ${icon}`;
+
+    li.innerHTML = `
+      <span class="file-label">
+        <i class="${iconClass}"></i> ${fileName}
+      </span>
+      <i class="fa-solid fa-xmark delete-btn" onclick="event.stopPropagation(); deleteFile('${fileName}')"></i>
+    `;
+
+    if (isBinaryMediaFile(fileName)) {
+      mediaListEl.appendChild(li);
+    } else {
+      webListEl.appendChild(li);
+    }
+  });
+}
+
+function switchFile(fileName) {
+  activeFileName = fileName;
+  clearSearch();
+  document.getElementById('search-input').value = ""; 
+  
+  const editorWrapper = document.getElementById('editor-wrapper');
+  const mediaView = document.getElementById('media-view');
+  const mediaContent = document.getElementById('media-content');
+  const searchBar = document.getElementById('search-bar');
+
+  if (isBinaryMediaFile(fileName)) {
+    editorWrapper.style.display = 'none';
+    searchBar.style.display = 'none';
+    mediaView.style.display = 'flex';
+    mediaContent.innerHTML = '';
+
+    const dataUrl = files[fileName] || '';
+
+    if (isImageFile(fileName)) {
+      mediaContent.innerHTML = `<img src="${dataUrl}" alt="preview">`;
+    } else if (isAudioFile(fileName)) {
+      mediaContent.innerHTML = `<audio controls src="${dataUrl}"></audio>`;
+    } else if (isVideoFile(fileName)) {
+      mediaContent.innerHTML = `<video controls src="${dataUrl}"></video>`;
+    } else if (isPdfFile(fileName)) {
+      mediaContent.innerHTML = `<embed src="${dataUrl}" width="100%" height="100%">`;
+    }
+
+    document.getElementById('media-info').innerHTML = `
+      <span>${fileName}</span>
+      <i class="fa-regular fa-copy" style="font-size: 0.8rem; opacity: 0.8;"></i>
+    `;
+  } else {
+    editorWrapper.style.display = 'block';
+    searchBar.style.display = 'flex';
+    mediaView.style.display = 'none';
+
+    editor.setOption("mode", fileName.endsWith('.html') ? 'htmlmixed' : fileName.endsWith('.css') ? 'css' : fileName.endsWith('.js') ? 'javascript' : 'text/plain');
+    editor.setValue(files[fileName] || '');
+    editor.clearHistory();
+    setTimeout(() => editor.refresh(), 100);
+  }
+
+  renderFileList();
+}
+
+function copyCurrentFileName() {
+  if (!activeFileName) return;
+  navigator.clipboard.writeText(activeFileName).then(() => {
+    showToast(`"${activeFileName}" をコピーしました`);
+  }).catch(err => {
+    console.error('Copy failed', err);
+  });
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2000);
+}
+
+function addNewFile() {
+  const name = prompt("ファイル名 (例: style.css, photo.jpg, doc.pdf):");
+  if (name && files[name] === undefined) { 
+    files[name] = ""; 
+    switchFile(name); 
+    saveToLocalStorage(); 
+  }
+}
+
+function deleteFile(fileName) {
+  if (Object.keys(files).length > 1 && confirm(`${fileName} を削除？`)) {
+    delete files[fileName];
+    if (activeFileName === fileName) activeFileName = Object.keys(files)[0];
+    switchFile(activeFileName);
+    saveToLocalStorage();
+  }
+}
+
+function undo() { editor.undo(); }
+function redo() { editor.redo(); }
+
+function handleSearchKey(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    if (event.shiftKey) { findPrev(); } else { findNext(); }
+  }
+}
+
+function clearSearch() {
+  if (searchOverlay) { editor.removeOverlay(searchOverlay); searchOverlay = null; }
+  if (activeMarker) { activeMarker.clear(); activeMarker = null; }
+  searchMatches = [];
+  currentMatchIndex = -1;
+  updateSearchCounter(0, 0);
+}
+
+function createSearchOverlay(query) {
+  return {
+    token: function(stream) {
+      query = query.toLowerCase();
+      if (stream.string.substr(stream.pos).toLowerCase().indexOf(query) === 0) {
+        for (var i = 0; i < query.length; i++) { stream.next(); }
+        return "custom-search-match";
+      } else {
+        stream.next();
+        while (stream.pos < stream.string.length) {
+          if (stream.string.substr(stream.pos).toLowerCase().indexOf(query) === 0) break;
+          stream.next();
+        }
+      }
+    }
+  };
+}
+
+function startSearch(shouldJump = true) {
+  const query = document.getElementById('search-input').value;
+  clearSearch();
+  if (!query) return;
+
+  searchOverlay = createSearchOverlay(query);
+  editor.addOverlay(searchOverlay);
+
+  const cursor = editor.getSearchCursor(new RegExp(escapeRegExp(query), "i"));
+  while (cursor.findNext()) {
+    searchMatches.push({ from: cursor.from(), to: cursor.to() });
+  }
+
+  if (searchMatches.length > 0) {
+    currentMatchIndex = 0;
+    if (shouldJump) { selectAndScrollToMatch(0); } else { highlightMatch(0); updateSearchCounter(1, searchMatches.length); }
+  }
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightMatch(index) {
+  if (index < 0 || index >= searchMatches.length) return;
+  const match = searchMatches[index];
+  if (activeMarker) activeMarker.clear();
+  activeMarker = editor.markText(match.from, match.to, { className: "cm-custom-search-match-active" });
+}
+
+function selectAndScrollToMatch(index) {
+  if (index < 0 || index >= searchMatches.length) return;
+  const match = searchMatches[index];
+  highlightMatch(index);
+  editor.setCursor(match.from);
+  editor.scrollIntoView({ from: match.from, to: match.to }, 100);
+  updateSearchCounter(index + 1, searchMatches.length);
+}
+
+function findNext() {
+  if (searchMatches.length === 0) return;
+  currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+  selectAndScrollToMatch(currentMatchIndex);
+}
+
+function findPrev() {
+  if (searchMatches.length === 0) return;
+  currentMatchIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+  selectAndScrollToMatch(currentMatchIndex);
+}
+
+function updateSearchCounter(current, total) {
+  const counterEl = document.getElementById('search-counter');
+  if (total === 0) {
+    counterEl.textContent = "0 / 0";
+    counterEl.style.color = "#6c7086";
+  } else {
+    counterEl.textContent = `${current} / ${total}`;
+    counterEl.style.color = "#a6e3a1";
+  }
+}
+
+function saveCurrentFile() {
+  const content = files[activeFileName] || '';
+  let blob;
+  
+  if (isBinaryMediaFile(activeFileName) && content.startsWith('data:')) {
+    try {
+      const byteString = atob(content.split(',')[1]);
+      const mimeString = content.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      blob = new Blob([ab], { type: mimeString });
+    } catch (e) {
+      blob = new Blob([content], { type: "text/plain" });
+    }
+  } else {
+    blob = new Blob([content], { type: "text/plain" });
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = activeFileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// --- スニペット / タグ挿入機能 ---
+function insertTag(snippet) {
+  // バイナリファイル（画像やPDFなど）を開いている場合は挿入しない
+  if (isBinaryMediaFile(activeFileName)) {
+    showToast("テキストファイル編集時のみ挿入できます");
+    return;
+  }
+
+  // 現在のカーソル位置（または選択範囲）を取得
+  const doc = editor.getDoc();
+  const cursor = doc.getCursor();
+  const selection = doc.getSelection();
+
+  // 選択中のテキストがあれば、$0 の代わりにその選択テキストを埋め込む
+  let formattedSnippet = snippet;
+  let cursorOffset = -1;
+
+  if (selection) {
+    formattedSnippet = snippet.replace('$0', selection);
+  } else {
+    // $0 の位置を記録してから特殊記号を除去
+    cursorOffset = snippet.indexOf('$0');
+    formattedSnippet = snippet.replace('$0', '');
+  }
+
+  // エディタのカーソル位置（または選択範囲）にテキストを置き換え挿入
+  doc.replaceSelection(formattedSnippet);
+
+  // カーソル位置の自動調整処理
+  if (!selection && cursorOffset !== -1) {
+    // 挿入された文字列を行ごとに分割してカーソル移動位置を計算
+    const lines = snippet.substring(0, cursorOffset).split('\n');
+    const lineOffset = lines.length - 1;
+    const chOffset = lineOffset === 0 ? cursor.ch + lines[0].length : lines[lineOffset].length;
+
+    doc.setCursor({
+      line: cursor.line + lineOffset,
+      ch: chOffset
+    });
+  }
+
+  // エディタへフォーカスを戻す
+  editor.focus();
+}
+      
+// --- Preview System ---
+function openInBrowser() {
+  let modal = document.getElementById('preview-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'preview-modal';
+    modal.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+    `;
+
+    modal.innerHTML = `
+      <div style="width: 90%; height: 90%; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <div style="background: #282a36; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span id="preview-title" style="font-weight: bold; font-family: sans-serif; font-size: 1rem;">Preview</span>
+            <span id="preview-page-title" style="font-size: 0.85rem; color: #bd93f9; font-family: sans-serif; font-weight: normal;"></span>
+          </div>
+          <button onclick="closePreview()" style="background: #ff5555; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">✕ 閉じる</button>
+        </div>
+        <div id="preview-body" style="width: 100%; height: 100%; overflow: auto; background: #f8f9fa;"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  modal.style.display = 'flex';
+
+  // 指定されたファイルを iframe または メディア表示領域に描画する関数
+  window.renderPreviewFile = function(fileName) {
+    // 先頭の ./ や / を取り除いてファイル名を正規化
+    fileName = fileName.replace(/^(\.\/|\/)/, '');
+
+    const title = document.getElementById('preview-title');
+    const pageTitleEl = document.getElementById('preview-page-title');
+    const container = document.getElementById('preview-body');
+    
+    if (files[fileName] === undefined) {
+      alert(`ファイル "${fileName}" が存在しません。`);
+      return;
+    }
+
+    title.textContent = `Preview: ${fileName}`;
+    pageTitleEl.textContent = ''; // 初期化
+    const fileData = files[fileName];
+
+    // --- 1. PDFファイルの場合 ---
+    if (isPdfFile(fileName)) {
+      container.innerHTML = `<embed src="${fileData}" type="application/pdf" width="100%" height="100%">`;
+      return;
+    }
+
+    // --- 2. 画像ファイルの場合 ---
+    if (isImageFile(fileName)) {
+      container.innerHTML = `
+        <div style="display:flex; justify-content:center; align-items:center; height:100%; padding:20px; box-sizing:border-box;">
+          <img src="${fileData}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+        </div>`;
+      return;
+    }
+
+    // --- 3. 音声ファイルの場合 ---
+    if (isAudioFile(fileName)) {
+      container.innerHTML = `
+        <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+          <audio controls src="${fileData}" style="width:80%; max-width:500px;"></audio>
+        </div>`;
+      return;
+    }
+
+    // --- 4. 動画ファイルの場合 ---
+    if (isVideoFile(fileName)) {
+      container.innerHTML = `
+        <div style="display:flex; justify-content:center; align-items:center; height:100%; background:#000;">
+          <video controls src="${fileData}" style="max-width:100%; max-height:100%;"></video>
+        </div>`;
+      return;
+    }
+
+    // --- 5. HTML / その他のテキストファイルの場合 ---
+    let html = fileData;
+
+    // <title>タグの中身を取得してヘッダーのサブタイトル欄にセット
+    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
+    if (titleMatch && titleMatch[1]) {
+      pageTitleEl.textContent = `TITLE: ${titleMatch[1].trim()}`;
+    }
+
+    // CSS の埋め込み
+    html = html.replace(/<link\s+[^>]*href=["']([^"']+\.css)["'][^>]*>/gi, (match, cssFile) => {
+      const cleanCssName = cssFile.replace(/^(\.\/|\/)/, '');
+      return files[cleanCssName] ? `<style>\n${files[cleanCssName]}\n</style>` : match;
+    });
+
+    // JS の埋め込み
+    html = html.replace(/<script\s+[^>]*src=["']([^"']+\.js)["'][^>]*><\/script>/gi, (match, jsFile) => {
+      const cleanJsName = jsFile.replace(/^(\.\/|\/)/, '');
+      return files[cleanJsName] ? `<script>\n${files[cleanJsName]}\n<\/script>` : match;
+    });
+
+    // 画像などの src 埋め込み（Data URLへ差し替え）
+    html = html.replace(/\bsrc=["']([^"']+)["']/gi, (match, src) => {
+      const cleanSrcName = src.replace(/^(\.\/|\/)/, '');
+      return files[cleanSrcName] ? `src="${files[cleanSrcName]}"` : match;
+    });
+
+    // リンク (<a href="...">) をハイジャックして親画面の renderPreviewFile を呼ぶスクリプト
+    const clickInterceptor = `
+      <script>
+        document.addEventListener('click', function(e) {
+          const a = e.target.closest('a');
+          if (!a) return;
+
+          const href = a.getAttribute('href');
+          if (!href) return;
+
+          // 外部リンク、アンカーリンク、JavaScriptリンクは通常の挙動
+          if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+              a.setAttribute('target', '_blank');
+            }
+            return;
+          }
+
+          // 相対パス・ローカルファイルへのリンクはプレビューを差し替え
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (window.parent && typeof window.parent.renderPreviewFile === 'function') {
+            window.parent.renderPreviewFile(href);
+          }
+        }, true);
+      <\/script>
+    `;
+
+    html += clickInterceptor;
+
+    // iframe要素を作成し、srcdocを使って表示
+    container.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.srcdoc = html;
+    
+    container.appendChild(iframe);
+  };
+
+  // 初期ファイル（現在開いているファイルか index.html）を表示
+  let targetFile = activeFileName.endsWith('.html') ? activeFileName : "index.html";
+  window.renderPreviewFile(targetFile);
+}
+
+// プレビューを閉じる関数
+function closePreview() {
+  const modal = document.getElementById('preview-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function triggerLoadFile() { document.getElementById('file-input').click(); }
+
+function loadFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  if (isBinaryMediaFile(file.name)) {
+    reader.onload = e => {
+      files[file.name] = e.target.result;
+      switchFile(file.name);
+      saveToLocalStorage();
+    };
+    reader.readAsDataURL(file);
+  } else {
+    reader.onload = e => {
+      files[file.name] = e.target.result;
+      switchFile(file.name);
+      saveToLocalStorage();
+    };
+    reader.readAsText(file);
+  }
+  event.target.value = "";
+}
+
+// Init
+renderFileList();
+switchFile(activeFileName);
+</script>
+</body>
+</html>
