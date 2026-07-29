@@ -4,14 +4,27 @@
   <meta charset="UTF-8">
   <!-- 画面全体のブラウザピンチズームを無効化 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Web Code Editor - Multi Media & PDF Support</title>
+  <title>Web Code Editor</title>
   
   <!-- FontAwesome (Icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- CodeMirror CSS & Themes -->
+  <!-- CodeMirror CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+
+  <!-- CodeMirror 本体 JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+
+  <!-- HTML/CSS/JSのモード -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
+  <!-- アドオン（自動閉じタグ & 検索機能） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
+
   <!-- ZIP操作用ライブラリ (JSZip) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
@@ -28,8 +41,8 @@
       flex-direction: column;
       height: 100vh;
       height: 100dvh; /* モバイルブラウザのアドレスバー考慮 */
-      background-color: #1e1e2e;
-      color: #cdd6f4;
+      background-color: #f7f7f7;
+      color: #333333;
       overflow: hidden; /* 画面全体のスクロールを強制固定 */
       
       /* 画面全体でのピンチズーム動作を阻止（スクロールのみ許可） */
@@ -38,12 +51,12 @@
 
     /* Toolbar Header */
     header {
-      background: #181825;
+      background: #ffffff;
       padding: 8px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #313244;
+      border-bottom: 1px solid #e0e0e0;
       z-index: 20;
       flex-shrink: 0; /* ヘッダーの高さを固定 */
       touch-action: pan-x pan-y;
@@ -52,7 +65,7 @@
     .brand {
       font-weight: bold;
       font-size: 1.1rem;
-      color: #cba6f7;
+      color: #2e7d32; /* エディタのタグ色（緑）と統一 */
       display: flex;
       align-items: center;
       gap: 10px;
@@ -63,7 +76,7 @@
       display: none;
       background: transparent;
       border: none;
-      color: #cdd6f4;
+      color: #333333;
       font-size: 1.2rem;
       padding: 4px;
       cursor: pointer;
@@ -76,9 +89,9 @@
     }
 
     button {
-      background: #313244;
-      color: #cdd6f4;
-      border: 1px solid #45475a;
+      background: #f0f0f0;
+      color: #333333;
+      border: 1px solid #cccccc;
       padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
@@ -91,19 +104,19 @@
     }
 
     button:hover {
-      background: #45475a;
-      color: #fff;
+      background: #e0e0e0;
+      color: #000000;
     }
 
     button.btn-primary {
-      background: #89b4fa;
-      color: #11111b;
+      background: #1976d2;
+      color: #ffffff;
       font-weight: bold;
       border: none;
     }
 
     button.btn-primary:hover {
-      background: #b4befe;
+      background: #1565c0;
     }
 
     /* Main Container Layout */
@@ -118,8 +131,8 @@
     /* Sidebar - File Explorer & Tag Inserter */
     .sidebar {
       width: 260px;
-      background: #181825;
-      border-right: 1px solid #313244;
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
       display: flex;
       flex-direction: column;
       z-index: 15;
@@ -132,12 +145,12 @@
       font-size: 0.8rem;
       font-weight: bold;
       text-transform: uppercase;
-      color: #a6adc8;
+      color: #555555;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #313244;
-      background: #11111b;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f0f0f0;
     }
 
     /* カテゴリー分けコンテナ */
@@ -147,25 +160,25 @@
     }
 
     .category-group {
-      border-bottom: 1px solid #282936;
+      border-bottom: 1px solid #e0e0e0;
     }
 
     .category-title {
       padding: 8px 12px;
       font-size: 0.75rem;
       font-weight: bold;
-      color: #89b4fa;
-      background: #181825;
+      color: #1976d2;
+      background: #f7f7f7;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
       user-select: none;
-      border-top: 1px solid #313244;
+      border-top: 1px solid #e0e0e0;
     }
 
     .category-title:hover {
-      background: #1e1e2e;
+      background: #e8e8e8;
     }
 
     .category-title i.chevron {
@@ -193,7 +206,7 @@
       align-items: center;
       justify-content: space-between;
       font-size: 0.85rem;
-      color: #a6adc8;
+      color: #444444;
       user-select: none;
     }
 
@@ -208,19 +221,19 @@
     }
 
     .file-item:hover {
-      background: #313244;
-      color: #cdd6f4;
+      background: #f0f0f0;
+      color: #000000;
     }
 
     .file-item.active {
-      background: #45475a;
-      color: #89b4fa;
+      background: #e3f2fd;
+      color: #1976d2;
       font-weight: bold;
     }
 
     .file-item .delete-btn {
       opacity: 0;
-      color: #f38ba8;
+      color: #d32f2f;
       transition: opacity 0.2s;
       padding: 2px 4px;
     }
@@ -236,7 +249,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.4);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -244,13 +257,14 @@
     }
 
     .student-modal-content {
-      background: #282a36;
-      color: #f8f8f2;
+      background: #ffffff;
+      color: #333333;
       padding: 24px;
       border-radius: 8px;
       width: 320px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
       font-family: sans-serif;
+      border: 1px solid #e0e0e0;
     }
 
     .student-modal-content h3 {
@@ -258,7 +272,7 @@
       margin-bottom: 16px;
       font-size: 1.1rem;
       text-align: center;
-      color: #50fa7b;
+      color: #2e7d32;
     }
 
     .student-form-group {
@@ -276,16 +290,16 @@
       width: 100px;
       padding: 6px 8px;
       border-radius: 4px;
-      border: 1px solid #6272a4;
-      background: #44475a;
-      color: #fff;
+      border: 1px solid #cccccc;
+      background: #ffffff;
+      color: #333333;
       font-size: 1rem;
       text-align: center;
     }
 
     .student-form-group input:focus {
       outline: none;
-      border-color: #bd93f9;
+      border-color: #1976d2;
     }
 
     .student-modal-buttons {
@@ -304,19 +318,19 @@
     }
 
     .student-btn-cancel {
-      background: #6272a4;
-      color: #fff;
+      background: #e0e0e0;
+      color: #333333;
     }
 
     .student-btn-draft {
-      background: #ffb86c;
-      color: #282a36;
+      background: #ed6c02;
+      color: #ffffff;
     }
 
     .student-btn-save {
-      background: #50fa7b;
-      color: #282a36;
-    }     
+      background: #2e7d32;
+      color: #ffffff;
+    }      
 
     /* タグ一覧用スタイル */
     .tag-list-container {
@@ -329,7 +343,7 @@
 
     .tag-sub-title {
       font-size: 0.7rem;
-      color: #f9e2af;
+      color: #ed6c02;
       font-weight: bold;
       padding: 4px 6px;
       display: flex;
@@ -345,22 +359,22 @@
     }
 
     .tag-chip {
-      background: #313244;
-      color: #cdd6f4;
+      background: #f0f0f0;
+      color: #333333;
       font-family: 'Fira Code', 'Consolas', monospace;
       font-size: 0.75rem;
       padding: 3px 7px;
       border-radius: 4px;
-      border: 1px solid #45475a;
+      border: 1px solid #cccccc;
       cursor: pointer;
       user-select: none;
       transition: all 0.15s ease;
     }
 
     .tag-chip:hover {
-      background: #89b4fa;
-      color: #11111b;
-      border-color: #89b4fa;
+      background: #1976d2;
+      color: #ffffff;
+      border-color: #1976d2;
       font-weight: bold;
     }
 
@@ -369,7 +383,7 @@
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.3);
       z-index: 14;
     }
 
@@ -385,11 +399,11 @@
 
     /* Search Bar Style */
     .search-bar {
-      background: #11111b;
+      background: #f7f7f7;
       padding: 8px 16px;
       display: flex;
       gap: 10px;
-      border-bottom: 1px solid #313244;
+      border-bottom: 1px solid #e0e0e0;
       align-items: center;
       flex-shrink: 0; /* 検索バーの高さを固定 */
       touch-action: pan-x pan-y;
@@ -406,14 +420,14 @@
     .search-input-group i {
       position: absolute;
       left: 10px;
-      color: #6c7086;
+      color: #888888;
     }
 
     .search-bar input {
       width: 100%;
-      background: #313244;
-      border: 1px solid #45475a;
-      color: #cdd6f4;
+      background: #ffffff;
+      border: 1px solid #cccccc;
+      color: #333333;
       padding: 6px 10px 6px 35px;
       border-radius: 4px;
       font-size: 0.9rem;
@@ -421,12 +435,12 @@
     }
 
     .search-bar input:focus {
-      border-color: #89b4fa;
+      border-color: #1976d2;
     }
 
     .search-counter {
       font-size: 0.85rem;
-      color: #a6adc8;
+      color: #666666;
       margin-left: 10px;
       min-width: 60px;
     }
@@ -467,30 +481,26 @@
     }
 
     /* HTML/CSSタグ、属性、値の色カスタマイズ */
-    /* タグ名（<div> や <html> などの要素名） */
     .cm-tag {
       color: #2e7d32 !important; /* 緑色 */
-      font-weight: bold;
     }
 
-    /* タグのブラケット（ < > / など ） */
     .cm-bracket {
       color: #2e7d32 !important; /* 緑色 */
     }
 
-    /* 属性名（ class, id, src, href など） */
     .cm-attribute {
       color: #0000ff !important; /* 青色 */
     }
 
-    /* 属性値（ "..." や '...' の文字列 ） */
     .cm-string {
       color: #c62828 !important; /* 赤色 */
     }
-/* CodeMirror 内のタグ名の太字を解除する */
-.cm-s-default .cm-tag {
-  font-weight: normal;
-}
+
+    .cm-s-default .cm-tag {
+      font-weight: normal;
+    }
+
     /* Media Preview Container */
     .media-preview {
       display: flex;
@@ -498,7 +508,7 @@
       align-items: center;
       justify-content: center;
       height: 100%;
-      background: #11111b;
+      background: #f7f7f7;
       padding: 16px;
       box-sizing: border-box;
     }
@@ -507,7 +517,7 @@
       max-width: 90%;
       max-height: 100%;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       object-fit: contain;
     }
 
@@ -519,23 +529,22 @@
 
     /* PDF表示を画面いっぱいに広げる設定 */
     .media-preview embed {
-      border: 1px solid #313244;
+      border: 1px solid #e0e0e0;
       border-radius: 4px;
       background: #ffffff;
       width: 100%;
       height: 100%;
     }
 
-    /* クリック可能なファイル名テキストスタイル */
     .media-info {
       margin-bottom: 8px;
-      color: #a6adc8;
+      color: #555555;
       font-size: 0.85rem;
       cursor: pointer;
-      background: #181825;
+      background: #ffffff;
       padding: 4px 12px;
       border-radius: 16px;
-      border: 1px solid #313244;
+      border: 1px solid #cccccc;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -545,9 +554,9 @@
     }
 
     .media-info:hover {
-      background: #313244;
-      color: #89b4fa;
-      border-color: #89b4fa;
+      background: #e3f2fd;
+      color: #1976d2;
+      border-color: #1976d2;
     }
 
     /* トースト通知 */
@@ -556,12 +565,12 @@
       bottom: 25px;
       left: 50%;
       transform: translateX(-50%);
-      background-color: #a6e3a1;
-      color: #11111b;
+      background-color: #2e7d32;
+      color: #ffffff;
       font-weight: bold;
       padding: 8px 16px;
       border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       font-size: 0.85rem;
       opacity: 0;
       pointer-events: none;
@@ -574,17 +583,17 @@
     }
 
     .cm-custom-search-match {
-      background-color: #f9e2af !important;
-      color: #11111b !important;
+      background-color: #fff59d !important;
+      color: #000000 !important;
       border-radius: 2px;
     }
 
     .cm-custom-search-match-active {
-      background-color: #fab387 !important;
-      color: #11111b !important;
+      background-color: #ffb74d !important;
+      color: #000000 !important;
       font-weight: bold !important;
       border-radius: 2px;
-      box-shadow: 0 0 4px #fab387;
+      box-shadow: 0 0 4px #ffb74d;
     }
 
     /* Hidden Elements */
@@ -607,7 +616,7 @@
         left: 0;
         width: 260px;
         transform: translateX(-100%);
-        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
       }
 
       .sidebar.open {
@@ -630,7 +639,7 @@
         opacity: 1;
       }
     }
-</style>
+  </style>
 </head>
 <body>
 
@@ -640,13 +649,73 @@
       <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="ファイル一覧">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <i class="fa-solid fa-code"></i>
-      <span>Web Code Studio</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="100%" height="100%">
+  <defs>
+    <!-- グラデーション定義 -->
+    <linearGradient id="primary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1976D2" />
+      <stop offset="100%" stop-color="#2E7D32" />
+    </linearGradient>
+
+    <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2E7D32" />
+      <stop offset="100%" stop-color="#ED6C02" />
+    </linearGradient>
+
+    <!-- ドロップシャドウ -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- アイコン部分：スケールを0.8に縮小（80px×80px）し、上下中央（y=20）に配置 -->
+  <g transform="translate(10, 20) scale(0.8)">
+    <!-- シンボルマーク背景アイコン（丸角グラデーション） -->
+    <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#primary-grad)" filter="url(#shadow)" />
+
+    <!-- コード ＆ Web ノードシンボル -->
+    <!-- 左ブラケット < -->
+    <path d="M 36 34 L 22 50 L 36 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- 右ブラケット > -->
+    <path d="M 64 34 L 78 50 L 64 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- スラッシュ / （スタジオの創造性を表すアクセントカラー） -->
+    <path d="M 57 30 L 43 70" fill="none" stroke="url(#accent-grad)" stroke-width="6" stroke-linecap="round" />
+
+    <!-- Webノード（コネクションポイント） -->
+    <circle cx="50" cy="20" r="3.5" fill="#FFFFFF" />
+    <circle cx="20" cy="50" r="3.5" fill="#FFFFFF" />
+    <circle cx="80" cy="50" r="3.5" fill="#FFFFFF" />
+    <circle cx="50" cy="80" r="3.5" fill="#FFFFFF" />
+    
+    <line x1="50" y1="20" x2="50" y2="28" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
+    <line x1="50" y1="72" x2="50" y2="80" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
+  </g>
+
+  <!-- テキストロゴ（文字自体はサイズ・スタイル維持、アイコン縮小に合わせて余白を最適化） -->
+  <g transform="translate(102, 0)">
+    <!-- Web Code -->
+    <text x="0" y="62" font-family="'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" font-size="38" font-weight="800" fill="#222222" letter-spacing="-0.5">
+      Web<tspan fill="#1976D2">Code</tspan>
+    </text>
+
+    <!-- STUDIO -->
+    <text x="2" y="90" font-family="'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" font-size="16" font-weight="700" fill="#2E7D32" letter-spacing="9">
+      EDITOR
+    </text>
+
+    <!-- アクセントドット -->
+    <circle cx="182" cy="86" r="3" fill="#ED6C02" />
+  </g>
+</svg>
+
     </div>
     <div class="toolbar-actions">
       <button onclick="undo()" title="元に戻す (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
       <button onclick="redo()" title="やり直す (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
       <div style="width: 1px; height: 20px; background: #45475a; margin: 0 2px;"></div>
+      
       <!-- 保存・読込エリア -->
       <button onclick="saveCurrentFile()" title="選択中のファイルを保存">
         <i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> 単体保存</span>
@@ -689,7 +758,7 @@
           <ul class="file-list" id="file-list-web"></ul>
         </div>
 
-        <!-- カテゴリー2: メディア・アセット (collapsedを追加) -->
+        <!-- カテゴリー2: メディア・アセット -->
         <div class="category-group collapsed" id="group-media">
           <div class="category-title" onclick="toggleCategory('group-media')">
             <span><i class="fa-solid fa-photo-film" style="margin-right:6px;"></i>メディアファイル</span>
@@ -703,7 +772,7 @@
           <span>タグ一覧</span>
         </div>
 
-        <!-- カテゴリー3: HTMLタグ (collapsedを追加) -->
+        <!-- カテゴリー3: HTMLタグ -->
         <div class="category-group collapsed" id="group-tag-html">
           <div class="category-title" onclick="toggleCategory('group-tag-html')">
             <span><i class="fa-brands fa-html5" style="margin-right:6px; color:#e34f26;"></i>HTML タグ</span>
@@ -720,7 +789,6 @@
               </div>
             </div>
               
-              
             <div class="tag-sub-group">
               <div class="tag-sub-title"><i class="fa-solid fa-layer-group"></i> 構造・レイアウト</div>
               <div class="tag-grid">
@@ -734,6 +802,7 @@
                 <span class="tag-chip" onclick="insertTag(' class=&quot;$0&quot;')" title="空クラス">class=&quot;&quot;</span>
               </div>
             </div>
+
             <div class="tag-sub-group">
               <div class="tag-sub-title"><i class="fa-solid fa-font"></i> テキスト・コンテンツ</div>
               <div class="tag-grid">
@@ -767,7 +836,7 @@
           </div>
         </div>
 
-        <!-- カテゴリー4: CSSプロパティ (collapsedを追加) -->
+        <!-- カテゴリー4: CSSプロパティ -->
         <div class="category-group collapsed" id="group-tag-css">
           <div class="category-title" onclick="toggleCategory('group-tag-css')">
             <span><i class="fa-brands fa-css3-alt" style="margin-right:6px; color:#1572b6;"></i>CSS スタイル</span>
@@ -792,7 +861,6 @@
                 <span class="tag-chip" onclick="insertTag('color: $0; /* 文字の色 */')" title="文字色">文字色</span>
                 <span class="tag-chip" onclick="insertTag('background-color: $0; /* 背景の色 */')" title="背景色">背景色</span>
                 <span class="tag-chip" onclick="insertTag('background-image: url(画像アドレス$0); /* 画像アドレスを指定 */\n  background-size: cover; /* 画面にフィットさせる */\n  background-repeat: no-repeat; /* 繰り返さない */\n  background-attachment: fixed;      /* 背景を固定 */')" title="背景画像">背景画像</span>
-                
                 <span class="tag-chip" onclick="insertTag('font-size: $0px; /* 文字の大きさ */')" title="フォントサイズ">文字サイズ</span>
                 <span class="tag-chip" onclick="insertTag('text-align: center; /* 文字の位置（中央） */')" title="文字の位置">文字の位置</span>
                 <span class="tag-chip" onclick="insertTag('font-family: sans-serif$0; /* 文字の形 */')" title="フォント形式">文字の形</span>
@@ -810,11 +878,10 @@
                 <span class="tag-chip" onclick="insertTag('padding: 10px 10px 10px 10px; /* 枠線の「内側」の余白（上・右・下・左） */')" title="パディング">padding</span>
               </div>
             </div>
-              
           </div>
         </div>
 
-        <!-- カテゴリー5: JSコードスニペット (collapsedを追加) -->
+        <!-- カテゴリー5: JSコードスニペット -->
         <div class="category-group collapsed" id="group-tag-js">
           <div class="category-title" onclick="toggleCategory('group-tag-js')">
             <span><i class="fa-brands fa-js" style="margin-right:6px; color:#f7df1e;"></i>JavaScript</span>
@@ -871,17 +938,7 @@
     </div>
   </div>
 
-  <input type="file" id="file-input" onchange="loadFile(event)" accept="*">
 
-  <!-- CodeMirror Main & Modes -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-
-  <!-- 検索カーソル機能用スクリプト -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
 
   <script>
     // ---Core State---
@@ -926,6 +983,7 @@ function getMimeType(fileName) {
 const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
   lineNumbers: true,
   mode: "htmlmixed",
+  autoCloseTags: true,
   undoDepth: 200,
   lineWrapping: true,
   extraKeys: {
