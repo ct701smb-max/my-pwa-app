@@ -29,7 +29,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
-    * { 
+     * { 
       box-sizing: border-box; 
       margin: 0; 
       padding: 0; 
@@ -118,7 +118,16 @@
     button.btn-primary:hover {
       background: #1565c0;
     }
-
+    .btn-real-dent{
+        height: 52px;
+        width: 52px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        box-sizing: border-box;
+        font-size: 2.0rem;
+        }
     /* Main Container Layout */
     .main-container {
       display: flex;
@@ -135,9 +144,11 @@
       border-right: 1px solid #e0e0e0;
       display: flex;
       flex-direction: column;
+      height: 100vh; /* サイドバー全体の高さを固定 */
       z-index: 15;
       transition: transform 0.3s ease;
       touch-action: pan-x pan-y;
+      overflow: hidden; /* サイドバー外へのみだしを防ぐ */
     }
 
     .sidebar-header {
@@ -151,16 +162,21 @@
       align-items: center;
       border-bottom: 1px solid #e0e0e0;
       background: #f0f0f0;
+      flex-shrink: 0; /* ヘッダーが潰れないようにする */
     }
 
-    /* カテゴリー分けコンテナ */
+    /* カテゴリー分けコンテナ（全体でスクロールさせる場合、または個別に効かせるベース） */
     .category-container {
       flex: 1;
-      overflow-y: auto;
+      overflow-y: auto;   /* サイドバー内全体でのスクロールを許可 */
+      display: flex;
+      flex-direction: column;
     }
 
     .category-group {
       border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
     }
 
     .category-title {
@@ -175,6 +191,7 @@
       justify-content: space-between;
       user-select: none;
       border-top: 1px solid #e0e0e0;
+      flex-shrink: 0;
     }
 
     .category-title:hover {
@@ -191,16 +208,64 @@
     }
 
     .category-group.collapsed .file-list,
+    .category-group.collapsed .folder-container,
     .category-group.collapsed .tag-list-container {
       display: none;
     }
 
-    .file-list {
+    /* ========================================== */
+    /* ▼ フォルダ階層構造用のCSS ▼ */
+    /* ========================================== */
+    .folder-container {
       list-style: none;
     }
 
+    .folder-group {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .folder-header {
+      padding: 6px 12px 6px 16px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #333333;
+      background: #fafafa;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .folder-header:hover {
+      background: #f0f0f0;
+    }
+
+    .folder-title-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .folder-title-left i.fa-folder {
+      color: #ffa000; /* フォルダアイコンの色（黄色系） */
+    }
+
+    .folder-group.collapsed .folder-content {
+      display: none;
+    }
+
+    .folder-group.collapsed .folder-header i.chevron {
+      transform: rotate(-90deg);
+    }
+
+    .folder-content {
+      list-style: none;
+    }
+
+    /* 階層ごとのファイルインデント（ネストが深くなるにつれて左パディングを増やす） */
     .file-item {
-      padding: 6px 14px 6px 20px;
+      padding: 6px 14px 6px 28px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -208,6 +273,22 @@
       font-size: 0.85rem;
       color: #444444;
       user-select: none;
+    }
+
+    /* さらにネストしたフォルダの中のファイル用 */
+    .folder-content .file-item {
+      padding-left: 40px;
+    }
+
+    .folder-content .folder-content .file-item {
+      padding-left: 52px;
+    }
+    /* ========================================== */
+
+    .file-list {
+      list-style: none;
+      overflow-y: auto;   /* 各ファイルリスト内でもスクロール可能に */
+      max-height: 250px;  /* リストが長くなりすぎた場合に高さ制限してスクロールバーを表示 */
     }
 
     .file-item .file-label {
@@ -241,6 +322,7 @@
     .file-item:hover .delete-btn {
       opacity: 1;
     }
+
 
     /* --- 学年・組・番号入力モーダル --- */
     .student-modal-overlay {
@@ -394,7 +476,7 @@
       flex-direction: column;
       position: relative;
       min-width: 0;
-      min-height: 0; /* スクロール枠計算のために必須 */
+      min-height: 0;
     }
 
     /* Search Bar Style */
@@ -405,7 +487,7 @@
       gap: 10px;
       border-bottom: 1px solid #e0e0e0;
       align-items: center;
-      flex-shrink: 0; /* 検索バーの高さを固定 */
+      flex-shrink: 0;
       touch-action: pan-x pan-y;
     }
 
@@ -450,8 +532,6 @@
       flex: 1;
       min-height: 0;
       position: relative;
-
-      /* ピンチイン・ピンチアウトのカスタムジェスチャーを処理できるよう指定 */
       touch-action: none; 
     }
 
@@ -463,9 +543,7 @@
       right: 0;
       height: 100% !important;
       font-family: 'Fira Code', 'Consolas', monospace;
-      font-size: 14px; /* JSでピンチイン・ピンチアウト時に変更するベースサイズ */
-      
-      /* エディタ背景色を白、デフォルトテキスト色を黒に指定 */
+      font-size: 14px;
       background-color: #fff !important;
       color: #000 !important;
     }
@@ -482,19 +560,19 @@
 
     /* HTML/CSSタグ、属性、値の色カスタマイズ */
     .cm-tag {
-      color: #2e7d32 !important; /* 緑色 */
+      color: #2e7d32 !important;
     }
 
     .cm-bracket {
-      color: #2e7d32 !important; /* 緑色 */
+      color: #2e7d32 !important;
     }
 
     .cm-attribute {
-      color: #0000ff !important; /* 青色 */
+      color: #0000ff !important;
     }
 
     .cm-string {
-      color: #c62828 !important; /* 赤色 */
+      color: #c62828 !important;
     }
 
     .cm-s-default .cm-tag {
@@ -527,7 +605,6 @@
       max-width: 500px;
     }
 
-    /* PDF表示を画面いっぱいに広げる設定 */
     .media-preview embed {
       border: 1px solid #e0e0e0;
       border-radius: 4px;
@@ -596,10 +673,286 @@
       box-shadow: 0 0 4px #ffb74d;
     }
 
-    /* Hidden Elements */
     #file-input { display: none; }
 
-    /* レスポンシブスタイル */
+    /* ========================================== */
+    /* ▼ フッター（タグ一覧）用の設定・固定 ▼ */
+    /* ========================================== */
+    /* フッター全体（高さを136pxへ拡大して底面に余裕を持たせる） */
+/* フッター全体（アニメーション＋初期状態の折りたたみに対応） */
+.editor-footer {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff; /* 白基調 */
+  border-top: 1px solid #e0e0e0;
+  height: 136px; /* 開いた状態の高さ */
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+
+.editor-footer.collapsed {
+  height: 32px !important;
+}
+
+/* 切替用タブボタンエリア */
+.footer-tabs {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f7; /* 明るいグレー */
+  border-bottom: 1px solid #e0e0e0;
+  height: 32px;
+  flex-shrink: 0;
+  padding-right: 6px; /* 右端の開閉ボタン用の余白 */
+}
+
+.footer-tab-btn {
+  background: none;
+  border: none;
+  color: #666666;
+  padding: 0 16px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-right: 1px solid #e0e0e0;
+  transition: all 0.2s;
+  font-weight: 500;
+  height: 100%;
+}
+
+.footer-tab-btn:hover {
+  color: #111111;
+  background-color: #ebebeb;
+}
+
+.footer-tab-btn.active {
+  background-color: #ffffff;
+  color: #1a73e8; /* アクティブ文字色（ブルー） */
+  font-weight: bold;
+  border-bottom: 2px solid #1a73e8; /* アクティブ下線 */
+}
+
+/* 開閉ボタン（「タグ一覧」テキスト付き） */
+.footer-toggle-btn {
+  margin-left: auto; /* 右端に自動で寄せる */
+  background-color: #1a73e8; /* アクセントブルー */
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  height: 24px;
+  padding: 0 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+}
+
+.footer-toggle-btn:hover {
+  background-color: #1557b0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.footer-toggle-btn:active {
+  transform: scale(0.96);
+}
+
+.toggle-btn-label {
+  line-height: 1;
+}
+
+/* 矢印アイコンの回転処理 */
+#footer-toggle-icon {
+  font-size: 0.7rem;
+  transition: transform 0.25s ease;
+}
+
+/* 開いている状態（.collapsedが付いていない時）は矢印を反転させて下向きに */
+.editor-footer:not(.collapsed) #footer-toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* 各タブの中身（コンテンツエリア） */
+.footer-content-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.footer-pane {
+  display: none;
+  height: 100%;
+  width: 100%;
+}
+
+.footer-pane.active {
+  display: block;
+}
+
+/* 横スクロールコンテナ */
+.tag-list-container {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 16px;
+  padding: 8px 14px 14px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+/* スクロールバー（ライトテーマ用） */
+.tag-list-container::-webkit-scrollbar {
+  height: 5px;
+}
+.tag-list-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.tag-list-container::-webkit-scrollbar-thumb {
+  background: #cccccc;
+  border-radius: 3px;
+}
+.tag-list-container::-webkit-scrollbar-thumb:hover {
+  background: #aaaaaa;
+}
+
+/* 各サブグループ */
+.tag-sub-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 100%;
+  border-right: 1px solid #eeeeee;
+  padding-right: 16px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* グループタイトル */
+.tag-sub-title {
+  font-size: 0.72rem;
+  color: #1a73e8;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.2;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+
+/* ボタンを縦2段×横拡張するグリッド */
+.tag-grid {
+  display: grid;
+  grid-template-rows: repeat(2, 1fr);
+  grid-auto-flow: column;
+  gap: 5px 6px;
+}
+
+/* タグチップ（ボタン） */
+.tag-chip {
+  background-color: #f1f3f4;
+  color: #3c4043;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  height: 24px;
+  box-sizing: border-box;
+  border: 1px solid #e0e0e0;
+}
+
+.tag-chip:hover {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  border-color: #d2e3fc;
+}
+
+.tag-chip:active {
+  transform: scale(0.96);
+}
+/* --------------------------------------------------
+   既存のフッターCSSに追記する部分
+-------------------------------------------------- */
+
+/* フッター本体 */
+.editor-footer {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  height: 136px; /* 開いた状態の標準高さ */
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 折りたたまれた（非表示）状態のCSS */
+.editor-footer.collapsed {
+  height: 32px !important; /* タブバーの高さ（32px）だけ残して縮小 */
+}
+
+/* タブバー内のレイアウト（開閉ボタンを右端へ固定） */
+.footer-tabs {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f7;
+  border-bottom: 1px solid #e0e0e0;
+  height: 32px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* 開閉トグルボタン（右端に配置） */
+.footer-toggle-btn {
+  margin-left: auto; /* 右端に寄せる */
+  background: none;
+  border: none;
+  border-left: 1px solid #e0e0e0;
+  color: #666666;
+  height: 100%;
+  padding: 0 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.footer-toggle-btn:hover {
+  background-color: #ebebeb;
+  color: #111111;
+}
+
+/* アイコンのアニメーション */
+#footer-toggle-icon {
+  transition: transform 0.25s ease;
+}
+
+/* 折りたたみ時に矢印を上向きに反転 */
+.editor-footer.collapsed #footer-toggle-icon {
+  transform: rotate(180deg);
+}
+    /* ========================================== */
+    /* ▼ レスポンシブスタイル（スマホ用） ▼ */
+    /* ========================================== */
     @media (max-width: 768px) {
       .sidebar-toggle-btn {
         display: inline-block;
@@ -638,7 +991,13 @@
       .file-item .delete-btn {
         opacity: 1;
       }
+
+       .btn-real-dent{
+        font-size: 1.5rem;
+        } 
     }
+
+
   </style>
 </head>
 <body>
@@ -649,7 +1008,10 @@
       <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="ファイル一覧">
         <i class="fa-solid fa-bars"></i>
       </button>
-        <h2><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a></h2>
+        <!-- 2. ホームボタン -->
+    <a href="../index.html" class="btn-real-dent" aria-label="ホーム">
+      <i class="fa fa-home" aria-hidden="true"></i>
+    </a>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="100%" height="100%">
   <defs>
     <!-- グラデーション定義 -->
@@ -669,7 +1031,7 @@
     </filter>
   </defs>
 
-  <!-- アイコン部分：スケールを0.8に縮小（80px×80px）し、上下中央（y=20）に配置 -->
+  <!-- アイコン部分 -->
   <g transform="translate(10, 20) scale(0.8)">
     <!-- シンボルマーク背景アイコン（丸角グラデーション） -->
     <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#primary-grad)" filter="url(#shadow)" />
@@ -713,8 +1075,8 @@
 
     </div>
     <div class="toolbar-actions">
-      <button onclick="undo()" title="元に戻す (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
-      <button onclick="redo()" title="やり直す (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+      <button onclick="undo()" title="元に戻す (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i><span class="btn-text"> 戻る</span></button>
+      <button onclick="redo()" title="やり直す (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i><span class="btn-text"> 進む</span></button>
       <div style="width: 1px; height: 20px; background: #45475a; margin: 0 2px;"></div>
       
       <!-- 保存・読込エリア -->
@@ -732,7 +1094,7 @@
 
       <!-- ファイル選択用 input（zip や各種メディア・コードに対応） -->
       <input type="file" id="file-input" style="display: none;" onchange="loadFile(event)" accept=".html,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.pdf,.mp3,.wav,.mp4,.zip">
-      <button class="btn-primary" onclick="openInBrowser()" title="プレビューを開く">
+      <button class="btn-primary" onclick="openInBrowser()" title="プレビューを開く(Alt + P)">
         <i class="fa-solid fa-globe"></i><span class="btn-text"> プレビュー</span>
       </button>
     </div>
@@ -740,23 +1102,26 @@
 
   <div class="main-container">
     
-    <!-- Sidebar -->
+    <!-- Sidebar (ファイル一覧) -->
     <div class="sidebar" id="sidebar">
-      
       <div class="category-container">
         <!-- ファイルセクションヘッダー -->
         <div class="sidebar-header">
           <span>ファイル一覧</span>
-          <button onclick="addNewFile()" style="padding: 2px 6px;"><i class="fa-solid fa-plus"></i></button>
+          <button onclick="addNewFile()" style="padding: 2px 6px;"><i class="fa-solid fa-plus" title="新規ファイル追加"></i></button>
         </div>
 
         <!-- カテゴリー1: Webソースコード -->
-        <div class="category-group" id="group-web">
+        <div class="category-gr oup" id="group-web">
           <div class="category-title" onclick="toggleCategory('group-web')">
             <span><i class="fa-solid fa-code" style="margin-right:6px;"></i>Webソースコード</span>
             <i class="fa-solid fa-chevron-down chevron"></i>
           </div>
-          <ul class="file-list" id="file-list-web"></ul>
+          <!-- フォルダ階層に対応するコンテナ -->
+          <div class="folder-container" id="folder-container-web">
+            <!-- ルート直下のファイルが配置される場所 -->
+            <ul class="file-list" id="file-list-web"></ul>
+          </div>
         </div>
 
         <!-- カテゴリー2: メディア・アセット -->
@@ -765,145 +1130,12 @@
             <span><i class="fa-solid fa-photo-film" style="margin-right:6px;"></i>メディアファイル</span>
             <i class="fa-solid fa-chevron-down chevron"></i>
           </div>
-          <ul class="file-list" id="file-list-media"></ul>
-        </div>
-
-        <!-- タグ挿入セクションヘッダー -->
-        <div class="sidebar-header" style="margin-top: 10px;">
-          <span>タグ一覧</span>
-        </div>
-
-        <!-- カテゴリー3: HTMLタグ -->
-        <div class="category-group collapsed" id="group-tag-html">
-          <div class="category-title" onclick="toggleCategory('group-tag-html')">
-            <span><i class="fa-brands fa-html5" style="margin-right:6px; color:#e34f26;"></i>HTML タグ</span>
-            <i class="fa-solid fa-chevron-down chevron"></i>
-          </div>
-          <div class="tag-list-container">
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-layer-group"></i> 基本設定</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('<link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;>')" title="CSSリンク">CSSリンク</span>
-                <span class="tag-chip" onclick="insertTag('<script src=&quot;script.js&quot;></script>')" title="JSリンク">JSリンク</span>
-                <span class="tag-chip" onclick="insertTag('<meta charset=&quot;UTF-8&quot;>')" title="文字コード">文字コード</span>
-                <span class="tag-chip" onclick="insertTag('<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;>')" title="スマホ画面対応">スマホ画面対応</span>
-              </div>
-            </div>
-              
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-layer-group"></i> 構造・レイアウト</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('<!-- コメント -->')" title="コメント">コメント</span>
-                <span class="tag-chip" onclick="insertTag('<div class=&quot;&quot;>\n  $0\n</div>')" title="div要素">div</span>
-                <span class="tag-chip" onclick="insertTag('<section>\n  $0\n</section>')" title="section要素">section</span>
-                <span class="tag-chip" onclick="insertTag('<header>\n  $0\n</header>')" title="header要素">header</span>
-                <span class="tag-chip" onclick="insertTag('<footer>\n  $0\n</footer>')" title="footer要素">footer</span>
-                <span class="tag-chip" onclick="insertTag('<main>\n  $0\n</main>')" title="main要素">main</span>
-                <span class="tag-chip" onclick="insertTag('<$0></>')" title="空タグ">&lt;&gt;&lt;/&gt;</span>
-                <span class="tag-chip" onclick="insertTag(' class=&quot;$0&quot;')" title="空クラス">class=&quot;&quot;</span>
-              </div>
-            </div>
-
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-font"></i> テキスト・コンテンツ</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('<h1>$0</h1>')" title="h1見出し">h1</span>
-                <span class="tag-chip" onclick="insertTag('<h2>$0</h2>')" title="h2見出し">h2</span>
-                <span class="tag-chip" onclick="insertTag('<p>$0</p>')" title="段落">段落</span>
-                <span class="tag-chip" onclick="insertTag('<a href=&quot;アドレス$0&quot;>テキスト</a>')" title="リンク">リンク</span>
-                <span class="tag-chip" onclick="insertTag('<span class=&quot;$0&quot;></span>')" title="span要素">span</span>
-              </div>
-            </div>
-
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-photo-film"></i> メディア・コンテンツ</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('<img src=&quot;画像アドレス$0&quot; width=&quot;200&quot; height=&quot;200&quot; alt=&quot;説明文&quot;>')" title="画像">画像</span>
-                <span class="tag-chip" onclick="insertTag('<embed src=&quot;PDFファイル$0&quot; width=&quot;100%&quot; height=&quot;600px&quot;>')" title="PDF">PDF</span>
-                <span class="tag-chip" onclick="insertTag('<audio controls src=&quot;音楽ファイル$0&quot;></audio>')" title="音楽">音楽</span>
-                <span class="tag-chip" onclick="insertTag('<video controls width=&quot;400&quot; src=&quot;動画ファイル$0&quot;></video>')" title="動画">動画</span>
-              </div>
-            </div>
-              
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-list"></i> リスト・フォーム</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('<ul>\n  <li>$0</li>\n</ul>')" title="箇条書きリスト">箇条書き</span>
-                <span class="tag-chip" onclick="insertTag('<li>$0</li>')" title="リスト項目">リスト項目</span>
-                <span class="tag-chip" onclick="insertTag('<button type=&quot;button&quot;>$0</button>')" title="ボタン">ボタン</span>
-                <span class="tag-chip" onclick="insertTag('<input type=&quot;text&quot; placeholder=&quot;$0&quot;>')" title="入力フォーム">入力フォーム</span>
-              </div>
-            </div>
+          <!-- フォルダ階層に対応するコンテナ -->
+          <div class="folder-container" id="folder-container-media">
+            <!-- ルート直下のメディアファイルが配置される場所 -->
+            <ul class="file-list" id="file-list-media"></ul>
           </div>
         </div>
-
-        <!-- カテゴリー4: CSSプロパティ -->
-        <div class="category-group collapsed" id="group-tag-css">
-          <div class="category-title" onclick="toggleCategory('group-tag-css')">
-            <span><i class="fa-brands fa-css3-alt" style="margin-right:6px; color:#1572b6;"></i>CSS スタイル</span>
-            <i class="fa-solid fa-chevron-down chevron"></i>
-          </div>
-          <div class="tag-list-container">
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-arrows-alt"></i> 構造・レイアウト</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('/* コメント */')" title="CSSコメント">コメント</span>
-                <span class="tag-chip" onclick="insertTag('body{\n  $0\n}')" title="bodyレイアウト">body</span>
-                <span class="tag-chip" onclick="insertTag('h1{\n  $0\n}')" title="h1レイアウト">h1</span>
-                <span class="tag-chip" onclick="insertTag('.class{\n  $0\n}')" title="クラス">クラス</span>
-                <span class="tag-chip" onclick="insertTag('#ID{\n  $0\n}')" title="ID">ID</span>
-                <span class="tag-chip" onclick="insertTag('/* ====================================================\n   レスポンシブ対応【スマホ画面（768px以下）対応】\n==================================================== */\n@media (max-width: 768px) {\n  body {\n  background-attachment: scroll;  /* 背景画像の固定を解除 */\n}\n  $0\n}')" title="スマホ画面対応">スマホ画面対応</span>
-              </div>
-            </div>
-              
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-palette"></i> 装飾・テキスト</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('color: $0; /* 文字の色 */')" title="文字色">文字色</span>
-                <span class="tag-chip" onclick="insertTag('background-color: $0; /* 背景の色 */')" title="背景色">背景色</span>
-                <span class="tag-chip" onclick="insertTag('background-image: url(画像アドレス$0); /* 画像アドレスを指定 */\n  background-size: cover; /* 画面にフィットさせる */\n  background-repeat: no-repeat; /* 繰り返さない */\n  background-attachment: fixed;      /* 背景を固定 */')" title="背景画像">背景画像</span>
-                <span class="tag-chip" onclick="insertTag('font-size: $0px; /* 文字の大きさ */')" title="フォントサイズ">文字サイズ</span>
-                <span class="tag-chip" onclick="insertTag('text-align: center; /* 文字の位置（中央） */')" title="文字の位置">文字の位置</span>
-                <span class="tag-chip" onclick="insertTag('font-family: sans-serif$0; /* 文字の形 */')" title="フォント形式">文字の形</span>
-                <span class="tag-chip" onclick="insertTag('overflow-wrap: break-word; /* 長い単語で折り返す */')" title="文字の折り返し">文字の折り返し</span>            
-                <span class="tag-chip" onclick="insertTag('border-style: solid; /* 枠線の形 */\n  border-color: orange; /* 枠線の色 */\n  border-width: 10px; /* 枠線の太さ */\n  border-bottom: 10px solid #3388dd; /* 下線の太さと色 */\n  border-radius: 90px; /* 枠線のカーブ */')" title="枠線">枠線</span>
-              </div>
-            </div>
-
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-arrows-alt"></i> Flexbox・レイアウト</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('display: flex; /*中のものを自由に並べる箱にする*/\n  justify-content: center; /*横方向（左右）の真ん中に寄せる*/\n  align-items: center; /*縦方向（上下）の真ん中に寄せる*/')" title="Flexbox中央揃え">中央揃え</span>
-                <span class="tag-chip" onclick="insertTag('display: grid;\n  grid-template-columns: repeat(3$0, 1fr); /*3つの同じ幅の列をつくる*/')" title="Gridレイアウト">grid</span>
-                <span class="tag-chip" onclick="insertTag('margin: 10px 10px 10px 10px; /* 枠線の「外側」の余白（上・右・下・左） */')" title="マージン">margin</span>
-                <span class="tag-chip" onclick="insertTag('padding: 10px 10px 10px 10px; /* 枠線の「内側」の余白（上・右・下・左） */')" title="パディング">padding</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- カテゴリー5: JSコードスニペット -->
-        <div class="category-group collapsed" id="group-tag-js">
-          <div class="category-title" onclick="toggleCategory('group-tag-js')">
-            <span><i class="fa-brands fa-js" style="margin-right:6px; color:#f7df1e;"></i>JavaScript</span>
-            <i class="fa-solid fa-chevron-down chevron"></i>
-          </div>
-          <div class="tag-list-container">
-            <div class="tag-sub-group">
-              <div class="tag-sub-title"><i class="fa-solid fa-terminal"></i> 構文・基本操作</div>
-              <div class="tag-grid">
-                <span class="tag-chip" onclick="insertTag('// ===== コメント =====')" title="JSコメント">コメント</span>
-                <span class="tag-chip" onclick="insertTag('console.log($0);')" title="コンソール出力">log</span>
-                <span class="tag-chip" onclick="insertTag('const $0 = ;')" title="定数定義">const</span>
-                <span class="tag-chip" onclick="insertTag('let $0 = ;')" title="変数定義">let</span>
-                <span class="tag-chip" onclick="insertTag('function $0() {\n  \n}')" title="関数定義">function</span>
-                <span class="tag-chip" onclick="insertTag('document.querySelector(&quot;$0&quot;)')" title="要素取得">querySelector</span>
-                <span class="tag-chip" onclick="insertTag('$0.addEventListener(&quot;click&quot;, (e) => {\n  \n});')" title="イベントリスナー">addEventListener</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
 
@@ -934,15 +1166,397 @@
         <div id="media-content" style="width:100%; flex: 1; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow: hidden;"></div>
       </div>
 
+      <!-- フッター部分（タブ切替付きタグ一覧） -->
+<div class="editor-footer collapsed" id="editor-footer">
+  <!-- 切替用タブボタン ＋ 開閉ボタン -->
+<div class="footer-tabs">
+  <button class="footer-tab-btn active" onclick="switchFooterTab('html')">
+    <i class="fa-brands fa-html5" style="color:#e34f26;"></i> HTML
+  </button>
+  <button class="footer-tab-btn" onclick="switchFooterTab('css')">
+    <i class="fa-brands fa-css3-alt" style="color:#1572b6;"></i> CSS
+  </button>
+  <button class="footer-tab-btn" onclick="switchFooterTab('js')">
+    <i class="fa-brands fa-js" style="color:#f7df1e;"></i> JavaScript
+  </button>
+  <!-- 記号タブボタン -->
+  <button class="footer-tab-btn" onclick="switchFooterTab('symbols')">
+    <i class="fa-solid fa-icons" style="color:#a6e22e;"></i> 記号
+  </button>
+  <!-- フォントタブボタン -->
+  <button class="footer-tab-btn" onclick="switchFooterTab('fonts')">
+    <i class="fa-solid fa-font" style="color:#ab47bc;"></i> フォント
+  </button>  
+  <!-- カラータブボタン -->
+  <button class="footer-tab-btn" onclick="switchFooterTab('colors')">
+    <i class="fa-solid fa-palette" style="color:#ff4081;"></i> カラー
+  </button>
+
+  <!-- 開閉トグルボタン -->
+  <button class="footer-toggle-btn" onclick="toggleFooter()" title="タグ一覧を開閉(Alt + T)">
+    <i class="fa-solid fa-tags"></i>
+    <span class="toggle-btn-label">タグ一覧</span>
+    <i class="fa-solid fa-chevron-up" id="footer-toggle-icon"></i>
+  </button>
+</div>
+
+  <!-- 各タブの中身（コンテナ） -->
+<div class="footer-content-area">
+ <!-- HTMLタグ一覧 -->
+<div id="footer-pane-html" class="footer-pane active">
+  <div class="tag-list-container">
+    <div class="tag-sub-group">
+      
+      <div class="tag-sub-title"><i class="fa-solid fa-gear"></i> 基本設定</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('&lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;')" title="CSSリンク">CSSリンク</span>
+        <span class="tag-chip" onclick="insertTag('&lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;')" title="JSリンク">JSリンク</span>
+        <span class="tag-chip" onclick="insertTag('&lt;meta charset=&quot;UTF-8&quot;&gt;')" title="文字コード">文字コード</span>
+        <span class="tag-chip" onclick="insertTag('&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;')" title="スマホ画面対応">スマホ画面対応</span>
+      </div>
+    </div>
+    
+    <div class="tag-sub-group">
+      
+      <div class="tag-sub-title"><i class="fa-solid fa-cubes"></i> 構造・レイアウト</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('&lt;!-- コメント --&gt;')" title="コメント">コメント</span>
+        <span class="tag-chip" onclick="insertTag('&lt;div class=&quot;&quot;&gt;\n  $0\n&lt;/div&gt;')" title="div要素">div</span>
+        <span class="tag-chip" onclick="insertTag('&lt;section&gt;\n  $0\n&lt;/section&gt;')" title="section要素">セクション</span>
+        <span class="tag-chip" onclick="insertTag('&lt;header&gt;\n  $0\n&lt;/header&gt;')" title="header要素">ヘッダー</span>
+        <span class="tag-chip" onclick="insertTag('&lt;main&gt;\n  $0\n&lt;/main&gt;')" title="main要素">メイン</span>
+        <span class="tag-chip" onclick="insertTag('&lt;footer&gt;\n  $0\n&lt;/footer&gt;')" title="footer要素">フッター</span>
+      </div>
+    </div>
+    
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-font"></i> テキスト・コンテンツ</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('&lt;h1&gt;$0&lt;/h1&gt;')" title="h1見出し">h1</span>
+        <span class="tag-chip" onclick="insertTag('&lt;h2&gt;$0&lt;/h2&gt;')" title="h2見出し">h2</span>
+        <span class="tag-chip" onclick="insertTag('&lt;p&gt;$0&lt;/p&gt;')" title="段落">段落</span>
+        <span class="tag-chip" onclick="insertTag('&lt;a href=&quot;アドレス$0&quot;&gt;テキスト&lt;/a&gt;')" title="リンク">リンク</span>
+        <span class="tag-chip" onclick="insertTag('&lt;span class=&quot;$0&quot;&gt;&lt;/span&gt;')" title="span要素">span</span>
+      </div>
+    </div>
+    
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-photo-film"></i> メディア・コンテンツ</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('&lt;img src=&quot;画像アドレス$0&quot; width=&quot;200&quot; height=&quot;200&quot; alt=&quot;説明文&quot;&gt;')" title="画像">画像</span>
+        <span class="tag-chip" onclick="insertTag('&lt;embed src=&quot;PDFファイル$0&quot; width=&quot;100%&quot; height=&quot;600px&quot;&gt;')" title="PDF">PDF</span>
+        <span class="tag-chip" onclick="insertTag('&lt;audio controls src=&quot;音楽ファイル$0&quot;&gt;&lt;/audio&gt;')" title="音楽">音楽</span>
+        <span class="tag-chip" onclick="insertTag('&lt;video controls width=&quot;400&quot; src=&quot;動画ファイル$0&quot;&gt;&lt;/video&gt;')" title="動画">動画</span>
+      </div>
+    </div>
+    
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-list"></i> リスト・フォーム</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('&lt;ul&gt;\n  &lt;li&gt;$0&lt;/li&gt;\n&lt;/ul&gt;')" title="箇条書きリスト">箇条書き</span>
+        <span class="tag-chip" onclick="insertTag('&lt;li&gt;$0&lt;/li&gt;')" title="リスト項目">リスト項目</span>
+        <span class="tag-chip" onclick="insertTag('&lt;button type=&quot;button&quot;&gt;$0&lt;/button&gt;')" title="ボタン">ボタン</span>
+        <span class="tag-chip" onclick="insertTag('&lt;input type=&quot;text&quot; placeholder=&quot;$0&quot;&gt;')" title="入力フォーム">入力フォーム</span>
+      </div>
+    </div>
+
+    <!-- リスト・フォームの横に配置したプリセットグループ -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-file-code"></i> プリセット</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('&lt;!DOCTYPE html&gt;\n&lt;html lang=&quot;ja&quot;&gt;\n&lt;head&gt;\n  &lt;meta charset=&quot;UTF-8&quot;&gt;\n  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;\n  &lt;title&gt;Document&lt;/title&gt;\n  &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;\n&lt;/head&gt;\n&lt;body&gt;\n  $0\n  &lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;\n&lt;/body&gt;\n&lt;/html&gt;')" title="HTML基本テンプレート">HTML一括生成</span>
+
+          <span class="tag-chip" onclick="insertTag('&lt;!-- メニュー部分 開始 --&gt;\n&lt;!-- ハンバーガーメニュー --&gt;\n&lt;div class=&quot;menu-toggle&quot; id=&quot;menu-toggle&quot;&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n&lt;/div&gt;\n&lt;!-- メニュー本体 --&gt;\n&lt;div id=&quot;menu&quot;&gt;\n  &lt;ul&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス$0&quot; target=&quot;_blank&quot;&gt;リンク１&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク２&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク３&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク４&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク５&lt;/a&gt;&lt;/li&gt;\n  &lt;/ul&gt;\n&lt;/div&gt;')" title="メニュー構造HTML">メニュー作成</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- CSSスタイル一覧 -->
+<div id="footer-pane-css" class="footer-pane">
+  <div class="tag-list-container">
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-arrows-alt"></i> 構造・レイアウト</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('/* コメント */')" title="CSSコメント">コメント</span>
+        <span class="tag-chip" onclick="insertTag('body{\n  $0\n}')" title="bodyレイアウト">body</span>
+        <span class="tag-chip" onclick="insertTag('h1{\n  $0\n}')" title="h1レイアウト">h1</span>
+        <span class="tag-chip" onclick="insertTag('.class{\n  $0\n}')" title="クラス">クラス</span>
+        <span class="tag-chip" onclick="insertTag('#ID{\n  $0\n}')" title="ID">ID</span>
+        <span class="tag-chip" onclick="insertTag('/* ====================================================\n   レスポンシブ対応【スマホ画面（768px以下）対応】\n==================================================== */\n@media (max-width: 768px) {\n  body {\n  background-attachment: scroll;  /* 背景画像の固定を解除 */\n}\n  $0\n}')" title="スマホ画面対応">スマホ画面対応</span>
+      </div>
+    </div>
+    
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-palette"></i> 装飾・テキスト</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('font-size: $0px; /* 文字の大きさ */')" title="フォントサイズ">文字サイズ</span>
+        <span class="tag-chip" onclick="insertTag('color: $0; /* 文字の色 */')" title="文字色">文字色</span>
+        <span class="tag-chip" onclick="insertTag('text-align: center; /* 文字の位置（中央） */')" title="文字の位置">文字の位置</span>
+        <span class="tag-chip" onclick="insertTag('font-family: sans-serif$0; /* 文字の形 */')" title="フォント形式">文字の形</span>
+        <span class="tag-chip" onclick="insertTag('background-color: $0; /* 背景の色 */')" title="背景色">背景色</span>
+        <span class="tag-chip" onclick="insertTag('background-image: url(画像アドレス$0); /* 画像アドレスを指定 */\n  background-size: cover; /* 画面にフィットさせる */\n  background-repeat: no-repeat; /* 繰り返さない */\n  background-attachment: fixed;      /* 背景を固定 */')" title="背景画像">背景画像</span>
+        <span class="tag-chip" onclick="insertTag('overflow-wrap: break-word; /* 長い単語で折り返す */')" title="文字の折り返し">文字の折り返し</span>            
+        <span class="tag-chip" onclick="insertTag('border-style: solid; /* 枠線の形 */\n  border-color: orange; /* 枠線の色 */\n  border-width: 10px; /* 枠線の太さ */\n  border-bottom: 10px solid #3388dd; /* 下線の太さと色 */\n  border-radius: 90px; /* 枠線のカーブ */')" title="枠線">枠線</span>
+      </div>
+    </div>
+
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-border-all"></i> Flexbox・レイアウト</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('display: flex; /*中のものを自由に並べる箱にする*/\n  justify-content: center; /*横方向（左右）の真ん中に寄せる*/\n  align-items: center; /*縦方向（上下）の真ん中に寄せる*/')" title="Flexbox中央揃え">中央揃え</span>
+        <span class="tag-chip" onclick="insertTag('display: grid;\n  grid-template-columns: repeat(3$0, 1fr); /*3つの同じ幅の列をつくる*/')" title="Gridレイアウト">grid</span>
+        <span class="tag-chip" onclick="insertTag('margin: 10px 10px 10px 10px; /* 枠線の「外側」の余白（上・右・下・左） */')" title="マージン">margin</span>
+        <span class="tag-chip" onclick="insertTag('padding: 10px 10px 10px 10px; /* 枠線の「内側」の余白（上・右・下・左） */')" title="パディング">padding</span>
+      </div>
+    </div>
+
+    <!-- メニュー用プリセット -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-bars"></i> プリセット</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('padding: 0.4em 0.5em; /* 文字の上下・左右の余白 */\n  color: #000000; /* 文字色 */\n  background: #f4f4f4; /* 背景色 */\n  border-left: solid 5px #7db4e6;   /* 左線 */\n  border-bottom: solid 3px #d7d7d7; /* 下線 */\n  font-size: 25px; /* 文字サイズ */')" title="見出しセット">見出しセット</span>
+        <span class="tag-chip" onclick="insertTag('/* メニューバー */\n/*========= PC表示 ==========*/\n#menu {\n  border-top: 3px solid #cccccc;\n  border-bottom: 3px solid #cccccc;\n  background: #ffffff;\n  height: 47px;\n  width: 100%;\n  color: #ffffff;\n}\n\n#menu ul {\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n#menu ul li {\n  flex: 1; /* 均等に分ける */\n  height: 47px;\n  border-right: 1px solid #ffffff;\n}\n\n#menu ul li:last-child {\n  border-right: none;\n}\n\n#menu ul li a { /* マウスを重ねる前 */\n  display: block;\n  color: #ffffff; /* 文字の色 */\n  background: #000000; /* 背景の色 */\n  font-weight: bold;\n  font-size: 18px;\n  text-align: center;\n  letter-spacing: 2px;\n  line-height: 47px;\n  text-decoration: none;\n}\n\n#menu ul li a:hover { /* マウスを重ねた後 */\n  color: #000000; /* 文字の色 */\n  background: #cccccc; /* 背景の色 */\n  text-decoration: underline;\n}\n\n/*========= ハンバーガーボタン ==========*/\n.menu-toggle {\n  display: none;\n  cursor: pointer;\n  width: 30px;\n  height: 25px;\n  position: fixed;\n  top: 15px;\n  right: 15px;\n  z-index: 1001;\n  background: rgba(0, 0, 0, 0.7);\n  border-radius: 5px;\n  padding: 5px;\n}\n\n.menu-toggle span {\n  display: block;\n  height: 3px;\n  background: #fff;\n  margin: 4px 0;\n  transition: 0.4s;\n  border-radius: 2px;\n}\n\n.menu-toggle.active span:nth-child(1) {\n  transform: rotate(45deg) translate(5px, 5px);\n}\n.menu-toggle.active span:nth-child(2) {\n  opacity: 0;\n}\n.menu-toggle.active span:nth-child(3) {\n  transform: rotate(-45deg) translate(6px, -6px);\n}\n\n/*========= スマホ表示 ==========*/\n@media screen and (max-width: 600px) {\n  #menu {\n    height: auto; /* 高さ固定しない */\n    border: none;\n    background: transparent;\n  }\n\n  #menu ul {\n    position: fixed;\n    top: 60px;\n    right: 15px;\n    width: 50vw;\n    max-height: 80vh;\n    background: #fff;\n    display: none;\n    flex-direction: column;\n    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);\n    border-radius: 5px;\n    overflow-y: auto;\n    z-index: 1000;\n  }\n\n  #menu ul.active {\n    display: flex;\n  }\n\n  #menu ul li {\n    border-bottom: 1px solid #ddd;\n    width: 100%;\n  }\n\n  #menu ul li:last-child {\n    border-bottom: none;\n  }\n\n  #menu ul li a {\n    display: block;\n    padding: 15px;\n    color: #000;\n    background: transparent;\n    font-size: 16px;\n    text-align: left;\n    line-height: 1.5;\n  }\n\n  #menu ul li a:hover {\n    background: #eee;\n    color: #000;\n  }\n\n  .menu-toggle {\n    display: block;\n  }\n}\n$0')" title="レスポンシブ対応メニューCSS">メニュー作成</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- JavaScriptスニペット一覧 -->
+<div id="footer-pane-js" class="footer-pane">
+  <div class="tag-list-container">
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-terminal"></i> 構文・基本操作</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('// コメント')" title="JSコメント">コメント</span>
+        <span class="tag-chip" onclick="insertTag('console.log($0);')" title="コンソール出力">log</span>
+        <span class="tag-chip" onclick="insertTag('const $0 = ;')" title="定数定義">const</span>
+        <span class="tag-chip" onclick="insertTag('let $0 = ;')" title="変数定義">let</span>
+        <span class="tag-chip" onclick="insertTag('function $0() {\n  \n}')" title="関数定義">function</span>
+        <span class="tag-chip" onclick="insertTag('document.querySelector(&quot;$0&quot;)')" title="要素取得">querySelector</span>
+        <span class="tag-chip" onclick="insertTag('$0.addEventListener(&quot;click&quot;, (e) =&gt; {\n  \n});')" title="イベントリスナー">addEventListener</span>
+      </div>
+    </div>
+
+    <!-- ハンバーガーメニュー用JSプリセット -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-bars-staggered"></i> プリセット</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('document.addEventListener(&quot;DOMContentLoaded&quot;, function () {\n  const toggle = document.getElementById(&quot;menu-toggle&quot;);\n  const menu = document.getElementById(&quot;menu&quot;);\n  const menuLists = document.querySelectorAll(&quot;#menu ul&quot;);\n\n  // メニュー開閉\n  toggle.addEventListener(&quot;click&quot;, function (e) {\n    e.stopPropagation(); // イベントのバブリングを防止\n    toggle.classList.toggle(&quot;active&quot;);\n    menuLists.forEach(function (ul) {\n      ul.classList.toggle(&quot;active&quot;);\n    });\n  });\n\n  // メニューの外をクリックしたら閉じる\n  document.addEventListener(&quot;click&quot;, function (event) {\n    if (!toggle.contains(event.target) &amp;&amp; !menu.contains(event.target)) {\n      toggle.classList.remove(&quot;active&quot;);\n      menuLists.forEach(function (ul) {\n        ul.classList.remove(&quot;active&quot;);\n      });\n    }\n  });\n});\n$0')" title="ハンバーガーメニュー制御JS">メニュー制御</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- よく使う記号一覧 -->
+  <div id="footer-pane-symbols" class="footer-pane">
+    <div class="tag-list-container">
+      <div class="tag-sub-group">
+        <div class="tag-sub-title"><i class="fa-solid fa-icons"></i> 括弧・引用符</div>
+        <div class="tag-grid">
+          <span class="tag-chip" onclick="insertTag('&lt;')" title="小なり">&lt;</span>
+          <span class="tag-chip" onclick="insertTag('&gt;')" title="大なり">&gt;</span>
+          <span class="tag-chip" onclick="insertTag('&lt;$0&gt;')" title="開始タグ">&lt;&gt;</span>
+          <span class="tag-chip" onclick="insertTag('&lt;/$0&gt;')" title="終了タグ">&lt;/&gt;</span>
+          <span class="tag-chip" onclick="insertTag('{')" title="波括弧(開)">{</span>
+          <span class="tag-chip" onclick="insertTag('}')" title="波括弧(閉)">}</span>
+          <span class="tag-chip" onclick="insertTag('(&quot;$0&quot;)')" title="丸括弧ダブルクォーテーション">("")</span>
+          <span class="tag-chip" onclick="insertTag('(\'$0\')')" title="丸括弧シングルクォーテーション">('')</span>
+          <span class="tag-chip" onclick="insertTag('&quot;$0&quot;')" title="ダブルクォーテーション">" "</span>
+          <span class="tag-chip" onclick="insertTag('\'$0\'')" title="シングルクォーテーション">' '</span>
+          <span class="tag-chip" onclick="insertTag('`$0`')" title="バックティック">` `</span>
+          <span class="tag-chip" onclick="insertTag('[')" title="角括弧(開)">[</span>
+          <span class="tag-chip" onclick="insertTag(']')" title="角括弧(閉)">]</span>
+        </div>
+      </div>
+
+      <div class="tag-sub-group">
+        <div class="tag-sub-title"><i class="fa-solid fa-code"></i> 区切り・演算子</div>
+        <div class="tag-grid">
+          <span class="tag-chip" onclick="insertTag(': ')" title="コロン">:</span>
+          <span class="tag-chip" onclick="insertTag(';')" title="セミコロン">;</span>
+          <span class="tag-chip" onclick="insertTag(', ')" title="カンマ">,</span>
+          <span class="tag-chip" onclick="insertTag('.')" title="ドット">.</span>
+          <span class="tag-chip" onclick="insertTag(' = ')" title="イコール">=</span>
+          <span class="tag-chip" onclick="insertTag(' === ')" title="厳密等価">===</span>
+          <span class="tag-chip" onclick="insertTag(' =&gt; ')" title="アロー演算子">=&gt;</span>
+          <span class="tag-chip" onclick="insertTag(' + ')" title="プラス">+</span>
+          <span class="tag-chip" onclick="insertTag(' - ')" title="マイナス">-</span>
+          <span class="tag-chip" onclick="insertTag(' / ')" title="スラッシュ">/</span>
+          <span class="tag-chip" onclick="insertTag(' * ')" title="アスタリスク">*</span>
+          <span class="tag-chip" onclick="insertTag('!')" title="感嘆符">!</span>
+          <span class="tag-chip" onclick="insertTag('?')" title="疑問符">?</span>
+          <span class="tag-chip" onclick="insertTag('#')" title="シャープ">#</span>
+          <span class="tag-chip" onclick="insertTag('&amp;&amp;')" title="論理積(AND)">&amp;&amp;</span>
+          <span class="tag-chip" onclick="insertTag('||')" title="論理和(OR)">||</span>
+        </div>
+      </div>
+
+        <div class="tag-sub-group">
+        <div class="tag-sub-title"><i class="fa-solid fa-layer-group"></i> 指定</div>
+        <div class="tag-grid">
+          
+          <span class="tag-chip" onclick="insertTag(' class=&quot;$0&quot;')" title="空クラス">class=&quot;&quot;</span>
+          <span class="tag-chip" onclick="insertTag(' id=&quot;$0&quot;')" title="空id">id=&quot;&quot;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- フォント一覧 -->
+<div id="footer-pane-fonts" class="footer-pane">
+  <div class="tag-list-container">
+    <!-- 日本語標準フォント -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-language"></i> 日本語フォント</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('font-family: &quot;Hiragino Sans&quot;, &quot;メイリオ&quot;, sans-serif;')" title="ゴシック体（標準）">ゴシック体</span>
+        <span class="tag-chip" onclick="insertTag('font-family: &quot;Yu Mincho&quot;, &quot;Hiragino Mincho ProN&quot;, serif;')" title="明朝体（標準）">明朝体</span>
+        <span class="tag-chip" onclick="insertTag('font-family: &quot;Arial&quot;, &quot;メイリオ&quot;, sans-serif;')" title="メイリオ">メイリオ</span>
+        <span class="tag-chip" onclick="insertTag('font-family: &quot;游ゴシック&quot;, &quot;Yu Gothic&quot;, sans-serif;')" title="游ゴシック">游ゴシック</span>
+      </div>
+    </div>
+
+    <!-- 英字・汎用フォント -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-font"></i> 英字・汎用</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('font-family: sans-serif;')" title="サンセリフ（ゴシック系）">sans-serif</span>
+        <span class="tag-chip" onclick="insertTag('font-family: serif;')" title="セリフ（明朝系）">serif</span>
+        <span class="tag-chip" onclick="insertTag('font-family: monospace;')" title="等幅フォント">monospace</span>
+        <span class="tag-chip" onclick="insertTag('font-family: &quot;Roboto&quot;, sans-serif;')" title="Roboto">Roboto</span>
+      </div>
+    </div>
+
+    <!-- Google Fonts 読み込み -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-cloud-arrow-down"></i> Google Fonts (HTML用)</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;&gt;\n  &lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin&gt;')" title="Googleサーバー用">Google Fonts用(HTML)</span>
+        <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://use.fontawesome.com/releases/v5.6.3/css/all.css&quot; rel=&quot;stylesheet&quot;&gt;')" title=" Font Awesome5(HTML読み込み)">Font Awesome5(HTML)</span>
+          
+        <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Noto Sans JP (HTML読み込み)">Noto Sans (HTML)</span>
+        <span class="tag-chip" onclick="insertTag('font-family: &quot;Noto Sans JP&quot;, sans-serif;')" title="Noto Sans JP (CSS指定)">Noto Sans (CSS)</span>
+        <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="M PLUS Rounded (HTML読み込み)">丸ゴシック (HTML)</span>
+        <span class="tag-chip" onclick="insertTag('font-family: &quot;M PLUS Rounded 1c&quot;, sans-serif;')" title="M PLUS Rounded (CSS指定)">丸ゴシック (CSS)</span>
+      </div>
+    </div>
+
+      <!-- 英字・専用フォント -->
+<div class="tag-sub-group">
+  <div class="tag-sub-title"><i class="fa-solid fa-font"></i> 英字・専用</div>
+  <div class="tag-grid">
+    <!-- Lobster -->
+    <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Lobster&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Lobster (HTML読み込み)">Lobster (HTML)</span>
+    <span class="tag-chip" onclick="insertTag('font-family: \'Lobster\', cursive;')" title="Lobster">Lobster (CSS)</span>
+
+    <!-- Geo -->
+    <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Geo&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Geo (HTML読み込み)">Geo (HTML)</span>
+    <span class="tag-chip" onclick="insertTag('font-family: \'Geo\', sans-serif;')" title="Geo">Geo (CSS)</span>
+
+    <!-- Oswald -->
+    <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Oswald&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Oswald (HTML読み込み)">Oswald (HTML)</span>
+    <span class="tag-chip" onclick="insertTag('font-family: \'Oswald\', sans-serif;')" title="Oswald">Oswald (CSS)</span>
+
+    <!-- Pacifico -->
+    <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Pacifico&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Pacifico (HTML読み込み)">Pacifico (HTML)</span>
+    <span class="tag-chip" onclick="insertTag('font-family: \'Pacifico\', cursive;')" title="Pacifico">Pacifico (CSS)</span>
+
+    <!-- Satisfy -->
+    <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Satisfy&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Satisfy (HTML読み込み)">Satisfy (HTML)</span>
+    <span class="tag-chip" onclick="insertTag('font-family: \'Satisfy\', cursive;')" title="Satisfy">Satisfy (CSS)</span>
+
+    <!-- Stoke -->
+    <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Stoke&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Stoke (HTML読み込み)">Stoke (HTML)</span>
+    <span class="tag-chip" onclick="insertTag('font-family: \'Stoke\', serif;')" title="Stoke">Stoke (CSS)</span>
+
+    <!-- Yellowtail -->
+    <span class="tag-chip" onclick="insertTag('&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Yellowtail&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;')" title="Yellowtail (HTML読み込み)">Yellowtail (HTML)</span>
+    <span class="tag-chip" onclick="insertTag('font-family: \'Yellowtail\', cursive;')" title="Yellowtail">Yellowtail (CSS)</span>
+  </div>
+</div>
+  </div>
+</div>
+
+<!-- カラー一覧 -->
+<div id="footer-pane-colors" class="footer-pane">
+  <div class="tag-list-container">
+    <!-- 基本カラー（16進数 HEX） -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-swatchbook"></i> 基本カラー (HEX)</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('#ffffff')" title="白">#ffffff (白)</span>
+        <span class="tag-chip" onclick="insertTag('#000000')" title="黒">#000000 (黒)</span>
+        <span class="tag-chip" onclick="insertTag('#ff0000')" title="赤">#ff0000 (赤)</span>
+        <span class="tag-chip" onclick="insertTag('#00ff00')" title="緑">#00ff00 (緑)</span>
+        <span class="tag-chip" onclick="insertTag('#0000ff')" title="青">#0000ff (青)</span>
+        <span class="tag-chip" onclick="insertTag('#ffff00')" title="黄">#ffff00 (黄)</span>
+      </div>
+    </div>
+
+    <!-- カラー指定構文 -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-solid fa-code"></i> CSS指定構文</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('background-color: rgba(0, 0, 0, 0.5);')" title="半透明（RGBA）">rgba(半透明)</span>
+        <span class="tag-chip" onclick="insertTag('background: linear-gradient(45deg, #1976d2, #2e7d32);')" title="線形グラデーション">グラデーション</span>
+        <span class="tag-chip" onclick="insertTag('background-color: transparent;')" title="透明">transparent</span>
+      </div>
+    </div>
+
+      <!-- カラーピッカー -->
+<div class="tag-sub-group">
+  <div class="tag-sub-title"><i class="fa-solid fa-droplet"></i> カラーピッカー</div>
+  <div class="tag-grid">
+    <div class="color-picker-container" style="display: flex; align-items: center; gap: 8px;">
+      <!-- カラー選択 -->
+      <input type="color" id="tag-color-picker" value="#ff0000" style="cursor: pointer; border: none; width: 36px; height: 36px; border-radius: 6px; padding: 0; background: none;">
+      
+      <!-- ボタン -->
+      <span class="tag-chip" onclick="copyCurrentColor()" title="選択中のカラーコードをコピー">
+        <i class="fa-solid fa-copy"></i> 選択中の色をコピー
+      </span>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+    
+</div>
+
+<!-- 新規ファイル作成モーダル -->
+<div id="new-file-modal" onclick="closeNewFileModal()" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); align-items: center; justify-content: center; z-index: 9999;">
+  <!-- カード本体（クリックイベントの伝播を防止） -->
+  <div onclick="event.stopPropagation()" style="background: #ffffff; color: #333333; padding: 20px; border-radius: 8px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid #e0e0e0;">
+    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 1rem; color: #222222;"><i class="fa-solid fa-file-circle-plus" style="color: #007acc;"></i> 新規ファイル作成</h3>
+    
+    <label style="font-size: 0.85rem; display: block; margin-bottom: 4px; color: #555555; font-weight: bold;">ファイル名</label>
+    <input type="text" id="new-filename-input" placeholder="例: main, index, data" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: #f9f9f9; color: #333333; box-sizing: border-box; margin-bottom: 12px; font-size: 0.9rem;">
+    
+    <label style="font-size: 0.85rem; display: block; margin-bottom: 4px; color: #555555; font-weight: bold;">拡張子</label>
+    <select id="new-file-ext-select" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: #f9f9f9; color: #333333; box-sizing: border-box; margin-bottom: 20px; font-size: 0.9rem; cursor: pointer;">
+      <option value=".html">.html (HTML)</option>
+      <option value=".css">.css (CSS)</option>
+      <option value=".js">.js (JavaScript)</option>
+      <option value=".json">.json (JSONデータ)</option>
+      <option value=".txt">.txt (テキスト)</option>
+      <option value=".md">.md (Markdown)</option>
+    </select>
+
+    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+      <button type="button" onclick="closeNewFileModal()" style="padding: 6px 14px; background: #f0f0f0; border: 1px solid #ccc; color: #555555; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">キャンセル</button>
+      <button type="button" onclick="confirmAddNewFile()" style="padding: 6px 14px; background: #007acc; border: none; color: #ffffff; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">作成</button>
+    </div>
+  </div>
+</div>
+    
       <!-- トースト通知 -->
       <div id="toast" class="toast">ファイル名をコピーしました！</div>
     </div>
   </div>
 
-
-
   <script>
-    // ---Core State---
+// ---Core State---
 let files = JSON.parse(localStorage.getItem('web_studio_files_v3')) || {
   "index.html": `<!DOCTYPE html>\n`,
   "style.css": `body {\n  background-color: #fff;\n  color: #000;\n  }`,
@@ -988,8 +1602,22 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
   undoDepth: 200,
   lineWrapping: true,
   extraKeys: {
-    "Ctrl-F": function(cm) { document.getElementById('search-input').focus(); },
-    "Cmd-F": function(cm) { document.getElementById('search-input').focus(); },
+    "Ctrl-F": function(cm, e) { 
+      if (e) e.preventDefault(); // ブラウザ標準のCtrl+F（検索）を打ち消す
+      const input = document.getElementById('search-input');
+      if (input) {
+        input.focus(); 
+        input.select(); // 入力済みの文字列があれば全選択状態にする（利便性向上）
+      }
+    },
+    "Cmd-F": function(cm, e) { 
+      if (e) e.preventDefault(); // Mac用 Cmd+F のブラウザ標準動作を打ち消す
+      const input = document.getElementById('search-input');
+      if (input) {
+        input.focus(); 
+        input.select();
+      }
+    },
     "Tab": function(cm) {
       if (cm.somethingSelected()) {
         cm.indentSelection("add");
@@ -999,28 +1627,36 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
     }
   }
 });
+// 画面全体で Ctrl+F / Cmd+F が押されたときに独自検索フォームへフォーカスする
+window.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+    const input = document.getElementById('search-input');
+    if (input) {
+      e.preventDefault(); // ブラウザのページ内検索を完全に無効化
+      input.focus();
+      input.select();
+    }
+  }
+});
 
-// --- CodeMirror のピンチイン/ピンチアウトによるフォントサイズ変更（スムーズ版） ---
+// --- CodeMirror のピンチイン/ピンチアウトによるフォントサイズ変更 ---
 (function initEditorPinchZoom(cmInstance) {
   const wrapper = cmInstance.getWrapperElement();
   
-  // フォントサイズの初期値と制限
-  let currentFontSize = 20; // 初期サイズ (px)
-  const MIN_FONT_SIZE = 12;   // 最小サイズ (px)
-  const MAX_FONT_SIZE = 45;  // 最大サイズ (px)
+  let currentFontSize = 20;
+  const MIN_FONT_SIZE = 12;
+  const MAX_FONT_SIZE = 45;
 
   let startDistance = 0;
   let initialFontSizeOnTouch = currentFontSize;
   let isPinching = false;
 
-  // 2点間の距離を計算
   function getDistance(touch1, touch2) {
     const dx = touch1.clientX - touch2.clientX;
     const dy = touch1.clientY - touch2.clientY;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  // タッチ開始
   wrapper.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
       startDistance = getDistance(e.touches[0], e.touches[1]);
@@ -1029,43 +1665,34 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
     }
   }, { passive: false });
 
-  // タッチ移動（ピンチ操作）
   wrapper.addEventListener('touchmove', (e) => {
     if (e.touches.length === 2 && startDistance > 0) {
-      // ブラウザ標準の画面ズームやスクロールを防止
       e.preventDefault();
-
       const currentDistance = getDistance(e.touches[0], e.touches[1]);
       const scale = currentDistance / startDistance;
 
-      // 小数点のままスムーズに計算し、最小・最大値の範囲内に収める
       let newFontSize = initialFontSizeOnTouch * scale;
       newFontSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, newFontSize));
 
       currentFontSize = newFontSize;
-      // 操作中はCSSのフォントサイズ変更のみ（refreshは呼ばないことで軽量化）
       wrapper.style.fontSize = `${currentFontSize}px`;
     }
   }, { passive: false });
 
-  // ピンチ操作終了時の共通処理（ここで1回だけリフレッシュ）
   function handlePinchEnd() {
     if (isPinching) {
       isPinching = false;
       startDistance = 0;
-      // 指を離したタイミングでレイアウトずれを修正
       cmInstance.refresh();
     }
   }
 
-  // タッチ終了
   wrapper.addEventListener('touchend', (e) => {
     if (e.touches.length < 2) {
       handlePinchEnd();
     }
   });
 
-  // タッチキャンセル
   wrapper.addEventListener('touchcancel', () => {
     handlePinchEnd();
   });
@@ -1076,7 +1703,8 @@ editor.on("change", () => {
   if (!isBinaryMediaFile(activeFileName)) {
     files[activeFileName] = editor.getValue();
     saveToLocalStorage();
-    if (document.getElementById('search-input').value) {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput && searchInput.value) {
       startSearch(false);
     }
   }
@@ -1086,15 +1714,15 @@ editor.on("change", () => {
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-  sidebar.classList.toggle('open');
-  overlay.classList.toggle('open');
+  if (sidebar) sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('open');
 }
 
 function closeSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-  sidebar.classList.remove('open');
-  overlay.classList.remove('open');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
 }
 
 // ---File Management---
@@ -1105,28 +1733,45 @@ function toggleCategory(groupId) {
   if (group) group.classList.toggle('collapsed');
 }
 
-function renderFileList() {
-  const webListEl = document.getElementById('file-list-web');
-  const mediaListEl = document.getElementById('file-list-media');
-  
-  webListEl.innerHTML = '';
-  mediaListEl.innerHTML = '';
+// フォルダ（階層構造）の開閉トグル用イベント
+document.addEventListener('click', function(e) {
+  const folderHeader = e.target.closest('.folder-header');
+  if (!folderHeader) return;
+  const folderGroup = folderHeader.closest('.folder-group');
+  if (folderGroup) {
+    folderGroup.classList.toggle('collapsed');
+  }
+});
 
-  Object.keys(files).forEach(fileName => {
-    const li = document.createElement('li');
-    li.className = `file-item ${fileName === activeFileName ? 'active' : ''}`;
-    
-    // 単一クリックでファイル切り替え
-    li.onclick = () => {
-      switchFile(fileName);
-      if (window.innerWidth <= 768) closeSidebar();
-    };
+// 階層構造（ツリー）を構築するヘルパー関数
+function buildFileTree(fileKeys) {
+  const root = { files: [], folders: {} };
 
-    // ダブルクリックでファイル名変更（拡張子は維持）
-    li.ondblclick = (e) => {
-      e.stopPropagation();
-      renameFile(fileName);
-    };
+  fileKeys.forEach(fileName => {
+    const parts = fileName.split('/');
+    let current = root;
+
+    for (let i = 0; i < parts.length - 1; i++) {
+      const folderName = parts[i];
+      if (!current.folders[folderName]) {
+        current.folders[folderName] = { files: [], folders: {} };
+      }
+      current = current.folders[folderName];
+    }
+    current.files.push(fileName);
+  });
+
+  return root;
+}
+
+// ツリー構造をHTML要素にレンダリングする再帰関数
+function renderTreeNodes(node, basePath = '') {
+  let html = '';
+
+  // 1. 直下のファイルを描画
+  node.files.sort().forEach(fileName => {
+    const isActive = fileName === activeFileName ? 'active' : '';
+    const displayName = fileName.split('/').pop();
 
     let icon = 'fa-file-code';
     if (fileName.endsWith('.html')) icon = 'fa-html5';
@@ -1140,22 +1785,75 @@ function renderFileList() {
     const isBrand = icon.includes('html5') || icon.includes('css3') || icon.includes('js');
     const iconClass = isBrand ? `fa-brands ${icon}` : `fa-solid ${icon}`;
 
-    li.innerHTML = `
-      <span class="file-label" title="ダブルクリックでファイル名を変更">
-        <i class="${iconClass}"></i> ${fileName}
-      </span>
-      <i class="fa-solid fa-xmark delete-btn" onclick="event.stopPropagation(); deleteFile('${fileName}')"></i>
+    html += `
+      <li class="file-item ${isActive}" 
+          data-file-name="${fileName}"
+          onclick="switchFile('${fileName}'); if(window.innerWidth<=768) closeSidebar();" 
+          ondblclick="event.stopPropagation(); renameFile('${fileName}');"
+          ontouchstart="handleFileTouchStart(event, '${fileName}')"
+          ontouchmove="handleFileTouchMove(event)"
+          ontouchend="handleFileTouchEnd(event)"
+          ontouchcancel="handleFileTouchCancel(event)">
+        <span class="file-label" title="ダブルクリックまたは長押しでファイル名を変更">
+          <i class="${iconClass}"></i> ${displayName}
+        </span>
+        <i class="fa-solid fa-xmark delete-btn" onclick="event.stopPropagation(); deleteFile('${fileName}')"></i>
+      </li>
     `;
-
-    if (isBinaryMediaFile(fileName)) {
-      mediaListEl.appendChild(li);
-    } else {
-      webListEl.appendChild(li);
-    }
   });
+
+  // 2. フォルダをその下に描画
+  Object.keys(node.folders).sort().forEach(folderName => {
+    const subNode = node.folders[folderName];
+    const fullFolderPath = basePath ? `${basePath}/${folderName}` : folderName;
+    const folderId = `folder_${fullFolderPath.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    html += `
+      <li class="folder-group collapsed" id="${folderId}">
+        <div class="folder-header">
+          <div class="folder-title-left">
+            <i class="fa-solid fa-folder"></i>
+            <span>${folderName}</span>
+          </div>
+          <i class="fa-solid fa-chevron-down chevron"></i>
+        </div>
+        <ul class="folder-content" style="list-style: none; padding: 0; margin: 0;">
+          ${renderTreeNodes(subNode, fullFolderPath)}
+        </ul>
+      </li>
+    `;
+  });
+
+  return html;
 }
 
-// ファイル名変更関数（拡張子を保持する処理）
+function renderFileList() {
+  const webListEl = document.getElementById('file-list-web');
+  const mediaListEl = document.getElementById('file-list-media');
+  
+  if (!webListEl || !mediaListEl) return;
+
+  webListEl.innerHTML = '';
+  mediaListEl.innerHTML = '';
+
+  const webFiles = [];
+  const mediaFiles = [];
+
+  Object.keys(files).forEach(fileName => {
+    if (isBinaryMediaFile(fileName)) {
+      mediaFiles.push(fileName);
+    } else {
+      webFiles.push(fileName);
+    }
+  });
+
+  const webTree = buildFileTree(webFiles);
+  const mediaTree = buildFileTree(mediaFiles);
+
+  webListEl.innerHTML = renderTreeNodes(webTree);
+  mediaListEl.innerHTML = renderTreeNodes(mediaTree);
+}
+
 function renameFile(oldFileName) {
   const lastDotIndex = oldFileName.lastIndexOf('.');
   let baseName = oldFileName;
@@ -1171,7 +1869,12 @@ function renameFile(oldFileName) {
   if (!newBaseName || newBaseName.trim() === '') return;
 
   const sanitizedBaseName = newBaseName.trim();
-  const newFileName = sanitizedBaseName + ext;
+  let dirPrefix = '';
+  if (oldFileName.includes('/')) {
+    dirPrefix = oldFileName.substring(0, oldFileName.lastIndexOf('/') + 1);
+  }
+
+  const newFileName = dirPrefix + sanitizedBaseName + ext;
 
   if (newFileName === oldFileName) return;
 
@@ -1194,16 +1897,66 @@ function renameFile(oldFileName) {
   if (activeFileName === oldFileName) {
     activeFileName = newFileName;
   }
-
+  
   saveToLocalStorage();
+  renderFileList();
   switchFile(activeFileName);
-  showToast(`"${oldFileName}" を "${newFileName}" に変更しました`);
+}
+
+// スマホ長押し判定用の変数
+let touchTimer = null;
+let isLongPress = false;
+
+// タッチ開始（長押しタイマー起動）
+function handleFileTouchStart(e, fileName) {
+  isLongPress = false;
+  
+  touchTimer = setTimeout(() => {
+    isLongPress = true;
+    if (navigator.vibrate) navigator.vibrate(40); // 軽くバイブで通知
+    
+    // 長押しで名前変更ダイアログを開く
+    renameFile(fileName);
+  }, 500); // 0.5秒で長押しと判定
+}
+
+// 指が動いたらスクロールとみなして長押しキャンセル
+function handleFileTouchMove(e) {
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+}
+
+// 指を離した時
+function handleFileTouchEnd(e) {
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+  
+  // 長押しでダイアログが開いた場合は、クリック（ファイル切り替え等）を無効化
+  if (isLongPress) {
+    e.preventDefault();
+    e.stopPropagation();
+    isLongPress = false;
+  }
+}
+
+// キャンセル時
+function handleFileTouchCancel(e) {
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
 }
 
 function switchFile(fileName) {
   activeFileName = fileName;
   clearSearch();
-  document.getElementById('search-input').value = ""; 
+  
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.value = ""; 
   
   const editorWrapper = document.getElementById('editor-wrapper');
   const mediaView = document.getElementById('media-view');
@@ -1211,10 +1964,10 @@ function switchFile(fileName) {
   const searchBar = document.getElementById('search-bar');
 
   if (isBinaryMediaFile(fileName)) {
-    editorWrapper.style.display = 'none';
-    searchBar.style.display = 'none';
-    mediaView.style.display = 'flex';
-    mediaContent.innerHTML = '';
+    if (editorWrapper) editorWrapper.style.display = 'none';
+    if (searchBar) searchBar.style.display = 'none';
+    if (mediaView) mediaView.style.display = 'flex';
+    if (mediaContent) mediaContent.innerHTML = '';
 
     const dataUrl = files[fileName] || '';
 
@@ -1228,19 +1981,33 @@ function switchFile(fileName) {
       mediaContent.innerHTML = `<embed src="${dataUrl}" width="100%" height="100%">`;
     }
 
-    document.getElementById('media-info').innerHTML = `
-      <span>${fileName}</span>
-      <i class="fa-regular fa-copy" style="font-size: 0.8rem; opacity: 0.8;"></i>
-    `;
+    const mediaInfo = document.getElementById('media-info');
+    if (mediaInfo) {
+      mediaInfo.innerHTML = `
+        <span>${fileName}</span>
+        <i class="fa-regular fa-copy" style="font-size: 0.8rem; opacity: 0.8;"></i>
+      `;
+    }
   } else {
-    editorWrapper.style.display = 'block';
-    searchBar.style.display = 'flex';
-    mediaView.style.display = 'none';
+    if (editorWrapper) editorWrapper.style.display = 'block';
+    if (searchBar) searchBar.style.display = 'flex';
+    if (mediaView) mediaView.style.display = 'none';
 
-    editor.setOption("mode", fileName.endsWith('.html') ? 'htmlmixed' : fileName.endsWith('.css') ? 'css' : fileName.endsWith('.js') ? 'javascript' : 'text/plain');
-    editor.setValue(files[fileName] || '');
-    editor.clearHistory();
-    setTimeout(() => editor.refresh(), 100);
+    if (typeof editor !== 'undefined' && editor) {
+      const mode = fileName.endsWith('.html') ? 'htmlmixed' : 
+                   fileName.endsWith('.css') ? 'css' : 
+                   fileName.endsWith('.js') ? 'javascript' : 'text/plain';
+      
+      editor.setOption("mode", mode);
+      editor.setValue(files[fileName] !== undefined ? files[fileName] : '');
+      editor.clearHistory();
+      
+      // DOMの描画タイミングズレを考慮し、即時＋少し遅れてリフレッシュを実施
+      editor.refresh();
+      setTimeout(() => {
+        if (typeof editor !== 'undefined' && editor) editor.refresh();
+      }, 50);
+    }
   }
 
   renderFileList();
@@ -1265,26 +2032,73 @@ function showToast(message) {
   }, 2000);
 }
 
+// 新規ファイルボタンを押したときにモーダルを開く
 function addNewFile() {
-  const name = prompt("ファイル名 (例: style.css, photo.jpg, doc.pdf):");
-  if (name && files[name] === undefined) { 
-    files[name] = ""; 
-    switchFile(name); 
-    saveToLocalStorage(); 
+  const modal = document.getElementById('new-file-modal');
+  const input = document.getElementById('new-filename-input');
+  if (modal && input) {
+    input.value = '';
+    modal.style.display = 'flex';
+    input.focus();
   }
 }
 
+// モーダルを閉じる
+function closeNewFileModal() {
+  const modal = document.getElementById('new-file-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 決定ボタンを押したときのファイル生成処理
+function confirmAddNewFile() {
+  const input = document.getElementById('new-filename-input');
+  const select = document.getElementById('new-file-ext-select');
+  if (!input || !select) return;
+
+  let rawName = input.value.trim();
+  if (!rawName) {
+    alert('ファイル名を入力してください。');
+    return;
+  }
+
+  const selectedExt = select.value; // 例: ".html"
+
+  // 既にユーザーが拡張子を入力済みの場合はそれを活かし、なければドロップダウンの拡張子を付与
+  let fullName = rawName;
+  if (!fullName.endsWith(selectedExt)) {
+    // 別の拡張子が含まれていなければ追加
+    if (!fullName.includes('.')) {
+      fullName += selectedExt;
+    }
+  }
+
+  // 重複チェック
+  if (files[fullName] !== undefined) {
+    alert(`ファイル "${fullName}" は既に存在します。`);
+    return;
+  }
+
+  // ファイル生成・初期化
+  files[fullName] = "";
+  closeNewFileModal();
+
+  // 再描画とファイル切り替え
+  if (typeof renderFileList === 'function') renderFileList();
+  if (typeof switchFile === 'function') switchFile(fullName);
+  if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+}
+
 function deleteFile(fileName) {
-  if (Object.keys(files).length > 1 && confirm(`${fileName} を削除？`)) {
+  if (Object.keys(files).length > 1 && confirm(`${fileName} を削除しますか？`)) {
     delete files[fileName];
-    if (activeFileName === fileName) activeFileName = Object.keys(files)[0];
+    if (activeFileName === fileName) activeFileName = getDefaultHtmlFile() || Object.keys(files)[0];
     switchFile(activeFileName);
     saveToLocalStorage();
   }
 }
 
-function undo() { editor.undo(); }
-function redo() { editor.redo(); }
+function undo() { if (typeof editor !== 'undefined' && editor) editor.undo(); }
+function redo() { if (typeof editor !== 'undefined' && editor) editor.redo(); }
 
 function handleSearchKey(event) {
   if (event.key === "Enter") {
@@ -1294,8 +2108,10 @@ function handleSearchKey(event) {
 }
 
 function clearSearch() {
-  if (searchOverlay) { editor.removeOverlay(searchOverlay); searchOverlay = null; }
-  if (activeMarker) { activeMarker.clear(); activeMarker = null; }
+  if (typeof editor !== 'undefined' && editor) {
+    if (searchOverlay) { editor.removeOverlay(searchOverlay); searchOverlay = null; }
+    if (activeMarker) { activeMarker.clear(); activeMarker = null; }
+  }
   searchMatches = [];
   currentMatchIndex = -1;
   updateSearchCounter(0, 0);
@@ -1322,7 +2138,7 @@ function createSearchOverlay(query) {
 function startSearch(shouldJump = true) {
   const query = document.getElementById('search-input').value;
   clearSearch();
-  if (!query) return;
+  if (!query || typeof editor === 'undefined' || !editor) return;
 
   searchOverlay = createSearchOverlay(query);
   editor.addOverlay(searchOverlay);
@@ -1343,14 +2159,14 @@ function escapeRegExp(string) {
 }
 
 function highlightMatch(index) {
-  if (index < 0 || index >= searchMatches.length) return;
+  if (index < 0 || index >= searchMatches.length || typeof editor === 'undefined' || !editor) return;
   const match = searchMatches[index];
   if (activeMarker) activeMarker.clear();
   activeMarker = editor.markText(match.from, match.to, { className: "cm-custom-search-match-active" });
 }
 
 function selectAndScrollToMatch(index) {
-  if (index < 0 || index >= searchMatches.length) return;
+  if (index < 0 || index >= searchMatches.length || typeof editor === 'undefined' || !editor) return;
   const match = searchMatches[index];
   highlightMatch(index);
   editor.setCursor(match.from);
@@ -1372,16 +2188,16 @@ function findPrev() {
 
 function updateSearchCounter(current, total) {
   const counterEl = document.getElementById('search-counter');
+  if (!counterEl) return;
   if (total === 0) {
     counterEl.textContent = "0 / 0";
     counterEl.style.color = "#6c7086";
   } else {
     counterEl.textContent = `${current} / ${total}`;
-    counterEl.style.color = "#a6e3a1";
+    counterEl.style.color = "#41bd37";
   }
 }
 
-// --- 1. 単体ファイル保存 (saveCurrentFile) ---
 function saveCurrentFile() {
   const content = files[activeFileName] || '';
   let blob;
@@ -1404,14 +2220,12 @@ function saveCurrentFile() {
   downloadBlob(blob, activeFileName);
 }
 
-// --- 全角数字を半角数字に変換する関数 ---
 function zenkakuToHankaku(str) {
   return str.replace(/[０-９]/g, function(s) {
     return String.fromCharCode(s.charCodeAt(0) - 0xfee0);
   });
 }
 
-// --- 本日の日付を YYYYMMDD 形式で取得する関数 ---
 function getFormattedToday() {
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -1420,7 +2234,6 @@ function getFormattedToday() {
   return `${yyyy}${mm}${dd}`;
 }
 
-// --- 学年・組・番号を入力するダイアログを表示する関数 ---
 function showStudentInfoModal() {
   return new Promise((resolve) => {
     const oldModal = document.getElementById('student-info-modal');
@@ -1435,15 +2248,15 @@ function showStudentInfoModal() {
         <h3>保存情報の入力</h3>
         <div class="student-form-group">
           <label for="grade-input">学年</label>
-          <div><input type="text" id="grade-input" placeholder="例: 3" maxlength="2"> 年</div>
+          <div><input type="text" id="grade-input" placeholder="3" maxlength="2"> 年</div>
         </div>
         <div class="student-form-group">
           <label for="class-input">組</label>
-          <div><input type="text" id="class-input" placeholder="例: 2" maxlength="2"> 組</div>
+          <div><input type="text" id="class-input" placeholder="1" maxlength="2"> 組</div>
         </div>
         <div class="student-form-group">
           <label for="num-input">出席番号</label>
-          <div><input type="text" id="num-input" placeholder="例: 4" maxlength="2"> 番</div>
+          <div><input type="text" id="num-input" placeholder="1" maxlength="2"> 番</div>
         </div>
         <div class="student-modal-buttons">
           <button class="student-btn student-btn-cancel" id="modal-cancel-btn">キャンセル</button>
@@ -1523,7 +2336,6 @@ function showStudentInfoModal() {
   });
 }
 
-// --- すべて保存 (saveAllAsZip) ---
 async function saveAllAsZip() {
   if (typeof JSZip === 'undefined') {
     alert("JSZipライブラリが読み込まれていません。<head> タグ内を確認してください。");
@@ -1557,7 +2369,6 @@ async function saveAllAsZip() {
   }
 }
 
-// ファイルダウンロード用ヘルパー
 function downloadBlob(blob, fileName) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -1566,7 +2377,7 @@ function downloadBlob(blob, fileName) {
   URL.revokeObjectURL(a.href);
 }
 
-// --- 3. 読込トリガーと loadFile 関数 ---
+// --- 3. 読込トリガーと loadFile 関数（階層構造対応版） ---
 function triggerLoadFile() { document.getElementById('file-input').click(); }
 
 async function loadFile(event) {
@@ -1574,6 +2385,9 @@ async function loadFile(event) {
   if (!file) return;
 
   const fileName = file.name;
+
+  // PDFかどうかの判定用ヘルパー（もし既に isPdfFile 関数があればそれを使ってもOKです）
+  const isPdf = fileName.toLowerCase().endsWith('.pdf');
 
   if (fileName.endsWith('.zip')) {
     if (typeof JSZip === 'undefined') {
@@ -1586,29 +2400,39 @@ async function loadFile(event) {
       const zipContent = await zip.loadAsync(file);
       let loadedCount = 0;
 
+      const newFiles = {};
+
       for (const relativePath in zipContent.files) {
         const zipEntry = zipContent.files[relativePath];
         
         if (zipEntry.dir || relativePath.startsWith('__MACOSX/') || relativePath.includes('/.')) continue;
 
-        const entryName = relativePath.split('/').pop();
-        if (!entryName) continue;
+        const cleanPath = relativePath.replace(/^\/+/, '');
+        if (!cleanPath) continue;
 
-        if (isBinaryMediaFile(entryName)) {
+        // ZIP内のPDFも必ずバイナリ（Base64）として読み込む
+        const isZipPdf = cleanPath.toLowerCase().endsWith('.pdf');
+        
+        if (isBinaryMediaFile(cleanPath) || isZipPdf) {
           const base64 = await zipEntry.async("base64");
-          const mimeType = getMimeType(entryName);
-          files[entryName] = `data:${mimeType};base64,${base64}`;
+          // PDFの場合はMIMEタイプを 'application/pdf' に固定、それ以外は getMimeType
+          const mimeType = isZipPdf ? 'application/pdf' : getMimeType(cleanPath);
+          newFiles[cleanPath] = `data:${mimeType};base64,${base64}`;
         } else {
           const text = await zipEntry.async("string");
-          files[entryName] = text;
+          newFiles[cleanPath] = text;
         }
         loadedCount++;
+      }
+
+      if (loadedCount > 0) {
+        files = newFiles;
       }
 
       saveToLocalStorage();
       renderFileList();
 
-      const firstHtml = Object.keys(files).find(f => f.endsWith('.html')) || Object.keys(files)[0];
+      const firstHtml = getDefaultHtmlFile();
       if (firstHtml) switchFile(firstHtml);
 
       showToast(`ZIPから ${loadedCount} 件のファイルを読み込みました`);
@@ -1620,14 +2444,21 @@ async function loadFile(event) {
   else {
     const reader = new FileReader();
 
-    if (isBinaryMediaFile(fileName)) {
+    // 単体ファイル読み込み時、PDFをバイナリ（DataURL）ルートに乗せる
+    if (isBinaryMediaFile(fileName) || isPdf) {
       reader.onload = e => {
-        files[fileName] = e.target.result;
+        files[fileName] = e.target.result; // ここに data:application/pdf;base64,... が入る
         switchFile(fileName);
-        saveToLocalStorage();
+        
+        try {
+          saveToLocalStorage();
+        } catch (storageErr) {
+          console.warn("容量オーバーで保存できませんでした:", storageErr);
+        }
+        
         showToast(`"${fileName}" を読み込みました`);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file); 
     } else {
       reader.onload = e => {
         files[fileName] = e.target.result;
@@ -1635,19 +2466,32 @@ async function loadFile(event) {
         saveToLocalStorage();
         showToast(`"${fileName}" を読み込みました`);
       };
-      reader.readAsText(file);
+      reader.readAsText(file); // テキストファイル（HTML/CSS/JS等）はこちら
     }
   }
 
   event.target.value = "";
 }
 
+/**
+ * フッター（タグ一覧エリア）の表示・非表示を切り替える
+ */
+function toggleFooter() {
+  const footer = document.getElementById('editor-footer');
+  if (footer) {
+    footer.classList.toggle('collapsed');
+    if (typeof editor !== 'undefined' && editor) { editor.refresh(); }
+  }
+}
+      
 // --- スニペット / タグ挿入機能 ---
 function insertTag(snippet) {
   if (isBinaryMediaFile(activeFileName)) {
     showToast("テキストファイル編集時のみ挿入できます");
     return;
   }
+
+  if (typeof editor === 'undefined' || !editor) return;
 
   const doc = editor.getDoc();
   const cursor = doc.getCursor();
@@ -1679,9 +2523,97 @@ function insertTag(snippet) {
   editor.focus();
 }
 
+function switchFooterTab(type) {
+  const buttons = document.querySelectorAll('.footer-tab-btn');
+  const panes = document.querySelectorAll('.footer-pane');
+
+  // 一旦すべての active クラスを解除
+  buttons.forEach(btn => btn.classList.remove('active'));
+  panes.forEach(pane => pane.classList.remove('active'));
+
+  // 対応するパネルを取得して表示
+  const pane = document.getElementById(`footer-pane-${type}`);
+  if (pane) {
+    pane.classList.add('active');
+  }
+
+  // ボタンの active 切り替え（onclick内の引数や data-tab 属性から対象ボタンを安全に特定）
+  buttons.forEach(btn => {
+    const onclickAttr = btn.getAttribute('onclick') || '';
+    if (onclickAttr.includes(`'${type}'`) || onclickAttr.includes(`"${type}"`)) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+// カラーピッカーで選んだ色をクリップボードにコピーする関数
+function insertColorFromPicker(colorHex) {
+  navigator.clipboard.writeText(colorHex).then(() => {
+    // コピー成功時のフィードバック（通知メッセージ）
+    showToast(`カラーコード ${colorHex} をコピーしました！`);
+  }).catch(err => {
+    // 万が一クリップボード処理が失敗した場合のフォールバック
+    console.error('コピーに失敗しました:', err);
+    alert(`カラーコード: ${colorHex}`);
+  });
+}
+
+// 現在選択されているカラーコードをコピーする関数
+function copyCurrentColor() {
+  const picker = document.getElementById('tag-color-picker');
+  if (!picker) return;
+
+  const colorHex = picker.value; // 現在選ばれている色（#ff0000 など）を取得
+
+  navigator.clipboard.writeText(colorHex).then(() => {
+    // トースト通知を表示
+    if (typeof showToast === 'function') {
+      showToast(`カラーコード ${colorHex} をコピーしました！`);
+    } else {
+      alert(`カラーコード ${colorHex} をコピーしました！`);
+    }
+  }).catch(err => {
+    console.error('コピーに失敗しました:', err);
+  });
+}
+      
+      
+      
+// 簡易トースト通知用関数（すでにある場合は不要です）
+function showToast(message) {
+  let toast = document.getElementById('toast-notification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    toast.style.cssText = `
+      position: fixed; bottom: 20px; right: 20px;
+      background: #323232; color: #fff; padding: 10px 16px;
+      border-radius: 6px; font-size: 0.9rem; z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: opacity 0.3s;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.style.opacity = '1';
+  toast.style.display = 'block';
+
+  // 2秒後に自動消去
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => { toast.style.display = 'none'; }, 300);
+  }, 2000);
+}
+      
 // --- Preview System ---
 function openInBrowser() {
   let modal = document.getElementById('preview-modal');
+  
+  // すでにモーダルが存在して表示されている場合は閉じて処理を終了する
+  if (modal && modal.style.display !== 'none') {
+    closePreview();
+    return;
+  }
+
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'preview-modal';
@@ -1704,170 +2636,333 @@ function openInBrowser() {
       </div>
     `;
     document.body.appendChild(modal);
+  } else {
+    // 過去に非表示(display: none)にされていた場合は再表示する
+    modal.style.display = 'flex';
   }
 
-  modal.style.display = 'flex';
+  // ▼ 開く対象ファイルの決定判定
+  const fileKeys = Object.keys(files || {});
+  
+  let targetFile = null;
 
-  window.renderPreviewFile = function(fileName) {
-    fileName = fileName.replace(/^(\.\/|\/)/, '');
-
-    const title = document.getElementById('preview-title');
-    const pageTitleEl = document.getElementById('preview-page-title');
-    const container = document.getElementById('preview-body');
+  // 1. 現在開いている（アクティブな）ファイルが HTML の場合は最優先で開く
+  if (typeof activeFileName !== 'undefined' && activeFileName && activeFileName.toLowerCase().endsWith('.html') && files[activeFileName]) {
+    targetFile = activeFileName;
+  } else {
+    // 2. それ以外の場合は、一番上（最初）にある .html ファイルを探す
+    targetFile = fileKeys.find(key => key.toLowerCase().endsWith('.html'));
     
-    if (files[fileName] === undefined) {
-      alert(`ファイル "${fileName}" が存在しません。`);
-      return;
+    // 3. HTMLが見つからなければ、一番上のファイルを選択
+    if (!targetFile && fileKeys.length > 0) {
+      targetFile = fileKeys[0];
     }
+  }
 
-    title.textContent = `Preview: ${fileName}`;
-    pageTitleEl.textContent = '';
-    const fileData = files[fileName];
+  if (targetFile) {
+    window.renderPreviewFile(targetFile);
+  } else {
+    alert('表示できるファイルがありません。');
+  }
+}
 
-    if (isPdfFile(fileName)) {
-      container.innerHTML = `<embed src="${fileData}" type="application/pdf" width="100%" height="100%">`;
-      return;
-    }
+// モーダル外・リンク遷移からも呼び出せるレンダリング関数
+let currentPreviewDir = '';
 
-    if (isImageFile(fileName)) {
-      container.innerHTML = `
-        <div style="display:flex; justify-content:center; align-items:center; height:100%; padding:20px; box-sizing:border-box;">
-          <img src="${fileData}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
-        </div>`;
-      return;
-    }
+window.renderPreviewFile = function(fileName, baseDir = '') {
+  const fileKeys = Object.keys(files || {});
+  let resolvedTarget = null;
 
-    if (isAudioFile(fileName)) {
-      container.innerHTML = `
-        <div style="display:flex; justify-content:center; align-items:center; height:100%;">
-          <audio controls src="${fileData}" style="width:80%; max-width:500px;"></audio>
-        </div>`;
-      return;
-    }
+  // パスの表記ゆれ（./ や 相対パス）を完全に解決してマッチングする関数
+  const findMatchingKey = (path) => {
+    if (!path) return null;
+    let clean = path.trim().replace(/^['"]|['"]$/g, '').replace(/^(\.\/|\/)+/, '');
+    
+    // 完全一致
+    if (files[path]) return path;
+    if (files[clean]) return clean;
 
-    if (isVideoFile(fileName)) {
-      container.innerHTML = `
-        <div style="display:flex; justify-content:center; align-items:center; height:100%; background:#000;">
-          <video controls src="${fileData}" style="max-width:100%; max-height:100%;"></video>
-        </div>`;
-      return;
-    }
-
-    let html = fileData;
-
-    const titleMatch = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
-    if (titleMatch && titleMatch[1]) {
-      pageTitleEl.textContent = titleMatch[1].trim();
-    }
-
-    const currentDir = fileName.includes('/') ? fileName.substring(0, fileName.lastIndexOf('/') + 1) : '';
-
-    const resolveFilePath = (relativePath) => {
-      if (!relativePath) return null;
-      let clean = relativePath.trim().replace(/^['"]|['"]$/g, '');
-      if (clean.startsWith('data:') || clean.startsWith('http://') || clean.startsWith('https://')) return null;
-
-      if (files[clean]) return clean;
-
-      let stripped = clean.replace(/^(\.\.\/|\.\/|\/)+/, '');
-      if (files[stripped]) return stripped;
-
-      let combined = currentDir + stripped;
+    // ディレクトリ指定がある場合
+    if (baseDir) {
+      let combined = baseDir + clean;
       if (files[combined]) return combined;
+    }
 
-      let baseName = clean.split('/').pop();
-      if (files[baseName]) return baseName;
+    // ファイル名（末尾）の一致で最終検索
+    let baseName = clean.split('/').pop();
+    let found = fileKeys.find(k => k === clean || k.endsWith('/' + baseName) || k === baseName);
+    return found || null;
+  };
 
-      return null;
-    };
+  resolvedTarget = findMatchingKey(fileName);
 
-    const replaceCssUrls = (cssText) => {
-      return cssText.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, urlPath) => {
-        const resolvedKey = resolveFilePath(urlPath);
-        if (resolvedKey && files[resolvedKey]) {
-          return `url('${files[resolvedKey]}')`;
+  const title = document.getElementById('preview-title');
+  const pageTitleEl = document.getElementById('preview-page-title');
+  const container = document.getElementById('preview-body');
+  
+  if (!resolvedTarget || !files[resolvedTarget]) {
+    alert(`ファイル "${fileName}" が存在しません。`);
+    return;
+  }
+
+  currentPreviewDir = resolvedTarget.includes('/') ? resolvedTarget.substring(0, resolvedTarget.lastIndexOf('/') + 1) : '';
+
+  if (title) title.textContent = `Preview: ${resolvedTarget}`;
+  if (pageTitleEl) pageTitleEl.textContent = '';
+  const fileData = files[resolvedTarget];
+
+  // PDF描画
+  if (typeof isPdfFile === 'function' && isPdfFile(resolvedTarget)) {
+    let pdfSrc = fileData;
+    let blobUrl = '';
+
+    try {
+      if (typeof pdfSrc === 'string' && pdfSrc.startsWith('data:')) {
+        const parts = pdfSrc.split(',');
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+        const bstr = atob(parts[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
         }
-        return match;
-      });
-    };
+        const blob = new Blob([u8arr], { type: mime });
+        blobUrl = URL.createObjectURL(blob);
+      } else if (pdfSrc instanceof Blob) {
+        blobUrl = URL.createObjectURL(pdfSrc);
+      } else {
+        blobUrl = pdfSrc;
+      }
+    } catch (e) {
+      console.error("PDF Blob conversion error:", e);
+      blobUrl = pdfSrc;
+    }
 
-    html = html.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, cssFile) => {
-      const resolvedKey = resolveFilePath(cssFile);
+    container.innerHTML = `
+      <object data="${blobUrl}" type="application/pdf" width="100%" height="100%">
+        <iframe src="${blobUrl}" style="width:100%; height:100%; border:none;">
+          <p>PDFを表示できません。<a href="${blobUrl}" target="_blank">ここをクリックしてダウンロード/表示</a>してください。</p>
+        </iframe>
+      </object>`;
+    return;
+  }
+
+  if (typeof isImageFile === 'function' && isImageFile(resolvedTarget)) {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:center; align-items:center; height:100%; padding:20px; box-sizing:border-box;">
+        <img src="${fileData}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+      </div>`;
+    return;
+  }
+
+  if (typeof isAudioFile === 'function' && isAudioFile(resolvedTarget)) {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+        <audio controls src="${fileData}" style="width:80%; max-width:500px;"></audio>
+      </div>`;
+    return;
+  }
+
+  if (typeof isVideoFile === 'function' && isVideoFile(resolvedTarget)) {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:center; align-items:center; height:100%; background:#000;">
+        <video controls src="${fileData}" style="max-width:100%; max-height:100%;"></video>
+      </div>`;
+    return;
+  }
+
+  let html = fileData;
+
+  const titleMatch = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleMatch && titleMatch[1] && pageTitleEl) {
+    pageTitleEl.textContent = titleMatch[1].trim();
+  }
+
+  const resolveFilePath = (relativePath) => {
+    if (!relativePath) return null;
+    let clean = relativePath.trim().replace(/^['"]|['"]$/g, '');
+    if (clean.startsWith('data:') || clean.startsWith('http://') || clean.startsWith('https://')) return null;
+
+    return findMatchingKey(clean);
+  };
+
+  const replaceCssUrls = (cssText) => {
+    return cssText.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, urlPath) => {
+      const resolvedKey = resolveFilePath(urlPath);
       if (resolvedKey && files[resolvedKey]) {
-        const processedCss = replaceCssUrls(files[resolvedKey]);
-        return `<style>\n/* Loaded: ${resolvedKey} */\n${processedCss}\n</style>`;
+        return `url('${files[resolvedKey]}')`;
       }
       return match;
     });
-
-    html = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, cssContent) => {
-      return `<style>${replaceCssUrls(cssContent)}</style>`;
-    });
-
-    html = html.replace(/style=(["'])([\s\S]*?)\1/gi, (match, quote, styleAttr) => {
-      return `style=${quote}${replaceCssUrls(styleAttr)}${quote}`;
-    });
-
-    html = html.replace(/<script\s+[^>]*src=["']([^"']+)["']><\/script>/gi, (match, jsFile) => {
-      const resolvedKey = resolveFilePath(jsFile);
-      return (resolvedKey && files[resolvedKey]) ? `<script>\n${files[resolvedKey]}\n<\/script>` : match;
-    });
-
-    html = html.replace(/\bsrc=["']([^"']+)["']/gi, (match, src) => {
-      const resolvedKey = resolveFilePath(src);
-      return (resolvedKey && files[resolvedKey]) ? `src="${files[resolvedKey]}"` : match;
-    });
-
-    const clickInterceptor = `
-      <script>
-        document.addEventListener('click', function(e) {
-          const a = e.target.closest('a');
-          if (!a) return;
-
-          const href = a.getAttribute('href');
-          if (!href) return;
-
-          if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
-            if (href.startsWith('http://') || href.startsWith('https://')) {
-              a.setAttribute('target', '_blank');
-            }
-            return;
-          }
-
-          e.preventDefault();
-          e.stopPropagation();
-
-          if (window.parent && typeof window.parent.renderPreviewFile === 'function') {
-            window.parent.renderPreviewFile(href);
-          }
-        }, true);
-      <\/script>
-    `;
-
-    html += clickInterceptor;
-
-    container.innerHTML = '';
-    const iframe = document.createElement('iframe');
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = 'none';
-    iframe.srcdoc = html;
-    
-    container.appendChild(iframe);
   };
 
-  let targetFile = activeFileName.endsWith('.html') ? activeFileName : "index.html";
-  window.renderPreviewFile(targetFile);
-}
+  html = html.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, cssFile) => {
+    const resolvedKey = resolveFilePath(cssFile);
+    if (resolvedKey && files[resolvedKey]) {
+      const processedCss = replaceCssUrls(files[resolvedKey]);
+      return `<style>\n/* Loaded: ${resolvedKey} */\n${processedCss}\n</style>`;
+    }
+    return match;
+  });
+
+  html = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, cssContent) => {
+    return `<style>${replaceCssUrls(cssContent)}</style>`;
+  });
+
+  html = html.replace(/style=(["'])([\s\S]*?)\1/gi, (match, quote, styleAttr) => {
+    return `style=${quote}${replaceCssUrls(styleAttr)}${quote}`;
+  });
+
+  html = html.replace(/<script\s+[^>]*src=["']([^"']+)["']><\/script>/gi, (match, jsFile) => {
+    const resolvedKey = resolveFilePath(jsFile);
+    return (resolvedKey && files[resolvedKey]) ? `<script>\n${files[resolvedKey]}\n<\/script>` : match;
+  });
+
+  html = html.replace(/\bsrc=["']([^"']+)["']/gi, (match, src) => {
+    const resolvedKey = resolveFilePath(src);
+    return (resolvedKey && files[resolvedKey]) ? `src="${files[resolvedKey]}"` : match;
+  });
+
+  const clickInterceptor = `
+<script>
+  document.addEventListener('click', function(e) {
+    const a = e.target.closest('a');
+    if (!a) return;
+
+    const href = a.getAttribute('href');
+    if (!href) return;
+
+    if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        a.setAttribute('target', '_blank');
+      }
+      return;
+    }
+
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (href === '#') return;
+      
+      const targetId = href.substring(1);
+      const targetEl = document.getElementById(targetId) || document.querySelector('[name="' + targetId + '"]');
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (window.parent && typeof window.parent.renderPreviewFile === 'function') {
+      window.parent.renderPreviewFile(href, '${currentPreviewDir}');
+    }
+  }, true);
+<\/script>
+`;
+
+  html += clickInterceptor;
+
+  container.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  iframe.style.border = 'none';
+  iframe.srcdoc = html;
+  
+  container.appendChild(iframe);
+};
 
 function closePreview() {
   const modal = document.getElementById('preview-modal');
   if (modal) modal.style.display = 'none';
 }
 
-// Init
+// ==========================================
+// ショートカットキー設定 (Alt + P / Alt + T)
+// ==========================================
+function handleShortcutKeys(event) {
+  // Alt キー (Macでは Option キー) が押されているか確認
+  if (event.altKey) {
+    const key = event.key ? event.key.toLowerCase() : '';
+
+    // Alt + P : プレビューを開く
+    if (key === 'p') {
+      event.preventDefault();
+      // onclick="openInBrowser()" のボタンを実行
+      const previewBtn = document.querySelector('button[onclick*="openInBrowser()"]');
+      if (previewBtn) {
+        previewBtn.click();
+      }
+    }
+
+    // Alt + T : タグ一覧（フッター）を開閉する
+    if (key === 't') {
+      event.preventDefault();
+      // class="footer-toggle-btn" または onclick="toggleFooter()" のボタンを実行
+      const tagListBtn = document.querySelector('.footer-toggle-btn') 
+        || document.querySelector('button[onclick*="toggleFooter()"]');
+      
+      if (tagListBtn) {
+        tagListBtn.click();
+      }
+    }
+  }
+}
+
+// 1. メインウィンドウにキー監視を適用
+window.addEventListener('keydown', handleShortcutKeys, true);
+
+// 2. iframe（もしプレビュー用iframeがある場合）の中からもショートカットが効くように保護
+function attachShortcutToIframes() {
+  const iframes = document.querySelectorAll('iframe');
+  iframes.forEach(iframe => {
+    try {
+      iframe.contentWindow.removeEventListener('keydown', handleShortcutKeys, true);
+      iframe.contentWindow.addEventListener('keydown', handleShortcutKeys, true);
+    } catch (e) {
+      // セキュリティ制限（クロスドメイン）の場合はスキップ
+    }
+  });
+}
+
+// 画面読み込み時＆定期チェック
+document.addEventListener('DOMContentLoaded', attachShortcutToIframes);
+setInterval(attachShortcutToIframes, 2000);
+      
+/**
+ * 初期表示用：一番最初に見つかるHTMLファイルを取得する関数
+ */
+function getDefaultHtmlFile() {
+  if (typeof files === 'undefined' || !files) return null;
+  const fileKeys = Object.keys(files);
+  if (fileKeys.length === 0) return null;
+
+  // 1. ルート階層またはフォルダ内から「最も最初にある .html ファイル」を探す
+  const firstHtml = fileKeys.find(key => key.toLowerCase().endsWith('.html'));
+  if (firstHtml) return firstHtml;
+
+  // 2. HTMLファイルが1つもない場合は、リストの最初のファイルを返す
+  return fileKeys[0];
+}
+
+// --- Init (初期化処理) ---
+// ページ更新時は常に最初に見つかったHTMLファイルをセット
+activeFileName = getDefaultHtmlFile();
+
+// ファイルリスト（サイドバー）を描画
 renderFileList();
-switchFile(activeFileName);
+
+// エディタの準備・初期化完了を待ってからコードを流し込む
+if (activeFileName) {
+  setTimeout(() => {
+    switchFile(activeFileName);
+  }, 50);
+}
+
+
 </script>
 </body>
 </html>
