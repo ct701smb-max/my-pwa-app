@@ -1672,7 +1672,7 @@ window.addEventListener('keydown', function(e) {
  * ヘッダー検索窓の開閉トグル
  */
 function toggleHeaderSearch(event) {
-  // ボタンクリック時のイベントがdocument全体に届いて即座に閉じるのを防ぐ
+  // ボタンクリック/タッチ時のイベントがdocument全体に届いて即座に閉じるのを防ぐ
   if (event) {
     event.stopPropagation();
   }
@@ -1694,19 +1694,29 @@ function toggleHeaderSearch(event) {
   }
 }
 
-// ★ 画面のどこをクリックしても「検索領域以外」なら閉じる処理
-document.addEventListener('click', function(event) {
+// ★ 画面のどこかを「クリック」または「タップ（touchstart / pointerdown）」した時に閉じる処理
+function handleOutsideClickOrTouch(event) {
   const container = document.getElementById('header-search-container');
   if (!container) return;
 
   // 検索窓が開いている場合
   if (container.classList.contains('active')) {
-    // クリックされた要素が header-search-container の内部でなければ閉じる
+    // タップ/クリックされた要素が header-search-container の内部でなければ閉じる
     if (!container.contains(event.target)) {
       container.classList.remove('active');
     }
   }
-});
+}
+
+// pointerevents が使えるモダンブラウザ/スマホ用
+if (window.PointerEvent) {
+  document.addEventListener('pointerdown', handleOutsideClickOrTouch);
+} else {
+  // 互換性維持（古いデバイス用）
+  document.addEventListener('touchstart', handleOutsideClickOrTouch);
+  document.addEventListener('click', handleOutsideClickOrTouch);
+}
+      
 // --- CodeMirror のピンチイン/ピンチアウトによるフォントサイズ変更（スムーズ版） ---
 (function initEditorPinchZoom(cmInstance) {
   const wrapper = cmInstance.getWrapperElement();
