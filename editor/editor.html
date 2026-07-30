@@ -253,7 +253,7 @@ button.btn-primary:hover {
   display: flex;
   flex-direction: column;
   height: 100%; /* ★100vhから100%に修正（親要素に合わせる） */
-  z-index: 15;
+  z-index: 9999 !important;
   transition: transform 0.3s ease;
   touch-action: pan-x pan-y;
   overflow: hidden; /* サイドバー外へのみだしを防ぐ */
@@ -1151,7 +1151,7 @@ button.btn-primary:hover {
         </div>
 
         <!-- カテゴリー1: Webソースコード -->
-        <div class="category-gr oup" id="group-web">
+        <div class="category-group" id="group-web">
           <div class="category-title" onclick="toggleCategory('group-web')">
             <span><i class="fa-solid fa-code" style="margin-right:6px;"></i>Webソースコード</span>
             <i class="fa-solid fa-chevron-down chevron"></i>
@@ -1707,7 +1707,64 @@ document.addEventListener('click', function(event) {
     }
   }
 });
+// --- CodeMirror のピンチイン/ピンチアウトによるフォントサイズ変更（スムーズ版） ---
+(function initEditorPinchZoom(cmInstance) {
+  const wrapper = cmInstance.getWrapperElement();
+  
+  let currentFontSize = 20;
+  const MIN_FONT_SIZE = 12;
+  const MAX_FONT_SIZE = 45;
 
+  let startDistance = 0;
+  let initialFontSizeOnTouch = currentFontSize;
+  let isPinching = false;
+
+  function getDistance(touch1, touch2) {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  wrapper.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      startDistance = getDistance(e.touches[0], e.touches[1]);
+      initialFontSizeOnTouch = currentFontSize;
+      isPinching = true;
+    }
+  }, { passive: false });
+
+  wrapper.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && startDistance > 0) {
+      e.preventDefault();
+      const currentDistance = getDistance(e.touches[0], e.touches[1]);
+      const scale = currentDistance / startDistance;
+
+      let newFontSize = initialFontSizeOnTouch * scale;
+      newFontSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, newFontSize));
+
+      currentFontSize = newFontSize;
+      wrapper.style.fontSize = `${currentFontSize}px`;
+    }
+  }, { passive: false });
+
+  function handlePinchEnd() {
+    if (isPinching) {
+      isPinching = false;
+      startDistance = 0;
+      cmInstance.refresh();
+    }
+  }
+
+  wrapper.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+      handlePinchEnd();
+    }
+  });
+
+  wrapper.addEventListener('touchcancel', () => {
+    handlePinchEnd();
+  });
+})(editor);
 // ---Events---
 editor.on("change", () => {
   if (!isBinaryMediaFile(activeFileName)) {
@@ -2507,27 +2564,39 @@ async function loadFile(event) {
 }
 
 /**
- * フッター（タグ一覧エリア）の表示・非表示を切り替える
+ * タグ一覧（フッター）の表示・非表示を切り替える関数
  */
-function toggleFooter() {
+function toggleFooter() { // ※関数名が toggleEditorFooter などの場合はそちらを書き換えてください
   const footer = document.getElementById('editor-footer');
-  const icon = document.getElementById('footer-toggle-icon');
+  const footerIcon = document.getElementById('footer-toggle-icon');
 
-  if (footer) {
-    footer.classList.toggle('collapsed');
-    
-    // アイコンの向きを更新（閉じているときは up / 開いているときは down）
-    if (icon) {
-      if (footer.classList.contains('collapsed')) {
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-      } else {
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
-      }
+  if (!footer) return;
+
+  // collapsed クラスを切り替え
+  const isNowCollapsed = footer.classList.toggle('collapsed');
+  const isOpening = !isNowCollapsed; // 今回開いたかどうか
+
+  // ★ タグ一覧を開いたとき、サイドメニュー（ファイル一覧）を自動で閉じる
+  if (isOpening) {
+    if (typeof closeSidebar === 'function') {
+      closeSidebar();
     }
+  }
 
-    if (typeof editor !== 'undefined' && editor) { editor.refresh(); }
+  // トグルアイコンの向きを切り替え
+  if (footerIcon) {
+    if (isNowCollapsed) {
+      footerIcon.classList.remove('fa-chevron-down');
+      footerIcon.classList.add('fa-chevron-up');
+    } else {
+      footerIcon.classList.remove('fa-chevron-up');
+      footerIcon.classList.add('fa-chevron-down');
+    }
+  }
+
+  // エディタの表示崩れ防止（サイズ再計算）
+  if (typeof editor !== 'undefined' && editor && editor.refresh) {
+    setTimeout(() => editor.refresh(), 100);
   }
 }
 
