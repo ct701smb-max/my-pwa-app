@@ -30,679 +30,601 @@
 
   <style>
      * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      height: 100dvh; /* モバイルブラウザのアドレスバー考慮 */
-      background-color: #f7f7f7;
-      color: #333333;
-      overflow: hidden; /* 画面全体のスクロールを強制固定 */
-      
-      /* 画面全体でのピンチズーム動作を阻止（スクロールのみ許可） */
-      touch-action: pan-x pan-y;
-    }
-
-    /* Toolbar Header */
-    header {
-      background: #ffffff;
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #e0e0e0;
-      z-index: 20;
-      flex-shrink: 0; /* ヘッダーの高さを固定 */
-      touch-action: pan-x pan-y;
-    }
-
-    .brand {
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: #2e7d32; /* エディタのタグ色（緑）と統一 */
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    /* モバイル用トグルボタン（PCでは隠す） */
-    .sidebar-toggle-btn {
-      display: none;
-      background: transparent;
-      border: none;
-      color: #333333;
-      font-size: 1.2rem;
-      padding: 4px;
-      cursor: pointer;
-    }
-
-    .toolbar-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    button {
-      background: #f0f0f0;
-      color: #333333;
-      border: 1px solid #cccccc;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    button:hover {
-      background: #e0e0e0;
-      color: #000000;
-    }
-
-    button.btn-primary {
-      background: #1976d2;
-      color: #ffffff;
-      font-weight: bold;
-      border: none;
-    }
-
-    button.btn-primary:hover {
-      background: #1565c0;
-    }
-    .btn-real-dent{
-        height: 52px;
-        width: 52px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        box-sizing: border-box;
-        font-size: 2.0rem;
-        }
-    /* Main Container Layout */
-    .main-container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-      min-height: 0; /* Flex要素の溢れを防ぐ必須プロパティ */
-    }
-
-    /* Sidebar - File Explorer & Tag Inserter */
-    .sidebar {
-      width: 260px;
-      background: #ffffff;
-      border-right: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh; /* サイドバー全体の高さを固定 */
-      z-index: 15;
-      transition: transform 0.3s ease;
-      touch-action: pan-x pan-y;
-      overflow: hidden; /* サイドバー外へのみだしを防ぐ */
-    }
-
-    .sidebar-header {
-      padding: 10px 14px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      text-transform: uppercase;
-      color: #555555;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e0e0e0;
-      background: #f0f0f0;
-      flex-shrink: 0; /* ヘッダーが潰れないようにする */
-    }
-
-    /* カテゴリー分けコンテナ（全体でスクロールさせる場合、または個別に効かせるベース） */
-    .category-container {
-      flex: 1;
-      overflow-y: auto;   /* サイドバー内全体でのスクロールを許可 */
-      display: flex;
-      flex-direction: column;
-    }
-
-    .category-group {
-      border-bottom: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .category-title {
-      padding: 8px 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      color: #1976d2;
-      background: #f7f7f7;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      user-select: none;
-      border-top: 1px solid #e0e0e0;
-      flex-shrink: 0;
-    }
-
-    .category-title:hover {
-      background: #e8e8e8;
-    }
-
-    .category-title i.chevron {
-      transition: transform 0.2s ease;
-      font-size: 0.7rem;
-    }
-
-    .category-group.collapsed .category-title i.chevron {
-      transform: rotate(-90deg);
-    }
-
-    .category-group.collapsed .file-list,
-    .category-group.collapsed .folder-container,
-    .category-group.collapsed .tag-list-container {
-      display: none;
-    }
-
-    /* ========================================== */
-    /* ▼ フォルダ階層構造用のCSS ▼ */
-    /* ========================================== */
-    .folder-container {
-      list-style: none;
-    }
-
-    .folder-group {
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .folder-header {
-      padding: 6px 12px 6px 16px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      color: #333333;
-      background: #fafafa;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      user-select: none;
-    }
-
-    .folder-header:hover {
-      background: #f0f0f0;
-    }
-
-    .folder-title-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .folder-title-left i.fa-folder {
-      color: #ffa000; /* フォルダアイコンの色（黄色系） */
-    }
-
-    .folder-group.collapsed .folder-content {
-      display: none;
-    }
-
-    .folder-group.collapsed .folder-header i.chevron {
-      transform: rotate(-90deg);
-    }
-
-    .folder-content {
-      list-style: none;
-    }
-
-    /* 階層ごとのファイルインデント（ネストが深くなるにつれて左パディングを増やす） */
-    .file-item {
-      padding: 6px 14px 6px 28px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: #444444;
-      user-select: none;
-    }
-
-    /* さらにネストしたフォルダの中のファイル用 */
-    .folder-content .file-item {
-      padding-left: 40px;
-    }
-
-    .folder-content .folder-content .file-item {
-      padding-left: 52px;
-    }
-    /* ========================================== */
-
-    .file-list {
-      list-style: none;
-      overflow-y: auto;   /* 各ファイルリスト内でもスクロール可能に */
-      max-height: 250px;  /* リストが長くなりすぎた場合に高さ制限してスクロールバーを表示 */
-    }
-
-    .file-item .file-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .file-item:hover {
-      background: #f0f0f0;
-      color: #000000;
-    }
-
-    .file-item.active {
-      background: #e3f2fd;
-      color: #1976d2;
-      font-weight: bold;
-    }
-
-    .file-item .delete-btn {
-      opacity: 0;
-      color: #d32f2f;
-      transition: opacity 0.2s;
-      padding: 2px 4px;
-    }
-
-    .file-item:hover .delete-btn {
-      opacity: 1;
-    }
-
-
-    /* --- 学年・組・番号入力モーダル --- */
-    .student-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-    }
-
-    .student-modal-content {
-      background: #ffffff;
-      color: #333333;
-      padding: 24px;
-      border-radius: 8px;
-      width: 320px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      font-family: sans-serif;
-      border: 1px solid #e0e0e0;
-    }
-
-    .student-modal-content h3 {
-      margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 1.1rem;
-      text-align: center;
-      color: #2e7d32;
-    }
-
-    .student-form-group {
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .student-form-group label {
-      font-size: 0.9rem;
-    }
-
-    .student-form-group input {
-      width: 100px;
-      padding: 6px 8px;
-      border-radius: 4px;
-      border: 1px solid #cccccc;
-      background: #ffffff;
-      color: #333333;
-      font-size: 1rem;
-      text-align: center;
-    }
-
-    .student-form-group input:focus {
-      outline: none;
-      border-color: #1976d2;
-    }
-
-    .student-modal-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .student-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .student-btn-cancel {
-      background: #e0e0e0;
-      color: #333333;
-    }
-
-    .student-btn-draft {
-      background: #ed6c02;
-      color: #ffffff;
-    }
-
-    .student-btn-save {
-      background: #2e7d32;
-      color: #ffffff;
-    }      
-
-    /* タグ一覧用スタイル */
-    .tag-list-container {
-      padding: 8px;
-    }
-
-    .tag-sub-group {
-      margin-bottom: 8px;
-    }
-
-    .tag-sub-title {
-      font-size: 0.7rem;
-      color: #ed6c02;
-      font-weight: bold;
-      padding: 4px 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tag-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      padding: 4px 2px;
-    }
-
-    .tag-chip {
-      background: #f0f0f0;
-      color: #333333;
-      font-family: 'Fira Code', 'Consolas', monospace;
-      font-size: 0.75rem;
-      padding: 3px 7px;
-      border-radius: 4px;
-      border: 1px solid #cccccc;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.15s ease;
-    }
-
-    .tag-chip:hover {
-      background: #1976d2;
-      color: #ffffff;
-      border-color: #1976d2;
-      font-weight: bold;
-    }
-
-    /* Mobile Overlay */
-    .sidebar-overlay {
-      display: none;
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.3);
-      z-index: 14;
-    }
-
-    /* Editor Area */
-    .editor-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      min-width: 0;
-      min-height: 0;
-    }
-
-    /* Search Bar Style */
-    .search-bar {
-      background: #f7f7f7;
-      padding: 8px 16px;
-      display: flex;
-      gap: 10px;
-      border-bottom: 1px solid #e0e0e0;
-      align-items: center;
-      flex-shrink: 0;
-      touch-action: pan-x pan-y;
-    }
-
-    .search-input-group {
-      position: relative;
-      display: flex;
-      align-items: center;
-      flex: 1;
-      max-width: 300px;
-    }
-
-    .search-input-group i {
-      position: absolute;
-      left: 10px;
-      color: #888888;
-    }
-
-    .search-bar input {
-      width: 100%;
-      background: #ffffff;
-      border: 1px solid #cccccc;
-      color: #333333;
-      padding: 6px 10px 6px 35px;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      outline: none;
-    }
-
-    .search-bar input:focus {
-      border-color: #1976d2;
-    }
-
-    .search-counter {
-      font-size: 0.85rem;
-      color: #666666;
-      margin-left: 10px;
-      min-width: 60px;
-    }
-
-    /* Editor Wrapper & CodeMirror Adjustment */
-    #editor-wrapper {
-      flex: 1;
-      min-height: 0;
-      position: relative;
-      touch-action: none; 
-    }
-
-    .CodeMirror {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 100% !important;
-      font-family: 'Fira Code', 'Consolas', monospace;
-      font-size: 14px;
-      background-color: #fff !important;
-      color: #000 !important;
-    }
-
-    /* 行番号領域（左側）の背景と境界線 */
-    .CodeMirror-gutters {
-      background-color: #f7f7f7 !important;
-      border-right: 1px solid #e0e0e0 !important;
-    }
-
-    .CodeMirror-linenumber {
-      color: #333 !important;
-    }
-
-    /* HTML/CSSタグ、属性、値の色カスタマイズ */
-    .cm-tag {
-      color: #2e7d32 !important;
-    }
-
-    .cm-bracket {
-      color: #2e7d32 !important;
-    }
-
-    .cm-attribute {
-      color: #0000ff !important;
-    }
-
-    .cm-string {
-      color: #c62828 !important;
-    }
-
-    .cm-s-default .cm-tag {
-      font-weight: normal;
-    }
-
-    /* Media Preview Container */
-    .media-preview {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      background: #f7f7f7;
-      padding: 16px;
-      box-sizing: border-box;
-    }
-
-    .media-preview img, .media-preview video {
-      max-width: 90%;
-      max-height: 100%;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      object-fit: contain;
-    }
-
-    .media-preview audio {
-      margin-top: 10px;
-      width: 80%;
-      max-width: 500px;
-    }
-
-    .media-preview embed {
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      background: #ffffff;
-      width: 100%;
-      height: 100%;
-    }
-
-    .media-info {
-      margin-bottom: 8px;
-      color: #555555;
-      font-size: 0.85rem;
-      cursor: pointer;
-      background: #ffffff;
-      padding: 4px 12px;
-      border-radius: 16px;
-      border: 1px solid #cccccc;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      user-select: none;
-      z-index: 2;
-    }
-
-    .media-info:hover {
-      background: #e3f2fd;
-      color: #1976d2;
-      border-color: #1976d2;
-    }
-
-    /* トースト通知 */
-    .toast {
-      position: absolute;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #2e7d32;
-      color: #ffffff;
-      font-weight: bold;
-      padding: 8px 16px;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      font-size: 0.85rem;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 100;
-    }
-
-    .toast.show {
-      opacity: 1;
-    }
-
-    .cm-custom-search-match {
-      background-color: #fff59d !important;
-      color: #000000 !important;
-      border-radius: 2px;
-    }
-
-    .cm-custom-search-match-active {
-      background-color: #ffb74d !important;
-      color: #000000 !important;
-      font-weight: bold !important;
-      border-radius: 2px;
-      box-shadow: 0 0 4px #ffb74d;
-    }
-
-    #file-input { display: none; }
-
-    /* ========================================== */
-    /* ▼ フッター（タグ一覧）用の設定・固定 ▼ */
-    /* ========================================== */
-    /* フッター全体（高さを136pxへ拡大して底面に余裕を持たせる） */
-/* フッター全体（アニメーション＋初期状態の折りたたみに対応） */
-.editor-footer {
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff; /* 白基調 */
-  border-top: 1px solid #e0e0e0;
-  height: 136px; /* 開いた状態の高さ */
+  height: 100vh;
+  height: 100dvh; /* モバイルブラウザのアドレスバー考慮 */
+  background-color: #f7f7f7;
+  color: #333333;
+  overflow: hidden; /* 画面全体のスクロールを強制固定 */
+  
+  /* 画面全体でのピンチズーム動作を阻止（スクロールのみ許可） */
+  touch-action: pan-x pan-y;
+}
+
+/* Toolbar Header */
+header {
+  background: #ffffff;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 20;
+  flex-shrink: 0; /* ヘッダーの高さを固定 */
+  touch-action: pan-x pan-y;
+}
+
+.brand {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #2e7d32; /* エディタのタグ色（緑）と統一 */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* モバイル用トグルボタン（PCでは隠す） */
+.sidebar-toggle-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #333333;
+  font-size: 1.2rem;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+button {
+  background: #f0f0f0;
+  color: #333333;
+  border: 1px solid #cccccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+button:hover {
+  background: #e0e0e0;
+  color: #000000;
+}
+
+button.btn-primary {
+  background: #1976d2;
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+}
+
+button.btn-primary:hover {
+  background: #1565c0;
+}
+
+.btn-real-dent {
+  height: 52px;
+  width: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   box-sizing: border-box;
+  font-size: 2.0rem;
+}
+
+/* Main Container Layout */
+.main-container {
+  display: flex;
+  flex: 1;
   overflow: hidden;
-  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
-  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
-  flex-shrink: 0; /* 画面の高さが足りなくてもフッターを絶対に縮めない */
-  z-index: 100;   /* 他の要素の後ろに隠れないように手前に配置 */
+  position: relative;
+  min-height: 0; /* Flex要素の溢れを防ぐ必須プロパティ */
 }
 
-.editor-footer.collapsed {
-  height: 32px !important;
+/* Sidebar - File Explorer & Tag Inserter */
+.sidebar {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* ★100vhから100%に修正（親要素に合わせる） */
+  z-index: 15;
+  transition: transform 0.3s ease;
+  touch-action: pan-x pan-y;
+  overflow: hidden; /* サイドバー外へのみだしを防ぐ */
 }
 
+.sidebar-header {
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #555555;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f0f0f0;
+  flex-shrink: 0; /* ヘッダーが潰れないようにする */
+}
+
+/* カテゴリー分けコンテナ */
+.category-container {
+  flex: 1;
+  overflow-y: auto;   /* サイドバー内全体でのスクロールを許可 */
+  display: flex;
+  flex-direction: column;
+}
+
+.category-group {
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-title {
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #1976d2;
+  background: #f7f7f7;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.category-title:hover {
+  background: #e8e8e8;
+}
+
+.category-title i.chevron {
+  transition: transform 0.2s ease;
+  font-size: 0.7rem;
+}
+
+.category-group.collapsed .category-title i.chevron {
+  transform: rotate(-90deg);
+}
+
+.category-group.collapsed .file-list,
+.category-group.collapsed .folder-container,
+.category-group.collapsed .tag-list-container {
+  display: none;
+}
+
+/* フォルダ階層構造 */
+.folder-container {
+  list-style: none;
+}
+
+.folder-group {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.folder-header {
+  padding: 6px 12px 6px 16px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #333333;
+  background: #fafafa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.folder-header:hover {
+  background: #f0f0f0;
+}
+
+.folder-title-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.folder-title-left i.fa-folder {
+  color: #ffa000;
+}
+
+.folder-group.collapsed .folder-content {
+  display: none;
+}
+
+.folder-group.collapsed .folder-header i.chevron {
+  transform: rotate(-90deg);
+}
+
+.folder-content {
+  list-style: none;
+}
+
+.file-item {
+  padding: 6px 14px 6px 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #444444;
+  user-select: none;
+}
+
+.folder-content .file-item {
+  padding-left: 40px;
+}
+
+.folder-content .folder-content .file-item {
+  padding-left: 52px;
+}
+
+.file-list {
+  list-style: none;
+  overflow-y: auto;
+  max-height: 250px;
+}
+
+.file-item .file-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-item:hover {
+  background: #f0f0f0;
+  color: #000000;
+}
+
+.file-item.active {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: bold;
+}
+
+.file-item .delete-btn {
+  opacity: 0;
+  color: #d32f2f;
+  transition: opacity 0.2s;
+  padding: 2px 4px;
+}
+
+.file-item:hover .delete-btn {
+  opacity: 1;
+}
+
+/* モーダル */
+.student-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.student-modal-content {
+  background: #ffffff;
+  color: #333333;
+  padding: 24px;
+  border-radius: 8px;
+  width: 320px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  font-family: sans-serif;
+  border: 1px solid #e0e0e0;
+}
+
+.student-modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  text-align: center;
+  color: #2e7d32;
+}
+
+.student-form-group {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.student-form-group label {
+  font-size: 0.9rem;
+}
+
+.student-form-group input {
+  width: 100px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  color: #333333;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.student-form-group input:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.student-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.student-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.student-btn-cancel {
+  background: #e0e0e0;
+  color: #333333;
+}
+
+.student-btn-draft {
+  background: #ed6c02;
+  color: #ffffff;
+}
+
+.student-btn-save {
+  background: #2e7d32;
+  color: #ffffff;
+}      
+
+/* Mobile Overlay */
+.sidebar-overlay {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 14;
+}
+
+/* Editor Area */
+.editor-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Search Bar */
+.search-bar {
+  background: #f7f7f7;
+  padding: 8px 16px;
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  align-items: center;
+  flex-shrink: 0;
+  touch-action: pan-x pan-y;
+}
+
+.search-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-input-group i {
+  position: absolute;
+  left: 10px;
+  color: #888888;
+}
+
+.search-bar input {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  color: #333333;
+  padding: 6px 10px 6px 35px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.search-bar input:focus {
+  border-color: #1976d2;
+}
+
+.search-counter {
+  font-size: 0.85rem;
+  color: #666666;
+  margin-left: 10px;
+  min-width: 60px;
+}
+
+/* Editor Wrapper & CodeMirror */
+#editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  touch-action: none; 
+}
+
+.CodeMirror {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100% !important;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+.CodeMirror-gutters {
+  background-color: #f7f7f7 !important;
+  border-right: 1px solid #e0e0e0 !important;
+}
+
+.CodeMirror-linenumber {
+  color: #333 !important;
+}
+
+.cm-tag, .cm-bracket {
+  color: #2e7d32 !important;
+}
+
+.cm-attribute {
+  color: #0000ff !important;
+}
+
+.cm-string {
+  color: #c62828 !important;
+}
+
+.cm-s-default .cm-tag {
+  font-weight: normal;
+}
+
+/* Media Preview */
+.media-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: #f7f7f7;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.media-preview img, .media-preview video {
+  max-width: 90%;
+  max-height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  object-fit: contain;
+}
+
+.media-preview audio {
+  margin-top: 10px;
+  width: 80%;
+  max-width: 500px;
+}
+
+.media-preview embed {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #ffffff;
+  width: 100%;
+  height: 100%;
+}
+
+.media-info {
+  margin-bottom: 8px;
+  color: #555555;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: #ffffff;
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid #cccccc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  user-select: none;
+  z-index: 2;
+}
+
+.media-info:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+  border-color: #1976d2;
+}
+
+/* トースト通知 */
+.toast {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2e7d32;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  font-size: 0.85rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+.cm-custom-search-match {
+  background-color: #fff59d !important;
+  color: #000000 !important;
+  border-radius: 2px;
+}
+
+.cm-custom-search-match-active {
+  background-color: #ffb74d !important;
+  color: #000000 !important;
+  font-weight: bold !important;
+  border-radius: 2px;
+  box-shadow: 0 0 4px #ffb74d;
+}
+
+#file-input { display: none; }
+
+
 /* ========================================== */
-/* ▼ フッター＆タブエリア基本スタイル ▼ */
+/* ▼ フッター（タグ一覧）基本スタイル ▼ */
 /* ========================================== */
 
-/* フッター本体 */
+/* フッター本体（重複を統合＆保護を追加） */
 .editor-footer {
   display: flex;
   flex-direction: column;
@@ -713,40 +635,43 @@
   overflow: hidden;
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
   transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ★絶対につぶれないよう保護 */
+  flex-shrink: 0 !important;
+  z-index: 100 !important;
 }
 
-/* 折りたたまれた（非表示）状態 */
+/* 折りたたまれた状態 */
 .editor-footer.collapsed {
-  height: 32px !important; /* タブバーの高さ（32px）だけ残して縮小 */
+  height: 32px !important;
 }
 
 /* タブバー全体コンテナ */
 .footer-tabs {
   display: flex;
   align-items: center;
-  background-color: #f5f5f7; /* 明るいグレー */
+  background-color: #f5f5f7;
   border-bottom: 1px solid #e0e0e0;
   height: 32px;
   flex-shrink: 0;
   position: relative;
   width: 100%;
-  overflow: hidden; /* 子要素のはみ出しを制御 */
+  overflow: hidden;
 }
 
-/* ★追加: タブボタン群を横スクロールさせるコンテナ */
+/* タブボタン群を横スクロールさせるコンテナ */
 .footer-tabs-scroll {
   display: flex;
   align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
-  flex: 1; /* 残りのスペースを全て埋める */
+  flex: 1;
   height: 100%;
-  -webkit-overflow-scrolling: touch; /* スマホでの滑らかなスクロール */
-  scrollbar-width: none; /* Firefoxスクロールバー非表示 */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
-/* スクロールバーを隠して見た目を綺麗にする（Chrome / Safari） */
 .footer-tabs-scroll::-webkit-scrollbar {
   display: none;
 }
@@ -766,7 +691,7 @@
   transition: all 0.2s;
   font-weight: 500;
   height: 100%;
-  flex-shrink: 0; /* スクロール時にボタンが潰れないように設定 */
+  flex-shrink: 0;
   white-space: nowrap;
   box-sizing: border-box;
 }
@@ -778,18 +703,18 @@
 
 .footer-tab-btn.active {
   background-color: #ffffff;
-  color: #1a73e8; /* アクティブ文字色（ブルー） */
+  color: #1a73e8;
   font-weight: bold;
-  border-bottom: 2px solid #1a73e8; /* アクティブ下線 */
+  border-bottom: 2px solid #1a73e8;
 }
 
-/* ★修正: 右端に常に固定表示される開閉ボタン */
+/* 右端に固定表示される開閉ボタン */
 .footer-toggle-btn {
   flex-shrink: 0;
   position: sticky;
   right: 0;
   z-index: 2;
-  background-color: #f5f5f7; /* スクロール要素が裏を透けないよう背景色を指定 */
+  background-color: #f5f5f7;
   border: none;
   border-left: 1px solid #e0e0e0;
   color: #666666;
@@ -803,7 +728,7 @@
   font-size: 0.75rem;
   font-weight: bold;
   transition: background-color 0.2s, color 0.2s;
-  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.05); /* 左側にうっすら影を入れて境界をわかりやすく */
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.05);
 }
 
 .footer-toggle-btn:hover {
@@ -819,13 +744,11 @@
   line-height: 1;
 }
 
-/* 矢印アイコンのアニメーション */
 #footer-toggle-icon {
   font-size: 0.7rem;
   transition: transform 0.25s ease;
 }
 
-/* 折りたたみ時に矢印を反転させる */
 .editor-footer.collapsed #footer-toggle-icon {
   transform: rotate(180deg);
 }
@@ -866,7 +789,6 @@
   white-space: nowrap;
 }
 
-/* スクロールバー（ライトテーマ用） */
 .tag-list-container::-webkit-scrollbar {
   height: 5px;
 }
@@ -881,7 +803,6 @@
   background: #aaaaaa;
 }
 
-/* 各サブグループ */
 .tag-sub-group {
   display: flex;
   flex-direction: column;
@@ -894,7 +815,6 @@
   flex-shrink: 0;
 }
 
-/* グループタイトル */
 .tag-sub-title {
   font-size: 0.72rem;
   color: #1a73e8;
@@ -907,7 +827,6 @@
   margin-bottom: 0;
 }
 
-/* ボタンを縦2段×横拡張するグリッド */
 .tag-grid {
   display: grid;
   grid-template-rows: repeat(2, 1fr);
@@ -915,7 +834,6 @@
   gap: 5px 6px;
 }
 
-/* タグチップ（ボタン） */
 .tag-chip {
   background-color: #f1f3f4;
   color: #3c4043;
