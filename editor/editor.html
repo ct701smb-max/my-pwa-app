@@ -690,13 +690,37 @@
   overflow: hidden;
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
   transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+  flex-shrink: 0; /* 画面の高さが足りなくてもフッターを絶対に縮めない */
+  z-index: 100;   /* 他の要素の後ろに隠れないように手前に配置 */
 }
 
 .editor-footer.collapsed {
   height: 32px !important;
 }
 
-/* 切替用タブボタンエリア */
+/* ========================================== */
+/* ▼ フッター＆タブエリア基本スタイル ▼ */
+/* ========================================== */
+
+/* フッター本体 */
+.editor-footer {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  height: 136px; /* 開いた状態の標準高さ */
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 折りたたまれた（非表示）状態 */
+.editor-footer.collapsed {
+  height: 32px !important; /* タブバーの高さ（32px）だけ残して縮小 */
+}
+
+/* タブバー全体コンテナ */
 .footer-tabs {
   display: flex;
   align-items: center;
@@ -704,9 +728,30 @@
   border-bottom: 1px solid #e0e0e0;
   height: 32px;
   flex-shrink: 0;
-  padding-right: 6px; /* 右端の開閉ボタン用の余白 */
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* 子要素のはみ出しを制御 */
 }
 
+/* ★追加: タブボタン群を横スクロールさせるコンテナ */
+.footer-tabs-scroll {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  flex: 1; /* 残りのスペースを全て埋める */
+  height: 100%;
+  -webkit-overflow-scrolling: touch; /* スマホでの滑らかなスクロール */
+  scrollbar-width: none; /* Firefoxスクロールバー非表示 */
+}
+
+/* スクロールバーを隠して見た目を綺麗にする（Chrome / Safari） */
+.footer-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* タブボタン */
 .footer-tab-btn {
   background: none;
   border: none;
@@ -721,6 +766,9 @@
   transition: all 0.2s;
   font-weight: 500;
   height: 100%;
+  flex-shrink: 0; /* スクロール時にボタンが潰れないように設定 */
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .footer-tab-btn:hover {
@@ -735,28 +783,32 @@
   border-bottom: 2px solid #1a73e8; /* アクティブ下線 */
 }
 
-/* 開閉ボタン（「タグ一覧」テキスト付き） */
+/* ★修正: 右端に常に固定表示される開閉ボタン */
 .footer-toggle-btn {
-  margin-left: auto; /* 右端に自動で寄せる */
-  background-color: #1a73e8; /* アクセントブルー */
-  color: #ffffff;
+  flex-shrink: 0;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: #f5f5f7; /* スクロール要素が裏を透けないよう背景色を指定 */
   border: none;
-  border-radius: 4px;
-  height: 24px;
-  padding: 0 10px;
+  border-left: 1px solid #e0e0e0;
+  color: #666666;
+  height: 100%;
+  padding: 0 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 0.75rem;
   font-weight: bold;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s, color 0.2s;
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.05); /* 左側にうっすら影を入れて境界をわかりやすく */
 }
 
 .footer-toggle-btn:hover {
-  background-color: #1557b0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  background-color: #ebebeb;
+  color: #111111;
 }
 
 .footer-toggle-btn:active {
@@ -767,18 +819,22 @@
   line-height: 1;
 }
 
-/* 矢印アイコンの回転処理 */
+/* 矢印アイコンのアニメーション */
 #footer-toggle-icon {
   font-size: 0.7rem;
   transition: transform 0.25s ease;
 }
 
-/* 開いている状態（.collapsedが付いていない時）は矢印を反転させて下向きに */
-.editor-footer:not(.collapsed) #footer-toggle-icon {
+/* 折りたたみ時に矢印を反転させる */
+.editor-footer.collapsed #footer-toggle-icon {
   transform: rotate(180deg);
 }
 
-/* 各タブの中身（コンテンツエリア） */
+
+/* ========================================== */
+/* ▼ コンテンツエリア（タグ一覧）スタイル ▼ */
+/* ========================================== */
+
 .footer-content-area {
   flex: 1;
   position: relative;
@@ -887,115 +943,54 @@
 .tag-chip:active {
   transform: scale(0.96);
 }
-/* --------------------------------------------------
-   既存のフッターCSSに追記する部分
--------------------------------------------------- */
 
-/* フッター本体 */
-.editor-footer {
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  border-top: 1px solid #e0e0e0;
-  height: 136px; /* 開いた状態の標準高さ */
-  box-sizing: border-box;
-  overflow: hidden;
-  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
-  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+/* ========================================== */
+/* ▼ レスポンシブスタイル（スマホ用） ▼ */
+/* ========================================== */
+@media (max-width: 768px) {
+  .sidebar-toggle-btn {
+    display: inline-block;
+  }
+
+  .brand span {
+    display: none;
+  }
+
+  .sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 260px;
+    transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  .toolbar-actions button .btn-text {
+    display: none;
+  }
+
+  .toolbar-actions button {
+    padding: 6px 8px;
+  }
+
+  .file-item .delete-btn {
+    opacity: 1;
+  }
+
+  .btn-real-dent {
+    font-size: 1.5rem;
+  }
 }
-
-/* 折りたたまれた（非表示）状態のCSS */
-.editor-footer.collapsed {
-  height: 32px !important; /* タブバーの高さ（32px）だけ残して縮小 */
-}
-
-/* タブバー内のレイアウト（開閉ボタンを右端へ固定） */
-.footer-tabs {
-  display: flex;
-  align-items: center;
-  background-color: #f5f5f7;
-  border-bottom: 1px solid #e0e0e0;
-  height: 32px;
-  flex-shrink: 0;
-  position: relative;
-}
-
-/* 開閉トグルボタン（右端に配置） */
-.footer-toggle-btn {
-  margin-left: auto; /* 右端に寄せる */
-  background: none;
-  border: none;
-  border-left: 1px solid #e0e0e0;
-  color: #666666;
-  height: 100%;
-  padding: 0 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.footer-toggle-btn:hover {
-  background-color: #ebebeb;
-  color: #111111;
-}
-
-/* アイコンのアニメーション */
-#footer-toggle-icon {
-  transition: transform 0.25s ease;
-}
-
-/* 折りたたみ時に矢印を上向きに反転 */
-.editor-footer.collapsed #footer-toggle-icon {
-  transform: rotate(180deg);
-}
-    /* ========================================== */
-    /* ▼ レスポンシブスタイル（スマホ用） ▼ */
-    /* ========================================== */
-    @media (max-width: 768px) {
-      .sidebar-toggle-btn {
-        display: inline-block;
-      }
-
-      .brand span {
-        display: none;
-      }
-
-      .sidebar {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 260px;
-        transform: translateX(-100%);
-        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .sidebar-overlay.open {
-        display: block;
-      }
-
-      .toolbar-actions button .btn-text {
-        display: none;
-      }
-
-      .toolbar-actions button {
-        padding: 6px 8px;
-      }
-
-      .file-item .delete-btn {
-        opacity: 1;
-      }
-
-       .btn-real-dent{
-        font-size: 1.5rem;
-        } 
-    }
 
 
   </style>
@@ -1169,36 +1164,41 @@
       <!-- フッター部分（タブ切替付きタグ一覧） -->
 <div class="editor-footer collapsed" id="editor-footer">
   <!-- 切替用タブボタン ＋ 開閉ボタン -->
-<div class="footer-tabs">
-  <button class="footer-tab-btn active" onclick="switchFooterTab('html')">
-    <i class="fa-brands fa-html5" style="color:#e34f26;"></i> HTML
-  </button>
-  <button class="footer-tab-btn" onclick="switchFooterTab('css')">
-    <i class="fa-brands fa-css3-alt" style="color:#1572b6;"></i> CSS
-  </button>
-  <button class="footer-tab-btn" onclick="switchFooterTab('js')">
-    <i class="fa-brands fa-js" style="color:#f7df1e;"></i> JavaScript
-  </button>
-  <!-- 記号タブボタン -->
-  <button class="footer-tab-btn" onclick="switchFooterTab('symbols')">
-    <i class="fa-solid fa-icons" style="color:#a6e22e;"></i> 記号
-  </button>
-  <!-- フォントタブボタン -->
-  <button class="footer-tab-btn" onclick="switchFooterTab('fonts')">
-    <i class="fa-solid fa-font" style="color:#ab47bc;"></i> フォント
-  </button>  
-  <!-- カラータブボタン -->
-  <button class="footer-tab-btn" onclick="switchFooterTab('colors')">
-    <i class="fa-solid fa-palette" style="color:#ff4081;"></i> カラー
-  </button>
+  <div class="footer-tabs">
+    
+    <!-- 横スクロール可能なエリア -->
+    <div class="footer-tabs-scroll">
+      <button class="footer-tab-btn active" onclick="switchFooterTab('html')">
+        <i class="fa-brands fa-html5" style="color:#e34f26;"></i> HTML
+      </button>
+      <button class="footer-tab-btn" onclick="switchFooterTab('css')">
+        <i class="fa-brands fa-css3-alt" style="color:#1572b6;"></i> CSS
+      </button>
+      <button class="footer-tab-btn" onclick="switchFooterTab('js')">
+        <i class="fa-brands fa-js" style="color:#f7df1e;"></i> JavaScript
+      </button>
+      <!-- 記号タブボタン -->
+      <button class="footer-tab-btn" onclick="switchFooterTab('symbols')">
+        <i class="fa-solid fa-icons" style="color:#a6e22e;"></i> 記号
+      </button>
+      <!-- フォントタブボタン -->
+      <button class="footer-tab-btn" onclick="switchFooterTab('fonts')">
+        <i class="fa-solid fa-font" style="color:#ab47bc;"></i> フォント
+      </button>  
+      <!-- カラータブボタン -->
+      <button class="footer-tab-btn" onclick="switchFooterTab('colors')">
+        <i class="fa-solid fa-palette" style="color:#ff4081;"></i> カラー
+      </button>
+    </div>
 
-  <!-- 開閉トグルボタン -->
-  <button class="footer-toggle-btn" onclick="toggleFooter()" title="タグ一覧を開閉(Alt + T)">
-    <i class="fa-solid fa-tags"></i>
-    <span class="toggle-btn-label">タグ一覧</span>
-    <i class="fa-solid fa-chevron-up" id="footer-toggle-icon"></i>
-  </button>
-</div>
+    <!-- 右端固定の開閉トグルボタン -->
+    <button class="footer-toggle-btn" onclick="toggleFooter()" title="タグ一覧を開閉(Alt + T)">
+      <i class="fa-solid fa-tags"></i>
+      <span class="toggle-btn-label">タグ一覧</span>
+      <i class="fa-solid fa-chevron-up" id="footer-toggle-icon"></i>
+    </button>
+
+  </div>
 
   <!-- 各タブの中身（コンテナ） -->
 <div class="footer-content-area">
