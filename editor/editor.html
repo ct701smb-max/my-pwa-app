@@ -60,6 +60,7 @@ header {
   z-index: 20;
   flex-shrink: 0; /* ヘッダーの高さを固定 */
   touch-action: pan-x pan-y;
+  overflow: visible !important; /* ★ ポップアップをはみ出させて表示するために必須 */
 }
 
 .brand {
@@ -86,6 +87,7 @@ header {
   display: flex;
   gap: 8px;
   align-items: center;
+  overflow: visible !important; /* ★ ポップアップ切り取り防止 */
 }
 
 button {
@@ -128,6 +130,110 @@ button.btn-primary:hover {
   text-decoration: none;
   box-sizing: border-box;
   font-size: 2.0rem;
+}
+
+/* ==================================================
+   ★ ヘッダー内検索バー（戻るボタンの左に配置）
+   ================================================== */
+.header-search-container {
+  display: flex;
+  align-items: center;
+  position: relative !important; /* ★ ポップアップの基準位置 */
+}
+
+/* 縮小時に表示される🔍アイコンボタン */
+.search-toggle-btn {
+  display: none;
+  background: #f0f0f0;
+  border: 1px solid #cccccc;
+  color: #333333;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* 検索バー本体（PC時） */
+.header-search-container .search-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f9f9f9;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #cccccc;
+  transition: all 0.2s ease;
+}
+
+.header-search-container .search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666666;
+}
+
+.header-search-container #search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #333333;
+  width: 110px;
+  font-size: 0.85rem;
+}
+
+.header-search-container #search-input::placeholder {
+  color: #999999;
+}
+
+/* 前へ・次へ用ボタン */
+.header-search-container .search-bar button {
+  padding: 3px 6px;
+  font-size: 0.75rem;
+  background: #ffffff;
+}
+
+.header-search-container .search-counter {
+  font-size: 0.75rem;
+  color: #666666;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+/* --- レスポンシブ（画面縮小・モバイル時: 768px以下） --- */
+@media (max-width: 768px) {
+  .toolbar-actions .btn-text {
+    display: none;
+  }
+
+  /* 🔍アイコンボタンを強制表示 */
+  .search-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 非表示時の検索窓 */
+  .header-search-container .search-bar {
+    display: none !important;
+  }
+
+  /* ★ active 時：位置を下（110px）に移動し、最前面に表示 */
+  .header-search-container.active .search-bar {
+    display: flex !important;
+    position: fixed !important;       /* 画面全体基準 */
+    top: 110px !important;             /* ★ 位置をさらに下へ移動（好みに合わせて 100px〜130px で調整可能） */
+    right: 12px !important;            /* 画面右端からの余白 */
+    left: auto !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    z-index: 99999 !important;        /* すべての要素より手前に表示 */
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #cccccc !important;
+    width: max-content !important;
+  }
+
+  .header-search-container #search-input {
+    width: 130px !important;
+  }
 }
 
 /* Main Container Layout */
@@ -988,30 +1094,50 @@ button.btn-primary:hover {
 
     </div>
     <div class="toolbar-actions">
-      <button onclick="undo()" title="元に戻す (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i><span class="btn-text"> 戻る</span></button>
-      <button onclick="redo()" title="やり直す (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i><span class="btn-text"> 進む</span></button>
-      <div style="width: 1px; height: 20px; background: #45475a; margin: 0 2px;"></div>
-      
-      <!-- 保存・読込エリア -->
-      <button onclick="saveCurrentFile()" title="選択中のファイルを保存">
-        <i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> 単体保存</span>
-      </button>
+    <!-- ★ 検索バーエリア（戻るボタンの左に配置） -->
+    <div class="header-search-container" id="header-search-container">
+      <!-- モバイル／縮小時に表示される検索アイコンボタン -->
+      <button class="search-toggle-btn" onclick="toggleHeaderSearch(event)" title="検索を開く/閉じる">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
 
-      <button onclick="saveAllAsZip()" title="全ファイルをZIPで保存">
-        <i class="fa-solid fa-file-zipper"></i><span class="btn-text"> すべて保存</span>
-      </button>
-
-      <button onclick="triggerLoadFile()" title="単体ファイルまたはZIPを選択">
-        <i class="fa-solid fa-folder-open"></i><span class="btn-text"> 読み込み</span>
-      </button>
-
-      <!-- ファイル選択用 input（zip や各種メディア・コードに対応） -->
-      <input type="file" id="file-input" style="display: none;" onchange="loadFile(event)" accept=".html,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.pdf,.mp3,.wav,.mp4,.zip">
-      <button class="btn-primary" onclick="openInBrowser()" title="プレビューを開く(Alt + P)">
-        <i class="fa-solid fa-globe"></i><span class="btn-text"> プレビュー</span>
-      </button>
+      <!-- 検索入力＆操作エリア -->
+      <div class="search-bar" id="search-bar">
+        <div class="search-input-group">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="search-input" placeholder="検索..." oninput="startSearch(true)" onkeydown="handleSearchKey(event)">
+        </div>
+        <button onclick="findPrev()" title="前へ (Shift+F3)"><i class="fa-solid fa-chevron-up"></i></button>
+        <button onclick="findNext()" title="次へ (F3)"><i class="fa-solid fa-chevron-down"></i></button>
+        <div class="search-counter" id="search-counter">0 / 0</div>
+      </div>
     </div>
-  </header>
+
+    <!-- 戻る・進むボタン -->
+    <button onclick="undo()" title="元に戻す (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i><span class="btn-text"> 戻る</span></button>
+    <button onclick="redo()" title="やり直す (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i><span class="btn-text"> 進む</span></button>
+    <div style="width: 1px; height: 20px; background: #45475a; margin: 0 2px;"></div>
+    
+    <!-- 保存・読込エリア -->
+    <button onclick="saveCurrentFile()" title="選択中のファイルを保存">
+      <i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> 単体保存</span>
+    </button>
+
+    <button onclick="saveAllAsZip()" title="全ファイルをZIPで保存">
+      <i class="fa-solid fa-file-zipper"></i><span class="btn-text"> すべて保存</span>
+    </button>
+
+    <button onclick="triggerLoadFile()" title="単体ファイルまたはZIPを選択">
+      <i class="fa-solid fa-folder-open"></i><span class="btn-text"> 読み込み</span>
+    </button>
+
+    <!-- ファイル選択用 input -->
+    <input type="file" id="file-input" style="display: none;" onchange="loadFile(event)" accept=".html,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.pdf,.mp3,.wav,.mp4,.zip">
+    <button class="btn-primary" onclick="openInBrowser()" title="プレビューを開く(Alt + P)">
+      <i class="fa-solid fa-globe"></i><span class="btn-text"> プレビュー</span>
+    </button>
+  </div>
+</header>
 
   <div class="main-container">
     
@@ -1056,141 +1182,116 @@ button.btn-primary:hover {
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
     <!-- Editor Area -->
-    <div class="editor-section">
-      <!-- Search Bar -->
-      <div class="search-bar" id="search-bar">
-        <div class="search-input-group">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="search-input" placeholder="検索..." oninput="startSearch(true)" onkeydown="handleSearchKey(event)">
+<div class="editor-section">
+  
+
+  <!-- フッター部分（タブ切替付きタグ一覧） -->
+  <div class="editor-footer collapsed" id="editor-footer">
+    <!-- 切替用タブボタン ＋ 開閉ボタン -->
+    <div class="footer-tabs">
+      <!-- 横スクロール可能なエリア -->
+      <div class="footer-tabs-scroll">
+        <button class="footer-tab-btn active" onclick="switchFooterTab('html')">
+          <i class="fa-brands fa-html5" style="color:#e34f26;"></i> HTML
+        </button>
+        <button class="footer-tab-btn" onclick="switchFooterTab('css')">
+          <i class="fa-brands fa-css3-alt" style="color:#1572b6;"></i> CSS
+        </button>
+        <button class="footer-tab-btn" onclick="switchFooterTab('js')">
+          <i class="fa-brands fa-js" style="color:#f7df1e;"></i> JavaScript
+        </button>
+        <!-- 記号タブボタン -->
+        <button class="footer-tab-btn" onclick="switchFooterTab('symbols')">
+          <i class="fa-solid fa-icons" style="color:#a6e22e;"></i> 記号
+        </button>
+        <!-- フォントタブボタン -->
+        <button class="footer-tab-btn" onclick="switchFooterTab('fonts')">
+          <i class="fa-solid fa-font" style="color:#ab47bc;"></i> フォント
+        </button>  
+        <!-- カラータブボタン -->
+        <button class="footer-tab-btn" onclick="switchFooterTab('colors')">
+          <i class="fa-solid fa-palette" style="color:#ff4081;"></i> カラー
+        </button>
+      </div>
+
+      <!-- 右端固定の開閉トグルボタン -->
+      <button class="footer-toggle-btn" onclick="toggleFooter()" title="タグ一覧を開閉(Alt + T)">
+        <i class="fa-solid fa-tags"></i>
+        <span class="toggle-btn-label">タグ一覧</span>
+        <i class="fa-solid fa-chevron-up" id="footer-toggle-icon"></i>
+      </button>
+    </div>
+
+    <!-- 各タブの中身（コンテナ） -->
+    <div class="footer-content-area">
+      <!-- HTMLタグ一覧 -->
+      <div id="footer-pane-html" class="footer-pane active">
+        <div class="tag-list-container">
+          <div class="tag-sub-group">
+            <div class="tag-sub-title"><i class="fa-solid fa-gear"></i> 基本設定</div>
+            <div class="tag-grid">
+              <span class="tag-chip" onclick="insertTag('&lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;')" title="CSSリンク">CSSリンク</span>
+              <span class="tag-chip" onclick="insertTag('&lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;')" title="JSリンク">JSリンク</span>
+              <span class="tag-chip" onclick="insertTag('&lt;meta charset=&quot;UTF-8&quot;&gt;')" title="文字コード">文字コード</span>
+              <span class="tag-chip" onclick="insertTag('&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;')" title="スマホ画面対応">スマホ画面対応</span>
+            </div>
+          </div>
+          
+          <div class="tag-sub-group">
+            <div class="tag-sub-title"><i class="fa-solid fa-cubes"></i> 構造・レイアウト</div>
+            <div class="tag-grid">
+              <span class="tag-chip" onclick="insertTag('&lt;!-- コメント --&gt;')" title="コメント">コメント</span>
+              <span class="tag-chip" onclick="insertTag('&lt;div class=&quot;&quot;&gt;\n  $0\n&lt;/div&gt;')" title="div要素">div</span>
+              <span class="tag-chip" onclick="insertTag('&lt;section&gt;\n  $0\n&lt;/section&gt;')" title="section要素">セクション</span>
+              <span class="tag-chip" onclick="insertTag('&lt;header&gt;\n  $0\n&lt;/header&gt;')" title="header要素">ヘッダー</span>
+              <span class="tag-chip" onclick="insertTag('&lt;main&gt;\n  $0\n&lt;/main&gt;')" title="main要素">メイン</span>
+              <span class="tag-chip" onclick="insertTag('&lt;footer&gt;\n  $0\n&lt;/footer&gt;')" title="footer要素">フッター</span>
+            </div>
+          </div>
+          
+          <div class="tag-sub-group">
+            <div class="tag-sub-title"><i class="fa-solid fa-font"></i> テキスト・コンテンツ</div>
+            <div class="tag-grid">
+              <span class="tag-chip" onclick="insertTag('&lt;h1&gt;$0&lt;/h1&gt;')" title="h1見出し">h1</span>
+              <span class="tag-chip" onclick="insertTag('&lt;h2&gt;$0&lt;/h2&gt;')" title="h2見出し">h2</span>
+              <span class="tag-chip" onclick="insertTag('&lt;p&gt;$0&lt;/p&gt;')" title="段落">段落</span>
+              <span class="tag-chip" onclick="insertTag('&lt;a href=&quot;アドレス$0&quot;&gt;テキスト&lt;/a&gt;')" title="リンク">リンク</span>
+              <span class="tag-chip" onclick="insertTag('&lt;span class=&quot;$0&quot;&gt;&lt;/span&gt;')" title="span要素">span</span>
+            </div>
+          </div>
+          
+          <div class="tag-sub-group">
+            <div class="tag-sub-title"><i class="fa-solid fa-photo-film"></i> メディア・コンテンツ</div>
+            <div class="tag-grid">
+              <span class="tag-chip" onclick="insertTag('&lt;img src=&quot;画像アドレス$0&quot; width=&quot;200&quot; height=&quot;200&quot; alt=&quot;説明文&quot;&gt;')" title="画像">画像</span>
+              <span class="tag-chip" onclick="insertTag('&lt;embed src=&quot;PDFファイル$0&quot; width=&quot;100%&quot; height=&quot;600px&quot;&gt;')" title="PDF">PDF</span>
+              <span class="tag-chip" onclick="insertTag('&lt;audio controls src=&quot;音楽ファイル$0&quot;&gt;&lt;/audio&gt;')" title="音楽">音楽</span>
+              <span class="tag-chip" onclick="insertTag('&lt;video controls width=&quot;400&quot; src=&quot;動画ファイル$0&quot;&gt;&lt;/video&gt;')" title="動画">動画</span>
+            </div>
+          </div>
+          
+          <div class="tag-sub-group">
+            <div class="tag-sub-title"><i class="fa-solid fa-list"></i> リスト・フォーム</div>
+            <div class="tag-grid">
+              <span class="tag-chip" onclick="insertTag('&lt;ul&gt;\n  &lt;li&gt;$0&lt;/li&gt;\n&lt;/ul&gt;')" title="箇条書きリスト">箇条書き</span>
+              <span class="tag-chip" onclick="insertTag('&lt;li&gt;$0&lt;/li&gt;')" title="リスト項目">リスト項目</span>
+              <span class="tag-chip" onclick="insertTag('&lt;button type=&quot;button&quot;&gt;$0&lt;/button&gt;')" title="ボタン">ボタン</span>
+              <span class="tag-chip" onclick="insertTag('&lt;input type=&quot;text&quot; placeholder=&quot;$0&quot;&gt;')" title="入力フォーム">入力フォーム</span>
+            </div>
+          </div>
+
+          <!-- リスト・フォームの横に配置したプリセットグループ -->
+          <div class="tag-sub-group">
+            <div class="tag-sub-title"><i class="fa-solid fa-file-code"></i> プリセット</div>
+            <div class="tag-grid">
+              <span class="tag-chip" onclick="insertTag('&lt;!DOCTYPE html&gt;\n&lt;html lang=&quot;ja&quot;&gt;\n&lt;head&gt;\n  &lt;meta charset=&quot;UTF-8&quot;&gt;\n  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;\n  &lt;title&gt;Document&lt;/title&gt;\n  &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;\n&lt;/head&gt;\n&lt;body&gt;\n  $0\n  &lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;\n&lt;/body&gt;\n&lt;/html&gt;')" title="HTML基本テンプレート">HTML一括生成</span>
+              <span class="tag-chip" onclick="insertTag('&lt;!-- メニュー部分 開始 --&gt;\n&lt;!-- ハンバーガーメニュー --&gt;\n&lt;div class=&quot;menu-toggle&quot; id=&quot;menu-toggle&quot;&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n&lt;/div&gt;\n&lt;!-- メニュー本体 --&gt;\n&lt;div id=&quot;menu&quot;&gt;\n  &lt;ul&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス$0&quot; target=&quot;_blank&quot;&gt;リンク１&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク２&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク３&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク４&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク５&lt;/a&gt;&lt;/li&gt;\n  &lt;/ul&gt;\n&lt;/div&gt;')" title="メニュー構造HTML">メニュー作成</span>
+            </div>
+          </div>
         </div>
-        <button onclick="findPrev()" title="前へ"><i class="fa-solid fa-chevron-up"></i></button>
-        <button onclick="findNext()" title="次へ"><i class="fa-solid fa-chevron-down"></i></button>
-        <div class="search-counter" id="search-counter">0 / 0</div>
-      </div>
-      
-      <div id="editor-wrapper">
-        <textarea id="code-editor"></textarea>
-      </div>
-      
-      <!-- Media View (Hidden by default) -->
-      <div id="media-view" class="media-preview" style="display: none;">
-        <div id="media-info" class="media-info" title="クリックしてファイル名をコピー" onclick="copyCurrentFileName()">
-        </div>
-        <div id="media-content" style="width:100%; flex: 1; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow: hidden;"></div>
       </div>
 
-      <!-- フッター部分（タブ切替付きタグ一覧） -->
-<div class="editor-footer collapsed" id="editor-footer">
-  <!-- 切替用タブボタン ＋ 開閉ボタン -->
-  <div class="footer-tabs">
-    
-    <!-- 横スクロール可能なエリア -->
-    <div class="footer-tabs-scroll">
-      <button class="footer-tab-btn active" onclick="switchFooterTab('html')">
-        <i class="fa-brands fa-html5" style="color:#e34f26;"></i> HTML
-      </button>
-      <button class="footer-tab-btn" onclick="switchFooterTab('css')">
-        <i class="fa-brands fa-css3-alt" style="color:#1572b6;"></i> CSS
-      </button>
-      <button class="footer-tab-btn" onclick="switchFooterTab('js')">
-        <i class="fa-brands fa-js" style="color:#f7df1e;"></i> JavaScript
-      </button>
-      <!-- 記号タブボタン -->
-      <button class="footer-tab-btn" onclick="switchFooterTab('symbols')">
-        <i class="fa-solid fa-icons" style="color:#a6e22e;"></i> 記号
-      </button>
-      <!-- フォントタブボタン -->
-      <button class="footer-tab-btn" onclick="switchFooterTab('fonts')">
-        <i class="fa-solid fa-font" style="color:#ab47bc;"></i> フォント
-      </button>  
-      <!-- カラータブボタン -->
-      <button class="footer-tab-btn" onclick="switchFooterTab('colors')">
-        <i class="fa-solid fa-palette" style="color:#ff4081;"></i> カラー
-      </button>
-    </div>
-
-    <!-- 右端固定の開閉トグルボタン -->
-    <button class="footer-toggle-btn" onclick="toggleFooter()" title="タグ一覧を開閉(Alt + T)">
-      <i class="fa-solid fa-tags"></i>
-      <span class="toggle-btn-label">タグ一覧</span>
-      <i class="fa-solid fa-chevron-up" id="footer-toggle-icon"></i>
-    </button>
-
-  </div>
-
-  <!-- 各タブの中身（コンテナ） -->
-<div class="footer-content-area">
- <!-- HTMLタグ一覧 -->
-<div id="footer-pane-html" class="footer-pane active">
-  <div class="tag-list-container">
-    <div class="tag-sub-group">
-      
-      <div class="tag-sub-title"><i class="fa-solid fa-gear"></i> 基本設定</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('&lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;')" title="CSSリンク">CSSリンク</span>
-        <span class="tag-chip" onclick="insertTag('&lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;')" title="JSリンク">JSリンク</span>
-        <span class="tag-chip" onclick="insertTag('&lt;meta charset=&quot;UTF-8&quot;&gt;')" title="文字コード">文字コード</span>
-        <span class="tag-chip" onclick="insertTag('&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;')" title="スマホ画面対応">スマホ画面対応</span>
-      </div>
-    </div>
-    
-    <div class="tag-sub-group">
-      
-      <div class="tag-sub-title"><i class="fa-solid fa-cubes"></i> 構造・レイアウト</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('&lt;!-- コメント --&gt;')" title="コメント">コメント</span>
-        <span class="tag-chip" onclick="insertTag('&lt;div class=&quot;&quot;&gt;\n  $0\n&lt;/div&gt;')" title="div要素">div</span>
-        <span class="tag-chip" onclick="insertTag('&lt;section&gt;\n  $0\n&lt;/section&gt;')" title="section要素">セクション</span>
-        <span class="tag-chip" onclick="insertTag('&lt;header&gt;\n  $0\n&lt;/header&gt;')" title="header要素">ヘッダー</span>
-        <span class="tag-chip" onclick="insertTag('&lt;main&gt;\n  $0\n&lt;/main&gt;')" title="main要素">メイン</span>
-        <span class="tag-chip" onclick="insertTag('&lt;footer&gt;\n  $0\n&lt;/footer&gt;')" title="footer要素">フッター</span>
-      </div>
-    </div>
-    
-    <div class="tag-sub-group">
-      <div class="tag-sub-title"><i class="fa-solid fa-font"></i> テキスト・コンテンツ</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('&lt;h1&gt;$0&lt;/h1&gt;')" title="h1見出し">h1</span>
-        <span class="tag-chip" onclick="insertTag('&lt;h2&gt;$0&lt;/h2&gt;')" title="h2見出し">h2</span>
-        <span class="tag-chip" onclick="insertTag('&lt;p&gt;$0&lt;/p&gt;')" title="段落">段落</span>
-        <span class="tag-chip" onclick="insertTag('&lt;a href=&quot;アドレス$0&quot;&gt;テキスト&lt;/a&gt;')" title="リンク">リンク</span>
-        <span class="tag-chip" onclick="insertTag('&lt;span class=&quot;$0&quot;&gt;&lt;/span&gt;')" title="span要素">span</span>
-      </div>
-    </div>
-    
-    <div class="tag-sub-group">
-      <div class="tag-sub-title"><i class="fa-solid fa-photo-film"></i> メディア・コンテンツ</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('&lt;img src=&quot;画像アドレス$0&quot; width=&quot;200&quot; height=&quot;200&quot; alt=&quot;説明文&quot;&gt;')" title="画像">画像</span>
-        <span class="tag-chip" onclick="insertTag('&lt;embed src=&quot;PDFファイル$0&quot; width=&quot;100%&quot; height=&quot;600px&quot;&gt;')" title="PDF">PDF</span>
-        <span class="tag-chip" onclick="insertTag('&lt;audio controls src=&quot;音楽ファイル$0&quot;&gt;&lt;/audio&gt;')" title="音楽">音楽</span>
-        <span class="tag-chip" onclick="insertTag('&lt;video controls width=&quot;400&quot; src=&quot;動画ファイル$0&quot;&gt;&lt;/video&gt;')" title="動画">動画</span>
-      </div>
-    </div>
-    
-    <div class="tag-sub-group">
-      <div class="tag-sub-title"><i class="fa-solid fa-list"></i> リスト・フォーム</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('&lt;ul&gt;\n  &lt;li&gt;$0&lt;/li&gt;\n&lt;/ul&gt;')" title="箇条書きリスト">箇条書き</span>
-        <span class="tag-chip" onclick="insertTag('&lt;li&gt;$0&lt;/li&gt;')" title="リスト項目">リスト項目</span>
-        <span class="tag-chip" onclick="insertTag('&lt;button type=&quot;button&quot;&gt;$0&lt;/button&gt;')" title="ボタン">ボタン</span>
-        <span class="tag-chip" onclick="insertTag('&lt;input type=&quot;text&quot; placeholder=&quot;$0&quot;&gt;')" title="入力フォーム">入力フォーム</span>
-      </div>
-    </div>
-
-    <!-- リスト・フォームの横に配置したプリセットグループ -->
-    <div class="tag-sub-group">
-      <div class="tag-sub-title"><i class="fa-solid fa-file-code"></i> プリセット</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('&lt;!DOCTYPE html&gt;\n&lt;html lang=&quot;ja&quot;&gt;\n&lt;head&gt;\n  &lt;meta charset=&quot;UTF-8&quot;&gt;\n  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;\n  &lt;title&gt;Document&lt;/title&gt;\n  &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;\n&lt;/head&gt;\n&lt;body&gt;\n  $0\n  &lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;\n&lt;/body&gt;\n&lt;/html&gt;')" title="HTML基本テンプレート">HTML一括生成</span>
-
-          <span class="tag-chip" onclick="insertTag('&lt;!-- メニュー部分 開始 --&gt;\n&lt;!-- ハンバーガーメニュー --&gt;\n&lt;div class=&quot;menu-toggle&quot; id=&quot;menu-toggle&quot;&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n&lt;/div&gt;\n&lt;!-- メニュー本体 --&gt;\n&lt;div id=&quot;menu&quot;&gt;\n  &lt;ul&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス$0&quot; target=&quot;_blank&quot;&gt;リンク１&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク２&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク３&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク４&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク５&lt;/a&gt;&lt;/li&gt;\n  &lt;/ul&gt;\n&lt;/div&gt;')" title="メニュー構造HTML">メニュー作成</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-  <!-- CSSスタイル一覧 -->
+<!-- CSSスタイル一覧 -->
 <div id="footer-pane-css" class="footer-pane">
   <div class="tag-list-container">
     <div class="tag-sub-group">
@@ -1240,7 +1341,7 @@ button.btn-primary:hover {
   </div>
 </div>
 
-  <!-- JavaScriptスニペット一覧 -->
+<!-- JavaScriptスニペット一覧 -->
 <div id="footer-pane-js" class="footer-pane">
   <div class="tag-list-container">
     <div class="tag-sub-group">
@@ -1435,12 +1536,25 @@ button.btn-primary:hover {
         <i class="fa-solid fa-copy"></i> 選択中の色をコピー
       </span>
     </div>
+      </div>
+    </div>
+  </div><!-- /.tag-list-container を閉じる -->
+</div><!-- /#footer-pane-colors を閉じる -->
+
+    </div><!-- /.footer-content-area -->
+  </div><!-- /#editor-footer -->
+
+  <!-- エディタ本体 -->
+  <div id="editor-wrapper">
+    <textarea id="code-editor"></textarea>
   </div>
-</div>
+  
+  <!-- Media View (Hidden by default) -->
+  <div id="media-view" class="media-preview" style="display: none;">
+    <div id="media-info" class="media-info" title="クリックしてファイル名をコピー" onclick="copyCurrentFileName()"></div>
+    <div id="media-content" style="width:100%; flex: 1; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow: hidden;"></div>
   </div>
-</div>
-    
-</div>
+</div><!-- /.editor-section -->
 
 <!-- 新規ファイル作成モーダル -->
 <div id="new-file-modal" onclick="closeNewFileModal()" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); align-items: center; justify-content: center; z-index: 9999;">
@@ -1467,11 +1581,9 @@ button.btn-primary:hover {
     </div>
   </div>
 </div>
-    
-      <!-- トースト通知 -->
-      <div id="toast" class="toast">ファイル名をコピーしました！</div>
-    </div>
-  </div>
+
+<!-- トースト通知 -->
+<div id="toast" class="toast">ファイル名をコピーしました！</div>
 
   <script>
 // ---Core State---
@@ -1556,65 +1668,45 @@ window.addEventListener('keydown', function(e) {
     }
   }
 });
-
-// --- CodeMirror のピンチイン/ピンチアウトによるフォントサイズ変更 ---
-(function initEditorPinchZoom(cmInstance) {
-  const wrapper = cmInstance.getWrapperElement();
+/**
+ * ヘッダー検索窓の開閉トグル
+ */
+function toggleHeaderSearch(event) {
+  // ボタンクリック時のイベントがdocument全体に届いて即座に閉じるのを防ぐ
+  if (event) {
+    event.stopPropagation();
+  }
   
-  let currentFontSize = 20;
-  const MIN_FONT_SIZE = 12;
-  const MAX_FONT_SIZE = 45;
+  const container = document.getElementById('header-search-container');
+  if (!container) return;
 
-  let startDistance = 0;
-  let initialFontSizeOnTouch = currentFontSize;
-  let isPinching = false;
+  const isActive = container.classList.toggle('active');
 
-  function getDistance(touch1, touch2) {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
+  // 開いた場合は入力欄へ自動フォーカス
+  if (isActive) {
+    setTimeout(() => {
+      const input = document.getElementById('search-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 50);
   }
+}
 
-  wrapper.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 2) {
-      startDistance = getDistance(e.touches[0], e.touches[1]);
-      initialFontSizeOnTouch = currentFontSize;
-      isPinching = true;
-    }
-  }, { passive: false });
+// ★ 画面のどこをクリックしても「検索領域以外」なら閉じる処理
+document.addEventListener('click', function(event) {
+  const container = document.getElementById('header-search-container');
+  if (!container) return;
 
-  wrapper.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 2 && startDistance > 0) {
-      e.preventDefault();
-      const currentDistance = getDistance(e.touches[0], e.touches[1]);
-      const scale = currentDistance / startDistance;
-
-      let newFontSize = initialFontSizeOnTouch * scale;
-      newFontSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, newFontSize));
-
-      currentFontSize = newFontSize;
-      wrapper.style.fontSize = `${currentFontSize}px`;
-    }
-  }, { passive: false });
-
-  function handlePinchEnd() {
-    if (isPinching) {
-      isPinching = false;
-      startDistance = 0;
-      cmInstance.refresh();
+  // 検索窓が開いている場合
+  if (container.classList.contains('active')) {
+    // クリックされた要素が header-search-container の内部でなければ閉じる
+    if (!container.contains(event.target)) {
+      container.classList.remove('active');
     }
   }
-
-  wrapper.addEventListener('touchend', (e) => {
-    if (e.touches.length < 2) {
-      handlePinchEnd();
-    }
-  });
-
-  wrapper.addEventListener('touchcancel', () => {
-    handlePinchEnd();
-  });
-})(editor);
+});
 
 // ---Events---
 editor.on("change", () => {
@@ -1632,8 +1724,31 @@ editor.on("change", () => {
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-  if (sidebar) sidebar.classList.toggle('open');
-  if (overlay) overlay.classList.toggle('open');
+  const footer = document.getElementById('editor-footer');
+  const footerIcon = document.getElementById('footer-toggle-icon');
+
+  if (!sidebar) return;
+
+  // 1. サイドバーとオーバーレイのトグル（クラス名 'open' に対応）
+  const isOpening = !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('open', isOpening);
+
+  // 2. ★ サイドバーを開くとき、タグ一覧（フッター）を自動的に閉じる
+  if (isOpening && footer && !footer.classList.contains('collapsed')) {
+    footer.classList.add('collapsed');
+
+    // トグルアイコンの向きも閉じている状態（上向きアイコン）に更新
+    if (footerIcon) {
+      footerIcon.classList.remove('fa-chevron-down');
+      footerIcon.classList.add('fa-chevron-up');
+    }
+
+    // エディタの表示崩れを防ぐ（CodeMirror等の場合）
+    if (typeof editor !== 'undefined' && editor && editor.refresh) {
+      editor.refresh();
+    }
+  }
 }
 
 function closeSidebar() {
@@ -2396,12 +2511,26 @@ async function loadFile(event) {
  */
 function toggleFooter() {
   const footer = document.getElementById('editor-footer');
+  const icon = document.getElementById('footer-toggle-icon');
+
   if (footer) {
     footer.classList.toggle('collapsed');
+    
+    // アイコンの向きを更新（閉じているときは up / 開いているときは down）
+    if (icon) {
+      if (footer.classList.contains('collapsed')) {
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+      } else {
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+      }
+    }
+
     if (typeof editor !== 'undefined' && editor) { editor.refresh(); }
   }
 }
-      
+
 // --- スニペット / タグ挿入機能 ---
 function insertTag(snippet) {
   if (isBinaryMediaFile(activeFileName)) {
@@ -2441,7 +2570,25 @@ function insertTag(snippet) {
   editor.focus();
 }
 
+/**
+ * タブの切り替えと自動開く処理
+ */
 function switchFooterTab(type) {
+  const footer = document.getElementById('editor-footer');
+  const icon = document.getElementById('footer-toggle-icon');
+
+  // 1. もしフッターが閉じている(collapsed)状態なら自動で開く
+  if (footer && footer.classList.contains('collapsed')) {
+    footer.classList.remove('collapsed');
+    
+    if (icon) {
+      icon.classList.remove('fa-chevron-up');
+      icon.classList.add('fa-chevron-down');
+    }
+
+    if (typeof editor !== 'undefined' && editor) { editor.refresh(); }
+  }
+
   const buttons = document.querySelectorAll('.footer-tab-btn');
   const panes = document.querySelectorAll('.footer-pane');
 
@@ -2455,7 +2602,7 @@ function switchFooterTab(type) {
     pane.classList.add('active');
   }
 
-  // ボタンの active 切り替え（onclick内の引数や data-tab 属性から対象ボタンを安全に特定）
+  // ボタンの active 切り替え
   buttons.forEach(btn => {
     const onclickAttr = btn.getAttribute('onclick') || '';
     if (onclickAttr.includes(`'${type}'`) || onclickAttr.includes(`"${type}"`)) {
