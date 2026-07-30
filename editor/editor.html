@@ -101,6 +101,19 @@ header {
     transform: translate(-28px, -90px) scale(3.15) !important;
     transform-origin: top left;
   }
+  /* ヘッダー全体の左右の余白と要素間の隙間を狭くする */
+  header {
+    padding: 6px 8px !important;
+    gap: 4px;
+  }
+
+  .brand {
+    gap: 4px !important; /* ホームとロゴの間隔を詰める */
+  }
+
+  .toolbar-actions {
+    gap: 4px !important; /* 右側のボタン同士の間隔を詰める */
+  }
 }
 /* モバイル用トグルボタン（PCでは隠す） */
 .sidebar-toggle-btn {
