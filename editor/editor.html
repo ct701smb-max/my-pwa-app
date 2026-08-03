@@ -79,42 +79,7 @@ header {
   display: block;
 }
 
-/* スマホ画面（768px以下）のレスポンシブ処理 */
-@media (max-width: 768px) {
-  /* 1. テキスト（Web Code EDITOR）を完全に非表示 */
-  .brand-logo-svg .logo-text {
-    display: none !important;
-  }
 
-  /* 2. SVG全体をホームボタンと同じ52pxの正方形枠にする */
-  .brand-logo-svg {
-    width: 52px !important;
-    height: 52px !important;
-    flex-shrink: 0; /* つぶれ防止 */
-    overflow: visible !important; /* 角丸や影の欠け防止 */
-    margin: 0 4px;
-  }
-
-  /* 3. 左側のアイコン部分の位置調整（Y方向をさらに上へ） */
-  .brand-logo-svg > g:first-of-type {
-    /* translate(-28px, -72px) : -62px から -72px にしてさらに上へ配置 */
-    transform: translate(-28px, -90px) scale(3.15) !important;
-    transform-origin: top left;
-  }
-  /* ヘッダー全体の左右の余白と要素間の隙間を狭くする */
-  header {
-    padding: 6px 8px !important;
-    gap: 4px;
-  }
-
-  .brand {
-    gap: 4px !important; /* ホームとロゴの間隔を詰める */
-  }
-
-  .toolbar-actions {
-    gap: 4px !important; /* 右側のボタン同士の間隔を詰める */
-  }
-}
 /* モバイル用トグルボタン（PCでは隠す） */
 .sidebar-toggle-btn {
   display: none;
@@ -238,45 +203,6 @@ button.btn-primary:hover {
   color: #666666;
   white-space: nowrap;
   padding: 0 4px;
-}
-
-/* --- レスポンシブ（画面縮小・モバイル時: 768px以下） --- */
-@media (max-width: 768px) {
-  .toolbar-actions .btn-text {
-    display: none;
-  }
-
-  /* 🔍アイコンボタンを強制表示 */
-  .search-toggle-btn {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* 非表示時の検索窓 */
-  .header-search-container .search-bar {
-    display: none !important;
-  }
-
-  /* ★ active 時：位置を下（110px）に移動し、最前面に表示 */
-  .header-search-container.active .search-bar {
-    display: flex !important;
-    position: fixed !important;       /* 画面全体基準 */
-    top: 110px !important;             /* ★ 位置をさらに下へ移動（好みに合わせて 100px〜130px で調整可能） */
-    right: 12px !important;            /* 画面右端からの余白 */
-    left: auto !important;
-    background: #ffffff !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-    z-index: 99999 !important;        /* すべての要素より手前に表示 */
-    padding: 8px 12px !important;
-    border-radius: 8px !important;
-    border: 1px solid #cccccc !important;
-    width: max-content !important;
-  }
-
-  .header-search-container #search-input {
-    width: 130px !important;
-  }
 }
 
 /* Main Container Layout */
@@ -631,7 +557,10 @@ button.btn-primary:hover {
   flex: 1;
   min-height: 0;
   position: relative;
-  touch-action: none; 
+  /* ❌ touch-action: none; を削除（縦スクロールを許可） */
+  touch-action: pan-y; 
+  /* 万が一の画面突き抜けを強力に防ぐ */
+  overflow: hidden; 
 }
 
 .CodeMirror {
@@ -770,10 +699,10 @@ button.btn-primary:hover {
 
 
 /* ========================================== */
-/* ▼ フッター（タグ一覧）基本スタイル ▼ */
+/* ▼ タグ一覧基本スタイル ▼ */
 /* ========================================== */
 
-/* フッター本体（重複を統合＆保護を追加） */
+/* タグ一覧本体（重複を統合＆保護を追加） */
 .editor-footer {
   display: flex;
   flex-direction: column;
@@ -1011,17 +940,517 @@ button.btn-primary:hover {
   transform: scale(0.96);
 }
 
+/* ==========================================
+   カラーピッカー
+========================================== */
 
+/* 現在選択中の色プレビュー枠 */
+#color-preview-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  padding: 3px;
+  background: #ffffff;
+  border: 2px solid #ddd;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.2s, border-color 0.2s;
+}
+#color-preview-box:hover {
+  transform: scale(1.05);
+  border-color: #1976D2;
+}
+#color-preview-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+}
+
+/* モーダル背景（オーバーレイ） */
+.color-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100000;
+  justify-content: center;
+  align-items: center;
+}
+.color-modal-overlay.active {
+  display: flex;
+}
+
+/* モーダル本体 */
+.color-modal-content {
+  background: #ffffff;
+  width: 90%;
+  max-width: 360px;
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: modalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* 閉じるボタン */
+.color-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #888;
+  cursor: pointer;
+}
+
+/* 情報パネル (スポイト / HEX / RGB) */
+.color-info-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 20px;
+  background: #f5f5f7;
+  padding: 10px 14px;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+/* スポイトボタン */
+#eyedropper-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  color: #333;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+#eyedropper-btn:hover {
+  background: #1976D2;
+  color: #fff;
+}
+
+/* モーダル内の入力フィールド全体 */
+.color-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 8px;
+}
+.input-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.input-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #666;
+}
+
+/* --- HEX ( # 固定表示ラッパー ) --- */
+.hex-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0 8px;
+  width: 140px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.hex-input-wrapper:focus-within {
+  border-color: #1976D2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+.hex-prefix {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: bold;
+  color: #888;
+  user-select: none; /* ドラッグ選択不可 */
+}
+.hex-input-wrapper input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 4px 2px !important;
+  width: 100% !important;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: left !important;
+  text-transform: uppercase;
+  background: transparent !important;
+}
+
+/* --- RGB ( 3分割フォーム R / G / B ) --- */
+.rgb-inputs-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rgb-sub-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #888;
+  margin-left: 2px;
+}
+.rgb-inputs-wrapper input {
+  width: 38px !important;
+  padding: 4px 2px !important;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center !important;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  /* 上下矢印（スピンボタン）の非表示 */
+  -moz-appearance: textfield;
+}
+.rgb-inputs-wrapper input::-webkit-outer-spin-button,
+.rgb-inputs-wrapper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.rgb-inputs-wrapper input:focus {
+  border-color: #1976D2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+/* カラー履歴セクション */
+.color-history-section {
+  width: 100%;
+  margin-top: 14px;
+}
+.history-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #888;
+  margin-bottom: 6px;
+  text-align: left;
+}
+.history-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 28px;
+}
+.history-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.history-chip:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+/* 決定ボタン */
+.color-apply-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: #1976D2;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  /* ★ テキストの中央揃え設定 */
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-apply-btn:hover {
+  background: #1565C0;
+}
+
+/* ==========================================
+   モーダル共通スタイル
+   ========================================== */
+/* オーバーレイ（背景） */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  outline: none;
+}
+
+/* モーダルコンテンツ領域 */
+.modal-content {
+  background: #ffffff;
+  color: #333333;
+  padding: 20px;
+  border-radius: 8px;
+  width: 320px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+/* ダイアログタイトル */
+.modal-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  color: #222222;
+}
+
+/* 削除用タイトルの色変更 */
+.modal-title.danger {
+  color: #d9534f;
+  margin-bottom: 12px;
+}
+
+/* フォームラベル */
+.modal-label {
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 4px;
+  color: #555555;
+  font-weight: bold;
+}
+
+/* テキスト入力・セレクトボックス */
+.modal-input,
+.modal-select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #333333;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.modal-select {
+  cursor: pointer;
+}
+
+.modal-input:focus,
+.modal-select:focus {
+  outline: none;
+  border-color: #007acc;
+  background: #ffffff;
+}
+
+/* 削除・確認メッセージ */
+.modal-message {
+  font-size: 0.85rem;
+  color: #555555;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+/* ボタン配置コンテナ */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ボタン共通 */
+.modal-btn {
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border: none;
+}
+
+/* 各種ボタンバリエーション */
+.modal-btn.cancel {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  color: #555555;
+}
+
+.modal-btn.primary {
+  background: #007acc;
+  color: #ffffff;
+}
+
+.modal-btn.warning {
+  background: #ff9800;
+  color: #ffffff;
+}
+
+.modal-btn.danger {
+  background: #d9534f;
+  color: #ffffff;
+}
+
+/* アイコン色定義 */
+.icon-blue { color: #007acc; }
+.icon-orange { color: #ff9800; }
+
+/* ==========================================
+   リネーム・移動専用モーダル
+   ========================================== */
+.rename-input-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+
+.rename-input {
+  width: 100%;
+  border: none;
+  padding: 8px 0;
+  outline: none;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.rename-ext {
+  font-size: 12px;
+  color: #888;
+  font-family: monospace;
+  white-space: nowrap;
+}
+      
 /* ========================================== */
-/* ▼ レスポンシブスタイル（スマホ用） ▼ */
+/* ▼ レスポンシブスタイル（スマホ用: 768px以下） ▼ */
 /* ========================================== */
 @media (max-width: 768px) {
-  .sidebar-toggle-btn {
-    display: inline-block;
+
+  /* --- 1. ヘッダー & ブランドロゴ (Header & Brand) --- */
+  header {
+    padding: 6px 8px !important;
+    gap: 4px;
+  }
+
+  .brand {
+    gap: 4px !important; /* ホームとロゴの間隔を詰める */
   }
 
   .brand span {
     display: none;
+  }
+
+  /* テキスト（Web Code EDITOR）を完全に非表示 */
+  .brand-logo-svg .logo-text {
+    display: none !important;
+  }
+
+  /* SVG全体をホームボタンと同じ52pxの正方形枠にする */
+  .brand-logo-svg {
+    width: 52px !important;
+    height: 52px !important;
+    flex-shrink: 0; /* つぶれ防止 */
+    overflow: visible !important; /* 角丸や影の欠け防止 */
+    margin: 0 4px;
+  }
+
+  /* 左側のアイコン部分の位置調整（Y方向をさらに上へ） */
+  .brand-logo-svg > g:first-of-type {
+    /* translate(-28px, -72px) : -62px から -72px にしてさらに上へ配置 */
+    transform: translate(-28px, -90px) scale(3.15) !important;
+    transform-origin: top left;
+  }
+
+
+  /* --- 2. 検索機能 (Header Search) --- */
+  /* 🔍アイコンボタンを強制表示 */
+  .search-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 非表示時の検索窓 */
+  .header-search-container .search-bar {
+    display: none !important;
+  }
+
+  /* ★ active 時：位置を下（110px）に移動し、最前面に表示 */
+  .header-search-container.active .search-bar {
+    display: flex !important;
+    position: fixed !important;       /* 画面全体基準 */
+    top: 110px !important;             /* ★ 位置をさらに下へ移動（好みに合わせて 100px〜130px で調整可能） */
+    right: 12px !important;            /* 画面右端からの余白 */
+    left: auto !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    z-index: 99999 !important;        /* すべての要素より手前に表示 */
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #cccccc !important;
+    width: max-content !important;
+  }
+
+  .header-search-container #search-input {
+    width: 130px !important;
+  }
+
+
+  /* --- 3. ツールバー & アクションボタン (Toolbar Actions) --- */
+  .toolbar-actions {
+    gap: 4px !important; /* 右側のボタン同士の間隔を詰める */
+  }
+
+  .toolbar-actions button {
+    padding: 6px 8px;
+  }
+
+  .toolbar-actions .btn-text,
+  .toolbar-actions button .btn-text {
+    display: none;
+  }
+
+  .btn-real-dent {
+    font-size: 1.5rem;
+  }
+
+
+  /* --- 4. サイドバー & ファイルツリー (Sidebar & File Tree) --- */
+  .sidebar-toggle-btn {
+    display: inline-block;
   }
 
   .sidebar {
@@ -1042,21 +1471,10 @@ button.btn-primary:hover {
     display: block;
   }
 
-  .toolbar-actions button .btn-text {
-    display: none;
-  }
-
-  .toolbar-actions button {
-    padding: 6px 8px;
-  }
-
   .file-item .delete-btn {
     opacity: 1;
   }
 
-  .btn-real-dent {
-    font-size: 1.5rem;
-  }
 }
 
 
@@ -1075,7 +1493,7 @@ button.btn-primary:hover {
   <i class="fa fa-home" aria-hidden="true"></i>
 </a>
 
-<!-- ★ SVGに class="brand-logo-svg" を追加 -->
+<!-- ロゴマーク -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" class="brand-logo-svg">
   <defs>
     <!-- グラデーション定義 -->
@@ -1115,7 +1533,7 @@ button.btn-primary:hover {
     <line x1="50" y1="72" x2="50" y2="80" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
   </g>
 
-  <!-- ★ テキストロゴ（class="logo-text" を追加） -->
+  <!-- テキストロゴ -->
   <g class="logo-text" transform="translate(102, 0)">
     <!-- Web Code -->
     <text x="0" y="62" font-family="'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" font-size="38" font-weight="800" fill="#222222" letter-spacing="-0.5">
@@ -1134,7 +1552,7 @@ button.btn-primary:hover {
 
     </div>
     <div class="toolbar-actions">
-    <!-- ★ 検索バーエリア（戻るボタンの左に配置） -->
+    <!-- 検索バーエリア -->
     <div class="header-search-container" id="header-search-container">
       <!-- モバイル／縮小時に表示される検索アイコンボタン -->
       <button class="search-toggle-btn" onclick="toggleHeaderSearch(event)" title="検索を開く/閉じる">
@@ -1173,7 +1591,7 @@ button.btn-primary:hover {
 
     <!-- ファイル選択用 input -->
     <input type="file" id="file-input" style="display: none;" onchange="loadFile(event)" accept=".html,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.pdf,.mp3,.wav,.mp4,.zip">
-    <button class="btn-primary" onclick="openInBrowser()" title="プレビューを開く(Alt + P)">
+    <button class="btn-primary" onclick="openInBrowser()" title="プレビューを開く(Ctrl + P)">
       <i class="fa-solid fa-globe"></i><span class="btn-text"> プレビュー</span>
     </button>
   </div>
@@ -1182,41 +1600,55 @@ button.btn-primary:hover {
   <div class="main-container">
     
     <!-- Sidebar (ファイル一覧) -->
-    <div class="sidebar" id="sidebar">
-      <div class="category-container">
-        <!-- ファイルセクションヘッダー -->
-        <div class="sidebar-header">
-          <span>ファイル一覧</span>
-          <button onclick="addNewFile()" style="padding: 2px 6px;"><i class="fa-solid fa-plus" title="新規ファイル追加"></i></button>
-        </div>
-
-        <!-- カテゴリー1: Webソースコード -->
-        <div class="category-group" id="group-web">
-          <div class="category-title" onclick="toggleCategory('group-web')">
-            <span><i class="fa-solid fa-code" style="margin-right:6px;"></i>Webソースコード</span>
-            <i class="fa-solid fa-chevron-down chevron"></i>
-          </div>
-          <!-- フォルダ階層に対応するコンテナ -->
-          <div class="folder-container" id="folder-container-web">
-            <!-- ルート直下のファイルが配置される場所 -->
-            <ul class="file-list" id="file-list-web"></ul>
-          </div>
-        </div>
-
-        <!-- カテゴリー2: メディア・アセット -->
-        <div class="category-group" id="group-media">
-          <div class="category-title" onclick="toggleCategory('group-media')">
-            <span><i class="fa-solid fa-photo-film" style="margin-right:6px;"></i>メディアファイル</span>
-            <i class="fa-solid fa-chevron-down chevron"></i>
-          </div>
-          <!-- フォルダ階層に対応するコンテナ -->
-          <div class="folder-container" id="folder-container-media">
-            <!-- ルート直下のメディアファイルが配置される場所 -->
-            <ul class="file-list" id="file-list-media"></ul>
-          </div>
-        </div>
+<div class="sidebar" id="sidebar">
+  <div class="category-container">
+    <!-- ファイルセクションヘッダー -->
+    <div class="sidebar-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px;">
+      <!-- タイトル -->
+      <span style="font-weight: bold;">ファイル一覧</span>
+      
+      <!-- タイトルの下に配置するボタンエリア -->
+      <div style="display: flex; gap: 6px; width: 100%;">
+        <!-- 新規ファイル追加ボタン -->
+        <button onclick="addNewFile()" style="flex: 1; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;" title="新規ファイル作成">
+          <i class="fa-solid fa-file-circle-plus"></i>
+          <span>ファイル作成</span>
+        </button>
+        <!-- 新規フォルダ追加ボタン -->
+        <button onclick="addNewFolder()" style="flex: 1; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;" title="新規フォルダ作成">
+          <i class="fa-solid fa-folder-plus"></i>
+          <span>フォルダ作成</span>
+        </button>
       </div>
     </div>
+
+    <!-- カテゴリー1: Webソースコード -->
+    <div class="category-group" id="group-web">
+      <div class="category-title" onclick="toggleCategory('group-web')">
+        <span><i class="fa-solid fa-code" style="margin-right:6px;"></i>Webソースコード</span>
+        <i class="fa-solid fa-chevron-down chevron"></i>
+      </div>
+      <!-- フォルダ階層に対応するコンテナ -->
+      <div class="folder-container" id="folder-container-web">
+        <!-- ルート直下のファイルが配置される場所 -->
+        <ul class="file-list" id="file-list-web"></ul>
+      </div>
+    </div>
+
+    <!-- カテゴリー2: メディア・アセット -->
+    <div class="category-group" id="group-media">
+      <div class="category-title" onclick="toggleCategory('group-media')">
+        <span><i class="fa-solid fa-photo-film" style="margin-right:6px;"></i>メディアファイル</span>
+        <i class="fa-solid fa-chevron-down chevron"></i>
+      </div>
+      <!-- フォルダ階層に対応するコンテナ -->
+      <div class="folder-container" id="folder-container-media">
+        <!-- ルート直下のメディアファイルが配置される場所 -->
+        <ul class="file-list" id="file-list-media"></ul>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- モバイル背景オーバーレイ -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -1225,7 +1657,7 @@ button.btn-primary:hover {
 <div class="editor-section">
   
 
-  <!-- フッター部分（タブ切替付きタグ一覧） -->
+  <!-- タブ切替付きタグ一覧 -->
   <div class="editor-footer collapsed" id="editor-footer">
     <!-- 切替用タブボタン ＋ 開閉ボタン -->
     <div class="footer-tabs">
@@ -1304,7 +1736,7 @@ button.btn-primary:hover {
             <div class="tag-sub-title"><i class="fa-solid fa-photo-film"></i> メディア・コンテンツ</div>
             <div class="tag-grid">
               <span class="tag-chip" onclick="insertTag('&lt;img src=&quot;画像アドレス$0&quot; width=&quot;200&quot; height=&quot;200&quot; alt=&quot;説明文&quot;&gt;')" title="画像">画像</span>
-              <span class="tag-chip" onclick="insertTag('&lt;embed src=&quot;PDFファイル$0&quot; width=&quot;100%&quot; height=&quot;600px&quot;&gt;')" title="PDF">PDF</span>
+              <span class="tag-chip" onclick="insertTag('&lt;embed src=&quot;PDFファイル$0&quot; width=&quot;50%&quot; height=&quot;400px&quot;&gt;')" title="PDF">PDF</span>
               <span class="tag-chip" onclick="insertTag('&lt;audio controls src=&quot;音楽ファイル$0&quot;&gt;&lt;/audio&gt;')" title="音楽">音楽</span>
               <span class="tag-chip" onclick="insertTag('&lt;video controls width=&quot;400&quot; src=&quot;動画ファイル$0&quot;&gt;&lt;/video&gt;')" title="動画">動画</span>
             </div>
@@ -1544,12 +1976,14 @@ button.btn-primary:hover {
     <div class="tag-sub-group">
       <div class="tag-sub-title"><i class="fa-solid fa-swatchbook"></i> 基本カラー (HEX)</div>
       <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('#ffffff')" title="白">#ffffff (白)</span>
+        <span class="tag-chip" onclick="insertTag('#FFFFFF')" title="白">#FFFFFF (白)</span>
         <span class="tag-chip" onclick="insertTag('#000000')" title="黒">#000000 (黒)</span>
-        <span class="tag-chip" onclick="insertTag('#ff0000')" title="赤">#ff0000 (赤)</span>
-        <span class="tag-chip" onclick="insertTag('#00ff00')" title="緑">#00ff00 (緑)</span>
-        <span class="tag-chip" onclick="insertTag('#0000ff')" title="青">#0000ff (青)</span>
-        <span class="tag-chip" onclick="insertTag('#ffff00')" title="黄">#ffff00 (黄)</span>
+        <span class="tag-chip" onclick="insertTag('#FF0000')" title="赤">#FF0000 (赤)</span>
+        <span class="tag-chip" onclick="insertTag('#00FF00')" title="緑">#00FF00 (緑)</span>
+        <span class="tag-chip" onclick="insertTag('#0000FF')" title="青">#0000FF (青)</span>
+        <span class="tag-chip" onclick="insertTag('#FFFF00')" title="黄">#FFFF00 (黄)</span>
+        <span class="tag-chip" onclick="insertTag('#00FFFF')" title="水">#00FFFF (水)</span>
+        <span class="tag-chip" onclick="insertTag('#FF00FF')" title="紫">#FF00FF (紫)</span>
       </div>
     </div>
 
@@ -1563,21 +1997,92 @@ button.btn-primary:hover {
       </div>
     </div>
 
-      <!-- カラーピッカー -->
+     <!-- カラーピッカー領域 -->
 <div class="tag-sub-group">
   <div class="tag-sub-title"><i class="fa-solid fa-droplet"></i> カラーピッカー</div>
   <div class="tag-grid">
-    <div class="color-picker-container" style="display: flex; align-items: center; gap: 8px;">
-      <!-- カラー選択 -->
-      <input type="color" id="tag-color-picker" value="#ff0000" style="cursor: pointer; border: none; width: 36px; height: 36px; border-radius: 6px; padding: 0; background: none;">
+    <div class="color-picker-container" style="display: flex; align-items: center; gap: 12px;">
       
-      <!-- ボタン -->
+      <!-- 現在選択中の色のプレビュー枠 -->
+      <div id="color-preview-box" onclick="openCircularColorPicker()" title="クリックで大型カラーパレットを開く">
+        <div id="color-preview-inner" style="background-color: #FF0000;"></div>
+      </div>
+      
+      <!-- カラーコード表示 -->
+      <span id="current-hex-display" style="font-weight: bold; font-family: monospace; font-size: 15px;">#FF0000</span>
+
+      <!-- コピーボタン -->
       <span class="tag-chip" onclick="copyCurrentColor()" title="選択中のカラーコードをコピー">
         <i class="fa-solid fa-copy"></i> 選択中の色をコピー
       </span>
     </div>
+  </div>
+</div>
+
+<!-- 大型円形カラーパレット -->
+<div id="custom-color-modal" class="color-modal-overlay" onclick="closeColorPickerOnOverlay(event)">
+  <div class="color-modal-content">
+    <button class="color-modal-close" onclick="closeCircularColorPicker()">&times;</button>
+    <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #333;">カラー選択</h3>
+    
+    <!-- 円形カラーピッカー描画エリア -->
+    <div id="iro-picker-container"></div>
+
+    <!-- 情報・操作パネル -->
+    <div class="color-info-panel">
+      <!-- スポイトボタン -->
+      <button id="eyedropper-btn" onclick="activateEyeDropper()" title="画面から色を取得">
+        <i class="fa-solid fa-eye-dropper"></i>
+      </button>
+
+      <!-- RGB ＆ HEX 直接入力エリア -->
+<div class="color-inputs">
+  <!-- HEX  -->
+  <div class="input-row">
+  <span class="input-label">カラーコード:</span>
+  <div class="hex-input-wrapper">
+    <span class="hex-prefix">#</span>
+    <input type="text" id="modal-hex-input" value="FF0000" maxlength="6"
+           oninput="handleHexInput(this.value)"
+           onfocus="this.select()">
+  </div>
+</div>
+
+  <!-- RGB -->
+  <div class="input-row">
+    <span class="input-label">RGB:</span>
+    <div class="rgb-inputs-wrapper">
+      <span class="rgb-sub-label">R</span>
+      <input type="number" id="modal-r-input" min="0" max="255" value="255"
+             oninput="handleRgbInputs()"
+             onfocus="this.select()">
+      <span class="rgb-sub-label">G</span>
+      <input type="number" id="modal-g-input" min="0" max="255" value="0"
+             oninput="handleRgbInputs()"
+             onfocus="this.select()">
+      <span class="rgb-sub-label">B</span>
+      <input type="number" id="modal-b-input" min="0" max="255" value="0"
+             oninput="handleRgbInputs()"
+             onfocus="this.select()">
+    </div>
+  </div>
+</div>
+    </div>
+
+    <!-- カラー履歴表示エリア -->
+    <div class="color-history-section">
+      <div class="history-label">カラー履歴</div>
+      <div class="history-chips" id="color-history-container">
+        <!-- JSで動的に履歴チップを追加 -->
       </div>
     </div>
+
+    <button class="color-apply-btn" onclick="applyAndCopyColor()">決定 ＆ コピー</button>
+  </div>
+</div>
+
+<!-- iRO.js の読み込み -->
+<script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
   </div><!-- /.tag-list-container を閉じる -->
 </div><!-- /#footer-pane-colors を閉じる -->
 
@@ -1589,24 +2094,27 @@ button.btn-primary:hover {
     <textarea id="code-editor"></textarea>
   </div>
   
-  <!-- Media View (Hidden by default) -->
+    <!-- メディアファイルのプレビュー表示 -->
   <div id="media-view" class="media-preview" style="display: none;">
     <div id="media-info" class="media-info" title="クリックしてファイル名をコピー" onclick="copyCurrentFileName()"></div>
     <div id="media-content" style="width:100%; flex: 1; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow: hidden;"></div>
   </div>
 </div><!-- /.editor-section -->
 
-<!-- 新規ファイル作成モーダル -->
-<div id="new-file-modal" onclick="closeNewFileModal()" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); align-items: center; justify-content: center; z-index: 9999;">
-  <!-- カード本体（クリックイベントの伝播を防止） -->
-  <div onclick="event.stopPropagation()" style="background: #ffffff; color: #333333; padding: 20px; border-radius: 8px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid #e0e0e0;">
-    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 1rem; color: #222222;"><i class="fa-solid fa-file-circle-plus" style="color: #007acc;"></i> 新規ファイル作成</h3>
+<!-- ① 新規ファイル作成モーダル -->
+<div id="new-file-modal" class="modal-overlay" onclick="closeNewFileModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 class="modal-title">
+      <i class="fa-solid fa-file-circle-plus icon-blue"></i> 新規ファイル作成
+    </h3>
     
-    <label style="font-size: 0.85rem; display: block; margin-bottom: 4px; color: #555555; font-weight: bold;">ファイル名</label>
-    <input type="text" id="new-filename-input" placeholder="例: main, index, data" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: #f9f9f9; color: #333333; box-sizing: border-box; margin-bottom: 12px; font-size: 0.9rem;">
+    <!-- ファイル名 -->
+    <label class="modal-label">ファイル名</label>
+    <input type="text" id="new-filename-input" class="modal-input" placeholder="例: index, style, app" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmAddNewFile(); }">
     
-    <label style="font-size: 0.85rem; display: block; margin-bottom: 4px; color: #555555; font-weight: bold;">拡張子</label>
-    <select id="new-file-ext-select" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: #f9f9f9; color: #333333; box-sizing: border-box; margin-bottom: 20px; font-size: 0.9rem; cursor: pointer;">
+    <!-- 拡張子選択 -->
+    <label class="modal-label">拡張子</label>
+    <select id="new-file-ext-select" class="modal-select" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmAddNewFile(); }">
       <option value=".html">.html (HTML)</option>
       <option value=".css">.css (CSS)</option>
       <option value=".js">.js (JavaScript)</option>
@@ -1615,9 +2123,108 @@ button.btn-primary:hover {
       <option value=".md">.md (Markdown)</option>
     </select>
 
-    <div style="display: flex; justify-content: flex-end; gap: 8px;">
-      <button type="button" onclick="closeNewFileModal()" style="padding: 6px 14px; background: #f0f0f0; border: 1px solid #ccc; color: #555555; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">キャンセル</button>
-      <button type="button" onclick="confirmAddNewFile()" style="padding: 6px 14px; background: #007acc; border: none; color: #ffffff; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">作成</button>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn cancel" onclick="closeNewFileModal()">キャンセル</button>
+      <button type="button" class="modal-btn primary" onclick="confirmAddNewFile()">作成</button>
+    </div>
+  </div>
+</div>
+
+<!-- ファイル削除確認モーダル -->
+<div id="delete-file-modal" class="modal-overlay" tabindex="0" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmDeleteFile(); }" onclick="closeDeleteFileModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 class="modal-title danger">
+      <i class="fa-solid fa-trash-can"></i> ファイルの削除
+    </h3>
+    <p id="delete-file-message" class="modal-message">
+      このファイルを削除してもよろしいですか？
+    </p>
+    
+    <div class="modal-actions">
+      <button type="button" class="modal-btn cancel" onclick="closeDeleteFileModal()">キャンセル</button>
+      <button type="button" class="modal-btn danger" onclick="confirmDeleteFile()">削除</button>
+    </div>
+  </div>
+</div>      
+      
+<!-- ② 新規フォルダ作成モーダル -->
+<div id="new-folder-modal" class="modal-overlay" onclick="closeNewFolderModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 class="modal-title">
+      <i class="fa-solid fa-folder-plus icon-orange"></i> 新規フォルダ作成
+    </h3>
+
+    <!-- 対象カテゴリ -->
+    <label class="modal-label">対象カテゴリ</label>
+    <select id="new-folder-category-select" class="modal-select" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmAddNewFolder(); }">
+      <option value="web">Webソースコード用</option>
+      <option value="media">メディア用</option>
+    </select>
+
+    <!-- フォルダ名 -->
+    <label class="modal-label">フォルダ名</label>
+    <input type="text" id="new-foldername-input" class="modal-input" placeholder="例: css, js, assets, images" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmAddNewFolder(); }">
+
+    <div class="modal-actions">
+      <button type="button" class="modal-btn cancel" onclick="closeNewFolderModal()">キャンセル</button>
+      <button type="button" class="modal-btn warning" onclick="confirmAddNewFolder()">作成</button>
+    </div>
+  </div>
+</div>
+
+<!-- ③ ファイル移動＆リネーム用モーダル -->
+<div id="rename-modal" class="color-modal-overlay" onclick="if(event.target===this) closeRenameModal();">
+  <div class="color-modal-content">
+    <button class="color-modal-close" onclick="closeRenameModal()">&times;</button>
+    <h3 class="modal-title">ファイルの変更・移動</h3>
+    
+    <!-- フォルダ選択 -->
+    <label class="modal-label">移動先フォルダ:</label>
+    <select id="rename-folder-select" class="modal-select" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyRenameAndMove(); }">
+      <!-- JSで動的にフォルダ一覧を生成 -->
+    </select>
+
+    <!-- ファイル名入力 -->
+    <label class="modal-label">ファイル名:</label>
+    <div class="rename-input-group">
+      <input type="text" id="rename-file-input" class="rename-input" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyRenameAndMove(); }" onfocus="this.select();">
+      <span id="rename-ext-span" class="rename-ext"></span>
+    </div>
+
+    <!-- 決定ボタン -->
+    <button class="color-apply-btn" onclick="applyRenameAndMove()">変更・移動を保存</button>
+  </div>
+</div>
+
+<!-- ④ フォルダ名前変更モーダル -->
+<div id="rename-folder-modal" class="modal-overlay" onclick="closeRenameFolderModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 class="modal-title">
+      <i class="fa-solid fa-pen-to-square icon-blue"></i> フォルダ名の変更
+    </h3>
+    <label class="modal-label">新しいフォルダ名</label>
+    <input type="text" id="rename-foldername-input" class="modal-input" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmRenameFolder(); }">
+    
+    <div class="modal-actions">
+      <button type="button" class="modal-btn cancel" onclick="closeRenameFolderModal()">キャンセル</button>
+      <button type="button" class="modal-btn primary" onclick="confirmRenameFolder()">変更</button>
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ フォルダ削除確認モーダル -->
+<div id="delete-folder-modal" class="modal-overlay" tabindex="0" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmDeleteFolder(); }" onclick="closeDeleteFolderModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 class="modal-title danger">
+      <i class="fa-solid fa-trash-can"></i> フォルダの削除
+    </h3>
+    <p id="delete-folder-message" class="modal-message">
+      このフォルダを削除してもよろしいですか？
+    </p>
+    
+    <div class="modal-actions">
+      <button type="button" class="modal-btn cancel" onclick="closeDeleteFolderModal()">キャンセル</button>
+      <button type="button" class="modal-btn danger" onclick="confirmDeleteFolder()">削除</button>
     </div>
   </div>
 </div>
@@ -1673,20 +2280,12 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
   lineWrapping: true,
   extraKeys: {
     "Ctrl-F": function(cm, e) { 
-      if (e) e.preventDefault(); // ブラウザ標準のCtrl+F（検索）を打ち消す
-      const input = document.getElementById('search-input');
-      if (input) {
-        input.focus(); 
-        input.select(); // 入力済みの文字列があれば全選択状態にする（利便性向上）
-      }
+      if (e) e.preventDefault();
+      openHeaderSearch();
     },
     "Cmd-F": function(cm, e) { 
-      if (e) e.preventDefault(); // Mac用 Cmd+F のブラウザ標準動作を打ち消す
-      const input = document.getElementById('search-input');
-      if (input) {
-        input.focus(); 
-        input.select();
-      }
+      if (e) e.preventDefault();
+      openHeaderSearch();
     },
     "Tab": function(cm) {
       if (cm.somethingSelected()) {
@@ -1697,52 +2296,66 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
     }
   }
 });
-// 画面全体で Ctrl+F / Cmd+F が押されたときに独自検索フォームへフォーカスする
+
+// 画面全体で Ctrl+F / Cmd+F が押されたときに検索窓を開く
 window.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
-    const input = document.getElementById('search-input');
-    if (input) {
-      e.preventDefault(); // ブラウザのページ内検索を完全に無効化
-      input.focus();
-      input.select();
-    }
+    e.preventDefault();
+    openHeaderSearch();
   }
 });
+
 /**
- * ヘッダー検索窓の開閉トグル
+ * ★ 検索窓を強制的に開いてフォーカスを当てる関数
  */
-function toggleHeaderSearch(event) {
-  // ボタンクリック/タッチ時のイベントがdocument全体に届いて即座に閉じるのを防ぐ
-  if (event) {
-    event.stopPropagation();
-  }
-  
+function openHeaderSearch() {
   const container = document.getElementById('header-search-container');
   if (!container) return;
 
-  const isActive = container.classList.toggle('active');
+  container.classList.add('active');
 
-  // 開いた場合は入力欄へ自動フォーカス
-  if (isActive) {
-    setTimeout(() => {
-      const input = document.getElementById('search-input');
-      if (input) {
-        input.focus();
-        input.select();
-      }
-    }, 50);
+  setTimeout(() => {
+    const input = document.getElementById('search-input');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 50);
+}
+
+/**
+ * ★ 🔍ボタンを押した時に開閉を切り替える（トグル）関数
+ * ※ HTML側の 🔍ボタンに onclick="toggleHeaderSearch(event)" または JSでイベントを設定してください
+ */
+function toggleHeaderSearch(event) {
+  if (event) {
+    event.stopPropagation(); // ★ 外側クリックイベントへの伝播を止める
+  }
+  const container = document.getElementById('header-search-container');
+  if (!container) return;
+
+  if (container.classList.contains('active')) {
+    container.classList.remove('active');
+  } else {
+    openHeaderSearch();
   }
 }
 
-// ★ 画面のどこかを「クリック」または「タップ（touchstart / pointerdown）」した時に閉じる処理
+/**
+ * ★ 画面のどこかを「クリック」または「タップ」した時に閉じる処理（修正版）
+ */
 function handleOutsideClickOrTouch(event) {
   const container = document.getElementById('header-search-container');
+  const searchBtn = document.querySelector('.search-toggle-btn'); // ★ 🔍ボタンを取得
   if (!container) return;
 
   // 検索窓が開いている場合
   if (container.classList.contains('active')) {
-    // タップ/クリックされた要素が header-search-container の内部でなければ閉じる
-    if (!container.contains(event.target)) {
+    // クリックされたのが「検索窓の内部」でも「🔍ボタン自体（またはその中のアイコン）」でもなければ閉じる
+    const isInsideContainer = container.contains(event.target);
+    const isSearchBtn = searchBtn && searchBtn.contains(event.target);
+
+    if (!isInsideContainer && !isSearchBtn) {
       container.classList.remove('active');
     }
   }
@@ -1841,7 +2454,7 @@ function toggleSidebar() {
   sidebar.classList.toggle('open');
   if (overlay) overlay.classList.toggle('open', isOpening);
 
-  // 2. ★ サイドバーを開くとき、タグ一覧（フッター）を自動的に閉じる
+  // 2. ★ サイドバーを開くとき、タグ一覧を自動的に閉じる
   if (isOpening && footer && !footer.classList.contains('collapsed')) {
     footer.classList.add('collapsed');
 
@@ -1888,17 +2501,32 @@ function buildFileTree(fileKeys) {
   const root = { files: [], folders: {} };
 
   fileKeys.forEach(fileName => {
-    const parts = fileName.split('/');
+    const isFolderKey = fileName.endsWith('/');
+    const cleanPath = isFolderKey ? fileName.slice(0, -1) : fileName;
+    const parts = cleanPath.split('/');
+    
     let current = root;
 
-    for (let i = 0; i < parts.length - 1; i++) {
-      const folderName = parts[i];
-      if (!current.folders[folderName]) {
-        current.folders[folderName] = { files: [], folders: {} };
+    if (isFolderKey) {
+      for (let i = 0; i < parts.length; i++) {
+        const folderName = parts[i];
+        if (!folderName) continue;
+
+        if (!current.folders[folderName]) {
+          current.folders[folderName] = { files: [], folders: {} };
+        }
+        current = current.folders[folderName];
       }
-      current = current.folders[folderName];
+    } else {
+      for (let i = 0; i < parts.length - 1; i++) {
+        const folderName = parts[i];
+        if (!current.folders[folderName]) {
+          current.folders[folderName] = { files: [], folders: {} };
+        }
+        current = current.folders[folderName];
+      }
+      current.files.push(fileName);
     }
-    current.files.push(fileName);
   });
 
   return root;
@@ -1908,7 +2536,6 @@ function buildFileTree(fileKeys) {
 function renderTreeNodes(node, basePath = '') {
   let html = '';
 
-  // 1. 直下のファイルを描画
   node.files.sort().forEach(fileName => {
     const isActive = fileName === activeFileName ? 'active' : '';
     const displayName = fileName.split('/').pop();
@@ -1942,7 +2569,6 @@ function renderTreeNodes(node, basePath = '') {
     `;
   });
 
-  // 2. フォルダをその下に描画
   Object.keys(node.folders).sort().forEach(folderName => {
     const subNode = node.folders[folderName];
     const fullFolderPath = basePath ? `${basePath}/${folderName}` : folderName;
@@ -1950,12 +2576,21 @@ function renderTreeNodes(node, basePath = '') {
 
     html += `
       <li class="folder-group collapsed" id="${folderId}">
-        <div class="folder-header">
-          <div class="folder-title-left">
+        <div class="folder-header" 
+             ontouchstart="handleFolderTouchStart(event, '${fullFolderPath}')"
+             ontouchmove="handleFolderTouchMove(event)"
+             ontouchend="handleFolderTouchEnd(event)"
+             ontouchcancel="handleFolderTouchCancel(event)">
+          <div class="folder-title-left" title="長押しでフォルダ名を変更">
             <i class="fa-solid fa-folder"></i>
             <span>${folderName}</span>
           </div>
-          <i class="fa-solid fa-chevron-down chevron"></i>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-xmark delete-btn" 
+               title="フォルダを削除" 
+               onclick="event.stopPropagation(); openDeleteFolderModal('${fullFolderPath}');"></i>
+            <i class="fa-solid fa-chevron-down chevron"></i>
+          </div>
         </div>
         <ul class="folder-content" style="list-style: none; padding: 0; margin: 0;">
           ${renderTreeNodes(subNode, fullFolderPath)}
@@ -1980,6 +2615,22 @@ function renderFileList() {
   const mediaFiles = [];
 
   Object.keys(files).forEach(fileName => {
+    // フォルダ（末尾が /）の場合
+    if (fileName.endsWith('/')) {
+      const fileData = files[fileName];
+      
+      // ★ オブジェクト内の category が 'media' かどうかを判定
+      const isMediaFolder = (typeof fileData === 'object' && fileData !== null && fileData.category === 'media');
+      
+      if (isMediaFolder) {
+        mediaFiles.push(fileName);
+      } else {
+        webFiles.push(fileName);
+      }
+      return;
+    }
+
+    // ファイルの場合
     if (isBinaryMediaFile(fileName)) {
       mediaFiles.push(fileName);
     } else {
@@ -1994,39 +2645,141 @@ function renderFileList() {
   mediaListEl.innerHTML = renderTreeNodes(mediaTree);
 }
 
+let targetOldFileName = '';
+
+/**
+ * 存在するすべてのフォルダパスを抽出するヘルパー関数（修正版）
+ */
+function getAllExistingFolders() {
+  const folderSet = new Set();
+  folderSet.add('/'); // ルートフォルダ
+
+  Object.keys(files).forEach(filePath => {
+    // フォルダ自体のキー（末尾が /）もそのまま登録できるように調整
+    const cleanPath = filePath.endsWith('/') ? filePath.slice(0, -1) : filePath;
+    const parts = cleanPath.split('/').filter(p => p.length > 0);
+    
+    if (!filePath.endsWith('/') && parts.length > 0) {
+      parts.pop(); // ファイル名を取り除く
+    }
+
+    let currentPath = '';
+    parts.forEach(part => {
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+      folderSet.add(currentPath);
+    });
+  });
+
+  return Array.from(folderSet).sort();
+}
+
+/**
+ * ファイルのリネーム＆移動ダイアログを開く
+ */
 function renameFile(oldFileName) {
-  const lastDotIndex = oldFileName.lastIndexOf('.');
-  let baseName = oldFileName;
+  targetOldFileName = oldFileName;
+
+  const lastSlashIndex = oldFileName.lastIndexOf('/');
+  let currentFolder = '/';
+  let fullFileName = oldFileName;
+
+  if (lastSlashIndex !== -1) {
+    currentFolder = oldFileName.substring(0, lastSlashIndex);
+    fullFileName = oldFileName.substring(lastSlashIndex + 1);
+  }
+
+  const lastDotIndex = fullFileName.lastIndexOf('.');
+  let baseName = fullFileName;
   let ext = '';
 
   if (lastDotIndex > 0) {
-    baseName = oldFileName.substring(0, lastDotIndex);
-    ext = oldFileName.substring(lastDotIndex);
+    baseName = fullFileName.substring(0, lastDotIndex);
+    ext = fullFileName.substring(lastDotIndex);
   }
 
-  const newBaseName = prompt(`新しいファイル名を入力してください (拡張子 ${ext || 'なし'} は自動付与されます):`, baseName);
-  
-  if (!newBaseName || newBaseName.trim() === '') return;
+  const folderSelect = document.getElementById('rename-folder-select');
+  if (folderSelect) {
+    folderSelect.innerHTML = '';
+    const allFolders = getAllExistingFolders();
 
-  const sanitizedBaseName = newBaseName.trim();
-  let dirPrefix = '';
-  if (oldFileName.includes('/')) {
-    dirPrefix = oldFileName.substring(0, oldFileName.lastIndexOf('/') + 1);
+    allFolders.forEach(folder => {
+      const option = document.createElement('option');
+      option.value = folder;
+      option.textContent = folder === '/' ? '/ (ルート直下)' : folder;
+      if (folder === currentFolder) option.selected = true;
+      folderSelect.appendChild(option);
+    });
   }
 
-  const newFileName = dirPrefix + sanitizedBaseName + ext;
+  const fileInput = document.getElementById('rename-file-input');
+  const extSpan = document.getElementById('rename-ext-span');
 
-  if (newFileName === oldFileName) return;
+  if (fileInput) fileInput.value = baseName;
+  if (extSpan) extSpan.textContent = ext;
 
-  if (files[newFileName] !== undefined) {
-    alert(`"${newFileName}" は既に存在します。別の名前を指定してください。`);
+  const modal = document.getElementById('rename-modal');
+  if (modal) {
+    modal.classList.add('active');
+    setTimeout(() => {
+      if (fileInput) {
+        fileInput.focus();
+        fileInput.select();
+      }
+    }, 50);
+  }
+}
+
+/**
+ * モーダルを閉じる
+ */
+function closeRenameModal() {
+  const modal = document.getElementById('rename-modal');
+  if (modal) modal.classList.remove('active');
+  targetOldFileName = '';
+}
+
+/**
+ * 変更・移動の確定保存処理
+ */
+function applyRenameAndMove() {
+  if (!targetOldFileName) return;
+
+  const folderSelect = document.getElementById('rename-folder-select');
+  const fileInput = document.getElementById('rename-file-input');
+  const extSpan = document.getElementById('rename-ext-span');
+
+  if (!folderSelect || !fileInput) return;
+
+  const selectedFolder = folderSelect.value;
+  const newBaseName = fileInput.value.trim();
+  const ext = extSpan ? extSpan.textContent : '';
+
+  if (!newBaseName) {
+    alert('ファイル名を入力してください。');
+    return;
+  }
+
+  let newFileName = '';
+  if (selectedFolder === '/') {
+    newFileName = newBaseName + ext;
+  } else {
+    newFileName = `${selectedFolder}/${newBaseName}${ext}`;
+  }
+
+  if (newFileName !== targetOldFileName && files[newFileName] !== undefined) {
+    alert(`"${newFileName}" は既に存在します。別の場所またはファイル名を指定してください。`);
+    return;
+  }
+
+  if (newFileName === targetOldFileName) {
+    closeRenameModal();
     return;
   }
 
   const newFiles = {};
   Object.keys(files).forEach(key => {
-    if (key === oldFileName) {
-      newFiles[newFileName] = files[oldFileName];
+    if (key === targetOldFileName) {
+      newFiles[newFileName] = files[targetOldFileName];
     } else {
       newFiles[key] = files[key];
     }
@@ -2034,33 +2787,142 @@ function renameFile(oldFileName) {
 
   files = newFiles;
 
-  if (activeFileName === oldFileName) {
+  if (activeFileName === targetOldFileName) {
     activeFileName = newFileName;
   }
-  
+
   saveToLocalStorage();
   renderFileList();
-  switchFile(activeFileName);
+  if (typeof switchFile === 'function') switchFile(activeFileName);
+  closeRenameModal();
 }
 
-// スマホ長押し判定用の変数
+let targetFolderPath = '';
+
+// ------------------------------------------
+// フォルダ名前変更処理
+// ------------------------------------------
+function openRenameFolderModal(folderPath) {
+  targetFolderPath = folderPath;
+  const modal = document.getElementById('rename-folder-modal');
+  const input = document.getElementById('rename-foldername-input');
+  if (modal && input) {
+    const folderName = folderPath.split('/').pop();
+    input.value = folderName;
+    modal.style.display = 'flex';
+    setTimeout(() => input.focus(), 50);
+  }
+}
+
+function closeRenameFolderModal() {
+  const modal = document.getElementById('rename-folder-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmRenameFolder() {
+  const input = document.getElementById('rename-foldername-input');
+  if (!input || !targetFolderPath) return;
+
+  const newName = input.value.trim().replace(/^\/+|\/+$/g, '');
+  if (!newName) {
+    alert('フォルダ名を入力してください。');
+    return;
+  }
+
+  const pathParts = targetFolderPath.split('/');
+  const oldName = pathParts.pop();
+  const parentPath = pathParts.join('/');
+  
+  const newFolderPath = parentPath ? `${parentPath}/${newName}` : newName;
+
+  if (oldName === newName) {
+    closeRenameFolderModal();
+    return;
+  }
+
+  const oldPrefix = targetFolderPath + '/';
+  const newPrefix = newFolderPath + '/';
+
+  const newFiles = {};
+
+  Object.keys(files).forEach(key => {
+    if (key === oldPrefix || key === targetFolderPath) {
+      newFiles[newPrefix] = files[key];
+    }
+    else if (key.startsWith(oldPrefix)) {
+      const updatedKey = newPrefix + key.slice(oldPrefix.length);
+      newFiles[updatedKey] = files[key];
+    } 
+    else {
+      newFiles[key] = files[key];
+    }
+  });
+
+  files = newFiles;
+  closeRenameFolderModal();
+
+  saveToLocalStorage();
+  renderFileList();
+}
+
+// ------------------------------------------
+// フォルダ削除処理
+// ------------------------------------------
+function openDeleteFolderModal(folderPath) {
+  targetFolderPath = folderPath;
+  const modal = document.getElementById('delete-folder-modal');
+  const msg = document.getElementById('delete-folder-message');
+  
+  if (modal && msg) {
+    msg.innerHTML = `フォルダ <strong>"${folderPath}"</strong> を削除しますか？<br><span style="font-size:0.78rem; color:#888;">※中身のファイル・サブフォルダもすべて削除されます。</span>`;
+    modal.style.display = 'flex';
+
+    // ★ ここを追加：モーダルにフォーカスを当ててEnterキーを反応させる
+    setTimeout(() => {
+      modal.focus();
+    }, 50);
+  }
+}
+
+function closeDeleteFolderModal() {
+  const modal = document.getElementById('delete-folder-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmDeleteFolder() {
+  if (!targetFolderPath) return;
+
+  const targetPrefix = targetFolderPath + '/';
+  const newFiles = {};
+
+  Object.keys(files).forEach(key => {
+    if (key !== targetFolderPath && key !== targetPrefix && !key.startsWith(targetPrefix)) {
+      newFiles[key] = files[key];
+    }
+  });
+
+  files = newFiles;
+  closeDeleteFolderModal();
+
+  saveToLocalStorage();
+  renderFileList();
+}
+
+// ファイル用操作処理
 let touchTimer = null;
 let isLongPress = false;
 
-// タッチ開始（長押しタイマー起動）
 function handleFileTouchStart(e, fileName) {
   isLongPress = false;
   
   touchTimer = setTimeout(() => {
     isLongPress = true;
-    if (navigator.vibrate) navigator.vibrate(40); // 軽くバイブで通知
+    if (navigator.vibrate) navigator.vibrate(40);
     
-    // 長押しで名前変更ダイアログを開く
     renameFile(fileName);
-  }, 500); // 0.5秒で長押しと判定
+  }, 500);
 }
 
-// 指が動いたらスクロールとみなして長押しキャンセル
 function handleFileTouchMove(e) {
   if (touchTimer) {
     clearTimeout(touchTimer);
@@ -2068,14 +2930,12 @@ function handleFileTouchMove(e) {
   }
 }
 
-// 指を離した時
 function handleFileTouchEnd(e) {
   if (touchTimer) {
     clearTimeout(touchTimer);
     touchTimer = null;
   }
   
-  // 長押しでダイアログが開いた場合は、クリック（ファイル切り替え等）を無効化
   if (isLongPress) {
     e.preventDefault();
     e.stopPropagation();
@@ -2083,11 +2943,45 @@ function handleFileTouchEnd(e) {
   }
 }
 
-// キャンセル時
 function handleFileTouchCancel(e) {
   if (touchTimer) {
     clearTimeout(touchTimer);
     touchTimer = null;
+  }
+}
+
+// フォルダ用操作処理
+let folderTouchTimer = null;
+let isFolderTouchMoved = false;
+
+function handleFolderTouchStart(event, folderPath) {
+  isFolderTouchMoved = false;
+  folderTouchTimer = setTimeout(() => {
+    if (!isFolderTouchMoved) {
+      openRenameFolderModal(folderPath);
+    }
+  }, 500);
+}
+
+function handleFolderTouchMove(event) {
+  isFolderTouchMoved = true;
+  if (folderTouchTimer) {
+    clearTimeout(folderTouchTimer);
+    folderTouchTimer = null;
+  }
+}
+
+function handleFolderTouchEnd(event) {
+  if (folderTouchTimer) {
+    clearTimeout(folderTouchTimer);
+    folderTouchTimer = null;
+  }
+}
+
+function handleFolderTouchCancel(event) {
+  if (folderTouchTimer) {
+    clearTimeout(folderTouchTimer);
+    folderTouchTimer = null;
   }
 }
 
@@ -2172,24 +3066,30 @@ function showToast(message) {
   }, 2000);
 }
 
-// 新規ファイルボタンを押したときにモーダルを開く
+// ==========================================
+// 1. ファイル作成関連処理
+// ==========================================
+
+// ファイル作成モーダルを開く
 function addNewFile() {
   const modal = document.getElementById('new-file-modal');
   const input = document.getElementById('new-filename-input');
-  if (modal && input) {
-    input.value = '';
+  if (modal) {
     modal.style.display = 'flex';
-    input.focus();
+    if (input) {
+      input.value = '';
+      setTimeout(() => input.focus(), 50);
+    }
   }
 }
 
-// モーダルを閉じる
+// ファイル作成モーダルを閉じる
 function closeNewFileModal() {
   const modal = document.getElementById('new-file-modal');
   if (modal) modal.style.display = 'none';
 }
 
-// 決定ボタンを押したときのファイル生成処理
+// ファイル作成の確定
 function confirmAddNewFile() {
   const input = document.getElementById('new-filename-input');
   const select = document.getElementById('new-file-ext-select');
@@ -2201,39 +3101,129 @@ function confirmAddNewFile() {
     return;
   }
 
-  const selectedExt = select.value; // 例: ".html"
-
-  // 既にユーザーが拡張子を入力済みの場合はそれを活かし、なければドロップダウンの拡張子を付与
+  const selectedExt = select.value;
   let fullName = rawName;
-  if (!fullName.endsWith(selectedExt)) {
-    // 別の拡張子が含まれていなければ追加
-    if (!fullName.includes('.')) {
-      fullName += selectedExt;
-    }
+
+  // 拡張子補完
+  if (!fullName.endsWith(selectedExt) && !fullName.includes('.')) {
+    fullName += selectedExt;
   }
 
-  // 重複チェック
   if (files[fullName] !== undefined) {
     alert(`ファイル "${fullName}" は既に存在します。`);
     return;
   }
 
-  // ファイル生成・初期化
   files[fullName] = "";
   closeNewFileModal();
 
-  // 再描画とファイル切り替え
+  if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
   if (typeof renderFileList === 'function') renderFileList();
   if (typeof switchFile === 'function') switchFile(fullName);
+}
+
+
+// ==========================================
+// 2. フォルダ作成関連処理
+// ==========================================
+
+// フォルダ作成モーダルを開く
+function addNewFolder() {
+  const modal = document.getElementById('new-folder-modal');
+  const input = document.getElementById('new-foldername-input');
+  if (modal) {
+    modal.style.display = 'flex';
+    if (input) {
+      input.value = '';
+      setTimeout(() => input.focus(), 50);
+    }
+  }
+}
+
+// フォルダ作成モーダルを閉じる
+function closeNewFolderModal() {
+  const modal = document.getElementById('new-folder-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// フォルダ作成の確定（.gitkeep などのファイルを作らず空フォルダを作成）
+function confirmAddNewFolder() {
+  const categorySelect = document.getElementById('new-folder-category-select');
+  const input = document.getElementById('new-foldername-input');
+  if (!input) return;
+
+  const rawName = input.value.trim();
+  if (!rawName) {
+    alert('フォルダ名を入力してください。');
+    return;
+  }
+
+  // スラッシュの掃除
+  const sanitizedFolderName = rawName.replace(/^\/+|\/+$/g, '');
+  const category = categorySelect ? categorySelect.value : 'web';
+
+  // ★ media/ は付けず、入力された通りのフォルダ名にする
+  const folderPath = `${sanitizedFolderName}/`;
+
+  if (files[folderPath] !== undefined) {
+    alert(`フォルダ "${sanitizedFolderName}" は既に存在します。`);
+    return;
+  }
+
+  // ★ カテゴリー情報をオブジェクトとして保存（これで media/ を付けずに判別可能）
+  files[folderPath] = { category: category };
+
+  closeNewFolderModal();
+
+  if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+  if (typeof renderFileList === 'function') renderFileList();
+}
+let fileToDelete = null;
+
+// ファイル削除ボタンが押されたとき（モーダルを開く）
+function deleteFile(fileName) {
+  if (Object.keys(files).length <= 1) {
+    alert('これ以上ファイルを削除できません。');
+    return;
+  }
+
+  fileToDelete = fileName;
+  const msgEl = document.getElementById('delete-file-message');
+  if (msgEl) {
+    msgEl.innerHTML = `ファイル <strong>"${fileName}"</strong> を削除しますか？<br><span style="font-size:0.78rem; color:#888;">※削除実行後は復元できません。</span>`;
+  }
+
+  const modal = document.getElementById('delete-file-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.focus(); // Enterキー判定用にフォーカスを当てる
+  }
+}
+
+// 削除確定ボタンまたはEnterキーが押されたとき
+function confirmDeleteFile() {
+  if (!fileToDelete) return;
+
+  delete files[fileToDelete];
+
+  if (activeFileName === fileToDelete) {
+    activeFileName = getDefaultHtmlFile() || Object.keys(files)[0];
+  }
+
+  const fileToSwitch = activeFileName;
+  fileToDelete = null;
+  closeDeleteFileModal();
+
+  switchFile(fileToSwitch);
   if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 }
 
-function deleteFile(fileName) {
-  if (Object.keys(files).length > 1 && confirm(`${fileName} を削除しますか？`)) {
-    delete files[fileName];
-    if (activeFileName === fileName) activeFileName = getDefaultHtmlFile() || Object.keys(files)[0];
-    switchFile(activeFileName);
-    saveToLocalStorage();
+// モーダルを閉じる
+function closeDeleteFileModal() {
+  fileToDelete = null;
+  const modal = document.getElementById('delete-file-modal');
+  if (modal) {
+    modal.style.display = 'none';
   }
 }
 
@@ -2280,6 +3270,9 @@ function startSearch(shouldJump = true) {
   clearSearch();
   if (!query || typeof editor === 'undefined' || !editor) return;
 
+  // ★ 検索開始前に表示を一度リフレッシュ（高さの再計算）
+  editor.refresh();
+
   searchOverlay = createSearchOverlay(query);
   editor.addOverlay(searchOverlay);
 
@@ -2305,12 +3298,25 @@ function highlightMatch(index) {
   activeMarker = editor.markText(match.from, match.to, { className: "cm-custom-search-match-active" });
 }
 
+/**
+ * ★ 該当箇所へスクロール＆ハイライト（修正箇所）
+ */
 function selectAndScrollToMatch(index) {
   if (index < 0 || index >= searchMatches.length || typeof editor === 'undefined' || !editor) return;
   const match = searchMatches[index];
+  
+  // ★ 1. スクロール前に高さを再計算させ、一番下まで正しく認識させる
+  editor.refresh();
+
   highlightMatch(index);
   editor.setCursor(match.from);
-  editor.scrollIntoView({ from: match.from, to: match.to }, 100);
+
+  // ★ 2. 安全なスクロール処理（上下マージン50pxを持たせてスクロール）
+  editor.scrollIntoView({ from: match.from, to: match.to }, 50);
+
+  // ★ 3. 万が一、ブラウザ全体が上にずれてヘッダーが隠れた場合の強制リセット
+  window.scrollTo(0, 0);
+
   updateSearchCounter(index + 1, searchMatches.length);
 }
 
@@ -2419,6 +3425,19 @@ function showStudentInfoModal() {
       resolve(value);
     };
 
+    // ★【重要】モーダルのボタンを押した瞬間にエディタの文字を強制取得する関数
+    const forceSyncEditor = () => {
+      if (document.activeElement) {
+        document.activeElement.blur(); // フォーカスを外して入力を確定させる
+      }
+      if (typeof activeFileName !== 'undefined' && activeFileName && 
+          typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
+          typeof editor !== 'undefined' && editor) {
+        // エディタの現在の全文字列を取得して直接保存データに上書き
+        files[activeFileName] = editor.getValue();
+      }
+    };
+
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         closeModal(null);
@@ -2435,8 +3454,18 @@ function showStudentInfoModal() {
         return;
       }
 
+      // 完成ボタンを押した瞬間に強制同期
+      forceSyncEditor();
+
       const paddedNum = n.padStart(2, '0');
-      const fileName = `${g}${c}${paddedNum}.zip`;
+      
+      // ★ 完成版にも時刻（時分秒）をつけて被りを防ぐ場合 (例: 3101_143025.zip)
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, '0') +
+                      String(now.getMinutes()).padStart(2, '0') +
+                      String(now.getSeconds()).padStart(2, '0');
+
+      const fileName = `${g}${c}${paddedNum}_${timeStr}.zip`;
 
       closeModal(fileName);
     };
@@ -2466,11 +3495,28 @@ function showStudentInfoModal() {
       closeModal(null);
     };
 
-    document.getElementById('modal-draft-btn').onclick = () => {
-      const dateStr = getFormattedToday();
-      const fileName = `web-${dateStr}.zip`;
-      closeModal(fileName);
-    };
+    // 作業中ボタンを押したとき
+document.getElementById('modal-draft-btn').onclick = () => {
+  if (document.activeElement) document.activeElement.blur();
+
+  if (typeof activeFileName !== 'undefined' && activeFileName && 
+      typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
+      typeof editor !== 'undefined' && editor) {
+    files[activeFileName] = editor.getValue();
+  }
+
+  // ★ 日付だけでなく「時分秒」までファイル名に含める (例: web-20260803-143025.zip)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  const fileName = `web-${year}${month}${day}-${hours}${minutes}${seconds}.zip`;
+  closeModal(fileName);
+};
 
     document.getElementById('modal-save-btn').onclick = executeStudentSave;
   });
@@ -2482,19 +3528,51 @@ async function saveAllAsZip() {
     return;
   }
 
+  // 1. モーダルを開く「前」に最新テキストを確定同期
+  if (typeof activeFileName !== 'undefined' && activeFileName && 
+      typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
+      typeof editor !== 'undefined' && editor) {
+    files[activeFileName] = editor.getValue();
+  }
+
+  // モーダル表示（ユーザーが「作業中」か「完成」を押すまで待つ）
   const zipFileName = await showStudentInfoModal();
-  if (!zipFileName) return;
+  if (!zipFileName) return; // キャンセルされたら処理中断
+
+  // 2. モーダルが閉じた「後」にも念のため最新テキストを確定同期
+  if (typeof activeFileName !== 'undefined' && activeFileName && 
+      typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
+      typeof editor !== 'undefined' && editor) {
+    files[activeFileName] = editor.getValue();
+  }
 
   const zip = new JSZip();
 
+  // ZIP生成処理
   Object.keys(files).forEach(fileName => {
-    const data = files[fileName];
-    if (isBinaryMediaFile(fileName) && data.startsWith('data:')) {
+    if (!fileName || fileName === '/') return;
+
+    // ★ 今画面で開いているファイルの場合、filesではなくエディタの生データを優先して取る
+    let data = files[fileName];
+    if (fileName === activeFileName && typeof editor !== 'undefined' && editor && !isBinaryMediaFile(fileName)) {
+      data = editor.getValue();
+    }
+
+    // フォルダ判定
+    const isFolderKey = fileName.endsWith('/') || (typeof data === 'object' && data !== null && data.isFolder);
+    if (isFolderKey) {
+      const folderPath = fileName.endsWith('/') ? fileName : `${fileName}/`;
+      zip.folder(folderPath);
+      return;
+    }
+
+    // バイナリ／テキスト判定してZIPに追加
+    if (typeof isBinaryMediaFile === 'function' && isBinaryMediaFile(fileName) && typeof data === 'string' && data.startsWith('data:')) {
       const base64Data = data.split(',')[1];
       if (base64Data) {
         zip.file(fileName, base64Data, { base64: true });
       }
-    } else {
+    } else if (typeof data === 'string') {
       zip.file(fileName, data);
     }
   });
@@ -2502,7 +3580,11 @@ async function saveAllAsZip() {
   try {
     const content = await zip.generateAsync({ type: "blob" });
     downloadBlob(content, zipFileName);
-    showToast(`${zipFileName} で保存しました`);
+    if (typeof showToast === 'function') {
+      showToast(`${zipFileName} で保存しました`);
+    } else {
+      alert(`${zipFileName} で保存しました`);
+    }
   } catch (err) {
     console.error(err);
     alert("ZIPファイルの作成に失敗しました。");
@@ -2590,6 +3672,13 @@ async function loadFile(event) {
         files[fileName] = e.target.result; // ここに data:application/pdf;base64,... が入る
         switchFile(fileName);
         
+        // ★ ファイル読み込み・切替後に CodeMirror の描画と高さを再計算させる
+        setTimeout(() => {
+          if (typeof editor !== 'undefined' && editor.refresh) {
+            editor.refresh();
+          }
+        }, 50);
+
         try {
           saveToLocalStorage();
         } catch (storageErr) {
@@ -2603,6 +3692,16 @@ async function loadFile(event) {
       reader.onload = e => {
         files[fileName] = e.target.result;
         switchFile(fileName);
+
+        // ★ テキストファイル（HTML/CSS/JS等）の場合もレイアウト高さを再構成
+        setTimeout(() => {
+          if (typeof editor !== 'undefined' && editor.refresh) {
+            editor.refresh();
+            // 必要に応じてスクロール位置を最上部にセット（お好みで）
+            // editor.scrollTo(0, 0); 
+          }
+        }, 50);
+
         saveToLocalStorage();
         showToast(`"${fileName}" を読み込みました`);
       };
@@ -2614,7 +3713,7 @@ async function loadFile(event) {
 }
 
 /**
- * タグ一覧（フッター）の表示・非表示を切り替える関数
+ * タグ一覧の表示・非表示を切り替える関数
  */
 function toggleFooter() { // ※関数名が toggleEditorFooter などの場合はそちらを書き換えてください
   const footer = document.getElementById('editor-footer');
@@ -2690,13 +3789,30 @@ function insertTag(snippet) {
 }
 
 /**
- * タブの切り替えと自動開く処理
+ * タブの切り替えと開閉（トグル）処理
  */
 function switchFooterTab(type) {
   const footer = document.getElementById('editor-footer');
   const icon = document.getElementById('footer-toggle-icon');
 
-  // 1. もしフッターが閉じている(collapsed)状態なら自動で開く
+  // 対象のタブボタンを取得
+  const targetBtn = Array.from(document.querySelectorAll('.footer-tab-btn')).find(btn => {
+    const onclickAttr = btn.getAttribute('onclick') || '';
+    return onclickAttr.includes(`'${type}'`) || onclickAttr.includes(`"${type}"`);
+  });
+
+  // ★ 1. タグ一覧が開いていて、かつ「すでにアクティブなタブ」が押された場合はタグ一覧を閉じる
+  if (footer && !footer.classList.contains('collapsed') && targetBtn && targetBtn.classList.contains('active')) {
+    footer.classList.add('collapsed');
+    
+    if (icon) {
+      icon.classList.remove('fa-chevron-down');
+      icon.classList.add('fa-chevron-up');
+    }
+    return; // 閉じる処理を行ったのでここで終了
+  }
+
+  // ★ 2. タグ一覧が閉じている(collapsed)状態なら開く
   if (footer && footer.classList.contains('collapsed')) {
     footer.classList.remove('collapsed');
     
@@ -2708,6 +3824,7 @@ function switchFooterTab(type) {
     if (typeof editor !== 'undefined' && editor) { editor.refresh(); }
   }
 
+  // 3. タブとパネルの切り替え処理
   const buttons = document.querySelectorAll('.footer-tab-btn');
   const panes = document.querySelectorAll('.footer-pane');
 
@@ -2715,49 +3832,206 @@ function switchFooterTab(type) {
   buttons.forEach(btn => btn.classList.remove('active'));
   panes.forEach(pane => pane.classList.remove('active'));
 
-  // 対応するパネルを取得して表示
+  // 対応するパネルを表示
   const pane = document.getElementById(`footer-pane-${type}`);
   if (pane) {
     pane.classList.add('active');
   }
 
   // ボタンの active 切り替え
-  buttons.forEach(btn => {
-    const onclickAttr = btn.getAttribute('onclick') || '';
-    if (onclickAttr.includes(`'${type}'`) || onclickAttr.includes(`"${type}"`)) {
-      btn.classList.add('active');
+  if (targetBtn) {
+    targetBtn.classList.add('active');
+  }
+}
+
+//カラーピッカー
+let iroPicker = null;
+let currentSelectedHex = '#FF0000';
+let colorHistory = [];
+
+// 初期化
+document.addEventListener('DOMContentLoaded', function() {
+  iroPicker = new iro.ColorPicker("#iro-picker-container", {
+    width: 240,
+    color: currentSelectedHex,
+    borderWidth: 2,
+    borderColor: "#fff",
+    layout: [
+      { component: iro.ui.Wheel, options: {} },
+      { component: iro.ui.Slider, options: { sliderType: 'value' } }
+    ]
+  });
+
+  // パレット操作時にフォーカスを強制解除してからUI更新
+  iroPicker.on('color:change', function(color) {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+      document.activeElement.blur(); // 入力中のフォーカスを即座に外す
     }
+    updateColorUI(color.hexString, color.rgb, false);
+  });
+});
+
+// UI全体の表示更新
+function updateColorUI(hex, rgb, updateInputs = true) {
+  currentSelectedHex = hex.toUpperCase();
+
+  // 1. 画面上プレビュー＆テキスト更新
+  const previewInner = document.getElementById('color-preview-inner');
+  const hexDisplay = document.getElementById('current-hex-display');
+  if (previewInner) previewInner.style.backgroundColor = currentSelectedHex;
+  if (hexDisplay) hexDisplay.textContent = currentSelectedHex;
+
+  // 2. モーダル内 input の更新
+  const modalHex = document.getElementById('modal-hex-input');
+  const modalR = document.getElementById('modal-r-input');
+  const modalG = document.getElementById('modal-g-input');
+  const modalB = document.getElementById('modal-b-input');
+
+  // HEX (# を除いた6桁をセット)
+  if (modalHex) {
+    modalHex.value = currentSelectedHex.replace('#', '');
+  }
+  // RGB (R, G, B をセット)
+  if (rgb) {
+    if (modalR) modalR.value = rgb.r;
+    if (modalG) modalG.value = rgb.g;
+    if (modalB) modalB.value = rgb.b;
+  }
+}
+
+// モーダル全体用：Enterキーイベントハンドラー
+function handleModalGlobalEnter(e) {
+  if (e.key === 'Enter' && !e.isComposing) {
+    e.preventDefault();
+    
+    // フォーカス中の入力確定
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.id === 'modal-hex-input') {
+      handleHexInput(activeEl.value);
+    } else if (activeEl && ['modal-r-input', 'modal-g-input', 'modal-b-input'].includes(activeEl.id)) {
+      handleRgbInputs();
+    }
+
+    applyAndCopyColor();
+  }
+}
+
+// モーダルを開く
+function openCircularColorPicker() {
+  const modal = document.getElementById('custom-color-modal');
+  if (modal) {
+    modal.classList.add('active');
+    if (iroPicker) iroPicker.resize(240);
+
+    window.removeEventListener('keydown', handleModalGlobalEnter);
+    window.addEventListener('keydown', handleModalGlobalEnter);
+  }
+}
+
+// モーダルを閉じる
+function closeCircularColorPicker() {
+  const modal = document.getElementById('custom-color-modal');
+  if (modal) modal.classList.remove('active');
+  window.removeEventListener('keydown', handleModalGlobalEnter);
+}
+
+function closeColorPickerOnOverlay(event) {
+  if (event.target.id === 'custom-color-modal') {
+    closeCircularColorPicker();
+  }
+}
+
+// HEX 直接入力の反映 (# を除いた6桁または3桁)
+function handleHexInput(val) {
+  val = val.replace(/[^0-9A-Fa-f]/g, ''); // 英数字以外の記号を除去
+  if (val.length === 3 || val.length === 6) {
+    if (iroPicker) {
+      iroPicker.color.hexString = '#' + val;
+      currentSelectedHex = iroPicker.color.hexString.toUpperCase();
+    }
+  }
+}
+
+// RGB (R/G/B 3つのフォーム) の直接入力の反映
+function handleRgbInputs() {
+  const rInput = document.getElementById('modal-r-input');
+  const gInput = document.getElementById('modal-g-input');
+  const bInput = document.getElementById('modal-b-input');
+
+  if (rInput && gInput && bInput) {
+    let r = parseInt(rInput.value) || 0;
+    let g = parseInt(gInput.value) || 0;
+    let b = parseInt(bInput.value) || 0;
+
+    // 0~255 の範囲制限
+    r = Math.min(255, Math.max(0, r));
+    g = Math.min(255, Math.max(0, g));
+    b = Math.min(255, Math.max(0, b));
+
+    if (iroPicker) {
+      iroPicker.color.rgb = { r, g, b };
+      currentSelectedHex = iroPicker.color.hexString.toUpperCase();
+    }
+  }
+}
+
+// 決定処理（履歴追加 ＆ 自動コピー ＆ 閉じる）
+function applyAndCopyColor() {
+  addToHistory(currentSelectedHex);
+  copyCurrentColor();
+  closeCircularColorPicker();
+}
+
+// カラー履歴の管理と描画
+function addToHistory(hex) {
+  colorHistory = colorHistory.filter(c => c !== hex);
+  colorHistory.unshift(hex);
+  if (colorHistory.length > 6) colorHistory.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const container = document.getElementById('color-history-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+  colorHistory.forEach(hex => {
+    const chip = document.createElement('div');
+    chip.className = 'history-chip';
+    chip.style.backgroundColor = hex;
+    chip.title = `${hex} を選択`;
+    chip.onclick = function() {
+      if (iroPicker) iroPicker.color.hexString = hex;
+    };
+    container.appendChild(chip);
   });
 }
 
-// カラーピッカーで選んだ色をクリップボードにコピーする関数
-function insertColorFromPicker(colorHex) {
-  navigator.clipboard.writeText(colorHex).then(() => {
-    // コピー成功時のフィードバック（通知メッセージ）
-    showToast(`カラーコード ${colorHex} をコピーしました！`);
-  }).catch(err => {
-    // 万が一クリップボード処理が失敗した場合のフォールバック
-    console.error('コピーに失敗しました:', err);
-    alert(`カラーコード: ${colorHex}`);
-  });
+// スポイト
+async function activateEyeDropper() {
+  if ('EyeDropper' in window) {
+    try {
+      const eyeDropper = new EyeDropper();
+      const result = await eyeDropper.open();
+      if (iroPicker && result.sRGBHex) {
+        iroPicker.color.hexString = result.sRGBHex;
+      }
+    } catch (e) {}
+  } else {
+    alert('お使いのブラウザはスポイト機能に対応していません。');
+  }
 }
 
-// 現在選択されているカラーコードをコピーする関数
+// クリップボードへコピー
 function copyCurrentColor() {
-  const picker = document.getElementById('tag-color-picker');
-  if (!picker) return;
-
-  const colorHex = picker.value; // 現在選ばれている色（#ff0000 など）を取得
-
-  navigator.clipboard.writeText(colorHex).then(() => {
-    // トースト通知を表示
+  navigator.clipboard.writeText(currentSelectedHex).then(() => {
     if (typeof showToast === 'function') {
-      showToast(`カラーコード ${colorHex} をコピーしました！`);
+      showToast(`カラーコード ${currentSelectedHex} をコピーしました！`);
     } else {
-      alert(`カラーコード ${colorHex} をコピーしました！`);
+      alert(`カラーコード ${currentSelectedHex} をコピーしました！`);
     }
   }).catch(err => {
-    console.error('コピーに失敗しました:', err);
+    console.error('コピー失敗:', err);
   });
 }
       
@@ -2891,7 +4165,7 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
 
   currentPreviewDir = resolvedTarget.includes('/') ? resolvedTarget.substring(0, resolvedTarget.lastIndexOf('/') + 1) : '';
 
-  if (title) title.textContent = `Preview: ${resolvedTarget}`;
+  if (title) title.textContent = `プレビュー: ${resolvedTarget}`;
   if (pageTitleEl) pageTitleEl.textContent = '';
   const fileData = files[resolvedTarget];
 
@@ -2981,6 +4255,7 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     });
   };
 
+  // 1. 外部CSSファイルの結合
   html = html.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, cssFile) => {
     const resolvedKey = resolveFilePath(cssFile);
     if (resolvedKey && files[resolvedKey]) {
@@ -2990,27 +4265,38 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     return match;
   });
 
+  // 2. <style> タグ内の url() 置換
   html = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, cssContent) => {
     return `<style>${replaceCssUrls(cssContent)}</style>`;
   });
 
+  // 3. インラインスタイルの url() 置換
   html = html.replace(/style=(["'])([\s\S]*?)\1/gi, (match, quote, styleAttr) => {
     return `style=${quote}${replaceCssUrls(styleAttr)}${quote}`;
   });
 
+  // 4. 外部JSファイルの結合
   html = html.replace(/<script\s+[^>]*src=["']([^"']+)["']><\/script>/gi, (match, jsFile) => {
     const resolvedKey = resolveFilePath(jsFile);
     return (resolvedKey && files[resolvedKey]) ? `<script>\n${files[resolvedKey]}\n<\/script>` : match;
   });
 
-  html = html.replace(/\bsrc=["']([^"']+)["']/gi, (match, src) => {
-    const resolvedKey = resolveFilePath(src);
-    return (resolvedKey && files[resolvedKey]) ? `src="${files[resolvedKey]}"` : match;
+  // 5. <img> タグ等の src 属性を Base64 に安全に置き換える
+  html = html.replace(/\b(src|href)\s*=\s*["']([^"']+)["']/gi, (match, attr, path) => {
+    const resolvedKey = resolveFilePath(path);
+    if (resolvedKey && files[resolvedKey]) {
+      return `${attr}="${files[resolvedKey]}"`;
+    }
+    return match;
   });
 
+  // クリック検出＆フォーカス強制スクリプトの追加
   const clickInterceptor = `
 <script>
+  // プレビュー領域をクリックした時に親（iframe自身）へフォーカスを移す
   document.addEventListener('click', function(e) {
+    window.focus();
+
     const a = e.target.closest('a');
     if (!a) return;
 
@@ -3054,8 +4340,20 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';
+
+  iframe.onload = () => {
+    try {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.files = files;
+        // ★ iframe 読み込み完了時に自動的にキーボードフォーカスを移す
+        iframe.contentWindow.focus();
+      }
+    } catch (err) {
+      console.warn("Could not inject files/focus into iframe window:", err);
+    }
+  };
+
   iframe.srcdoc = html;
-  
   container.appendChild(iframe);
 };
 
@@ -3065,24 +4363,28 @@ function closePreview() {
 }
 
 // ==========================================
-// ショートカットキー設定 (Alt + P / Alt + T)
+// ショートカットキー設定 (Ctrl + P [Mac: Cmd + P] / Alt + T)
 // ==========================================
 function handleShortcutKeys(event) {
-  // Alt キー (Macでは Option キー) が押されているか確認
-  if (event.altKey) {
+  // Ctrl キー (または Mac の Command キー) が押されているか確認
+  const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+  if (isCtrlOrCmd) {
     const key = event.key ? event.key.toLowerCase() : '';
 
-    // Alt + P : プレビューを開く
+    // Ctrl + P (Cmd + P) : プレビューを開く
     if (key === 'p') {
-      event.preventDefault();
+      event.preventDefault(); // ブラウザ標準の印刷(Print)ダイアログを止める
+      
       // onclick="openInBrowser()" のボタンを実行
       const previewBtn = document.querySelector('button[onclick*="openInBrowser()"]');
       if (previewBtn) {
         previewBtn.click();
       }
     }
+  
 
-    // Alt + T : タグ一覧（フッター）を開閉する
+    // Alt + T : タグ一覧を開閉する
     if (key === 't') {
       event.preventDefault();
       // class="footer-toggle-btn" または onclick="toggleFooter()" のボタンを実行
