@@ -1147,12 +1147,27 @@ button.btn-primary:hover {
   width: 100%;
   margin-top: 14px;
 }
+
+/* カラー履歴ラベル */
 .history-label {
-  font-size: 11px;
-  font-weight: bold;
-  color: #888;
-  margin-bottom: 6px;
-  text-align: left;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+  transition: color 0.2s ease;
+}
+
+/* カラー履歴アイコンのワンポイント */
+.history-label::before {
+  content: '\f1da'; /* FontAwesomeの履歴アイコン (fa-clock-rotate-left) */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 12px;
 }
 .history-chips {
   display: flex;
@@ -3851,7 +3866,7 @@ let currentSelectedHex = '#FF0000';
 let colorHistory = [];
 
 /**
- * ★ モーダルの背景色とテキスト色（反転処理）を更新する関数
+ * ★ モーダル本体の背景色と「見出しタイトル(h3)」「カラー履歴ラベル」を連動更新する関数
  */
 function updateModalBackground(hex) {
   const modalContent = document.querySelector('.color-modal-content');
@@ -3860,24 +3875,21 @@ function updateModalBackground(hex) {
   // 1. モーダルコンテンツの背景色を選択色に変更
   modalContent.style.backgroundColor = hex;
 
-  // 2. 輝度判定（YIQ方式）によるテキスト色の明暗自動調整
+  // 2. 輝度判定（YIQ方式）によるタイトルの明暗自動調整
   const rgb = hexToRgb(hex);
-  if (rgb) {
-    const yiq = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-    
-    // 背景が暗いときは白文字、明るいときは黒/ダークグレー文字
-    if (yiq < 128) {
-      modalContent.style.color = "#ffffff";
-      modalContent.querySelectorAll("h3, .input-label, .rgb-sub-label, .history-label, .hex-prefix").forEach(el => {
-        el.style.color = "#ffffff";
-      });
-    } else {
-      modalContent.style.color = "#333333";
-      modalContent.querySelectorAll("h3, .input-label, .rgb-sub-label, .history-label, .hex-prefix").forEach(el => {
-        el.style.color = "#333333";
-      });
-    }
-  }
+  if (!rgb) return;
+
+  const yiq = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+  const isDark = yiq < 128; // 背景が暗いかどうか
+
+  const targetTextColor = isDark ? "#ffffff" : "#333333";
+
+  // ★ 「カラー選択（h3）」と「カラー履歴（.history-label）」のみ文字色を切り替え
+  const titleEl = modalContent.querySelector("h3");
+  const historyLabelEl = modalContent.querySelector(".history-label");
+
+  if (titleEl) titleEl.style.color = targetTextColor;
+  if (historyLabelEl) historyLabelEl.style.color = targetTextColor;
 }
 
 /**
@@ -3909,12 +3921,12 @@ document.addEventListener('DOMContentLoaded', function() {
     ]
   });
 
-  // パレット操作時にフォーカスを強制解除してからUI更新
+  // パレット操作時のイベント連動
   iroPicker.on('color:change', function(color) {
-    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
-      document.activeElement.blur(); // 入力中のフォーカスを即座に外す
-    }
-    updateColorUI(color.hexString, color.rgb, false);
+    const activeEl = document.activeElement;
+    const isEditingInput = activeEl && activeEl.tagName === 'INPUT';
+    
+    updateColorUI(color.hexString, color.rgb, !isEditingInput);
   });
 });
 
@@ -3922,7 +3934,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateColorUI(hex, rgb, updateInputs = true) {
   currentSelectedHex = hex.toUpperCase();
 
-  // ★ 1. モーダル背景色の連動更新
+  // 1. モーダル背景色の連動更新
   updateModalBackground(currentSelectedHex);
 
   // 2. 画面上プレビュー＆テキスト更新
@@ -3931,21 +3943,19 @@ function updateColorUI(hex, rgb, updateInputs = true) {
   if (previewInner) previewInner.style.backgroundColor = currentSelectedHex;
   if (hexDisplay) hexDisplay.textContent = currentSelectedHex;
 
-  // 3. モーダル内 input の更新
-  const modalHex = document.getElementById('modal-hex-input');
-  const modalR = document.getElementById('modal-r-input');
-  const modalG = document.getElementById('modal-g-input');
-  const modalB = document.getElementById('modal-b-input');
+  // 3. モーダル内 input の数値更新
+  if (updateInputs) {
+    const modalHex = document.getElementById('modal-hex-input');
+    const modalR = document.getElementById('modal-r-input');
+    const modalG = document.getElementById('modal-g-input');
+    const modalB = document.getElementById('modal-b-input');
 
-  // HEX (# を除いた6桁をセット)
-  if (modalHex && updateInputs) {
-    modalHex.value = currentSelectedHex.replace('#', '');
-  }
-  // RGB (R, G, B をセット)
-  if (rgb && updateInputs) {
-    if (modalR) modalR.value = rgb.r;
-    if (modalG) modalG.value = rgb.g;
-    if (modalB) modalB.value = rgb.b;
+    if (modalHex) modalHex.value = currentSelectedHex.replace('#', '');
+    if (rgb) {
+      if (modalR) modalR.value = rgb.r;
+      if (modalG) modalG.value = rgb.g;
+      if (modalB) modalB.value = rgb.b;
+    }
   }
 }
 
@@ -3954,7 +3964,6 @@ function handleModalGlobalEnter(e) {
   if (e.key === 'Enter' && !e.isComposing) {
     e.preventDefault();
     
-    // フォーカス中の入力確定
     const activeEl = document.activeElement;
     if (activeEl && activeEl.id === 'modal-hex-input') {
       handleHexInput(activeEl.value);
@@ -3973,8 +3982,7 @@ function openCircularColorPicker() {
     modal.classList.add('active');
     if (iroPicker) {
       iroPicker.resize(240);
-      // 開いた時点の選択色を背景色に適用
-      updateModalBackground(currentSelectedHex);
+      updateColorUI(currentSelectedHex, iroPicker.color.rgb, true);
     }
 
     window.removeEventListener('keydown', handleModalGlobalEnter);
@@ -3997,12 +4005,11 @@ function closeColorPickerOnOverlay(event) {
 
 // HEX 直接入力の反映 (# を除いた6桁または3桁)
 function handleHexInput(val) {
-  val = val.replace(/[^0-9A-Fa-f]/g, ''); // 英数字以外の記号を除去
+  val = val.replace(/[^0-9A-Fa-f]/g, '');
   if (val.length === 3 || val.length === 6) {
     if (iroPicker) {
       iroPicker.color.hexString = '#' + val;
-      currentSelectedHex = iroPicker.color.hexString.toUpperCase();
-      updateModalBackground(currentSelectedHex); // ★ 即座に背景色へ反映
+      updateColorUI(iroPicker.color.hexString, iroPicker.color.rgb, false);
     }
   }
 }
@@ -4018,15 +4025,13 @@ function handleRgbInputs() {
     let g = parseInt(gInput.value) || 0;
     let b = parseInt(bInput.value) || 0;
 
-    // 0~255 の範囲制限
     r = Math.min(255, Math.max(0, r));
     g = Math.min(255, Math.max(0, g));
     b = Math.min(255, Math.max(0, b));
 
     if (iroPicker) {
       iroPicker.color.rgb = { r, g, b };
-      currentSelectedHex = iroPicker.color.hexString.toUpperCase();
-      updateModalBackground(currentSelectedHex); // ★ 即座に背景色へ反映
+      updateColorUI(iroPicker.color.hexString, { r, g, b }, false);
     }
   }
 }
@@ -4059,7 +4064,7 @@ function renderHistory() {
     chip.onclick = function() {
       if (iroPicker) {
         iroPicker.color.hexString = hex;
-        updateModalBackground(hex); // ★ 履歴クリック時も背景色更新
+        updateColorUI(hex, iroPicker.color.rgb, true);
       }
     };
     container.appendChild(chip);
@@ -4074,7 +4079,7 @@ async function activateEyeDropper() {
       const result = await eyeDropper.open();
       if (iroPicker && result.sRGBHex) {
         iroPicker.color.hexString = result.sRGBHex;
-        updateModalBackground(result.sRGBHex); // ★ スポイト取得時も背景色更新
+        updateColorUI(result.sRGBHex, iroPicker.color.rgb, true);
       }
     } catch (e) {}
   } else {
