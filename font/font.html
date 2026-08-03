@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本語フォント 試し書きアプリ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f5f5f7;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    header {
+      background-color: #ffffff;
+      padding: 12px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      font-weight: bold;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: column;
+    }
+/* preview-card が空のときに placeholder の文字を表示する */
+.preview-card:empty::before {
+  content: attr(placeholder);
+  color: #aaa; /* 薄いグレーにする */
+  pointer-events: none; /* クリック操作を妨げない */
+  display: block;
+}
+    @media (min-width: 768px) {
+      .app-container {
+        flex-direction: row;
+      }
+    }
+
+    .control-panel {
+      width: 100%;
+      background-color: #ffffff;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      order: 2;
+      max-height: 45vh;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    @media (min-width: 768px) {
+      .control-panel {
+        width: 320px;
+        order: 1;
+        max-height: 100%;
+        border-top: none;
+        border-right: 1px solid #e0e0e0;
+      }
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    select, input[type="range"], input[type="color"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background-color: #fff;
+    }
+
+    input[type="color"] {
+      height: 40px;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .color-inputs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .color-inputs > div {
+      flex: 1;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #333;
+    }
+
+    .checkbox-label input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .range-val {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .toggle-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn.active {
+      background-color: #0071e3;
+      color: #ffffff;
+      border-color: #0071e3;
+    }
+
+    .download-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #34c759;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+
+    .download-btn:hover {
+      background-color: #2fb350;
+    }
+
+    .download-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .preview-container {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #e5e5ea;
+      background-image: 
+        linear-gradient(45deg, #ddd 25%, transparent 25%), 
+        linear-gradient(-45deg, #ddd 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #ddd 75%), 
+        linear-gradient(-45deg, transparent 75%, #ddd 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      overflow: auto;
+      order: 1;
+    }
+
+    @media (min-width: 768px) {
+      .preview-container {
+        padding: 40px;
+        order: 2;
+      }
+    }
+
+    .preview-card {
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      color: #333333;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      outline: none;
+      white-space: pre-wrap;
+      overflow: auto;
+      box-sizing: border-box;
+      
+      font-size: 32px;
+      letter-spacing: 0px;
+      line-height: 1.5;
+    }
+
+    .preview-card.transparent-bg {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    @media (min-width: 768px) {
+      .preview-card {
+        padding: 40px;
+        font-size: 48px;
+      }
+    }
+
+    .preview-card.vertical {
+      writing-mode: vertical-rl;
+      -webkit-writing-mode: vertical-rl;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span>日本語フォント 試し書きプレビュー</span>
+  </header>
+
+  <div class="app-container">
+    <aside class="control-panel">
+      <button class="download-btn" id="btnDownload">
+        📸 PNG画像として保存
+      </button>
+
+      <!-- フォント選択（バリエーション追加） -->
+      <div class="control-group">
+        <label for="fontSelect">フォント選択</label>
+        <select id="fontSelect">
+          <optgroup label="ゴシック体 / モダン">
+            <option value="Noto Sans JP">Noto Sans JP（標準ゴシック）</option>
+            <option value="Zen Kaku Gothic New">Zen Kaku Gothic New（モダン）</option>
+            <option value="BIZ UDPGothic">BIZ UDPGothic（ユニバーサル）</option>
+          </optgroup>
+          <optgroup label="明朝体 / 上品">
+            <option value="Noto Serif JP">Noto Serif JP（標準明朝）</option>
+            <option value="Shippori Mincho">Shippori Mincho（しっぽり明朝）</option>
+            <option value="Kaisei Decol">Kaisei Decol（レトロ明朝）</option>
+          </optgroup>
+          <optgroup label="ポップ / 丸ゴシック">
+            <option value="M PLUS Rounded 1c">M PLUS Rounded 1c（丸ゴシック）</option>
+            <option value="Reggae One">Reggae One（ポップ・音楽的）</option>
+            <option value="Potta One">Potta One（ぽってり文字）</option>
+          </optgroup>
+          <optgroup label="手書き風 / ディスプレイ">
+            <option value="Yuji Syuku">Yuji Syuku（毛筆手書き）</option>
+            <option value="Kurenaido">Kurenaido（クレナイド手書き）</option>
+
+            <option value="Yomogi">Yomogi（ペン字風）</option>
+          </optgroup>
+          <optgroup label="インパクト・太字">
+            <option value="Dela Gothic One">Dela Gothic One（超極太）</option>
+  <option value="Rampart One">Rampart One（3D影付き）</option>
+  <option value="Potta One">Potta One（ぽってり太字）</option>
+  <option value="Reggae One">Reggae One（ロック調）</option>
+<option value="Rock 3D">Rock 3D（立体ロック調）</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>文字組み</label>
+        <div class="toggle-buttons">
+          <button class="toggle-btn active" id="btnHorizontal">横書き</button>
+          <button class="toggle-btn" id="btnVertical">縦書き</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>カラー調整</label>
+        <div class="color-inputs">
+          <div>
+            <label for="textColorInput">文字色</label>
+            <input type="color" id="textColorInput" value="#333333">
+          </div>
+          <div>
+            <label for="bgColorInput">背景色</label>
+            <input type="color" id="bgColorInput" value="#ffffff">
+          </div>
+        </div>
+        <label class="checkbox-label" style="margin-top: 6px;">
+          <input type="checkbox" id="transparentBgCheck"> 背景を透過（透明）にする
+        </label>
+      </div>
+
+      <div class="control-group">
+        <label for="sizeInput">文字サイズ <span id="sizeVal" class="range-val">32px</span></label>
+        <input type="range" id="sizeInput" min="14" max="100" value="32">
+      </div>
+
+      <div class="control-group">
+        <label for="spacingInput">字間 <span id="spacingVal" class="range-val">0px</span></label>
+        <input type="range" id="spacingInput" min="-5" max="30" value="0">
+      </div>
+
+      <div class="control-group">
+        <label for="heightInput">行間 <span id="heightVal" class="range-val">1.5</span></label>
+        <input type="range" id="heightInput" min="1.0" max="3.0" step="0.1" value="1.5">
+      </div>
+    </aside>
+
+    <main class="preview-container">
+<div id="previewCard" class="preview-card" contenteditable="true" spellcheck="false" placeholder="ここに文章を入力して試せます"></div>
+    </main>
+  </div>
+
+  <script>
+    const fontSelect = document.getElementById('fontSelect');
+    const sizeInput = document.getElementById('sizeInput');
+    const spacingInput = document.getElementById('spacingInput');
+    const heightInput = document.getElementById('heightInput');
+    const textColorInput = document.getElementById('textColorInput');
+    const bgColorInput = document.getElementById('bgColorInput');
+    const transparentBgCheck = document.getElementById('transparentBgCheck');
+    const btnHorizontal = document.getElementById('btnHorizontal');
+    const btnVertical = document.getElementById('btnVertical');
+    const btnDownload = document.getElementById('btnDownload');
+    const previewCard = document.getElementById('previewCard');
+
+    const sizeVal = document.getElementById('sizeVal');
+    const spacingVal = document.getElementById('spacingVal');
+    const heightVal = document.getElementById('heightVal');
+
+    const loadedFonts = new Set();
+
+    if (window.innerWidth < 768) {
+      previewCard.style.fontSize = '32px';
+      sizeInput.value = 32;
+      sizeVal.textContent = '32px';
+    } else {
+      previewCard.style.fontSize = '48px';
+      sizeInput.value = 48;
+      sizeVal.textContent = '48px';
+    }
+
+    function loadGoogleFont(fontName) {
+  if (loadedFonts.has(fontName)) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    // スペースを '+' に変換（例: "Rock 3D" -> "Rock+3D"）
+    const formattedName = fontName.replace(/ /g, '+');
+    
+    // Rock 3Dなどの特殊フォントに対応するため、ウェイト指定(wght)を除外した標準URLで読み込み
+    link.href = `https://fonts.googleapis.com/css2?family=${formattedName}&display=swap`;
+    link.rel = 'stylesheet';
+    
+    link.onload = () => {
+      loadedFonts.add(fontName);
+      document.fonts.ready.then(resolve);
+    };
+    link.onerror = reject;
+    document.head.appendChild(link);
+  });
+}
+
+    fontSelect.addEventListener('change', async (e) => {
+      const selectedFont = e.target.value;
+      await loadGoogleFont(selectedFont);
+      previewCard.style.fontFamily = `'${selectedFont}', sans-serif`;
+    });
+
+    sizeInput.addEventListener('input', (e) => {
+      const val = `${e.target.value}px`;
+      previewCard.style.fontSize = val;
+      sizeVal.textContent = val;
+    });
+
+    spacingInput.addEventListener('input', (e) => {
+      const val = `${e.target.value}px`;
+      previewCard.style.letterSpacing = val;
+      spacingVal.textContent = val;
+    });
+
+    heightInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      previewCard.style.lineHeight = val;
+      heightVal.textContent = val;
+    });
+
+    textColorInput.addEventListener('input', (e) => {
+      previewCard.style.color = e.target.value;
+    });
+
+    bgColorInput.addEventListener('input', (e) => {
+      if (!transparentBgCheck.checked) {
+        previewCard.style.backgroundColor = e.target.value;
+      }
+    });
+
+    transparentBgCheck.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        bgColorInput.disabled = true;
+        previewCard.classList.add('transparent-bg');
+      } else {
+        bgColorInput.disabled = false;
+        previewCard.classList.remove('transparent-bg');
+        previewCard.style.backgroundColor = bgColorInput.value;
+      }
+    });
+
+    btnHorizontal.addEventListener('click', () => {
+      previewCard.classList.remove('vertical');
+      btnHorizontal.classList.add('active');
+      btnVertical.classList.remove('active');
+    });
+
+    btnVertical.addEventListener('click', () => {
+      previewCard.classList.add('vertical');
+      btnVertical.classList.add('active');
+      btnHorizontal.classList.remove('active');
+    });
+
+    btnDownload.addEventListener('click', async () => {
+        if (!previewCard.innerText.trim()) {
+    alert('文字を入力してから保存してください。');
+    return;
+  }
+      try {
+        btnDownload.disabled = true;
+        btnDownload.innerText = '保存中...';
+
+        await document.fonts.ready;
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const isTransparent = transparentBgCheck.checked;
+
+        const canvas = await html2canvas(previewCard, {
+          backgroundColor: isTransparent ? null : (bgColorInput.value || '#ffffff'),
+          scale: 2,
+          useCORS: true,
+          logging: false
+        });
+
+        const link = document.createElement('a');
+        link.download = `font-preview-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+      } catch (error) {
+        console.error('画像生成エラー:', error);
+        alert('画像の保存に失敗しました。');
+      } finally {
+        btnDownload.disabled = false;
+        btnDownload.innerText = '📸 PNG画像として保存';
+      }
+    });
+
+    loadGoogleFont(fontSelect.value).then(() => {
+      previewCard.style.fontFamily = `'${fontSelect.value}', sans-serif`;
+    });
+  </script>
+</body>
+</html>
