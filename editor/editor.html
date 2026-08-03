@@ -4393,13 +4393,282 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     if (window.parent && typeof window.parent.renderPreviewFile === 'function') {
       window.parent.renderPreviewFile(href, '${currentPreviewDir}');
     }
+// --- Preview System ---
+function openInBrowser() {
+  let modal = document.getElementById('preview-modal');
+  
+  // すでにモーダルが存在して表示されている場合は閉じて処理を終了する
+  if (modal && modal.style.display !== 'none') {
+    closePreview();
+    return;
+  }
+
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'preview-modal';
+    modal.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+    `;
+
+    modal.innerHTML = `
+      <div style="width: 90%; height: 90%; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <div style="background: #282a36; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span id="preview-title" style="font-weight: bold; font-family: sans-serif; font-size: 1rem;">Preview</span>
+            <span id="preview-page-title" style="font-size: 0.85rem; color: #bd93f9; font-family: sans-serif; font-weight: normal;"></span>
+          </div>
+          <button onclick="closePreview()" style="background: #ff5555; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">✕ 閉じる</button>
+        </div>
+        <div id="preview-body" style="width: 100%; height: 100%; overflow: auto; background: #f8f9fa;"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    // 過去に非表示(display: none)にされていた場合は再表示する
+    modal.style.display = 'flex';
+  }
+
+  // ▼ 開く対象ファイルの決定判定
+  const fileKeys = Object.keys(files || {});
+  
+  let targetFile = null;
+
+  // 1. 現在開いている（アクティブな）ファイルが HTML の場合は最優先で開く
+  if (typeof activeFileName !== 'undefined' && activeFileName && activeFileName.toLowerCase().endsWith('.html') && files[activeFileName]) {
+    targetFile = activeFileName;
+  } else {
+    // 2. それ以外の場合は、一番上（最初）にある .html ファイルを探す
+    targetFile = fileKeys.find(key => key.toLowerCase().endsWith('.html'));
+    
+    // 3. HTMLが見つかりなければ、一番上のファイルを選択
+    if (!targetFile && fileKeys.length > 0) {
+      targetFile = fileKeys[0];
+    }
+  }
+
+  if (targetFile) {
+    window.renderPreviewFile(targetFile);
+  } else {
+    alert('表示できるファイルがありません。');
+  }
+}
+
+// モーダル外・リンク遷移からも呼び出せるレンダリング関数
+let currentPreviewDir = '';
+
+window.renderPreviewFile = function(fileName, baseDir = '') {
+  const fileKeys = Object.keys(files || {});
+  let resolvedTarget = null;
+
+  // パスの表記ゆれ（./ や 相対パス）を完全に解決してマッチングする関数
+  const findMatchingKey = (path) => {
+    if (!path) return null;
+    let clean = path.trim().replace(/^['"]|['"]$/g, '').replace(/^(\.\/|\/)+/, '');
+    
+    // 完全一致
+    if (files[path]) return path;
+    if (files[clean]) return clean;
+
+    // ディレクトリ指定がある場合
+    if (baseDir) {
+      let combined = baseDir + clean;
+      if (files[combined]) return combined;
+    }
+
+    // ファイル名（末尾）の一致で最終検索
+    let baseName = clean.split('/').pop();
+    let found = fileKeys.find(k => k === clean || k.endsWith('/' + baseName) || k === baseName);
+    return found || null;
+  };
+
+  resolvedTarget = findMatchingKey(fileName);
+
+  const title = document.getElementById('preview-title');
+  const pageTitleEl = document.getElementById('preview-page-title');
+  const container = document.getElementById('preview-body');
+  
+  if (!resolvedTarget || !files[resolvedTarget]) {
+    alert(`ファイル "${fileName}" が存在しません。`);
+    return;
+  }
+
+  currentPreviewDir = resolvedTarget.includes('/') ? resolvedTarget.substring(0, resolvedTarget.lastIndexOf('/') + 1) : '';
+
+  if (title) title.textContent = `プレビュー: ${resolvedTarget}`;
+  if (pageTitleEl) pageTitleEl.textContent = '';
+  const fileData = files[resolvedTarget];
+
+  // コンテナを完全にクリアしてiframeの残留・混ざり合いを防ぐ
+  container.innerHTML = '';
+
+  // PDF描画
+  if (typeof isPdfFile === 'function' && isPdfFile(resolvedTarget)) {
+    let pdfSrc = fileData;
+    let blobUrl = '';
+
+    try {
+      if (typeof pdfSrc === 'string' && pdfSrc.startsWith('data:')) {
+        const parts = pdfSrc.split(',');
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+        const bstr = atob(parts[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        blobUrl = URL.createObjectURL(blob);
+      } else if (pdfSrc instanceof Blob) {
+        blobUrl = URL.createObjectURL(pdfSrc);
+      } else {
+        blobUrl = pdfSrc;
+      }
+    } catch (e) {
+      console.error("PDF Blob conversion error:", e);
+      blobUrl = pdfSrc;
+    }
+
+    container.innerHTML = `
+      <object data="${blobUrl}" type="application/pdf" width="100%" height="100%">
+        <iframe src="${blobUrl}" style="width:100%; height:100%; border:none;">
+          <p>PDFを表示できません。<a href="${blobUrl}" target="_blank">ここをクリックしてダウンロード/表示</a>してください。</p>
+        </iframe>
+      </object>`;
+    return;
+  }
+
+  if (typeof isImageFile === 'function' && isImageFile(resolvedTarget)) {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:center; align-items:center; height:100%; padding:20px; box-sizing:border-box;">
+        <img src="${fileData}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+      </div>`;
+    return;
+  }
+
+  if (typeof isAudioFile === 'function' && isAudioFile(resolvedTarget)) {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+        <audio controls src="${fileData}" style="width:80%; max-width:500px;"></audio>
+      </div>`;
+    return;
+  }
+
+  if (typeof isVideoFile === 'function' && isVideoFile(resolvedTarget)) {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:center; align-items:center; height:100%; background:#000;">
+        <video controls src="${fileData}" style="max-width:100%; max-height:100%;"></video>
+      </div>`;
+    return;
+  }
+
+  let html = fileData;
+
+  const titleMatch = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleMatch && titleMatch[1] && pageTitleEl) {
+    pageTitleEl.textContent = titleMatch[1].trim();
+  }
+
+  const resolveFilePath = (relativePath) => {
+    if (!relativePath) return null;
+    let clean = relativePath.trim().replace(/^['"]|['"]$/g, '');
+    if (clean.startsWith('data:') || clean.startsWith('http://') || clean.startsWith('https://')) return null;
+
+    return findMatchingKey(clean);
+  };
+
+  const replaceCssUrls = (cssText) => {
+    return cssText.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, urlPath) => {
+      const resolvedKey = resolveFilePath(urlPath);
+      if (resolvedKey && files[resolvedKey]) {
+        return `url('${files[resolvedKey]}')`;
+      }
+      return match;
+    });
+  };
+
+  // 1. 外部CSSファイルの結合
+  html = html.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, cssFile) => {
+    const resolvedKey = resolveFilePath(cssFile);
+    if (resolvedKey && files[resolvedKey]) {
+      const processedCss = replaceCssUrls(files[resolvedKey]);
+      return `<style>\n/* Loaded: ${resolvedKey} */\n${processedCss}\n</style>`;
+    }
+    return match;
+  });
+
+  // 2. <style> タグ内の url() 置換
+  html = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, cssContent) => {
+    return `<style>${replaceCssUrls(cssContent)}</style>`;
+  });
+
+  // 3. インラインスタイルの url() 置換
+  html = html.replace(/style=(["'])([\s\S]*?)\1/gi, (match, quote, styleAttr) => {
+    return `style=${quote}${replaceCssUrls(styleAttr)}${quote}`;
+  });
+
+  // 4. 外部JSファイルの結合
+  html = html.replace(/<script\s+[^>]*src=["']([^"']+)["']><\/script>/gi, (match, jsFile) => {
+    const resolvedKey = resolveFilePath(jsFile);
+    return (resolvedKey && files[resolvedKey]) ? `<script>\n${files[resolvedKey]}\n<\/script>` : match;
+  });
+
+  // 5. <img> タグ等の src 属性を Base64 に安全に置き換える
+  html = html.replace(/\b(src|href)\s*=\s*["']([^"']+)["']/gi, (match, attr, path) => {
+    const resolvedKey = resolveFilePath(path);
+    if (resolvedKey && files[resolvedKey]) {
+      return `${attr}="${files[resolvedKey]}"`;
+    }
+    return match;
+  });
+
+  // クリック検出＆フォーカス強制スクリプトの追加
+  const clickInterceptor = `
+<script>
+  // プレビュー領域をクリックした時に親（iframe自身）へフォーカスを移す
+  document.addEventListener('click', function(e) {
+    window.focus();
+
+    const a = e.target.closest('a');
+    if (!a) return;
+
+    const href = a.getAttribute('href');
+    if (!href) return;
+
+    if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        a.setAttribute('target', '_blank');
+      }
+      return;
+    }
+
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (href === '#') return;
+      
+      const targetId = href.substring(1);
+      const targetEl = document.getElementById(targetId) || document.querySelector('[name="' + targetId + '"]');
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (window.parent && typeof window.parent.renderPreviewFile === 'function') {
+      window.parent.renderPreviewFile(href, '${currentPreviewDir}');
+    }
   }, true);
 <\/script>
 `;
 
   html += clickInterceptor;
 
-  container.innerHTML = '';
   const iframe = document.createElement('iframe');
   iframe.style.width = '100%';
   iframe.style.height = '100%';
@@ -4409,7 +4678,6 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     try {
       if (iframe.contentWindow) {
         iframe.contentWindow.files = files;
-        // ★ iframe 読み込み完了時に自動的にキーボードフォーカスを移す
         iframe.contentWindow.focus();
       }
     } catch (err) {
