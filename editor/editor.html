@@ -787,46 +787,7 @@ button.btn-primary:hover {
   border-bottom: 2px solid #1a73e8;
 }
 
-/* 右端に固定表示される開閉ボタン */
-.footer-toggle-btn {
-  flex-shrink: 0;
-  position: sticky;
-  right: 0;
-  z-index: 2;
-  background-color: #f5f5f7;
-  border: none;
-  border-left: 1px solid #e0e0e0;
-  color: #666666;
-  height: 100%;
-  padding: 0 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  font-weight: bold;
-  transition: background-color 0.2s, color 0.2s;
-  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.05);
-}
 
-.footer-toggle-btn:hover {
-  background-color: #ebebeb;
-  color: #111111;
-}
-
-.footer-toggle-btn:active {
-  transform: scale(0.96);
-}
-
-.toggle-btn-label {
-  line-height: 1;
-}
-
-#footer-toggle-icon {
-  font-size: 0.7rem;
-  transition: transform 0.25s ease;
-}
 
 .editor-footer.collapsed #footer-toggle-icon {
   transform: rotate(180deg);
@@ -1719,12 +1680,7 @@ button.btn-primary:hover {
         </button>
       </div>
 
-      <!-- 右端固定の開閉トグルボタン -->
-      <button class="footer-toggle-btn" onclick="toggleFooter()" title="タグ一覧を開閉(Alt + T)">
-        <i class="fa-solid fa-tags"></i>
-        <span class="toggle-btn-label">タグ一覧</span>
-        <i class="fa-solid fa-chevron-up" id="footer-toggle-icon"></i>
-      </button>
+      
     </div>
 
     <!-- 各タブの中身（コンテナ） -->
