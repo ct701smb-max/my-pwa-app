@@ -561,6 +561,7 @@ button.btn-primary:hover {
   touch-action: pan-y; 
   /* 万が一の画面突き抜けを強力に防ぐ */
   overflow: hidden; 
+  
 }
 
 .CodeMirror {
@@ -1369,7 +1370,23 @@ button.btn-primary:hover {
   font-family: monospace;
   white-space: nowrap;
 }
-      
+
+/* スマホ用底上げ */
+.editor-footer2 {
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  box-sizing: border-box;
+  overflow: hidden;
+  
+  /* ★絶対につぶれないよう保護 */
+  flex-shrink: 0 !important;
+  z-index: 100 !important;
+}
+
+/* 折りたたまれた状態 */
+.editor-footer2.collapsed {
+  height: 40px !important;
+}
 /* ========================================== */
 /* ▼ レスポンシブスタイル（スマホ用: 768px以下） ▼ */
 /* ========================================== */
@@ -1879,6 +1896,7 @@ button.btn-primary:hover {
           <span class="tag-chip" onclick="insertTag('&quot;$0&quot;')" title="ダブルクォーテーション">" "</span>
           <span class="tag-chip" onclick="insertTag('\'$0\'')" title="シングルクォーテーション">' '</span>
           <span class="tag-chip" onclick="insertTag('`$0`')" title="バックティック">` `</span>
+          <span class="tag-chip" onclick="insertTag('../')" title="階層">../</span>  
           <span class="tag-chip" onclick="insertTag('[')" title="角括弧(開)">[</span>
           <span class="tag-chip" onclick="insertTag(']')" title="角括弧(閉)">]</span>
         </div>
@@ -2116,9 +2134,10 @@ button.btn-primary:hover {
   <div id="editor-wrapper">
     <textarea id="code-editor"></textarea>
   </div>
-  <div class="editor-footer collapsed" id="editor-footer">
-  <!--フッターエリア-->
-  </div>
+
+    <div class="editor-footer2 collapsed">
+    <!--スマホ用底上げ-->
+    </div>
     <!-- メディアファイルのプレビュー表示 -->
   <div id="media-view" class="media-preview" style="display: none;">
     <div id="media-info" class="media-info" title="クリックしてファイル名をコピー" onclick="copyCurrentFileName()"></div>
