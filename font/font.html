@@ -64,16 +64,20 @@
       }
     }
 
+    /* --- スモール画面（スマホ）用の操作パネル領域の調整 --- */
     .control-panel {
       width: 100%;
       background-color: #ffffff;
       padding: 16px;
+      padding-bottom: 40px; /* スマホ下部ナビゲーション対策の余白を追加 */
       display: flex;
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch; /* iOSでのスクロールをスムーズに */
       order: 2;
-      max-height: 45vh;
+      flex: 1; /* プレビューと高さ調整し合えるよう変更 */
+      max-height: 55vh; /* 高さを少し拡張して画面に余裕を持たせる */
       border-top: 1px solid #e0e0e0;
     }
 
@@ -81,7 +85,9 @@
       .control-panel {
         width: 320px;
         order: 1;
+        flex: initial;
         max-height: 100%;
+        padding-bottom: 16px;
         border-top: none;
         border-right: 1px solid #e0e0e0;
       }
@@ -91,6 +97,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+      flex-shrink: 0; /* スクリプト内の要素が潰れるのを防ぐ */
     }
 
     .control-group label {
@@ -173,6 +180,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      flex-shrink: 0;
     }
 
     .download-btn {
@@ -230,12 +238,14 @@
       background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
       overflow: auto;
       order: 1;
+      min-height: 180px; /* スマホ時に最低限のプレビュー領域を確保 */
     }
 
     @media (min-width: 768px) {
       .preview-container {
         padding: 40px;
         order: 2;
+        min-height: 0;
       }
     }
 
@@ -401,7 +411,7 @@
         </button>
       </div>
 
-      <!-- フォント選択（2つのカテゴリーに再編） -->
+      <!-- フォント選択（2つのカテゴリー） -->
       <div class="control-group">
         <label for="fontSelect">フォント選択</label>
         <select id="fontSelect">
@@ -422,11 +432,11 @@
             <option value="Dela Gothic One">Dela Gothic One（超極太）</option>
             <option value="Rampart One">Rampart One（3D影付き）</option>
           </optgroup>
-            <option value="Rock 3D">Rock 3D（立体ロック調・漢字不可）</option>
-          <optgroup label="🔤 英数のみ対応フォント">
+          <optgroup label="🔤 英数のみフォント">
             <option value="Creepster">Creepster（滴る毒液ホラー）</option>
             <option value="Eater">Eater（ドクロ・グロテスク）</option>
             <option value="Nosifer">Nosifer（血が滴るホラー）</option>
+            <option value="Rock 3D">Rock 3D（立体ロック調）</option>
           </optgroup>
         </select>
       </div>
