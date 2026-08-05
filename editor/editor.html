@@ -2197,18 +2197,26 @@ button.btn-primary:hover {
   </div>
 </div>
 
-<!-- ④ フォルダ名前変更モーダル -->
+<!-- ④ フォルダ名前変更・移動モーダル -->
 <div id="rename-folder-modal" class="modal-overlay" onclick="closeRenameFolderModal()">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h3 class="modal-title">
-      <i class="fa-solid fa-pen-to-square icon-blue"></i> フォルダ名の変更
+      <i class="fa-solid fa-pen-to-square icon-blue"></i> フォルダの変更・移動
     </h3>
-    <label class="modal-label">新しいフォルダ名</label>
-    <input type="text" id="rename-foldername-input" class="modal-input" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmRenameFolder(); }">
+    
+    <!-- 移動先親フォルダの選択 -->
+    <label class="modal-label">移動先フォルダ:</label>
+    <select id="rename-parent-folder-select" class="modal-select" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmRenameFolder(); }">
+      <!-- JSで動的に自身以外のフォルダ一覧を生成 -->
+    </select>
+
+    <!-- フォルダ名入力 -->
+    <label class="modal-label">フォルダ名:</label>
+    <input type="text" id="rename-foldername-input" class="modal-input" onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmRenameFolder(); }" onfocus="this.select();">
     
     <div class="modal-actions">
       <button type="button" class="modal-btn cancel" onclick="closeRenameFolderModal()">キャンセル</button>
-      <button type="button" class="modal-btn primary" onclick="confirmRenameFolder()">変更</button>
+      <button type="button" class="modal-btn primary" onclick="confirmRenameFolder()">変更・移動を保存</button>
     </div>
   </div>
 </div>
@@ -2576,18 +2584,64 @@ async function saveToLocalStorage() {
   }
 }
 
+// --- フォルダの開閉状態を保持するグローバルセット ---
+const openFolderIds = new Set();
+
+/**
+ * カテゴリー（Webソースコード / メディアファイル）の開閉トグル
+ * @param {string} groupId - 'group-web' または 'group-media'
+ */
 function toggleCategory(groupId) {
-  const group = document.getElementById(groupId);
-  if (group) group.classList.toggle('collapsed');
+  const groupEl = document.getElementById(groupId);
+  if (!groupEl) return;
+
+  // collapsed クラスのトグル
+  const isCollapsed = groupEl.classList.toggle('collapsed');
+
+  // カテゴリーを「閉じた」場合、配下のフォルダもすべて閉じた状態にリセット
+  if (isCollapsed) {
+    const categoryType = groupId.replace('group-', ''); // 'web' または 'media'
+    const prefix = `${categoryType}_folder_`;
+
+    // 1. 開閉状態管理セットから該当カテゴリー配下のフォルダIDを一括削除
+    Array.from(openFolderIds).forEach(id => {
+      if (id.startsWith(prefix)) {
+        openFolderIds.delete(id);
+      }
+    });
+
+    // 2. DOM上の該当カテゴリー内にあるすべてのフォルダを閉じる
+    const folderElements = groupEl.querySelectorAll('.folder-group');
+    folderElements.forEach(el => {
+      el.classList.add('collapsed');
+    });
+  }
 }
 
+// --------------------------------------------------
 // フォルダ（階層構造）の開閉トグル用イベント
+// ※二重発火を防ぐため、イベントデリゲーションで一元管理します
+// --------------------------------------------------
 document.addEventListener('click', function(e) {
+  // 削除ボタンをクリックした場合はフォルダ開閉を行わない
+  if (e.target.closest('.delete-btn')) return;
+
   const folderHeader = e.target.closest('.folder-header');
   if (!folderHeader) return;
+
   const folderGroup = folderHeader.closest('.folder-group');
   if (folderGroup) {
-    folderGroup.classList.toggle('collapsed');
+    const folderId = folderGroup.id;
+    const isCollapsed = folderGroup.classList.toggle('collapsed');
+
+    // openFolderIds の同期更新
+    if (folderId) {
+      if (isCollapsed) {
+        openFolderIds.delete(folderId);
+      } else {
+        openFolderIds.add(folderId);
+      }
+    }
   }
 });
 
@@ -2627,10 +2681,34 @@ function buildFileTree(fileKeys) {
   return root;
 }
 
+// フォルダの開閉を切り替える関数（安全版）
+function toggleFolder(event, folderId) {
+  // 子要素（削除ボタンなど）のクリックイベントが伝播してフォルダが開閉するのを防ぐ
+  if (event) {
+    const target = event.target;
+    if (target.classList.contains('delete-btn') || target.closest('.delete-btn')) {
+      return;
+    }
+    event.stopPropagation();
+  }
+
+  const folderEl = document.getElementById(folderId);
+  if (!folderEl) return;
+
+  if (folderEl.classList.contains('collapsed')) {
+    folderEl.classList.remove('collapsed');
+    openFolderIds.add(folderId);
+  } else {
+    folderEl.classList.add('collapsed');
+    openFolderIds.delete(folderId);
+  }
+}
+
 // ツリー構造をHTML要素にレンダリングする再帰関数
-function renderTreeNodes(node, basePath = '') {
+function renderTreeNodes(node, basePath = '', treeType = 'web') {
   let html = '';
 
+  // 1. ファイルのレンダリング
   node.files.sort().forEach(fileName => {
     const isActive = fileName === activeFileName ? 'active' : '';
     const displayName = fileName.split('/').pop();
@@ -2639,10 +2717,10 @@ function renderTreeNodes(node, basePath = '') {
     if (fileName.endsWith('.html')) icon = 'fa-html5';
     else if (fileName.endsWith('.css')) icon = 'fa-css3-alt';
     else if (fileName.endsWith('.js')) icon = 'fa-js';
-    else if (isImageFile(fileName)) icon = 'fa-image';
-    else if (isAudioFile(fileName)) icon = 'fa-file-audio';
-    else if (isVideoFile(fileName)) icon = 'fa-file-video';
-    else if (isPdfFile(fileName)) icon = 'fa-file-pdf';
+    else if (typeof isImageFile === 'function' && isImageFile(fileName)) icon = 'fa-image';
+    else if (typeof isAudioFile === 'function' && isAudioFile(fileName)) icon = 'fa-file-audio';
+    else if (typeof isVideoFile === 'function' && isVideoFile(fileName)) icon = 'fa-file-video';
+    else if (typeof isPdfFile === 'function' && isPdfFile(fileName)) icon = 'fa-file-pdf';
     
     const isBrand = icon.includes('html5') || icon.includes('css3') || icon.includes('js');
     const iconClass = isBrand ? `fa-brands ${icon}` : `fa-solid ${icon}`;
@@ -2650,32 +2728,45 @@ function renderTreeNodes(node, basePath = '') {
     html += `
       <li class="file-item ${isActive}" 
           data-file-name="${fileName}"
-          onclick="switchFile('${fileName}'); if(window.innerWidth<=768) closeSidebar();" 
-          ondblclick="event.stopPropagation(); renameFile('${fileName}');"
-          ontouchstart="handleFileTouchStart(event, '${fileName}')"
-          ontouchmove="handleFileTouchMove(event)"
-          ontouchend="handleFileTouchEnd(event)"
-          ontouchcancel="handleFileTouchCancel(event)">
+          onclick="switchFile('${fileName}'); if(window.innerWidth<=768 && typeof closeSidebar === 'function') closeSidebar();" 
+          ondblclick="event.stopPropagation(); if(typeof renameFile === 'function') renameFile('${fileName}');"
+          ${typeof handleFileTouchStart === 'function' ? `ontouchstart="handleFileTouchStart(event, '${fileName}')"` : ''}
+          ${typeof handleFileTouchMove === 'function' ? `ontouchmove="handleFileTouchMove(event)"` : ''}
+          ${typeof handleFileTouchEnd === 'function' ? `ontouchend="handleFileTouchEnd(event)"` : ''}
+          ${typeof handleFileTouchCancel === 'function' ? `ontouchcancel="handleFileTouchCancel(event)"` : ''}>
         <span class="file-label" title="ダブルクリックまたは長押しでファイル名を変更">
           <i class="${iconClass}"></i> ${displayName}
         </span>
-        <i class="fa-solid fa-xmark delete-btn" onclick="event.stopPropagation(); deleteFile('${fileName}')"></i>
+        <i class="fa-solid fa-xmark delete-btn" onclick="event.stopPropagation(); if(typeof deleteFile === 'function') deleteFile('${fileName}');"></i>
       </li>
     `;
   });
 
+  // 2. フォルダのレンダリング
   Object.keys(node.folders).sort().forEach(folderName => {
     const subNode = node.folders[folderName];
     const fullFolderPath = basePath ? `${basePath}/${folderName}` : folderName;
-    const folderId = `folder_${fullFolderPath.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    
+    // ID重複回避（web_folder_... や media_folder_...）
+    const folderId = `${treeType}_folder_${fullFolderPath.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    // アクティブファイルが含まれる場合は自動で開く状態にする
+    const isActiveFileInside = activeFileName && activeFileName.startsWith(fullFolderPath + '/');
+    if (isActiveFileInside) {
+      openFolderIds.add(folderId);
+    }
+
+    const isOpen = openFolderIds.has(folderId);
+    const folderClass = isOpen ? 'folder-group' : 'folder-group collapsed';
 
     html += `
-      <li class="folder-group collapsed" id="${folderId}">
+      <li class="${folderClass}" id="${folderId}">
         <div class="folder-header" 
-             ontouchstart="handleFolderTouchStart(event, '${fullFolderPath}')"
-             ontouchmove="handleFolderTouchMove(event)"
-             ontouchend="handleFolderTouchEnd(event)"
-             ontouchcancel="handleFolderTouchCancel(event)">
+             onclick="toggleFolder(event, '${folderId}')"
+             ${typeof handleFolderTouchStart === 'function' ? `ontouchstart="handleFolderTouchStart(event, '${fullFolderPath}')"` : ''}
+             ${typeof handleFolderTouchMove === 'function' ? `ontouchmove="handleFolderTouchMove(event)"` : ''}
+             ${typeof handleFolderTouchEnd === 'function' ? `ontouchend="handleFolderTouchEnd(event)"` : ''}
+             ${typeof handleFolderTouchCancel === 'function' ? `ontouchcancel="handleFolderTouchCancel(event)"` : ''}>
           <div class="folder-title-left" title="長押しでフォルダ名を変更">
             <i class="fa-solid fa-folder"></i>
             <span>${folderName}</span>
@@ -2683,12 +2774,12 @@ function renderTreeNodes(node, basePath = '') {
           <div style="display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-xmark delete-btn" 
                title="フォルダを削除" 
-               onclick="event.stopPropagation(); openDeleteFolderModal('${fullFolderPath}');"></i>
+               onclick="event.stopPropagation(); if(typeof openDeleteFolderModal === 'function') openDeleteFolderModal('${fullFolderPath}');"></i>
             <i class="fa-solid fa-chevron-down chevron"></i>
           </div>
         </div>
         <ul class="folder-content" style="list-style: none; padding: 0; margin: 0;">
-          ${renderTreeNodes(subNode, fullFolderPath)}
+          ${renderTreeNodes(subNode, fullFolderPath, treeType)}
         </ul>
       </li>
     `;
@@ -2710,11 +2801,8 @@ function renderFileList() {
   const mediaFiles = [];
 
   Object.keys(files).forEach(fileName => {
-    // フォルダ（末尾が /）の場合
     if (fileName.endsWith('/')) {
       const fileData = files[fileName];
-      
-      // ★ オブジェクト内の category が 'media' かどうかを判定
       const isMediaFolder = (typeof fileData === 'object' && fileData !== null && fileData.category === 'media');
       
       if (isMediaFolder) {
@@ -2725,8 +2813,7 @@ function renderFileList() {
       return;
     }
 
-    // ファイルの場合
-    if (isBinaryMediaFile(fileName)) {
+    if (typeof isBinaryMediaFile === 'function' && isBinaryMediaFile(fileName)) {
       mediaFiles.push(fileName);
     } else {
       webFiles.push(fileName);
@@ -2736,36 +2823,8 @@ function renderFileList() {
   const webTree = buildFileTree(webFiles);
   const mediaTree = buildFileTree(mediaFiles);
 
-  webListEl.innerHTML = renderTreeNodes(webTree);
-  mediaListEl.innerHTML = renderTreeNodes(mediaTree);
-}
-
-let targetOldFileName = '';
-
-/**
- * 存在するすべてのフォルダパスを抽出するヘルパー関数（修正版）
- */
-function getAllExistingFolders() {
-  const folderSet = new Set();
-  folderSet.add('/'); // ルートフォルダ
-
-  Object.keys(files).forEach(filePath => {
-    // フォルダ自体のキー（末尾が /）もそのまま登録できるように調整
-    const cleanPath = filePath.endsWith('/') ? filePath.slice(0, -1) : filePath;
-    const parts = cleanPath.split('/').filter(p => p.length > 0);
-    
-    if (!filePath.endsWith('/') && parts.length > 0) {
-      parts.pop(); // ファイル名を取り除く
-    }
-
-    let currentPath = '';
-    parts.forEach(part => {
-      currentPath = currentPath ? `${currentPath}/${part}` : part;
-      folderSet.add(currentPath);
-    });
-  });
-
-  return Array.from(folderSet).sort();
+  webListEl.innerHTML = renderTreeNodes(webTree, '', 'web');
+  mediaListEl.innerHTML = renderTreeNodes(mediaTree, '', 'media');
 }
 
 /**
@@ -2895,15 +2954,57 @@ function applyRenameAndMove() {
 let targetFolderPath = '';
 
 // ------------------------------------------
-// フォルダ名前変更処理
+// フォルダ名前変更・移動処理
 // ------------------------------------------
 function openRenameFolderModal(folderPath) {
   targetFolderPath = folderPath;
   const modal = document.getElementById('rename-folder-modal');
+  const parentSelect = document.getElementById('rename-parent-folder-select');
   const input = document.getElementById('rename-foldername-input');
+
   if (modal && input) {
-    const folderName = folderPath.split('/').pop();
-    input.value = folderName;
+    // パスの末尾の / を除外して分解
+    const cleanPath = folderPath.replace(/\/+$/, '');
+    const pathParts = cleanPath.split('/');
+    const currentFolderName = pathParts.pop(); // 現在のフォルダ名
+    // 現在の親フォルダパス (例: "sub/dir" または ルートなら "")
+    const currentParentPath = pathParts.join('/');
+
+    // 1. 移動先親フォルダの <select> 選択肢を動的に生成
+    if (parentSelect) {
+      parentSelect.innerHTML = '';
+
+      // ルートフォルダ (/) の追加
+      const rootOption = document.createElement('option');
+      rootOption.value = '';
+      rootOption.textContent = '/ (ルート)';
+      if (currentParentPath === '') rootOption.selected = true;
+      parentSelect.appendChild(rootOption);
+
+      // 全ファイル/フォルダから「既存のフォルダ」を取得してリスト化
+      const folderSet = new Set();
+      Object.keys(files).forEach(k => {
+        // キーからパス部分を取り出す
+        const dir = k.substring(0, k.lastIndexOf('/'));
+        if (dir) folderSet.add(dir);
+      });
+
+      // フォルダ一覧をソートして追加
+      Array.from(folderSet).sort().forEach(fp => {
+        // 自分自身（targetFolderPath）やその配下のサブフォルダには移動できないので除外
+        if (fp === cleanPath || fp.startsWith(cleanPath + '/')) return;
+
+        const opt = document.createElement('option');
+        opt.value = fp;
+        opt.textContent = fp + '/';
+        if (fp === currentParentPath) opt.selected = true;
+        parentSelect.appendChild(opt);
+      });
+    }
+
+    // 2. 現在のフォルダ名をインプットにセット
+    input.value = currentFolderName;
+
     modal.style.display = 'flex';
     setTimeout(() => input.focus(), 50);
   }
@@ -2915,31 +3016,41 @@ function closeRenameFolderModal() {
 }
 
 function confirmRenameFolder() {
+  const parentSelect = document.getElementById('rename-parent-folder-select');
   const input = document.getElementById('rename-foldername-input');
   if (!input || !targetFolderPath) return;
 
-  const newName = input.value.trim().replace(/^\/+|\/+$/g, '');
+  // 入力された新しいフォルダ名（不要なスラッシュや不正文字を除去）
+  const newName = input.value.trim().replace(/[\/\\:*?"<>|]/g, '');
   if (!newName) {
     alert('フォルダ名を入力してください。');
     return;
   }
 
-  const pathParts = targetFolderPath.split('/');
-  const oldName = pathParts.pop();
-  const parentPath = pathParts.join('/');
-  
-  const newFolderPath = parentPath ? `${parentPath}/${newName}` : newName;
+  // 選択された親フォルダパスを取得
+  const newParentPath = parentSelect ? parentSelect.value : '';
 
-  if (oldName === newName) {
+  // 新しいフォルダパスの組み立て
+  const newFolderPath = newParentPath ? `${newParentPath}/${newName}` : newName;
+
+  // パスもフォルダ名も変わっていない場合は閉じるだけ
+  if (targetFolderPath === newFolderPath) {
     closeRenameFolderModal();
     return;
   }
 
-  const oldPrefix = targetFolderPath + '/';
-  const newPrefix = newFolderPath + '/';
+  const oldPrefix = targetFolderPath.endsWith('/') ? targetFolderPath : targetFolderPath + '/';
+  const newPrefix = newFolderPath.endsWith('/') ? newFolderPath : newFolderPath + '/';
+
+  // 重複チェック
+  if (files[newPrefix] || files[newFolderPath]) {
+    alert('指定した場所には同名のフォルダが既に存在します。');
+    return;
+  }
 
   const newFiles = {};
 
+  // 対象フォルダおよび配下のファイル・サブフォルダのキーを一括書き換え
   Object.keys(files).forEach(key => {
     if (key === oldPrefix || key === targetFolderPath) {
       newFiles[newPrefix] = files[key];
@@ -2954,10 +3065,16 @@ function confirmRenameFolder() {
   });
 
   files = newFiles;
+
+  // 現在開いているアクティブファイルのパスが対象フォルダ配下にある場合はパス更新
+  if (typeof activeFileName !== 'undefined' && activeFileName.startsWith(oldPrefix)) {
+    activeFileName = newPrefix + activeFileName.slice(oldPrefix.length);
+  }
+
   closeRenameFolderModal();
 
-  saveToLocalStorage();
-  renderFileList();
+  if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+  if (typeof renderFileList === 'function') renderFileList();
 }
 
 // ------------------------------------------
@@ -4249,10 +4366,29 @@ function openInBrowser() {
   const fileKeys = Object.keys(files || {});
   let targetFile = null;
 
+  // 1. 現在選択中のファイルが HTML の場合、そのままプレビュー
   if (typeof activeFileName !== 'undefined' && activeFileName && activeFileName.toLowerCase().endsWith('.html') && files[activeFileName]) {
     targetFile = activeFileName;
   } else {
-    targetFile = fileKeys.find(key => key.toLowerCase().endsWith('.html'));
+    // 2. HTML以外（CSS, JS, 画像など）が選択されている場合、そのファイルが存在するディレクトリを取得
+    let activeDir = '';
+    if (typeof activeFileName !== 'undefined' && activeFileName && activeFileName.includes('/')) {
+      activeDir = activeFileName.substring(0, activeFileName.lastIndexOf('/') + 1);
+    }
+
+    // 選択中ファイルのフォルダ内にある HTML ファイルを探索（名前順で最初＝一番上のHTML）
+    if (activeDir) {
+      targetFile = fileKeys.sort().find(key => 
+        key.startsWith(activeDir) && key.toLowerCase().endsWith('.html')
+      );
+    }
+
+    // 3. フォルダ内に HTML が見つからなかった場合は、プロジェクト全体で最初（一番上）の HTML を探す
+    if (!targetFile) {
+      targetFile = fileKeys.sort().find(key => key.toLowerCase().endsWith('.html'));
+    }
+
+    // 4. HTML が一切ない場合は、一覧の一番上のファイルを開く
     if (!targetFile && fileKeys.length > 0) {
       targetFile = fileKeys[0];
     }
