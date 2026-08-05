@@ -2729,12 +2729,17 @@ function renderTreeNodes(node, basePath = '', treeType = 'web') {
       <li class="file-item ${isActive}" 
           data-file-name="${fileName}"
           onclick="switchFile('${fileName}'); if(window.innerWidth<=768 && typeof closeSidebar === 'function') closeSidebar();" 
-          ondblclick="event.stopPropagation(); if(typeof renameFile === 'function') renameFile('${fileName}');"
-          ${typeof handleFileTouchStart === 'function' ? `ontouchstart="handleFileTouchStart(event, '${fileName}')"` : ''}
-          ${typeof handleFileTouchMove === 'function' ? `ontouchmove="handleFileTouchMove(event)"` : ''}
-          ${typeof handleFileTouchEnd === 'function' ? `ontouchend="handleFileTouchEnd(event)"` : ''}
-          ${typeof handleFileTouchCancel === 'function' ? `ontouchcancel="handleFileTouchCancel(event)"` : ''}>
-        <span class="file-label" title="ダブルクリックまたは長押しでファイル名を変更">
+          ondblclick="handleFileDblClick(event, '${fileName}')"
+          oncontextmenu="handleFileContextMenu(event, '${fileName}')"
+          onmousedown="handleFileTouchStart(event, '${fileName}')"
+          onmouseup="handleFileTouchEnd(event)"
+          onmouseleave="handleFileTouchEnd(event)"
+          ontouchstart="handleFileTouchStart(event, '${fileName}')"
+          ontouchmove="handleFileTouchMove(event)"
+          ontouchend="handleFileTouchEnd(event)"
+          ontouchcancel="handleFileTouchCancel(event)"
+          style="-webkit-touch-callout: none; user-select: none;">
+        <span class="file-label" title="右クリック、ダブルクリック、または長押しでファイル名を変更">
           <i class="${iconClass}"></i> ${displayName}
         </span>
         <i class="fa-solid fa-xmark delete-btn" onclick="event.stopPropagation(); if(typeof deleteFile === 'function') deleteFile('${fileName}');"></i>
@@ -2763,11 +2768,16 @@ function renderTreeNodes(node, basePath = '', treeType = 'web') {
       <li class="${folderClass}" id="${folderId}">
         <div class="folder-header" 
              onclick="toggleFolder(event, '${folderId}')"
-             ${typeof handleFolderTouchStart === 'function' ? `ontouchstart="handleFolderTouchStart(event, '${fullFolderPath}')"` : ''}
-             ${typeof handleFolderTouchMove === 'function' ? `ontouchmove="handleFolderTouchMove(event)"` : ''}
-             ${typeof handleFolderTouchEnd === 'function' ? `ontouchend="handleFolderTouchEnd(event)"` : ''}
-             ${typeof handleFolderTouchCancel === 'function' ? `ontouchcancel="handleFolderTouchCancel(event)"` : ''}>
-          <div class="folder-title-left" title="長押しでフォルダ名を変更">
+             oncontextmenu="handleFolderContextMenu(event, '${fullFolderPath}')"
+             onmousedown="handleFolderTouchStart(event, '${fullFolderPath}')"
+             onmouseup="handleFolderTouchEnd(event)"
+             onmouseleave="handleFolderTouchEnd(event)"
+             ontouchstart="handleFolderTouchStart(event, '${fullFolderPath}')"
+             ontouchmove="handleFolderTouchMove(event)"
+             ontouchend="handleFolderTouchEnd(event)"
+             ontouchcancel="handleFolderTouchCancel(event)"
+             style="-webkit-touch-callout: none; user-select: none;">
+          <div class="folder-title-left" title="右クリックまたは長押しでフォルダ名を変更">
             <i class="fa-solid fa-folder"></i>
             <span>${folderName}</span>
           </div>
@@ -2787,7 +2797,7 @@ function renderTreeNodes(node, basePath = '', treeType = 'web') {
 
   return html;
 }
-
+      
 function renderFileList() {
   const webListEl = document.getElementById('file-list-web');
   const mediaListEl = document.getElementById('file-list-media');
@@ -2827,10 +2837,14 @@ function renderFileList() {
   mediaListEl.innerHTML = renderTreeNodes(mediaTree, '', 'media');
 }
 
+let targetOldFileName = '';
+let targetFolderPath = '';
+
 /**
  * ファイルのリネーム＆移動ダイアログを開く
  */
 function renameFile(oldFileName) {
+  if (!oldFileName) return;
   targetOldFileName = oldFileName;
 
   const lastSlashIndex = oldFileName.lastIndexOf('/');
@@ -2851,35 +2865,82 @@ function renameFile(oldFileName) {
     ext = fullFileName.substring(lastDotIndex);
   }
 
+  // 1. フォルダ選択ドロップダウンの構築（安全処理付き）
   const folderSelect = document.getElementById('rename-folder-select');
   if (folderSelect) {
     folderSelect.innerHTML = '';
-    const allFolders = getAllExistingFolders();
+    
+    // getAllExistingFolders が定義されていれば使い、なければ files から動的に抽出
+    let allFolders = [];
+    if (typeof getAllExistingFolders === 'function') {
+      allFolders = getAllExistingFolders();
+    } else {
+      const folderSet = new Set(['/']);
+      Object.keys(files || {}).forEach(key => {
+        if (key.includes('/')) {
+          const parts = key.split('/');
+          // ファイル名を除くディレクトリパスを分解して収集
+          let pathAcc = '';
+          for (let i = 0; i < parts.length - 1; i++) {
+            pathAcc = pathAcc ? `${pathAcc}/${parts[i]}` : parts[i];
+            folderSet.add(pathAcc);
+          }
+        }
+      });
+      allFolders = Array.from(folderSet);
+    }
 
     allFolders.forEach(folder => {
       const option = document.createElement('option');
       option.value = folder;
-      option.textContent = folder === '/' ? '/ (ルート直下)' : folder;
+      option.textContent = (folder === '/' || folder === '') ? '/ (ルート直下)' : folder;
       if (folder === currentFolder) option.selected = true;
       folderSelect.appendChild(option);
     });
   }
 
+  // 2. 入力欄と拡張子の設定
   const fileInput = document.getElementById('rename-file-input');
   const extSpan = document.getElementById('rename-ext-span');
 
   if (fileInput) fileInput.value = baseName;
   if (extSpan) extSpan.textContent = ext;
 
+  // 3. モーダルの表示（class方式・style方式の両方に対応）
   const modal = document.getElementById('rename-modal');
   if (modal) {
     modal.classList.add('active');
+    modal.style.display = 'flex'; // style表示も合わせて実行して確実に表示
+
     setTimeout(() => {
       if (fileInput) {
         fileInput.focus();
         fileInput.select();
       }
     }, 50);
+  } else {
+    // 万が一 'rename-modal' 要素が無い場合のバックアップ処理
+    const newName = prompt('新しいファイル名を入力してください:', fullFileName);
+    if (!newName || newName === fullFileName) return;
+
+    const dir = currentFolder === '/' ? '' : currentFolder + '/';
+    const newFullPath = dir + newName.trim();
+
+    if (files[newFullPath] !== undefined) {
+      alert('同名のファイルが既に存在します。');
+      return;
+    }
+
+    files[newFullPath] = files[oldFileName];
+    delete files[oldFileName];
+
+    if (typeof activeFileName !== 'undefined' && activeFileName === oldFileName) {
+      activeFileName = newFullPath;
+    }
+
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    if (typeof renderFileList === 'function') renderFileList();
+    if (typeof switchFile === 'function') switchFile(activeFileName);
   }
 }
 
@@ -2888,7 +2949,10 @@ function renameFile(oldFileName) {
  */
 function closeRenameModal() {
   const modal = document.getElementById('rename-modal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none'; // 確実に非表示にする
+  }
   targetOldFileName = '';
 }
 
@@ -2905,7 +2969,7 @@ function applyRenameAndMove() {
   if (!folderSelect || !fileInput) return;
 
   const selectedFolder = folderSelect.value;
-  const newBaseName = fileInput.value.trim();
+  const newBaseName = fileInput.value.trim().replace(/[\/\\:*?"<>|]/g, ''); // 禁止文字をカット
   const ext = extSpan ? extSpan.textContent : '';
 
   if (!newBaseName) {
@@ -2914,22 +2978,25 @@ function applyRenameAndMove() {
   }
 
   let newFileName = '';
-  if (selectedFolder === '/') {
+  if (selectedFolder === '/' || selectedFolder === '') {
     newFileName = newBaseName + ext;
   } else {
     newFileName = `${selectedFolder}/${newBaseName}${ext}`;
   }
 
+  // 重複チェック
   if (newFileName !== targetOldFileName && files[newFileName] !== undefined) {
     alert(`"${newFileName}" は既に存在します。別の場所またはファイル名を指定してください。`);
     return;
   }
 
+  // 変更なしの場合
   if (newFileName === targetOldFileName) {
     closeRenameModal();
     return;
   }
 
+  // ファイルキーの更新
   const newFiles = {};
   Object.keys(files).forEach(key => {
     if (key === targetOldFileName) {
@@ -2941,17 +3008,20 @@ function applyRenameAndMove() {
 
   files = newFiles;
 
-  if (activeFileName === targetOldFileName) {
+  // アクティブファイルのパス更新
+  if (typeof activeFileName !== 'undefined' && activeFileName === targetOldFileName) {
     activeFileName = newFileName;
   }
 
-  saveToLocalStorage();
-  renderFileList();
-  if (typeof switchFile === 'function') switchFile(activeFileName);
   closeRenameModal();
-}
 
-let targetFolderPath = '';
+  // 画面と保存処理の安全呼び出し
+  if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+  if (typeof renderFileList === 'function') renderFileList();
+  if (typeof switchFile === 'function' && typeof activeFileName !== 'undefined') {
+    switchFile(activeFileName);
+  }
+}
 
 // ------------------------------------------
 // フォルダ名前変更・移動処理
@@ -2977,7 +3047,7 @@ function openRenameFolderModal(folderPath) {
       // ルートフォルダ (/) の追加
       const rootOption = document.createElement('option');
       rootOption.value = '';
-      rootOption.textContent = '/ (ルート)';
+      rootOption.textContent = '/ (ルート直下)';
       if (currentParentPath === '') rootOption.selected = true;
       parentSelect.appendChild(rootOption);
 
@@ -3120,19 +3190,29 @@ function confirmDeleteFolder() {
   renderFileList();
 }
 
-// ファイル用操作処理
+// ==========================================
+// 長押し / タッチ / マウスイベント管理（完全無効化・修正版）
+// ==========================================
 let touchTimer = null;
 let isLongPress = false;
+let isFolderTouchMoved = false;
 
+// ------------------------------------------
+// 1. ファイル用（長押し または ダブルクリック）
+// ------------------------------------------
+
+// 長押し開始（スマホ / PC共通）
 function handleFileTouchStart(e, fileName) {
   isLongPress = false;
-  
+  if (touchTimer) clearTimeout(touchTimer);
+
   touchTimer = setTimeout(() => {
     isLongPress = true;
     if (navigator.vibrate) navigator.vibrate(40);
-    
-    renameFile(fileName);
-  }, 500);
+    if (typeof renameFile === 'function') {
+      renameFile(fileName);
+    }
+  }, 500); // 0.5秒長押し
 }
 
 function handleFileTouchMove(e) {
@@ -3147,9 +3227,8 @@ function handleFileTouchEnd(e) {
     clearTimeout(touchTimer);
     touchTimer = null;
   }
-  
   if (isLongPress) {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     isLongPress = false;
   }
@@ -3162,38 +3241,79 @@ function handleFileTouchCancel(e) {
   }
 }
 
-// フォルダ用操作処理
-let folderTouchTimer = null;
-let isFolderTouchMoved = false;
+// ダブルクリック（PC用）
+function handleFileDblClick(e, fileName) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (typeof renameFile === 'function') {
+    renameFile(fileName);
+  }
+}
 
+// ファイルの右クリック：ブラウザ標準メニューを消して、名前変更モーダルを開く
+function handleFileContextMenu(e, fileName) {
+  e.preventDefault();  // ブラウザ標準の右クリックメニューを無効化
+  e.stopPropagation(); // イベントのバブリングを防止
+
+  if (typeof renameFile === 'function') {
+    renameFile(fileName);
+  }
+}
+
+// ------------------------------------------
+// 2. フォルダ用（長押し または 右クリック）
+// ------------------------------------------
+
+// 長押し開始（スマホ / PC共通）
 function handleFolderTouchStart(event, folderPath) {
   isFolderTouchMoved = false;
-  folderTouchTimer = setTimeout(() => {
+  if (touchTimer) clearTimeout(touchTimer);
+
+  touchTimer = setTimeout(() => {
     if (!isFolderTouchMoved) {
-      openRenameFolderModal(folderPath);
+      isLongPress = true;
+      if (navigator.vibrate) navigator.vibrate(40);
+      if (typeof openRenameFolderModal === 'function') {
+        openRenameFolderModal(folderPath);
+      }
     }
-  }, 500);
+  }, 500); // 0.5秒長押し
 }
 
 function handleFolderTouchMove(event) {
   isFolderTouchMoved = true;
-  if (folderTouchTimer) {
-    clearTimeout(folderTouchTimer);
-    folderTouchTimer = null;
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
   }
 }
 
 function handleFolderTouchEnd(event) {
-  if (folderTouchTimer) {
-    clearTimeout(folderTouchTimer);
-    folderTouchTimer = null;
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+  if (isLongPress) {
+    if (event.cancelable) event.preventDefault();
+    event.stopPropagation();
+    isLongPress = false;
   }
 }
 
 function handleFolderTouchCancel(event) {
-  if (folderTouchTimer) {
-    clearTimeout(folderTouchTimer);
-    folderTouchTimer = null;
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+}
+
+// 右クリック（PC用：標準メニューを消してモーダルを開く）
+function handleFolderContextMenu(event, folderPath) {
+  event.preventDefault();  // 標準の右クリックメニューを無効化
+  event.stopPropagation();
+
+  if (typeof openRenameFolderModal === 'function') {
+    openRenameFolderModal(folderPath);
   }
 }
 
