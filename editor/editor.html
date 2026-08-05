@@ -1347,7 +1347,7 @@ button.btn-primary:hover {
 /* 折りたたまれた状態 */
 .editor-footer2.collapsed {
   height: 40px !important;
-  margin: 20px 0px 0px 0px;
+  margin: 20px 0 0 0;
 }
 /* ========================================== */
 /* ▼ レスポンシブスタイル（スマホ用: 768px以下） ▼ */
@@ -2235,12 +2235,94 @@ button.btn-primary:hover {
 
   <script>
 // ---Core State---
-let files = JSON.parse(localStorage.getItem('web_studio_files_v3')) || {
+// 大容量保存（50MB〜数GB）が可能なIndexedDBベースの保存構造
+let files = {
   "index.html": `<!DOCTYPE html>\n`,
-  "style.css": `body {\n  background-color: #fff;\n  color: #000;\n  }`,
-  "script.js": `console.log("Web Studio Initialized!");\n  `
+  "style.css": `body {\n  background-color: #fff;\n  color: #000;\n}`,
+  "script.js": `console.log("Web Studio Initialized!");\n`
 };
 let activeFileName = "index.html";
+
+// ---IndexedDB / 大容量ストレージ用ヘルパー---
+const DB_NAME = 'WebStudioDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'files_store';
+const FILES_KEY = 'web_studio_files_v4';
+
+// IndexedDB の簡易初期化・取得関数（外部ライブラリ不要のネイティブ実装）
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// データの読み込み
+async function loadFilesFromStorage() {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(FILES_KEY);
+      request.onsuccess = () => {
+        if (request.result) {
+          resolve(request.result);
+        } else {
+          // バックアップ：旧localStorageからの移行チェック
+          const legacyFiles = localStorage.getItem('web_studio_files_v3');
+          if (legacyFiles) {
+            try {
+              const parsed = JSON.parse(legacyFiles);
+              resolve(parsed);
+              return;
+            } catch (err) {}
+          }
+          resolve(null);
+        }
+      };
+      request.onerror = () => resolve(null);
+    });
+  } catch (e) {
+    console.warn("IndexedDB へのアクセスに失敗したため、初期値を使用します", e);
+    return null;
+  }
+}
+
+// データの保存（後続の保存処理から呼び出す用）
+async function saveFilesToStorage(data) {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.put(data, FILES_KEY);
+      request.onsuccess = () => resolve(true);
+      request.onerror = (e) => reject(e.target.error);
+    });
+  } catch (e) {
+    console.error("ストレージへの保存に失敗しました", e);
+    return false;
+  }
+}
+
+// 非同期でデータを初期ロードする起動関数
+async function initCoreState() {
+  const loadedFiles = await loadFilesFromStorage();
+  if (loadedFiles) {
+    files = loadedFiles;
+  }
+  
+  if (typeof renderFileList === 'function') renderFileList();
+  if (typeof switchFile === 'function' && activeFileName) switchFile(activeFileName);
+}
 
 // ---Search State---
 let searchOverlay = null;
@@ -2296,6 +2378,11 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
       }
     }
   }
+});
+
+// 初期化実行
+document.addEventListener('DOMContentLoaded', () => {
+  initCoreState();
 });
 
 // 画面全体で Ctrl+F / Cmd+F が押されたときに検索窓を開く
@@ -2480,7 +2567,14 @@ function closeSidebar() {
 }
 
 // ---File Management---
-function saveToLocalStorage() { localStorage.setItem('web_studio_files_v3', JSON.stringify(files)); }
+// IndexedDB への非同期保存処理に変更（関数名は既存の呼び出し元との互換性を保つため維持）
+async function saveToLocalStorage() {
+  try {
+    await saveFilesToStorage(files);
+  } catch (e) {
+    console.error("ファイルの保存に失敗しました:", e);
+  }
+}
 
 function toggleCategory(groupId) {
   const group = document.getElementById(groupId);
@@ -3349,7 +3443,7 @@ function saveCurrentFile() {
   const content = files[activeFileName] || '';
   let blob;
   
-  if (isBinaryMediaFile(activeFileName) && content.startsWith('data:')) {
+  if ((typeof isBinaryMediaFile === 'function' && isBinaryMediaFile(activeFileName) || content.startsWith('data:')) && content.startsWith('data:')) {
     try {
       const byteString = atob(content.split(',')[1]);
       const mimeString = content.split(',')[0].split(':')[1].split(';')[0];
@@ -3426,15 +3520,13 @@ function showStudentInfoModal() {
       resolve(value);
     };
 
-    // ★【重要】モーダルのボタンを押した瞬間にエディタの文字を強制取得する関数
     const forceSyncEditor = () => {
       if (document.activeElement) {
-        document.activeElement.blur(); // フォーカスを外して入力を確定させる
+        document.activeElement.blur();
       }
       if (typeof activeFileName !== 'undefined' && activeFileName && 
           typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
           typeof editor !== 'undefined' && editor) {
-        // エディタの現在の全文字列を取得して直接保存データに上書き
         files[activeFileName] = editor.getValue();
       }
     };
@@ -3455,12 +3547,9 @@ function showStudentInfoModal() {
         return;
       }
 
-      // 完成ボタンを押した瞬間に強制同期
       forceSyncEditor();
 
       const paddedNum = n.padStart(2, '0');
-      
-      // ★ 完成版にも時刻（時分秒）をつけて被りを防ぐ場合 (例: 3101_143025.zip)
       const now = new Date();
       const timeStr = String(now.getHours()).padStart(2, '0') +
                       String(now.getMinutes()).padStart(2, '0') +
@@ -3496,28 +3585,26 @@ function showStudentInfoModal() {
       closeModal(null);
     };
 
-    // 作業中ボタンを押したとき
-document.getElementById('modal-draft-btn').onclick = () => {
-  if (document.activeElement) document.activeElement.blur();
+    document.getElementById('modal-draft-btn').onclick = () => {
+      if (document.activeElement) document.activeElement.blur();
 
-  if (typeof activeFileName !== 'undefined' && activeFileName && 
-      typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
-      typeof editor !== 'undefined' && editor) {
-    files[activeFileName] = editor.getValue();
-  }
+      if (typeof activeFileName !== 'undefined' && activeFileName && 
+          typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
+          typeof editor !== 'undefined' && editor) {
+        files[activeFileName] = editor.getValue();
+      }
 
-  // ★ 日付だけでなく「時分秒」までファイル名に含める (例: web-20260803-143025.zip)
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
 
-  const fileName = `web-${year}${month}${day}-${hours}${minutes}${seconds}.zip`;
-  closeModal(fileName);
-};
+      const fileName = `web-${year}${month}${day}-${hours}${minutes}${seconds}.zip`;
+      closeModal(fileName);
+    };
 
     document.getElementById('modal-save-btn').onclick = executeStudentSave;
   });
@@ -3529,18 +3616,17 @@ async function saveAllAsZip() {
     return;
   }
 
-  // 1. モーダルを開く「前」に最新テキストを確定同期
+  // 1. モーダルを開く前に最新テキストを確定同期
   if (typeof activeFileName !== 'undefined' && activeFileName && 
       typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
       typeof editor !== 'undefined' && editor) {
     files[activeFileName] = editor.getValue();
   }
 
-  // モーダル表示（ユーザーが「作業中」か「完成」を押すまで待つ）
   const zipFileName = await showStudentInfoModal();
-  if (!zipFileName) return; // キャンセルされたら処理中断
+  if (!zipFileName) return;
 
-  // 2. モーダルが閉じた「後」にも念のため最新テキストを確定同期
+  // 2. モーダル閉じた後も最新テキストを同期
   if (typeof activeFileName !== 'undefined' && activeFileName && 
       typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(activeFileName) && 
       typeof editor !== 'undefined' && editor) {
@@ -3549,17 +3635,15 @@ async function saveAllAsZip() {
 
   const zip = new JSZip();
 
-  // ZIP生成処理
+  // バイナリデータ（DataURL）の安全なZIP追加
   Object.keys(files).forEach(fileName => {
     if (!fileName || fileName === '/') return;
 
-    // ★ 今画面で開いているファイルの場合、filesではなくエディタの生データを優先して取る
     let data = files[fileName];
-    if (fileName === activeFileName && typeof editor !== 'undefined' && editor && !isBinaryMediaFile(fileName)) {
+    if (fileName === activeFileName && typeof editor !== 'undefined' && editor && typeof isBinaryMediaFile === 'function' && !isBinaryMediaFile(fileName)) {
       data = editor.getValue();
     }
 
-    // フォルダ判定
     const isFolderKey = fileName.endsWith('/') || (typeof data === 'object' && data !== null && data.isFolder);
     if (isFolderKey) {
       const folderPath = fileName.endsWith('/') ? fileName : `${fileName}/`;
@@ -3567,13 +3651,16 @@ async function saveAllAsZip() {
       return;
     }
 
-    // バイナリ／テキスト判定してZIPに追加
-    if (typeof isBinaryMediaFile === 'function' && isBinaryMediaFile(fileName) && typeof data === 'string' && data.startsWith('data:')) {
-      const base64Data = data.split(',')[1];
-      if (base64Data) {
-        zip.file(fileName, base64Data, { base64: true });
+    // DataURL 形式の場合は強制的に Base64 として書き出す
+    if (typeof data === 'string' && data.startsWith('data:')) {
+      const parts = data.split(',');
+      if (parts.length > 1) {
+        zip.file(fileName, parts[1], { base64: true });
+        return;
       }
-    } else if (typeof data === 'string') {
+    }
+
+    if (typeof data === 'string') {
       zip.file(fileName, data);
     }
   });
@@ -3600,7 +3687,7 @@ function downloadBlob(blob, fileName) {
   URL.revokeObjectURL(a.href);
 }
 
-// --- 3. 読込トリガーと loadFile 関数（階層構造対応版） ---
+// --- 3. 読込トリガーと loadFile 関数 ---
 function triggerLoadFile() { document.getElementById('file-input').click(); }
 
 async function loadFile(event) {
@@ -3608,8 +3695,6 @@ async function loadFile(event) {
   if (!file) return;
 
   const fileName = file.name;
-
-  // PDFかどうかの判定用ヘルパー（もし既に isPdfFile 関数があればそれを使ってもOKです）
   const isPdf = fileName.toLowerCase().endsWith('.pdf');
 
   if (fileName.endsWith('.zip')) {
@@ -3622,97 +3707,112 @@ async function loadFile(event) {
       const zip = new JSZip();
       const zipContent = await zip.loadAsync(file);
       let loadedCount = 0;
-
       const newFiles = {};
 
       for (const relativePath in zipContent.files) {
         const zipEntry = zipContent.files[relativePath];
-        
-        if (zipEntry.dir || relativePath.startsWith('__MACOSX/') || relativePath.includes('/.')) continue;
+
+        // 不要・特殊ファイルの除外
+        if (
+          zipEntry.dir || 
+          relativePath.startsWith('__MACOSX/') || 
+          relativePath.startsWith('.') || 
+          relativePath.includes('/.') ||
+          relativePath.endsWith('.DS_Store')
+        ) {
+          continue;
+        }
 
         const cleanPath = relativePath.replace(/^\/+/, '');
         if (!cleanPath) continue;
 
-        // ZIP内のPDFも必ずバイナリ（Base64）として読み込む
-        const isZipPdf = cleanPath.toLowerCase().endsWith('.pdf');
-        
-        if (isBinaryMediaFile(cleanPath) || isZipPdf) {
-          const base64 = await zipEntry.async("base64");
-          // PDFの場合はMIMEタイプを 'application/pdf' に固定、それ以外は getMimeType
-          const mimeType = isZipPdf ? 'application/pdf' : getMimeType(cleanPath);
-          newFiles[cleanPath] = `data:${mimeType};base64,${base64}`;
-        } else {
-          const text = await zipEntry.async("string");
-          newFiles[cleanPath] = text;
+        try {
+          const isZipPdf = cleanPath.toLowerCase().endsWith('.pdf');
+
+          if ((typeof isBinaryMediaFile === 'function' && isBinaryMediaFile(cleanPath)) || isZipPdf) {
+            const base64 = await zipEntry.async("base64");
+            const mimeType = isZipPdf ? 'application/pdf' : (typeof getMimeType === 'function' ? getMimeType(cleanPath) : 'application/octet-stream');
+            newFiles[cleanPath] = `data:${mimeType};base64,${base64}`;
+          } else {
+            try {
+              const text = await zipEntry.async("string");
+              newFiles[cleanPath] = text;
+            } catch (e) {
+              const base64 = await zipEntry.async("base64");
+              newFiles[cleanPath] = `data:application/octet-stream;base64,${base64}`;
+            }
+          }
+          loadedCount++;
+        } catch (singleFileErr) {
+          console.warn("ファイル読み込みスキップ:", cleanPath, singleFileErr);
         }
-        loadedCount++;
       }
 
       if (loadedCount > 0) {
         files = newFiles;
+
+        // ★ 非同期の IndexedDB 保存を確実に実行
+        try {
+          if (typeof saveToLocalStorage === 'function') {
+            await saveToLocalStorage();
+          }
+        } catch (storageErr) {
+          console.error("ストレージ保存失敗:", storageErr);
+          alert("データの保存に失敗しました。端末の空き容量などを確認してください。");
+        }
+
+        // 画面描画処理
+        if (typeof renderFileList === 'function') renderFileList();
+
+        const firstHtml = typeof getDefaultHtmlFile === 'function' ? getDefaultHtmlFile() : Object.keys(files).find(k => k.endsWith('.html'));
+        if (firstHtml && typeof switchFile === 'function') switchFile(firstHtml);
+
+        if (typeof showToast === 'function') {
+          showToast(`ZIPから ${loadedCount} 件のファイルを読み込みました`);
+        }
+      } else {
+        alert("ZIPファイルの展開に失敗しました。（有効なファイルが見つかりません）");
       }
 
-      saveToLocalStorage();
-      renderFileList();
-
-      const firstHtml = getDefaultHtmlFile();
-      if (firstHtml) switchFile(firstHtml);
-
-      showToast(`ZIPから ${loadedCount} 件のファイルを読み込みました`);
-    } catch (err) {
-      console.error(err);
-      alert("ZIPファイルの展開に失敗しました。");
+    } catch (zipParseErr) {
+      console.error("ZIP処理エラー:", zipParseErr);
+      alert("ZIPファイルの展開に失敗しました。（ファイルが破損している可能性があります）");
     }
-  } 
-  else {
+  } else {
+    // 通常ファイル処理
     const reader = new FileReader();
 
-    // 単体ファイル読み込み時、PDFをバイナリ（DataURL）ルートに乗せる
-    if (isBinaryMediaFile(fileName) || isPdf) {
-      reader.onload = e => {
-        files[fileName] = e.target.result; // ここに data:application/pdf;base64,... が入る
-        switchFile(fileName);
-        
-        // ★ ファイル読み込み・切替後に CodeMirror の描画と高さを再計算させる
-        setTimeout(() => {
-          if (typeof editor !== 'undefined' && editor.refresh) {
-            editor.refresh();
-          }
-        }, 50);
+    const handleSingleFileLoad = async (e) => {
+      files[fileName] = e.target.result;
+      if (typeof switchFile === 'function') switchFile(fileName);
+      
+      setTimeout(() => {
+        if (typeof editor !== 'undefined' && editor.refresh) editor.refresh();
+      }, 50);
 
-        try {
-          saveToLocalStorage();
-        } catch (storageErr) {
-          console.warn("容量オーバーで保存できませんでした:", storageErr);
+      try {
+        if (typeof saveToLocalStorage === 'function') await saveToLocalStorage();
+      } catch (storageErr) {
+        console.error("保存失敗:", storageErr);
+        if (typeof showToast === 'function') {
+          showToast(`警告: 保存に失敗しました。`);
         }
-        
-        showToast(`"${fileName}" を読み込みました`);
-      };
+      }
+      
+      if (typeof showToast === 'function') showToast(`"${fileName}" を読み込みました`);
+    };
+
+    if ((typeof isBinaryMediaFile === 'function' && isBinaryMediaFile(fileName)) || isPdf) {
+      reader.onload = handleSingleFileLoad;
       reader.readAsDataURL(file); 
     } else {
-      reader.onload = e => {
-        files[fileName] = e.target.result;
-        switchFile(fileName);
-
-        // ★ テキストファイル（HTML/CSS/JS等）の場合もレイアウト高さを再構成
-        setTimeout(() => {
-          if (typeof editor !== 'undefined' && editor.refresh) {
-            editor.refresh();
-            // 必要に応じてスクロール位置を最上部にセット（お好みで）
-            // editor.scrollTo(0, 0); 
-          }
-        }, 50);
-
-        saveToLocalStorage();
-        showToast(`"${fileName}" を読み込みました`);
-      };
-      reader.readAsText(file); // テキストファイル（HTML/CSS/JS等）はこちら
+      reader.onload = handleSingleFileLoad;
+      reader.readAsText(file);
     }
   }
 
   event.target.value = "";
 }
-
 /**
  * タグ一覧の表示・非表示を切り替える関数
  */
@@ -4268,11 +4368,12 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
   }
 
   // 内部のリソースパスを解決するヘルパー
-  const resolveFilePath = (relPath) => resolveNormalizedPath(relPath, currentPreviewDir);
+  const resolveFilePath = (relPath, customBaseDir = currentPreviewDir) => resolveNormalizedPath(relPath, customBaseDir);
 
-  const replaceCssUrls = (cssText) => {
+  // ★ 修正：CSS内の url() 画像パスを CSS ファイルが存在するディレクトリ基準で置換する関数
+  const replaceCssUrls = (cssText, cssBaseDir = currentPreviewDir) => {
     return cssText.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, urlPath) => {
-      const resolvedKey = resolveFilePath(urlPath);
+      const resolvedKey = resolveFilePath(urlPath, cssBaseDir);
       if (resolvedKey && files[resolvedKey]) {
         return `url('${files[resolvedKey]}')`;
       }
@@ -4280,11 +4381,13 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     });
   };
 
-  // 1. 外部CSSの置換
+  // 1. 外部CSSの置換 (CSSファイルが存在するディレクトリ階層を取得して適用)
   html = html.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, cssFile) => {
     const resolvedKey = resolveFilePath(cssFile);
     if (resolvedKey && files[resolvedKey]) {
-      const processedCss = replaceCssUrls(files[resolvedKey]);
+      // CSSファイルの場所（例: "css/style.css" -> "css/"）を取得
+      const cssDir = resolvedKey.includes('/') ? resolvedKey.substring(0, resolvedKey.lastIndexOf('/') + 1) : '';
+      const processedCss = replaceCssUrls(files[resolvedKey], cssDir);
       return `<style>\n/* Loaded: ${resolvedKey} */\n${processedCss}\n</style>`;
     }
     return match;
@@ -4292,12 +4395,12 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
 
   // 2. <style> 内 url() 置換
   html = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, cssContent) => {
-    return `<style>${replaceCssUrls(cssContent)}</style>`;
+    return `<style>${replaceCssUrls(cssContent, currentPreviewDir)}</style>`;
   });
 
   // 3. インラインスタイル url() 置換
   html = html.replace(/style=(["'])([\s\S]*?)\1/gi, (match, quote, styleAttr) => {
-    return `style=${quote}${replaceCssUrls(styleAttr)}${quote}`;
+    return `style=${quote}${replaceCssUrls(styleAttr, currentPreviewDir)}${quote}`;
   });
 
   // 4. 外部JSの置換
@@ -4306,8 +4409,102 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     return (resolvedKey && files[resolvedKey]) ? `<script>\n${files[resolvedKey]}\n<\/script>` : match;
   });
 
-  // 5. img/src などの各種リソース置換（リンク<a>タグは除外）
+  // 5. iframe の src 属性を仮想ファイルの内容(srcdoc)に変換する処理
+  html = html.replace(/<iframe\b([^>]*?)\bsrc=["']([^"']+)["']([^>]*?)>/gi, (match, before, srcPath, after) => {
+    const resolvedKey = resolveFilePath(srcPath);
+    
+    if (resolvedKey && files[resolvedKey]) {
+      let childHtml = files[resolvedKey];
+      
+      // ① 子HTMLが置かれているディレクトリを計算 (例: "page/top-company.html" -> "page/")
+      const childDir = resolvedKey.includes('/') ? resolvedKey.substring(0, resolvedKey.lastIndexOf('/') + 1) : '';
+
+      // ② 子HTML内の外部CSS (<link rel="stylesheet">) をインライン<style>に置換
+      childHtml = childHtml.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (m, cssFile) => {
+        const resolvedCssKey = resolveNormalizedPath(cssFile, childDir);
+        if (resolvedCssKey && files[resolvedCssKey]) {
+          const childCssDir = resolvedCssKey.includes('/') ? resolvedCssKey.substring(0, resolvedCssKey.lastIndexOf('/') + 1) : '';
+          const processedCss = replaceCssUrls(files[resolvedCssKey], childCssDir);
+          return `<style>\n/* Loaded: ${resolvedCssKey} */\n${processedCss}\n</style>`;
+        }
+        return m;
+      });
+
+      // ③ 子HTML内の <style> や インライン style 内の url() 画像パスを置換
+      childHtml = childHtml.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (m, cssContent) => {
+        return `<style>${replaceCssUrls(cssContent, childDir)}</style>`;
+      });
+
+      // ④ 子HTML内の 画像(img src) などのパスを置換
+      childHtml = childHtml.replace(/\b(src)\s*=\s*["']([^"']+)["']/gi, (m, attr, imgPath) => {
+        const resolvedImgKey = resolveNormalizedPath(imgPath, childDir);
+        if (resolvedImgKey && files[resolvedImgKey]) {
+          return `${attr}="${files[resolvedImgKey]}"`;
+        }
+        return m;
+      });
+
+      // ⑤ 子iframe内でもクリックイベント（target="main-frame"など）が作動するように clickInterceptor を注入
+      const childClickInterceptor = `
+<script>
+  document.addEventListener('click', function(e) {
+    window.focus();
+    const a = e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    const target = a.getAttribute('target');
+    if (!href) return;
+
+    if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
+      if (href.startsWith('http://') || href.startsWith('https://')) a.setAttribute('target', '_blank');
+      return;
+    }
+
+    if (href.startsWith('#')) return;
+
+    // 親画面（一番外側のプレビュー画面）を取得
+    const topWin = window.top || window.parent;
+
+    if (target && target !== '_self' && target !== '_top' && target !== '_parent') {
+      const targetIframe = topWin.document.querySelector('iframe[name="' + target + '"]') || topWin.document.getElementById(target);
+      if (targetIframe) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (topWin.resolveNormalizedPath && topWin.files) {
+          const resolved = topWin.resolveNormalizedPath(href, '${childDir}');
+          if (resolved && topWin.files[resolved]) {
+            // 対象iframeを再レンダリング
+            topWin.renderPreviewFile(href, '${childDir}');
+          }
+        }
+        return;
+      }
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (topWin.renderPreviewFile) {
+      topWin.renderPreviewFile(href, '${childDir}');
+    }
+  }, true);
+<\/script>
+`;
+      childHtml += childClickInterceptor;
+
+      // ⑥ エスケープして srcdoc 属性に埋め込む
+      const escapedHtml = childHtml
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+      return `<iframe ${before} srcdoc="${escapedHtml}" ${after}>`;
+    }
+    return match;
+  });
+
+  // 6. その他の img などの src 置換
   html = html.replace(/\b(src)\s*=\s*["']([^"']+)["']/gi, (match, attr, path) => {
+    // iframe 以外の src（画像等）を置換
     const resolvedKey = resolveFilePath(path);
     if (resolvedKey && files[resolvedKey]) {
       return `${attr}="${files[resolvedKey]}"`;
@@ -4315,7 +4512,7 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     return match;
   });
 
-  // クリック検出＆ページ内リンク・ページ遷移処理
+  // クリック検出＆ target 属性に対応した処理
   const clickInterceptor = `
 <script>
   document.addEventListener('click', function(e) {
@@ -4325,6 +4522,7 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     if (!a) return;
 
     const href = a.getAttribute('href');
+    const target = a.getAttribute('target');
     if (!href) return;
 
     if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
@@ -4347,10 +4545,28 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
       return;
     }
 
+    // target="main-frame" などの指定がある場合の特別処理
+    if (target && target !== '_self' && target !== '_top' && target !== '_parent') {
+      const targetIframe = document.querySelector('iframe[name="' + target + '"]') || document.getElementById(target);
+      
+      if (targetIframe) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (window.parent && typeof window.parent.resolveNormalizedPath === 'function') {
+          const resolved = window.parent.resolveNormalizedPath(href, '${currentPreviewDir}');
+          if (resolved && window.parent.files && window.parent.files[resolved]) {
+            targetIframe.srcdoc = window.parent.files[resolved];
+          }
+        }
+        return;
+      }
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
-    // 親ウィンドウへクリックされた遷移先のパスと現在のディレクトリルートを渡す
+    // 通常の遷移：親ウィンドウへクリックされた遷移先のパスを渡す
     if (window.parent && typeof window.parent.renderPreviewFile === 'function') {
       window.parent.renderPreviewFile(href, '${currentPreviewDir}');
     }
@@ -4380,7 +4596,6 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
   iframe.srcdoc = html;
   container.appendChild(iframe);
 };
-
 function closePreview() {
   const modal = document.getElementById('preview-modal');
   if (modal) modal.style.display = 'none';
@@ -4445,31 +4660,43 @@ setInterval(attachShortcutToIframes, 2000);
 /**
  * 初期表示用：一番最初に見つかるHTMLファイルを取得する関数
  */
+// HTMLファイルを取得するヘルパー関数（既存になければ定義）
 function getDefaultHtmlFile() {
-  if (typeof files === 'undefined' || !files) return null;
-  const fileKeys = Object.keys(files);
-  if (fileKeys.length === 0) return null;
-
-  // 1. ルート階層またはフォルダ内から「最も最初にある .html ファイル」を探す
-  const firstHtml = fileKeys.find(key => key.toLowerCase().endsWith('.html'));
-  if (firstHtml) return firstHtml;
-
-  // 2. HTMLファイルが1つもない場合は、リストの最初のファイルを返す
-  return fileKeys[0];
+  const fileNames = Object.keys(files);
+  // 1. .html で終わるファイルの先頭を探す
+  const htmlFile = fileNames.find(name => name.toLowerCase().endsWith('.html'));
+  if (htmlFile) return htmlFile;
+  
+  // 2. HTMLがなければフォルダ以外の最初のファイルを返す
+  const firstFile = fileNames.find(name => !name.endsWith('/') && (!files[name] || typeof files[name] !== 'object' || !files[name].isFolder));
+  return firstFile || null;
 }
 
-// --- Init (初期化処理) ---
-// ページ更新時は常に最初に見つかったHTMLファイルをセット
-activeFileName = getDefaultHtmlFile();
+// 非同期でデータを初期ロードする起動関数
+async function initCoreState() {
+  const loadedFiles = await loadFilesFromStorage();
+  if (loadedFiles) {
+    files = loadedFiles;
+  }
 
-// ファイルリスト（サイドバー）を描画
-renderFileList();
+  // ★1. ファイルリストを描画
+  if (typeof renderFileList === 'function') {
+    renderFileList();
+  }
 
-// エディタの準備・初期化完了を待ってからコードを流し込む
-if (activeFileName) {
-  setTimeout(() => {
-    switchFile(activeFileName);
-  }, 50);
+  // ★2. 自動フォーカス：最初（一番上）のHTMLファイルを選択
+  const targetFile = getDefaultHtmlFile();
+  if (targetFile && typeof switchFile === 'function') {
+    switchFile(targetFile);
+    
+    // ★3. エディタにフォーカスを当てる（カーソルをセット）
+    setTimeout(() => {
+      if (typeof editor !== 'undefined' && editor) {
+        editor.refresh();
+        editor.focus();
+      }
+    }, 50);
+  }
 }
 
 
