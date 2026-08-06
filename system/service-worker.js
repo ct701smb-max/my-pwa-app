@@ -53,11 +53,7 @@ const urlsToCache = [
   '../png/png.html',
   '../png/png.css',
   '../png/png.js',
-  '../CAD/cad.html',
-  '../editor/editor.html',
-  '../gear/radio-gear.html'
-  '../number/number.html',
-  '../font/font.html',
+  '../CAD/cad.html'
   'manifest.json',
   'register.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
