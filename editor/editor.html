@@ -4626,7 +4626,7 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
   // 内部のリソースパスを解決するヘルパー
   const resolveFilePath = (relPath, customBaseDir = currentPreviewDir) => resolveNormalizedPath(relPath, customBaseDir);
 
-  // ★ 修正：CSS内の url() 画像パスを CSS ファイルが存在するディレクトリ基準で置換する関数
+  // CSS内の url() 画像パスを CSS ファイルが存在するディレクトリ基準で置換する関数
   const replaceCssUrls = (cssText, cssBaseDir = currentPreviewDir) => {
     return cssText.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, urlPath) => {
       const resolvedKey = resolveFilePath(urlPath, cssBaseDir);
@@ -4637,11 +4637,37 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     });
   };
 
-  // 1. 外部CSSの置換 (CSSファイルが存在するディレクトリ階層を取得して適用)
+  // 属性値（src, srcset, data-* 等）内のパスを置換するヘルパー関数
+  const replaceAttributePaths = (htmlText, targetDir = currentPreviewDir) => {
+    return htmlText.replace(/\b(src|srcset|data-[a-z0-9_-]+)\s*=\s*["']([^"']+)["']/gi, (match, attr, pathValue) => {
+      if (attr.toLowerCase() === 'srcset') {
+        const newSrcset = pathValue.split(',').map(part => {
+          const trimmed = part.trim();
+          const spaceIdx = trimmed.search(/\s/);
+          let imgUrl = trimmed;
+          let descriptor = '';
+          if (spaceIdx !== -1) {
+            imgUrl = trimmed.substring(0, spaceIdx);
+            descriptor = trimmed.substring(spaceIdx);
+          }
+          const resKey = resolveNormalizedPath(imgUrl, targetDir);
+          return (resKey && files[resKey]) ? files[resKey] + descriptor : part;
+        }).join(', ');
+        return `${attr}="${newSrcset}"`;
+      }
+
+      const resolvedKey = resolveNormalizedPath(pathValue, targetDir);
+      if (resolvedKey && files[resolvedKey]) {
+        return `${attr}="${files[resolvedKey]}"`;
+      }
+      return match;
+    });
+  };
+
+  // 1. 外部CSSの置換
   html = html.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, cssFile) => {
     const resolvedKey = resolveFilePath(cssFile);
     if (resolvedKey && files[resolvedKey]) {
-      // CSSファイルの場所（例: "css/style.css" -> "css/"）を取得
       const cssDir = resolvedKey.includes('/') ? resolvedKey.substring(0, resolvedKey.lastIndexOf('/') + 1) : '';
       const processedCss = replaceCssUrls(files[resolvedKey], cssDir);
       return `<style>\n/* Loaded: ${resolvedKey} */\n${processedCss}\n</style>`;
@@ -4671,11 +4697,9 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     
     if (resolvedKey && files[resolvedKey]) {
       let childHtml = files[resolvedKey];
-      
-      // ① 子HTMLが置かれているディレクトリを計算 (例: "page/top-company.html" -> "page/")
       const childDir = resolvedKey.includes('/') ? resolvedKey.substring(0, resolvedKey.lastIndexOf('/') + 1) : '';
 
-      // ② 子HTML内の外部CSS (<link rel="stylesheet">) をインライン<style>に置換
+      // 子HTML内の外部CSS
       childHtml = childHtml.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (m, cssFile) => {
         const resolvedCssKey = resolveNormalizedPath(cssFile, childDir);
         if (resolvedCssKey && files[resolvedCssKey]) {
@@ -4686,21 +4710,15 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
         return m;
       });
 
-      // ③ 子HTML内の <style> や インライン style 内の url() 画像パスを置換
+      // 子HTML内の style 変換
       childHtml = childHtml.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (m, cssContent) => {
         return `<style>${replaceCssUrls(cssContent, childDir)}</style>`;
       });
 
-      // ④ 子HTML内の 画像(img src) などのパスを置換
-      childHtml = childHtml.replace(/\b(src)\s*=\s*["']([^"']+)["']/gi, (m, attr, imgPath) => {
-        const resolvedImgKey = resolveNormalizedPath(imgPath, childDir);
-        if (resolvedImgKey && files[resolvedImgKey]) {
-          return `${attr}="${files[resolvedImgKey]}"`;
-        }
-        return m;
-      });
+      // 子HTML内の src, srcset, data-* 置換
+      childHtml = replaceAttributePaths(childHtml, childDir);
 
-      // ⑤ 子iframe内でもクリックイベント（target="main-frame"など）が作動するように clickInterceptor を注入
+      // 子iframe内クリック制御スクリプト注入
       const childClickInterceptor = `
 <script>
   document.addEventListener('click', function(e) {
@@ -4718,7 +4736,6 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
 
     if (href.startsWith('#')) return;
 
-    // 親画面（一番外側のプレビュー画面）を取得
     const topWin = window.top || window.parent;
 
     if (target && target !== '_self' && target !== '_top' && target !== '_parent') {
@@ -4729,7 +4746,6 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
         if (topWin.resolveNormalizedPath && topWin.files) {
           const resolved = topWin.resolveNormalizedPath(href, '${childDir}');
           if (resolved && topWin.files[resolved]) {
-            // 対象iframeを再レンダリング
             topWin.renderPreviewFile(href, '${childDir}');
           }
         }
@@ -4747,7 +4763,6 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
 `;
       childHtml += childClickInterceptor;
 
-      // ⑥ エスケープして srcdoc 属性に埋め込む
       const escapedHtml = childHtml
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
@@ -4758,15 +4773,8 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     return match;
   });
 
-  // 6. その他の img などの src 置換
-  html = html.replace(/\b(src)\s*=\s*["']([^"']+)["']/gi, (match, attr, path) => {
-    // iframe 以外の src（画像等）を置換
-    const resolvedKey = resolveFilePath(path);
-    if (resolvedKey && files[resolvedKey]) {
-      return `${attr}="${files[resolvedKey]}"`;
-    }
-    return match;
-  });
+  // 6. メインHTML内の src, srcset, data-* 属性（data-small, data-src など）の置換
+  html = replaceAttributePaths(html, currentPreviewDir);
 
   // クリック検出＆ target 属性に対応した処理
   const clickInterceptor = `
@@ -4801,7 +4809,6 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
       return;
     }
 
-    // target="main-frame" などの指定がある場合の特別処理
     if (target && target !== '_self' && target !== '_top' && target !== '_parent') {
       const targetIframe = document.querySelector('iframe[name="' + target + '"]') || document.getElementById(target);
       
@@ -4822,7 +4829,6 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
     e.preventDefault();
     e.stopPropagation();
 
-    // 通常の遷移：親ウィンドウへクリックされた遷移先のパスを渡す
     if (window.parent && typeof window.parent.renderPreviewFile === 'function') {
       window.parent.renderPreviewFile(href, '${currentPreviewDir}');
     }
@@ -4852,6 +4858,7 @@ window.renderPreviewFile = function(fileName, baseDir = '') {
   iframe.srcdoc = html;
   container.appendChild(iframe);
 };
+      
 function closePreview() {
   const modal = document.getElementById('preview-modal');
   if (modal) modal.style.display = 'none';
