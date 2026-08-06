@@ -8,6 +8,7 @@ const currentImageIndexSpan = document.getElementById('currentImageIndex');
 const totalImagesSpan = document.getElementById('totalImages');
 
 const presetFullButton = document.getElementById('presetFull');
+const presetCenterSquareButton = document.getElementById('presetCenterSquare');
 const presetRightHalfButton = document.getElementById('presetRightHalf');
 const presetLeftHalfButton = document.getElementById('presetLeftHalf');
 const duplicateButton = document.getElementById('duplicateButton');
@@ -130,6 +131,7 @@ function updateUI() {
 
     const controlDisabled = total === 0;
     presetFullButton.disabled = controlDisabled;
+    presetCenterSquareButton.disabled = controlDisabled;
     presetRightHalfButton.disabled = controlDisabled;
     presetLeftHalfButton.disabled = controlDisabled;
     duplicateButton.disabled = controlDisabled;
@@ -333,6 +335,28 @@ presetFullButton.addEventListener('click', () => {
         x: 0, y: 0,
         width: imageData.naturalWidth,
         height: imageData.naturalHeight
+    });
+});
+
+presetCenterSquareButton.addEventListener('click', () => {
+    const imageData = cropper.getImageData();
+    if (!imageData) return;
+
+    const width = imageData.naturalWidth;
+    const height = imageData.naturalHeight;
+
+    // 縦と横の短い方を正方形の一辺のサイズにする
+    const squareSize = Math.min(width, height);
+
+    // 画像の中央に来るように x, y 座標を計算
+    const x = (width - squareSize) / 2;
+    const y = (height - squareSize) / 2;
+
+    setCropData({
+        x: x,
+        y: y,
+        width: squareSize,
+        height: squareSize
     });
 });
 
