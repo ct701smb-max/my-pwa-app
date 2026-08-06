@@ -55,6 +55,7 @@ const urlsToCache = [
   '../png/png.js',
   '../CAD/cad.html',
   '../editor/editor.html',
+  '../gear/radio-gear.html'
   '../number/number.html',
   '../font/font.html',
   'manifest.json',
