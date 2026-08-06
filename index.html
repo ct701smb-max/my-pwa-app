@@ -15,43 +15,89 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        /* Interフォントの設定とライトグレイの背景 */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Tailwindのslate-50に近い色 */
+            background-color: #f8fafc;
         }
         
-        /* * アプリケーションアイコンのスタイル
-         * Tailwindのtransitionクラスとbox-shadowを組み合わせ、カスタムhover効果を追加
-         */
         .app-item-icon {
-            /* transition-all duration-300 ease-in-outを適用 */
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
 
         .app-item-icon:hover {
-            /* 浮き上がる効果を強調 */
             transform: translateY(-6px);
-            /* より深く、鮮やかな影を作成 */
             box-shadow: 0 15px 25px -3px rgba(0, 0, 0, 0.15), 0 6px 15px -3px rgba(0, 0, 0, 0.08);
         }
         
-        /* * 画像を円形にクリッピングするためのカスタムクラス (Tailwindのrounded-fullと類似) 
-         * clip-pathはより複雑な形状に対応できます
-         */
         .clip-circle {
             clip-path: circle(50% at 50% 50%);
         }
         
-        /* * SVGアイコンのデフォルトカラー設定
-         * group-hover:fill-indigo-600 クラスと組み合わせて使用
-         */
         .pdf-icon-default-color {
-            fill: #DC2626; /* Red-600 */
+            fill: #DC2626;
         }
         .web-editor-icon-default-color {
-            fill: #10B981; /* Emerald-500 */
+            fill: #10B981;
         }
+
+        /* PDFカード共通スタイル */
+        .pdf-card {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .pdf-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* アイコン枠 */
+        .pdf-icon-box {
+            width: 2.5rem;
+            height: 2.5rem;
+            flex-shrink: 0;
+            background-color: #fef2f2;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            transition: background-color 0.3s ease;
+        }
+        .pdf-card:hover .pdf-icon-box {
+            background-color: #ef4444;
+        }
+
+        /* PDFアイコン */
+        .pdf-icon {
+            font-size: 1.25rem;
+            color: #ef4444;
+            transition: color 0.3s ease;
+        }
+        .pdf-card:hover .pdf-icon {
+            color: #ffffff;
+        }
+
+        /* タイトルテキスト */
+        .pdf-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #1f2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.3s ease;
+        }
+
+        /* 分野別 ホバー時タイトルカラー */
+        .cat-a:hover .pdf-title { color: #d97706; } /* A: amber */
+        .cat-b:hover .pdf-title { color: #059669; } /* B: emerald */
+        .cat-c:hover .pdf-title { color: #0284c7; } /* C: sky */
+        .cat-d:hover .pdf-title { color: #4f46e5; } /* D: indigo */
     </style>
 </head>
 <body class="min-h-screen antialiased flex flex-col items-center p-4 sm:p-8">
@@ -239,7 +285,7 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">電卓</p>
             </a>
 
-              <!-- 17. フォント (追加項目) -->
+<!-- 16. フォント (追加項目) -->
             <a href="./font/font.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-font text-4xl sm:text-5xl text-purple-600"></i>
@@ -295,10 +341,213 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Webエディタ</p>
             </a>
 
-          
-
-        </div>
         
+        </div>
+        <br>
+   <!-- 授業用資料集（PDFファイル等）セクション -->
+        <section class="border-t border-gray-200 pt-10">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-folder-open text-indigo-600 text-3xl mr-3"></i>
+                <h2 class="text-2xl font-bold text-gray-800">授業用資料集</h2>
+            </div>
+
+            <!-- 分野切り替えタブボタン -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
+                <button onclick="showCategory('a')" id="btn-a" class="tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-amber-500 text-white border-amber-500 shadow-md">
+                    <i class="fas fa-hammer"></i>
+                    <span>A. 材料と加工</span>
+                </button>
+                <button onclick="showCategory('b')" id="btn-b" class="tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <i class="fas fa-seedling"></i>
+                    <span>B. 生物育成</span>
+                </button>
+                <button onclick="showCategory('c')" id="btn-c" class="tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <i class="fas fa-bolt"></i>
+                    <span>C. エネルギー</span>
+                </button>
+                <button onclick="showCategory('d')" id="btn-d" class="tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <i class="fas fa-laptop-code"></i>
+                    <span>D. 情報</span>
+                </button>
+            </div>
+
+            <!-- 資料コンテンツエリア -->
+            <div class="tab-content-container">
+                
+                <!-- A. 材料と加工 -->
+                <div id="content-a" class="tab-content bg-amber-50/50 p-5 rounded-2xl border border-amber-100">
+                    <div class="flex items-center mb-4">
+                        <span class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm mr-3">A</span>
+                        <h3 class="text-lg font-bold text-gray-800">材料と加工に関する資料</h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+<!-- A-資料1 -->
+<a href="./docs/A-01-等角図.pdf" target="_blank" class="pdf-card cat-a">
+    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">設計図</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+<!-- A-資料2 -->
+<a href="./docs/A-02-工具の名称と使い方.pdf" target="_blank" class="pdf-card cat-a">
+    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">工具の名称と使い方</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+                    </div>
+                </div>
+
+                <!-- B. 生物育成 -->
+                <div id="content-b" class="tab-content hidden bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                    <div class="flex items-center mb-4">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-sm mr-3">B</span>
+                        <h3 class="text-lg font-bold text-gray-800">生物育成に関する資料</h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+<!-- B-資料1 -->
+<a href="./docs/B-01生物育成.pdf" target="_blank" class="pdf-card cat-b">
+    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">生物育成</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+                    </div>
+                </div>
+
+                <!-- C. エネルギー変換 -->
+                <div id="content-c" class="tab-content hidden bg-sky-50/50 p-5 rounded-2xl border border-sky-100">
+                    <div class="flex items-center mb-4">
+                        <span class="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center font-bold text-sm mr-3">C</span>
+                        <h3 class="text-lg font-bold text-gray-800">エネルギー変換に関する資料</h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+<!-- C-資料1 -->
+<a href="./docs/C-01-発電と核エネルギー.pdf" target="_blank" class="pdf-card cat-c">
+    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">発電と核エネルギー</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+<!-- C-資料2 -->
+<a href="./docs/C-02-エネルギー変換.pdf" target="_blank" class="pdf-card cat-c">
+    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">電気エネルギー</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+<!-- C-資料3 -->
+<a href="./docs/C-03-電子回路.pdf" target="_blank" class="pdf-card cat-c">
+    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">電子回路</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+                        
+                    </div>
+                </div>
+
+                <!-- D. 情報 -->
+                <div id="content-d" class="tab-content hidden bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
+                    <div class="flex items-center mb-4">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center font-bold text-sm mr-3">D</span>
+                        <h3 class="text-lg font-bold text-gray-800">情報に関する資料</h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+<!-- D-資料1 -->
+<a href="./docs/D-01-情報の技術.pdf" target="_blank" class="pdf-card cat-d">
+<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">情報の技術</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+<!-- D-資料2 -->
+<a href="./docs/D-02-情報モラルと知的財産権.pdf" target="_blank" class="pdf-card cat-d">
+<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">情報モラルと知的財産権</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+<!-- D-資料3 -->
+<a href="./docs/D-03-SNS学びのポイント.pdf" target="_blank" class="pdf-card cat-d">
+<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">SNS学びのポイント</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+<!-- D-資料4 -->
+<a href="./docs/D-04-プログラミング.pdf" target="_blank" class="pdf-card cat-d">
+<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">プログラミング</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+
+<!-- D-資料5 -->
+<a href="./docs/D-05-AI.pdf" target="_blank" class="pdf-card cat-d">
+<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+    <div class="overflow-hidden">
+    <h4 class="pdf-title">AI時代の幕開け</h4>
+    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+</div>
+</a>
+                        
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- タブ切り替え制御スクリプト -->
+        <script>
+            function showCategory(cat) {
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                const targetContent = document.getElementById(`content-${cat}`);
+                if (targetContent) {
+                    targetContent.classList.remove('hidden');
+                }
+
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.className = "tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-white text-gray-600 border-gray-200 hover:bg-gray-50";
+                });
+
+                const activeBtn = document.getElementById(`btn-${cat}`);
+                if (activeBtn) {
+                    const activeStyles = {
+                        'a': 'bg-amber-500 text-white border-amber-500 shadow-md',
+                        'b': 'bg-emerald-500 text-white border-emerald-500 shadow-md',
+                        'c': 'bg-sky-500 text-white border-sky-500 shadow-md',
+                        'd': 'bg-indigo-500 text-white border-indigo-500 shadow-md'
+                    };
+                    activeBtn.className = `tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${activeStyles[cat]}`;
+                }
+            }
+        </script>    
+
     </main>
     <script src="./system/register.js"></script>
 </body>
