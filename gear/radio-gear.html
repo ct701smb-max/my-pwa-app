@@ -412,78 +412,80 @@
     </div>
 
     <!-- ==================== タブ1: 歯車＆自転車変速 ==================== -->
-    <div id="tab-gear" class="tab-content active">
-        <!-- 変速サブモード切り替え -->
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <button class="tab-btn active" id="mode3Gear" style="min-width: unset; padding: 8px;">⚙️ 3連歯車（直接噛み合い）</button>
-            <button class="tab-btn" id="modeBike" style="min-width: unset; padding: 8px;">🚲 自転車の変速（チェーン連結）</button>
+<div id="tab-gear" class="tab-content active">
+    <!-- 変速サブモード切り替え -->
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button class="tab-btn active" id="mode3Gear" style="min-width: unset; padding: 8px;">⚙️ 3連歯車（直接噛み合い）</button>
+        <button class="tab-btn" id="modeBike" style="min-width: unset; padding: 8px;">🚲 自転車の変速（チェーン連結）</button>
+    </div>
+
+    <div class="explanation" id="mode-explanation">
+        <strong>【学習のポイント：なぜアイドルギヤを使うのか？】</strong><br>
+        1. <strong>回転方向の反転：</strong> 2つの歯車を直接噛み合わせると回転方向が逆になりますが、間にもう1つ歯車を挟むことで、<strong>「元の回転方向に戻す」</strong>ことができます。<br>
+        2. <strong>距離の調整：</strong> ギヤ比を変えることなく、離れた場所に動力を伝えたいときに非常に便利です。
+    </div>
+
+    <!-- コントロール -->
+    <div class="controls">
+        <!-- 3連歯車用コントロール（歯車1:被動輪 / 歯車3:駆動輪） -->
+        <div class="control-group normal-ctrl">
+            <label>歯車1 (被動輪): <span id="t1-val" class="value-display">24</span> 枚</label>
+            <input type="range" id="teeth1" min="10" max="36" step="1" value="24">
+        </div>
+        <div class="control-group normal-ctrl">
+            <label>歯車2 (アイドルギヤ): <span id="t2-val" class="value-display">16</span> 枚</label>
+            <input type="range" id="teeth2" min="10" max="36" step="1" value="16">
+        </div>
+        <div class="control-group normal-ctrl">
+            <label>歯車3 (駆動輪): <span id="t3-val" class="value-display">32</span> 枚</label>
+            <input type="range" id="teeth3" min="10" max="36" step="1" value="32">
         </div>
 
-        <div class="explanation" id="mode-explanation">
-            <strong>【学習のポイント：なぜアイドルギアを使うのか？】</strong><br>
-            1. <strong>回転方向の反転：</strong> 2つの歯車を直接噛み合わせると回転方向が逆になりますが、間にもう1つ歯車を挟むことで、<strong>「元の回転方向に戻す」</strong>ことができます。<br>
-            2. <strong>距離の調整：</strong> ギヤ比を変えることなく、離れた場所に動力を伝えたいときに非常に便利です。
-        </div>
-
-        <!-- コントロール -->
-        <div class="controls">
-            <!-- 3連歯車用コントロール -->
-            <div class="control-group normal-ctrl">
-                <label>歯車1 (駆動輪): <span id="t1-val" class="value-display">24</span> 枚</label>
-                <input type="range" id="teeth1" min="10" max="36" step="1" value="24">
-            </div>
-            <div class="control-group normal-ctrl">
-                <label>歯車2 (アイドル): <span id="t2-val" class="value-display">16</span> 枚</label>
-                <input type="range" id="teeth2" min="10" max="36" step="1" value="16">
-            </div>
-            <div class="control-group normal-ctrl">
-                <label>歯車3 (被動輪): <span id="t3-val" class="value-display">32</span> 枚</label>
-                <input type="range" id="teeth3" min="10" max="36" step="1" value="32">
-            </div>
-
-            <!-- 自転車用コントロール -->
-            <div class="control-group bike-ctrl" style="display: none; grid-column: span 3;">
-                <label>自転車のリアギア（シフター）</label>
-                <div class="bike-shifter">
-                    <button class="shift-btn active" data-gear="1">1段 (軽い/28枚)</button>
-                    <button class="shift-btn" data-gear="2">2段 (24枚)</button>
-                    <button class="shift-btn" data-gear="3">3段 (20枚)</button>
-                    <button class="shift-btn" data-gear="4">4段 (16枚)</button>
-                    <button class="shift-btn" data-gear="5">5段 (重い・速い/12枚)</button>
-                </div>
-            </div>
-
-            <!-- 共通スピード -->
-            <div class="control-group" style="grid-column: span 1;">
-                <label>ペダルの入力速度: <span id="speed-val" style="color:var(--text); font-weight:bold;">1.0</span>x</label>
-                <input type="range" id="speed" min="0" max="3" step="0.1" value="1">
+        <!-- 自転車用コントロール（左側のリアギヤ/歯車1を変更） -->
+        <div class="control-group bike-ctrl" style="display: none; grid-column: span 3;">
+            <label>自転車のリアギヤ (左・後輪/歯車1)</label>
+            <div class="bike-shifter">
+                <button class="shift-btn active" data-gear="1">1段 (軽い/28枚)</button>
+                <button class="shift-btn" data-gear="2">2段 (24枚)</button>
+                <button class="shift-btn" data-gear="3">3段 (20枚)</button>
+                <button class="shift-btn" data-gear="4">4段 (16枚)</button>
+                <button class="shift-btn" data-gear="5">5段 (重い・速い/12枚)</button>
             </div>
         </div>
 
-        <!-- ダッシュボード -->
-        <div class="dashboard">
-            <div class="info-panel">
-                <div class="info-title" id="info-panel-title">全体の速度伝達比</div>
-                <div class="formula-box">
-                    <div id="formula-label">歯車3 (被動輪) ÷ 歯車1 (駆動輪):</div>
-                    <div class="formula" id="total-ratio">32 ÷ 24 = 1.33</div>
-                </div>
-                <div style="font-size: 0.9rem; line-height: 1.5;">
-                    <p><strong>回転方向:</strong><br><span id="direction-text" style="color:var(--secondary); font-weight:bold; font-size:1.1rem;">同じ方向</span> に回ります！</p>
-                    <p id="dynamic-desc">真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。</p>
-                </div>
-            </div>
-            <div class="canvas-container">
-                <canvas id="gearCanvas" width="650" height="320"></canvas>
-            </div>
+        <!-- 共通スピード（右側のペダル/歯車3への入力） -->
+        <div class="control-group" style="grid-column: span 1;">
+            <label>ペダルの入力速度 (右/歯車3): <span id="speed-val" style="color:var(--text); font-weight:bold;">1.0</span>x</label>
+            <input type="range" id="speed" min="0" max="3" step="0.1" value="1">
         </div>
     </div>
+
+    <!-- ダッシュボード -->
+    <div class="dashboard">
+        <div class="info-panel">
+            <div class="info-title" id="info-panel-title">全体の速度伝達比</div>
+            <div class="formula-box">
+                <!-- 駆動輪(歯車3) と 被動輪(歯車1) の関係に計算式表示を更新 -->
+                <div id="formula-label">歯車1 (被動輪) ÷ 歯車3 (駆動輪):</div>
+                <div class="formula" id="total-ratio">24 ÷ 32 = 0.75</div>
+            </div>
+            <div style="font-size: 0.9rem; line-height: 1.5;">
+                <p><strong>回転方向:</strong><br><span id="direction-text" style="color:var(--secondary); font-weight:bold; font-size:1.1rem;">同じ方向</span> に回ります！</p>
+                <p id="dynamic-desc">真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。</p>
+                <p id="dynamic-desc">被動輪が大きくなると速度伝達比が大きくなり、回転力（トルク）も大きくなります。</p>
+            </div>
+        </div>
+        <div class="canvas-container">
+            <canvas id="gearCanvas" width="650" height="320"></canvas>
+        </div>
+    </div>
+</div>
 
     <!-- ==================== タブ2: ダイナモ発電 ==================== -->
     <div id="tab-dynamo" class="tab-content">
         <div class="explanation">
-            <strong>⚙️ 増速ギア（歯車）の役割と破損リスク</strong><br>
-            手で回すスピードは遅いため、内部の<strong>「大きな歯車」</strong>と<strong>「小さな歯車」</strong>を組み合わせて磁石を数十倍の速さで高速回転させています（増速機構）。しかし、勢いよく回しすぎると、過剰な負荷や摩擦熱によって<strong>プラスチックギアが破損してしまいます！</strong><br>一定のリズムで回して、安全かつ効率よく発電する感覚を掴みましょう。
+            <strong>⚙️ 増速ギヤ（歯車）の役割と破損リスク</strong><br>
+            手で回すスピードは遅いため、内部の<strong>「大きな歯車」</strong>と<strong>「小さな歯車」</strong>を組み合わせて磁石を数十倍の速さで高速回転させています（増速機構）。しかし、勢いよく回しすぎると、過剰な負荷や摩擦熱によって<strong>プラスチックギヤが破損してしまいます！</strong><br>一定のリズムで回して、安全かつ効率よく発電する感覚を掴みましょう。
         </div>
 
         <div class="canvas-container">
@@ -503,7 +505,7 @@
                 <div class="status-display" id="generatorStatus" style="background-color: #fef3c7; color: #d97706; width: 100%; box-sizing: border-box;">
                     発電中...
                 </div>
-                <button id="resetGearBtn" class="btn-reset" onclick="repairGear()">⚙️ 新しいギアと交換する（修理）</button>
+                <button id="resetGearBtn" class="btn-reset" onclick="repairGear()">⚙️ 新しいギヤと交換する（修理）</button>
             </div>
         </div>
     </div>
@@ -708,199 +710,211 @@
     modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
 
 
-    // ==========================================
-    // ① 歯車＆自転車変速シミュレーター JS
-    // ==========================================
-    let currentGearMode = '3gear'; // '3gear' か 'bike'
-    let bikeGear = 1;
-    const bikeTeethMap = { 1: 28, 2: 24, 3: 20, 4: 16, 5: 12 };
+// ==========================================
+// ① 歯車＆自転車変速シミュレーター JS
+// ==========================================
+let currentGearMode = '3gear'; // '3gear' か 'bike'
+let bikeGear = 1;
+const bikeTeethMap = { 1: 28, 2: 24, 3: 20, 4: 16, 5: 12 };
 
-    const mode3GearBtn = document.getElementById('mode3Gear');
-    const modeBikeBtn = document.getElementById('modeBike');
-    const normalCtrls = document.querySelectorAll('.normal-ctrl');
-    const bikeCtrl = document.querySelector('.bike-ctrl');
-    const dynamicDesc = document.getElementById('dynamic-desc');
-    const formulaLabel = document.getElementById('formula-label');
-    const infoPanelTitle = document.getElementById('info-panel-title');
-    const modeExplanation = document.getElementById('mode-explanation');
-    const directionText = document.getElementById('direction-text');
+const mode3GearBtn = document.getElementById('mode3Gear');
+const modeBikeBtn = document.getElementById('modeBike');
+const normalCtrls = document.querySelectorAll('.normal-ctrl');
+const bikeCtrl = document.querySelector('.bike-ctrl');
+const dynamicDesc = document.getElementById('dynamic-desc');
+const formulaLabel = document.getElementById('formula-label');
+const infoPanelTitle = document.getElementById('info-panel-title');
+const modeExplanation = document.getElementById('mode-explanation');
+const directionText = document.getElementById('direction-text');
 
-    mode3GearBtn.addEventListener('click', () => {
-        currentGearMode = '3gear';
-        mode3GearBtn.classList.add('active');
-        modeBikeBtn.classList.remove('active');
-        normalCtrls.forEach(el => el.style.display = 'flex');
-        bikeCtrl.style.display = 'none';
-        infoPanelTitle.textContent = "全体の速度伝達比";
-        formulaLabel.textContent = "全合成ギヤ比 (歯車1 → 歯車3):";
-        dynamicDesc.innerHTML = "真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。";
-        modeExplanation.innerHTML = `<strong>【学習のポイント：なぜアイドルギアを使うのか？】</strong><br>1. <strong>回転方向の反転：</strong> 2つの歯車を直接噛み合わせると回転方向が逆になりますが、間にもう1つ歯車を挟むことで、<strong>「元の回転方向に戻す」</strong>ことができます。<br>2. <strong>距離の調整：</strong> ギヤ比を変えることなく、離れた場所に動力を伝えたいときに非常に便利です。`;
-    });
+mode3GearBtn.addEventListener('click', () => {
+    currentGearMode = '3gear';
+    mode3GearBtn.classList.add('active');
+    modeBikeBtn.classList.remove('active');
+    normalCtrls.forEach(el => el.style.display = 'flex');
+    bikeCtrl.style.display = 'none';
+    infoPanelTitle.textContent = "全体の速度伝達比";
+    formulaLabel.textContent = "歯車1 (被動輪) ÷ 歯車3 (駆動輪):";
+    dynamicDesc.innerHTML = "真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。";
+    modeExplanation.innerHTML = `<strong>【学習のポイント：なぜアイドルギヤを使うのか？】</strong><br>1. <strong>回転方向の反転：</strong> 2つの歯車を直接噛み合わせると回転方向が逆になりますが、間にもう1つ歯車を挟むことで、<strong>「元の回転方向に戻す」</strong>ことができます。<br>2. <strong>距離の調整：</strong> ギヤ比を変えることなく、離れた場所に動力を伝えたいときに非常に便利です。`;
+});
 
-    modeBikeBtn.addEventListener('click', () => {
-        currentGearMode = 'bike';
-        modeBikeBtn.classList.add('active');
-        mode3GearBtn.classList.remove('active');
-        normalCtrls.forEach(el => el.style.display = 'none');
-        bikeCtrl.style.display = 'flex';
-        infoPanelTitle.textContent = "自転車の変速比（ギヤレシオ）";
-        formulaLabel.textContent = "変速比 (フロント歯数 ÷ リア歯数):";
-        updateBikeDescription();
-        modeExplanation.innerHTML = `
+modeBikeBtn.addEventListener('click', () => {
+    currentGearMode = 'bike';
+    modeBikeBtn.classList.add('active');
+    mode3GearBtn.classList.remove('active');
+    normalCtrls.forEach(el => el.style.display = 'none');
+    bikeCtrl.style.display = 'flex';
+    infoPanelTitle.textContent = "自転車の変速比（ギヤレシオ）";
+    formulaLabel.textContent = "変速比 (ペダル歯数 ÷ リア歯数):";
+    updateBikeDescription();
+    modeExplanation.innerHTML = `
     <strong>【学習のポイント：自転車の変速のナゾ】</strong><br>
-    1. <strong>チェーンとスプロケット（歯車）：</strong> 
-    ペダルを回す力は<strong>チェーン</strong>を伝わって、後輪にある<strong>スプロケット</strong>（金属製のギザギザした歯車）に伝わります。この歯車のサイズを切り替えるのが変速（ギアチェンジ）です。<br>
-    
-    2. <strong>スピードアップの仕組み：</strong> 
-    5段（高速ギア）にすると、後ろの<strong>スプロケットが小さく</strong>なります。ペダルを1回転させる間に、後輪が何回転も猛スピードで回るようになるからです（その代わりペダルは重くなります）。<br>
-    
-    3. <strong>坂道を登るときの仕組み：</strong> 
-    1段（軽いギア）にすると、後ろの<strong>スプロケットが大きく</strong>なります。ペダルをたくさん回す必要がありますが、小さな力でグイグイ坂道を登ることができます。
+    1. <strong>チェーンとスプロケット（歯車）：</strong><br>
+    ペダルを回す力は<strong>チェーン</strong>を伝わって、後輪にある<strong>スプロケット</strong>（金属製のギザギザした歯車）に伝わります。この歯車のサイズを切り替えるのが変速（ギヤチェンジ）です。<br><br>
+    2. <strong>スピードアップの仕組み：</strong><br>
+    5段（高速ギヤ）にすると、後ろの<strong>スプロケットが小さく</strong>なります。ペダルを1回転させる間に、後輪が何回転も猛スピードで回るようになるからです（その代わりペダルは重くなります）。<br><br>
+    3. <strong>坂道を登るときの仕組み：</strong><br>
+    1段（軽いギヤ）にすると、後ろの<strong>スプロケットが大きく</strong>なります。ペダルをたくさん回す必要がありますが、小さな力でグイグイ坂道を登ることができます。
 `;
-    });
+});
 
-    document.querySelectorAll('.shift-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            bikeGear = parseInt(e.target.getAttribute('data-gear'));
-            updateBikeDescription();
-        });
+document.querySelectorAll('.shift-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        bikeGear = parseInt(e.target.getAttribute('data-gear'));
+        updateBikeDescription();
     });
+});
 
-    function updateBikeDescription() {
-        if(currentGearMode !== 'bike') return;
-        const frontTeeth = 40;
-        const rearTeeth = bikeTeethMap[bikeGear];
-        const ratio = frontTeeth / rearTeeth;
-        dynamicDesc.innerHTML = `<strong>現在の状態:</strong><br>ペダル（左）を <strong>1回転</strong> させると、後輪（右）は <strong style="color:var(--secondary); font-size:1.1rem;">${ratio.toFixed(2)}回転</strong> します！<br>` + 
-        (bikeGear === 5 ? "🔥 最もハイスピードですが、ペダルは一番重くなります。" : bikeGear === 1 ? "⛰️ 一番スピードは遅いですが、軽い力で回せます（坂道用）。" : "");
+function updateBikeDescription() {
+    if(currentGearMode !== 'bike') return;
+    const frontTeeth = 40; // 右ペダル (歯車3)
+    const rearTeeth = bikeTeethMap[bikeGear]; // 左後輪 (歯車1)
+    const ratio = frontTeeth / rearTeeth;
+    dynamicDesc.innerHTML = `<strong>現在の状態:</strong><br>ペダル（右）を <strong>1回転</strong> させると、後輪（左）は <strong style="color:var(--secondary); font-size:1.1rem;">${ratio.toFixed(2)}回転</strong> します！<br>` + 
+    (bikeGear === 5 ? "🔥 最もハイスピードですが、ペダルは一番重くなります。" : bikeGear === 1 ? "⛰️ 一番スピードは遅いですが、軽い力で回せます（坂道用）。" : "");
+}
+
+const gearCanvas = document.getElementById('gearCanvas');
+const gearCtx = gearCanvas.getContext('2d');
+const t1Input = document.getElementById('teeth1');
+const t2Input = document.getElementById('teeth2');
+const t3Input = document.getElementById('teeth3');
+const speedInput = document.getElementById('speed');
+const t1Val = document.getElementById('t1-val');
+const t2Val = document.getElementById('t2-val');
+const t3Val = document.getElementById('t3-val');
+const speedVal = document.getElementById('speed-val');
+const totalRatioFormula = document.getElementById('total-ratio');
+
+const MODULE = 6;
+let driveAngle = 0; // 入力軸（歯車3・駆動輪）の回転角度
+
+function drawGearBase(ctx, x, y, radius, teeth, angle, color, name) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    const toothDepth = MODULE * 2;
+    const outerRadius = radius + toothDepth / 2;
+    const innerRadius = radius - toothDepth / 2;
+
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+
+    for (let i = 0; i < teeth; i++) {
+        const angleStep = (Math.PI * 2) / teeth;
+        const a = i * angleStep;
+        ctx.lineTo(Math.cos(a) * outerRadius, Math.sin(a) * outerRadius);
+        ctx.lineTo(Math.cos(a + angleStep * 0.4) * outerRadius, Math.sin(a + angleStep * 0.4) * outerRadius);
+        ctx.lineTo(Math.cos(a + angleStep * 0.5) * innerRadius, Math.sin(a + angleStep * 0.5) * innerRadius);
+        ctx.lineTo(Math.cos(a + angleStep * 0.9) * innerRadius, Math.sin(a + angleStep * 0.9) * innerRadius);
     }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
 
-    const gearCanvas = document.getElementById('gearCanvas');
-    const gearCtx = gearCanvas.getContext('2d');
-    const t1Input = document.getElementById('teeth1');
-    const t2Input = document.getElementById('teeth2');
-    const t3Input = document.getElementById('teeth3');
-    const speedInput = document.getElementById('speed');
-    const t1Val = document.getElementById('t1-val');
-    const t2Val = document.getElementById('t2-val');
-    const t3Val = document.getElementById('t3-val');
-    const speedVal = document.getElementById('speed-val');
-    const totalRatioFormula = document.getElementById('total-ratio');
+    ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fillStyle = '#1e293b'; ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -radius); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
 
-    const MODULE = 6;
-    let angle1 = 0;
+    ctx.restore();
+    
+    // 文字を中心に置かず、歯車の下側（radius + 20px）へ配置
+    ctx.save(); 
+    ctx.font = 'bold 13px Arial'; 
+    ctx.fillStyle = '#ffffff'; 
+    ctx.textAlign = 'center'; 
+    ctx.fillText(name, x, y + radius + 20); 
+    ctx.restore();
+}
 
-    function drawGearBase(ctx, x, y, radius, teeth, angle, color, name) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
+function drawChain(ctx, x1, y1, r1, x3, y3, r3) {
+    ctx.save();
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1 - r1); ctx.lineTo(x3, y3 - r3);
+    ctx.moveTo(x1, y1 + r1); ctx.lineTo(x3, y3 + r3);
+    ctx.stroke();
+    ctx.restore();
+}
 
-        const toothDepth = MODULE * 2;
-        const outerRadius = radius + toothDepth / 2;
-        const innerRadius = radius - toothDepth / 2;
+function initGear() {
+    function drawGear() {
+        if (typeof activeTab !== 'undefined' && activeTab !== 'gear') return;
+        const ctx = gearCtx;
+        ctx.clearRect(0, 0, gearCanvas.width, gearCanvas.height);
+        const speedMultiplier = parseFloat(speedInput.value);
+        speedVal.textContent = speedMultiplier.toFixed(1);
 
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
+        const baseSpeed = 0.012 * speedMultiplier;
+        driveAngle += baseSpeed; // 駆動軸（時計回り）を進める
 
-        for (let i = 0; i < teeth; i++) {
-            const angleStep = (Math.PI * 2) / teeth;
-            const a = i * angleStep;
-            ctx.lineTo(Math.cos(a) * outerRadius, Math.sin(a) * outerRadius);
-            ctx.lineTo(Math.cos(a + angleStep * 0.4) * outerRadius, Math.sin(a + angleStep * 0.4) * outerRadius);
-            ctx.lineTo(Math.cos(a + angleStep * 0.5) * innerRadius, Math.sin(a + angleStep * 0.5) * innerRadius);
-            ctx.lineTo(Math.cos(a + angleStep * 0.9) * innerRadius, Math.sin(a + angleStep * 0.9) * innerRadius);
+        if (currentGearMode === '3gear') {
+            directionText.textContent = "同じ方向";
+            directionText.style.color = "var(--secondary)";
+            
+            const t1 = parseInt(t1Input.value); // 左 (被動)
+            const t2 = parseInt(t2Input.value); // 中 (アイドル)
+            const t3 = parseInt(t3Input.value); // 右 (駆動)
+            t1Val.textContent = t1; t2Val.textContent = t2; t3Val.textContent = t3;
+
+            const r1 = (MODULE * t1) / 2;
+            const r2 = (MODULE * t2) / 2;
+            const r3 = (MODULE * t3) / 2;
+
+            // ギヤ比 (被動歯数 ÷ 駆動歯数)
+            const gearRatio = t1 / t3;
+            totalRatioFormula.textContent = `${t1} ÷ ${t3} = ${gearRatio.toFixed(2)}`;
+
+            const y = gearCanvas.height / 2 - 10;
+
+            // 3つの歯車全体が常に画面中央にくるよう x1 を動的計算
+            const x1 = (gearCanvas.width / 2) - r2 - r3 + 2;
+            const x2 = x1 + r1 + r2 - 2; 
+            const x3 = x2 + r2 + r3 - 2;
+
+            const drawAngle3 = driveAngle;
+            const drawAngle2 = -drawAngle3 * (t3 / t2) + (Math.PI / t2);
+            const drawAngle1 = -drawAngle2 * (t2 / t1) + (Math.PI / t1);
+
+            drawGearBase(ctx, x1, y, r1, t1, drawAngle1, '#2563eb', '歯車1(被動)');
+            drawGearBase(ctx, x2, y, r2, t2, drawAngle2, '#eab308', '歯車2');
+            drawGearBase(ctx, x3, y, r3, t3, drawAngle3, '#10b981', '歯車3(駆動)');
+        } else {
+            directionText.textContent = "同じ方向";
+            directionText.style.color = "var(--secondary)";
+
+            const t3 = 40; // 右: ペダル (駆動)
+            const t1 = bikeTeethMap[bikeGear]; // 左: 後輪 (被動)
+            
+            const r3 = (MODULE * t3) / 2;
+            const r1 = (MODULE * t1) / 2;
+
+            const bikeRatio = t3 / t1; // 変速比 (ペダル ÷ リア)
+            totalRatioFormula.textContent = `${t3} ÷ ${t1} = ${bikeRatio.toFixed(2)}`;
+
+            const x1 = 160, x3 = 480, y = gearCanvas.height / 2 - 10;
+
+            const drawAngle3 = driveAngle;
+            const drawAngle1 = drawAngle3 * bikeRatio;
+
+            drawChain(ctx, x1, y, r1, x3, y, r3);
+            drawGearBase(ctx, x1, y, r1, t1, drawAngle1, '#2563eb', 'リア(被動輪)');
+            drawGearBase(ctx, x3, y, r3, t3, drawAngle3, '#10b981', 'ペダル(駆動輪)');
         }
-        ctx.closePath(); ctx.fill(); ctx.stroke();
 
-        ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fillStyle = '#1e293b'; ctx.fill(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -radius); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
-
-        ctx.restore();
-        ctx.save(); ctx.font = 'bold 12px Arial'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.fillText(name, x, y + 5); ctx.restore();
-    }
-
-    function drawChain(ctx, x1, y1, r1, x3, y3, r3) {
-        ctx.save();
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 4;
-        ctx.setLineDash([6, 6]);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1 - r1); ctx.lineTo(x3, y3 - r3);
-        ctx.moveTo(x1, y1 + r1); ctx.lineTo(x3, y3 + r3);
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    function initGear() {
-        function drawGear() {
-            if (activeTab !== 'gear') return;
-            const ctx = gearCtx;
-            ctx.clearRect(0, 0, gearCanvas.width, gearCanvas.height);
-            const speedMultiplier = parseFloat(speedInput.value);
-            speedVal.textContent = speedMultiplier.toFixed(1);
-
-            const baseSpeed = 0.012 * speedMultiplier;
-            angle1 += baseSpeed;
-
-            if (currentGearMode === '3gear') {
-                directionText.textContent = "同じ方向";
-                directionText.style.color = "var(--secondary)";
-                
-                const t1 = parseInt(t1Input.value);
-                const t2 = parseInt(t2Input.value);
-                const t3 = parseInt(t3Input.value);
-                t1Val.textContent = t1; t2Val.textContent = t2; t3Val.textContent = t3;
-
-                const r1 = (MODULE * t1) / 2;
-                const r2 = (MODULE * t2) / 2;
-                const r3 = (MODULE * t3) / 2;
-
-                const finalRatio = t3 / t1;
-                totalRatioFormula.textContent = `${t3} ÷ ${t1} = ${finalRatio.toFixed(2)}`;
-
-                const x1 = 120, y = gearCanvas.height / 2;
-                const x2 = x1 + r1 + r2 - 2; 
-                const x3 = x2 + r2 + r3 - 2;
-
-                const drawAngle1 = angle1;
-                const drawAngle2 = -drawAngle1 * (t1 / t2) + (Math.PI / t2);
-                const drawAngle3 = -drawAngle2 * (t2 / t3) + (Math.PI / t3);
-
-                drawGearBase(ctx, x1, y, r1, t1, drawAngle1, '#2563eb', '歯車1');
-                drawGearBase(ctx, x2, y, r2, t2, drawAngle2, '#eab308', '歯車2');
-                drawGearBase(ctx, x3, y, r3, t3, drawAngle3, '#10b981', '歯車3');
-            } else {
-                directionText.textContent = "同じ方向";
-                directionText.style.color = "var(--secondary)";
-
-                const t1 = 40;
-                const t3 = bikeTeethMap[bikeGear];
-                
-                const r1 = (MODULE * t1) / 2;
-                const r3 = (MODULE * t3) / 2;
-
-                const finalRatio = t1 / t3;
-                totalRatioFormula.textContent = `${t1} ÷ ${t3} = ${finalRatio.toFixed(2)}`;
-
-                const x1 = 160, x3 = 480, y = gearCanvas.height / 2;
-
-                const drawAngle1 = -angle1;
-                const drawAngle3 = drawAngle1 * finalRatio;
-
-                drawChain(ctx, x1, y, r1, x3, y, r3);
-                drawGearBase(ctx, x1, y, r1, t1, drawAngle1, '#2563eb', 'ペダル(前)');
-                drawGearBase(ctx, x3, y, r3, t3, drawAngle3, '#10b981', '後輪(後ろ)');
-            }
-
+        if (typeof animationFrameIds !== 'undefined') {
             animationFrameIds.gear = requestAnimationFrame(drawGear);
+        } else {
+            requestAnimationFrame(drawGear);
         }
-        drawGear();
     }
-
+    drawGear();
+}
 
    // ==========================================
     // ② ダイナモ発電 JS
@@ -1025,7 +1039,7 @@
             const centerX = width / 2;
             const centerY = height / 2;
 
-            // ギアのパラメータ（綺麗に噛み合う配置）
+            // ギヤのパラメータ（綺麗に噛み合う配置）
             const gear1X = centerX - 120;
             const gear1R = 60; // 少し大きめにして見栄えを強化
             const gear1Teeth = 30;
@@ -1057,11 +1071,11 @@
                 subGearAngle = -mainGearAngle * (gear1Teeth / gear2Teeth) + (Math.PI / gear2Teeth); 
             }
 
-            // 3連歯車と同じ「インボリュート風」デザインで2つのギアを描画！
+            // 3連歯車と同じ「インボリュート風」デザインで2つのギヤを描画！
             drawDynamoGear(ctx, gear1X, centerY, gear1R, gear1Teeth, mainGearAngle, isBroken ? '#475569' : '#3b82f6', '手回し大ギヤ(30枚)');
             drawDynamoGear(ctx, gear2X, centerY, gear2R, gear2Teeth, subGearAngle, isBroken ? '#ef4444' : '#f43f5e', '増速小ギヤ(10枚)');
 
-            // 手回しハンドル（ギアの上に重ねて描画）
+            // 手回しハンドル（ギヤの上に重ねて描画）
             ctx.save();
             ctx.translate(gear1X, centerY);
             ctx.rotate(mainGearAngle);
@@ -1149,7 +1163,7 @@
                 ctx.strokeRect(centerX - 60, height - 30, 120, 15);
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 10px Arial';
-                ctx.fillText(`ギアの熱: ${Math.round(heatLevel)}%`, centerX - 40, height - 18);
+                ctx.fillText(`ギヤの熱: ${Math.round(heatLevel)}%`, centerX - 40, height - 18);
             }
 
             // UI状態更新
@@ -1157,7 +1171,7 @@
             const resetBtn = document.getElementById('resetGearBtn');
 
             if (isBroken) {
-                statusDiv.textContent = '⚠️ 警告：回しすぎです！ギア（歯車）の噛み合わせが欠けて、壊れてしまいました！';
+                statusDiv.textContent = '⚠️ 警告：回しすぎです！ギヤ（歯車）の噛み合わせが欠けて、壊れてしまいました！';
                 statusDiv.style.backgroundColor = '#fecaca';
                 statusDiv.style.color = '#b91c1c';
                 if (resetBtn) resetBtn.style.display = 'block';
@@ -1170,12 +1184,12 @@
                     statusDiv.style.backgroundColor = '#fee2e2';
                     statusDiv.style.color = '#dc2626';
                 } else if (speed >= 10.5) {
-                    statusDiv.textContent = '💥 危ない！回すのが速すぎます！このままだとギアが壊れます！';
+                    statusDiv.textContent = '💥 危ない！回すのが速すぎます！このままだとギヤが壊れます！';
                     statusDiv.style.backgroundColor = '#ffedd5';
                     statusDiv.style.color = '#ea580c';
                 } else {
                     const voltage = Math.round(speed * 12);
-                    statusDiv.textContent = `ギア増速中！ ハンドル1回転で磁石が3倍速で回っています（発電電圧: 約${voltage}V）`;
+                    statusDiv.textContent = `ギヤ増速中！ ハンドル1回転で磁石が3倍速で回っています（発電電圧: 約${voltage}V）`;
                     statusDiv.style.backgroundColor = '#dcfce7';
                     statusDiv.style.color = '#15803d';
                 }
