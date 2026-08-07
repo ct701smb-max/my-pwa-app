@@ -1,327 +1,174 @@
-/* ベーススタイル */
+/* ベース設定 */
 :root {
-    --primary-color: #1E90FF; /* 明るい青 */
-    --restore-color: #FFD700; /* ゴールド */
+    --primary-color: #1E90FF;
+    --restore-color: #FFD700;
     --background-light: #f9f9f9;
     --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --ai-color: #4CAF50; /* 緑系 */
+    --ai-color: #4CAF50;
 }
 
 body {
     font-family: 'Inter', 'Arial', sans-serif;
     background-color: var(--background-light);
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
+    padding: 20px;
     margin: 0;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
-.container {
+.app-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.main-content {
     background-color: #fff;
     padding: 20px;
     border-radius: 12px;
     box-shadow: var(--shadow-base);
-    width: 100%;
-    max-width: 800px;
-    display: flex;
-    flex-direction: column;
-}
-
-h1 {
-    text-align: center;
-    color: var(--primary-color);
-    margin-bottom: 20px;
-    font-size: 1.8em;
-    font-weight: 700;
-}
-
-/* 汎用ボタンのスタイル */
-button {
-    padding: 10px 15px;
-    cursor: pointer;
-    border: 1px solid var(--primary-color);
-    background-color: white;
-    color: var(--primary-color);
-    border-radius: 6px;
-    font-size: 14px;
-    transition: all 0.2s ease;
-}
-
-button:hover:not(:disabled) {
-    background-color: var(--primary-color);
-    color: white;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-button.active {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-/* ツールボタンの個別スタイル */
-#tool-restore {
-    border: 1px solid var(--restore-color);
-    color: var(--restore-color);
-    background-color: white;
-}
-
-#tool-restore.active {
-    background-color: var(--restore-color);
-    color: #333;
-    border-color: var(--restore-color);
-}
-
-/* AI自動削除ボタン (新規追加) */
-#tool-auto-remove {
-    background-color: var(--ai-color); /* 緑系で特別感を出す */
-    color: white;
-    border: none;
-    font-weight: bold;
-    box-shadow: 0 3px 8px rgba(76, 175, 80, 0.5);
-}
-
-#tool-auto-remove:hover:not(:disabled) {
-    background-color: #45a049;
-    transform: translateY(-1px);
-}
-
-/* ヘッダーコントロール (Undo/Redo/メニュー) */
-.controls-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    position: relative; /* メニューパネルの基準位置 */
-}
-
-/* ダウンロードボタン */
-#download-btn {
-    width: 50%;
-    background-color: #dc3545; /* 強調色（ダウンロード） */
-    color: white;
-    border: none;
-    padding: 10px 0px;
-    font-size: 16px;
-    margin-top: 0px;
-    box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4);
-}
-
-#download-btn:hover:not(:disabled) {
-    background-color: #c82333;
 }
 
 /* =======================================
-    サイドメニューパネル (#side-menu-panel)
-    ======================================= */
-#side-menu-panel {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 280px; /* PC/タブレット用幅 */
-    height: 100%;
-    background-color: #f7f7f7;
-    border-left: 1px solid #ddd;
-    padding: 20px;
-    box-shadow: -4px 0 10px rgba(0,0,0,0.15);
-    z-index: 100;
-    overflow-y: auto;
-    transition: transform 0.3s ease-out;
-    transform: translateX(100%); /* 初期状態は画面外に隠す */
-}
-
-.hidden {
-    /* JSでtransform: translateX(0)が適用されていない場合の fallback/初期非表示 */
-    display: none; 
-}
-
-#side-menu-panel:not(.hidden) {
-    /* JSで .hidden が除去されたとき */
-    display: block;
-    transform: translateX(0);
-}
-
-#side-menu-panel h2, #side-menu-panel h3 {
-    color: #333;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
-#side-menu-panel hr {
-    border: none;
-    border-top: 1px solid #e0e0e0;
-    margin: 15px 0;
-}
-
-.tool-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* フォーム要素 */
-label {
-    display: block;
-    margin-top: 10px;
-    font-size: 0.9em;
-    color: #555;
-}
-input[type="color"], input[type="range"] {
-    width: 100%;
-    margin-top: 5px;
-}
-
-/* =======================================
-    キャンバスエリアとインジケーター
-    ======================================= */
-
-.canvas-area {
-    position: relative; /* 💡 **最重要**：インジケーターの基準点 */
-    border: 1px solid #ccc;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
-    /* 市松模様のパターン */
-    background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
-                      linear-gradient(-45deg, #ccc 25%, transparent 25%),
-                      linear-gradient(45deg, transparent 75%, #ccc 75%),
-                      linear-gradient(-45deg, transparent 75%, #ccc 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    overflow: hidden;
-    margin-top: 10px;
-}
-
-#main-canvas {
-    display: block;
-    cursor: crosshair;
-}
-
-/* 💡 ブラシインジケーターのスタイル */
-#brush-indicator {
-    position: absolute;
-    /* 円のスタイル */
-    border: 2px solid rgba(255, 0, 0, 0.8); 
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0; /* 🌟 **修正点**：初期状態を非表示にする */
-    z-index: 50;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
-    transition: opacity 0.1s;
-    transform: translate(-50%, -50%); /* 中心に配置 */
-}
-
-/* 十字ラインの共通設定 */
-#brush-indicator::before,
-#brush-indicator::after {
-    content: '';
-    position: absolute;
-    background-color: rgba(0, 0, 0, 1.0); 
-    z-index: 51;
-}
-
-/* 縦線 */
-#brush-indicator::before {
-    top: 0;
-    left: 50%;
-    width: 1px; 
-    height: 100%;
-    transform: translateX(-50%);
-}
-
-/* 横線 */
-#brush-indicator::after {
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 1px; 
-    transform: translateY(-50%);
-}
-
-
-/* スポイトインジケーターのスタイル */
-#color-sampler-indicator {
-    position: absolute;
-    width: 40px; 
-    height: 40px;
-    
-    border: 3px solid white;
-    outline: 2px solid #555;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 100;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
-    transform: translate(-50%, -50%);
-    
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* 🌟 **修正点**：初期状態を非表示にする（JS側で .hidden が無い場合） */
-    opacity: 0; 
-}
-/* JSで .hidden クラスが付与されることを前提として、ここでは opacity 0 を追加 */
-#color-sampler-indicator:not(.hidden) {
-    opacity: 1;
-}
-
-
-/* 取得した色を表示する部分 */
-#sampler-output-color {
-    width: 70%;
-    height: 70%;
-    border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.3);
-}
-
-/* =======================================
-    レスポンシブ対応 (モバイル向け)
-    ======================================= */
-@media (max-width: 650px) {
-    
-    body {
-        padding: 0; /* モバイルでは余白を詰める */
+   PC表示 (901px以上): 3カラム独立配置
+   ======================================= */
+@media (min-width: 901px) {
+    /* ラッパーの枠構造を無効化して直接Flexアイテム化 */
+    .side-menu-drawer {
+        display: contents;
     }
 
-    .container {
-        padding: 10px;
-        border-radius: 0;
+    /* flexのorderで「左メニュー → メイン → 右メニュー」の順に並べる */
+    #left-menu-panel { order: 1; }
+    .main-content { order: 2; flex: 1; min-width: 0; }
+    #right-menu-panel { order: 3; }
+
+    .side-menu-panel {
+        width: 260px;
+        flex-shrink: 0;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-base);
+        box-sizing: border-box;
+    }
+
+    #menu-toggle-btn {
+        display: none; /* PC時はボタン非表示 */
+    }
+}
+
+/* =======================================
+   スマホ・タブレット表示 (900px以下): まとめてスライドドロワー化
+   ======================================= */
+@media (max-width: 900px) {
+    body { padding: 10px; }
+
+    .app-container {
+        flex-direction: column;
+    }
+
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* ボタンを前面に配置して確実にタップできるように修正 */
+    #menu-toggle-btn {
+        display: inline-block;
+        position: relative;
+        z-index: 201; /* ドロワー(200)より上に配置 */
+    }
+
+    /* まとめたドロワーコンテナ */
+    .side-menu-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 300px;
+        max-width: 80vw;
+        height: 100vh;
+        background-color: #ffffff;
+        box-shadow: -4px 0 15px rgba(0, 0, 0, 0.15);
+        z-index: 200;
+        overflow-y: auto;
+        padding: 20px;
+        box-sizing: border-box;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    /* 非表示時は画面右に退避 */
+    .side-menu-drawer.hidden {
+        transform: translateX(100%);
+    }
+
+    .side-menu-panel {
+        background: none;
+        padding: 0;
         box-shadow: none;
-        min-height: 100vh;
-    }
-    
-    .controls-header {
-        margin-bottom: 10px;
-    }
-    
-    .controls-header button {
-        flex-grow: 1;
-        margin: 0 3px;
-    }
-    
-    /* モバイルでのメニューパネル */
-    #side-menu-panel {
-        width: 280px; /* 全幅に広げる */
-        height: calc(100% - 60px); /* ヘッダー分を引く */
-        max-width: none;
-        top: 60px; /* ヘッダーの下から開始 */
-        padding-bottom: 80px;
-    }
-    
-    /* モバイルでのダウンロードボタン */
-    #download-btn {
-        position: sticky;
-        bottom: 0;
-        left: 0;
-        border-radius: 0;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        z-index: 90;
-        margin-top: 10px;
+        margin-bottom: 20px;
     }
 }
 
+/* 汎用スタイル */
+h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; font-size: 1.8em; font-weight: 700; }
+button { padding: 10px 15px; cursor: pointer; border: 1px solid var(--primary-color); background-color: white; color: var(--primary-color); border-radius: 6px; font-size: 14px; transition: all 0.2s ease; }
+button:hover:not(:disabled) { background-color: var(--primary-color); color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+button.active { background-color: var(--primary-color); color: white; }
+#tool-restore { border-color: var(--restore-color); color: var(--restore-color); }
+#tool-restore.active { background-color: var(--restore-color); color: #333; }
+#tool-auto-remove { background-color: var(--ai-color); color: white; border: none; font-weight: bold; }
+.tool-group { display: flex; flex-direction: column; gap: 10px; }
+label { display: block; margin-top: 10px; font-size: 0.9em; color: #555; }
+input[type="color"], input[type="range"] { width: 100%; margin-top: 5px; }
+.controls-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+#download-btn { flex: 1; background-color: #dc3545; color: white; border: none; padding: 10px; font-size: 15px; }
+.canvas-area { position: relative; border: 1px solid #ccc; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; overflow: hidden; margin-top: 10px; }
+#main-canvas { display: block; cursor: crosshair; max-width: 100%; height: auto; }
+#brush-indicator { position: absolute; border: 2px solid rgba(255, 0, 0, 0.8); border-radius: 50%; pointer-events: none; opacity: 0; z-index: 50; transform: translate(-50%, -50%); }
+#brush-indicator::before, #brush-indicator::after { content: ''; position: absolute; background-color: #000; z-index: 51; }
+#brush-indicator::before { top: 0; left: 50%; width: 1px; height: 100%; transform: translateX(-50%); }
+#brush-indicator::after { top: 50%; left: 0; width: 100%; height: 1px; transform: translateY(-50%); }
+#color-sampler-indicator { position: absolute; width: 40px; height: 40px; border: 3px solid white; outline: 2px solid #555; border-radius: 50%; pointer-events: none; z-index: 100; transform: translate(-50%, -50%); display: flex; justify-content: center; align-items: center; opacity: 0; }
+#color-sampler-indicator:not(.hidden) { opacity: 1; }
+#sampler-output-color { width: 70%; height: 70%; border-radius: 50%; border: 1px solid rgba(0,0,0,0.3); }
+
+/* ----------------------------------------------------
+   レスポンシブ対応（画面サイズが小さいとき）
+   ---------------------------------------------------- */
+@media (max-width: 768px) {
+    /* 2. トップツールバーのボタン整列 */
+    .top-bar, .toolbar, header { /* 実際にお使いの親要素クラス名に合わせて調整してください */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 各ボタンのサイズと配置を統一 */
+    .top-bar button, 
+    #reload-btn, #undo-btn, #redo-btn, #download-btn, #menu-toggle-btn {
+        flex: 1; /* ボタンの幅を等分割 */
+        padding: 8px 4px;
+        font-size: 13px;
+        white-space: nowrap; /* テキストの改行を防止 */
+        text-align: center;
+        border-radius: 6px;
+    }
+
+    /* 1. メニューが表示されている時は「閉じる（メニュー）」ボタンを隠す */
+    #side-menu-panel:not(.hidden) ~ #menu-toggle-btn,
+    #side-menu-drawer:not(.hidden) ~ #menu-toggle-btn,
+    body:has(#side-menu-panel:not(.hidden)) #menu-toggle-btn,
+    body:has(#side-menu-drawer:not(.hidden)) #menu-toggle-btn {
+        display: none !important;
+    }
+}

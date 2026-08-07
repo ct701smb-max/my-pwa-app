@@ -10,8 +10,68 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.2/dist/body-pix.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="main-content">
+    <div class="app-container">
+        
+        <!-- スマホ・タブレット時に1つにまとまるメニューラッパー (idを修正) -->
+        <div id="side-menu-panel" class="side-menu-drawer hidden">
+            <!-- 左パネル内容 -->
+            <aside id="left-menu-panel" class="side-menu-panel">
+                <h2>描画・選択ツール</h2>
+                <hr>
+                <h3>🖌️ ブラシツール</h3>
+                <div class="tool-group">
+                    <button id="tool-eraser" class="active">消しゴム (透過)</button>
+                    <button id="tool-restore">修復ブラシ</button>
+                </div>
+                <hr>
+                <h3>📏 サイズ調整</h3>
+                <label for="brush-size">ブラシサイズ:</label>
+                <input type="range" id="brush-size" min="5" max="100" value="30">
+                <hr>
+                <h3>⭕️ 範囲指定</h3>
+                <div class="tool-group">
+                    <button id="tool-lasso">✂️ 囲み選択</button>
+                    <button id="tool-rect">四角形で囲む</button>
+                    <button id="tool-circle">円形で囲む</button>
+                </div>
+            </aside>
+
+            <!-- 右パネル内容 -->
+            <aside id="right-menu-panel" class="side-menu-panel">
+                <h2>カラー・自動処理</h2>
+                <hr>
+                <h3>✨ カラー一括透過</h3>
+                <div class="tool-group">
+                    <button id="tool-sampler">スポイト 💧</button>
+                    <label for="color-picker">対象色:</label>
+                    <input type="color" id="color-picker" value="#ffffff">
+                    <label for="color-eraser-tolerance">許容度: <span id="tolerance-value">10</span></label>
+                    <input type="range" id="color-eraser-tolerance" min="0" max="100" value="10">
+                    <button id="tool-color-eraser">一括透過実行</button>
+                </div>
+                <hr>
+                <h3>✨ カラー一括反転</h3>
+                <div class="tool-group">
+                    <button id="tool-invert">色を反転</button>
+                </div>
+                <hr>
+                <h3>🤖 BodyPix 人物自動削除</h3>
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
+                        <label for="auto-remove-threshold">人物判定の強さ:</label>
+                        <span id="threshold-value" style="font-weight: bold;">0.7</span>
+                    </div>
+                    <input type="range" id="auto-remove-threshold" min="0.0" max="1.0" step="0.05" value="0.7">
+                    <p style="font-size: 12px; color: gray; margin-top: 4px; margin-bottom: 10px;">低いほど多くの範囲を人物と見なします。</p>
+                    <button id="tool-auto-remove" style="background-color: #6495ED; color: white; width: 100%; font-weight: bold; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">
+                        ✨ 人物自動削除
+                    </button>
+                </div>
+            </aside>
+        </div>
+
+        <!-- 中央メインコンテンツ -->
+        <main class="main-content">
             <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> 画像の透過処理</h1>
 
             <input type="file" id="image-loader" accept="image/*">
@@ -21,7 +81,6 @@
                     <button id="reload-btn">🔄 更新</button> 
                     <button id="undo-btn" disabled>↩️ 戻る</button>
                     <button id="redo-btn" disabled>↪️ 進む</button>
-                    
                 </div>
                 <button id="download-btn" disabled>結果をダウンロード (PNG)</button>
                 <button id="menu-toggle-btn">メニュー ☰</button>
@@ -35,60 +94,10 @@
                     <div id="sampler-output-color"></div>
                 </div>
             </div>
+        </main>
 
-        </div>
-
-        <div id="side-menu-panel" class="hidden">
-            <h2>ブラシと一括処理</h2>
-            <hr>
-            <h3>🖌️ ブラシツール</h3>
-            <div class="tool-group">
-                <button id="tool-eraser" class="active">消しゴム (透過)</button>
-                <button id="tool-restore">修復ブラシ</button>
-            </div>
-            <hr>
-            <h3>📏 サイズ調整</h3>
-            <label for="brush-size">ブラシサイズ:</label>
-            <input type="range" id="brush-size" min="5" max="100" value="30">
-            <hr>
-            <h3>⭕️ 範囲指定</h3>
-            <div class="tool-group">
-                <button id="tool-lasso">✂️ 囲み選択</button>
-                <button id="tool-rect">四角形で囲む</button>
-                <button id="tool-circle">円形で囲む</button>
-            </div>
-            <hr>
-            <h3>✨ カラー一括透過</h3>
-            <div class="tool-group">
-                <button id="tool-sampler">スポイト 💧</button>
-                <label for="color-picker">対象色:</label>
-                <input type="color" id="color-picker" value="#ffffff">
-                <label for="color-eraser-tolerance">許容度: <span id="tolerance-value">10</span></label>
-                <input type="range" id="color-eraser-tolerance" min="0" max="100" value="10">
-                <button id="tool-color-eraser">一括透過実行</button>
-            </div>
-            <hr>
-<h3>✨ カラー一括反転</h3>
-            <div class="tool-group">
-            <button id="tool-invert">色を反転</button>
-            </div>
-            <hr>
-            <h3>🤖 AI自動削除</h3>
-            <div>
-                <h4>AI自動削除の閾値設定</h4>
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <label for="auto-remove-threshold">人物判定の強さ:</label>
-                    <span id="threshold-value" style="font-weight: bold;">0.7</span>
-                </div>
-                <input type="range" id="auto-remove-threshold" min="0.0" max="1.0" step="0.05" value="0.7">
-                <p style="font-size: small; color: gray;">低いほど多くの範囲を人物と見なします。</p>
-                <button id="tool-auto-remove" style="background-color: #6495ED; color: white; width: 100%; font-weight: bold; border: none; padding: 10px; border-radius: 6px;">
-                    ✨ AI自動削除
-                </button>
-            </div>
-        </div>
     </div>
-    
+
     <script src="png.js"></script> 
 </body>
 </html>

@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolEraserBtn = document.getElementById('tool-eraser');
     const toolRestoreBtn = document.getElementById('tool-restore');
     const toolLassoBtn = document.getElementById('tool-lasso');
-    const toolRectBtn = document.getElementById('tool-rect');     // 四角形ボタン
-    const toolCircleBtn = document.getElementById('tool-circle'); // 円形ボタン
-    const toolInvertBtn = document.getElementById('tool-invert'); // 色反転ボタン
+    const toolRectBtn = document.getElementById('tool-rect');
+    const toolCircleBtn = document.getElementById('tool-circle');
+    const toolInvertBtn = document.getElementById('tool-invert');
     const brushIndicator = document.getElementById('brush-indicator');
     const sideMenuPanel = document.getElementById('side-menu-panel');
     const menuToggleBtn = document.getElementById('menu-toggle-btn');
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolAutoRemoveBtn = document.getElementById('tool-auto-remove');
     const autoRemoveThresholdInput = document.getElementById('auto-remove-threshold');
     const thresholdValueSpan = document.getElementById('threshold-value');
+    const sideMenuDrawer = document.querySelector('.side-menu-drawer');
 
     if (!canvas || !imageLoader || !brushSizeInput || !ctx || !colorSamplerIndicator || !autoRemoveThresholdInput) {
         console.error("Critical DOM elements are missing. Check your HTML structure.");
@@ -39,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初期変数設定
     // ----------------------------------------------------
     let isDrawing = false;
-    let currentTool = 'eraser'; // 'eraser', 'restore', 'lasso', 'sampler', 'rect', 'circle'
+    let currentTool = 'eraser';
     let brushSize = parseInt(brushSizeInput.value);
     let targetColor = [255, 255, 255];
     let colorTolerance = colorEraserToleranceInput ? parseInt(colorEraserToleranceInput.value) : 30;
@@ -54,15 +55,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let segmentationThreshold = autoRemoveThresholdInput ? parseFloat(autoRemoveThresholdInput.value) : 0.7;
     let bodyPixNet = null; 
 
-    // 投げ縄・図形ツール用の座標保存
     let lassoPoints = [];
     let shapeStartPoint = null;
     let shapeEndPoint = null;
 
-    // 定数
     const TOUCH_OFFSET_Y_DISPLAY = -80;
     const DRAW_OFFSET_X = 0; 
     const DRAW_OFFSET_Y = 0; 
+
+    // ----------------------------------------------------
+    // イベントリスナーの初期登録関数
+    // ----------------------------------------------------
+    const initCanvasEventListeners = () => {
+        canvas.addEventListener('mousedown', handleDrawStart);
+        canvas.addEventListener('mousemove', handleDrawMove);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', hideBrushIndicator);
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+    };
 
     // ----------------------------------------------------
     // ユーティリティ関数
@@ -125,6 +137,17 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (tool === 'circle' && toolCircleBtn) toolCircleBtn.classList.add('active');
         else if (tool === 'sampler' && toolSamplerBtn) toolSamplerBtn.classList.add('active');
     };
+
+    // カラーピッカーの値変更を targetColor (RGB配列) に同期
+    if (colorPicker) {
+        colorPicker.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            targetColor = [r, g, b];
+        });
+    }
 
     // ----------------------------------------------------
     // 画像の読み込みと自動調整
@@ -311,12 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.removeEventListener('touchmove', handleSamplerMove);
             window.removeEventListener('touchend', handleSamplerEnd);
 
-            canvas.addEventListener('mousedown', handleDrawStart);
-            canvas.addEventListener('mousemove', handleDrawMove);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseleave', hideBrushIndicator);
-            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            initCanvasEventListeners();
         }
     };
     
@@ -417,7 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.putImageData(imageData, startX, startY);
     };
 
-    // 四角形・円形マスクの確定処理（指定範囲外を透過）
     const applyShapeCrop = () => {
         if (!shapeStartPoint || !shapeEndPoint) return;
 
@@ -439,12 +456,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTool === 'rect') {
             tempCtx.rect(x, y, w, h);
         } else if (currentTool === 'circle') {
-            // 【変更】始点を左上、終点を右下とした四角形に内接する円を計算
             const centerX = x + w / 2;
             const centerY = y + h / 2;
             const radiusX = Math.abs(w / 2);
             const radiusY = Math.abs(h / 2);
-            // 正円にするため、幅と高さの大きい方を基準に半径を決定（好みに応じてMath.minでも可）
             const radius = Math.max(radiusX, radiusY); 
             
             tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -458,13 +473,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = 0; i < pixels.length; i += 4) {
             if (maskPixels[i + 3] === 0) {
-                pixels[i + 3] = 0; // マスク外の領域を透明化
+                pixels[i + 3] = 0;
             }
         }
         ctx.putImageData(mainImgData, 0, 0);
     };
 
-    // 図形ドラッグ中のプレビュー描画
     const drawShapePreview = () => {
         if (!shapeStartPoint || !shapeEndPoint) return;
         ctx.putImageData(history[historyIndex], 0, 0);
@@ -482,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTool === 'rect') {
             ctx.strokeRect(x, y, w, h);
         } else if (currentTool === 'circle') {
-            // 【変更】プレビュー側も同様に内接する円として描画
             const centerX = x + w / 2;
             const centerY = y + h / 2;
             const radiusX = Math.abs(w / 2);
@@ -655,16 +668,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     const loadBodyPix = async () => {
         try {
-            bodyPixNet = await bodyPix.load({
-                architecture: 'MobileNetV1', 
-                outputStride: 16, 
-                multiplier: 0.75, 
-                quantBytes: 2 
-            });
-            console.log("BodyPix model loaded successfully.");
+            if (typeof bodyPix !== 'undefined') {
+                bodyPixNet = await bodyPix.load({
+                    architecture: 'MobileNetV1', 
+                    outputStride: 16, 
+                    multiplier: 0.75, 
+                    quantBytes: 2 
+                });
+                console.log("BodyPix model loaded successfully.");
+            }
         } catch (error) {
             console.error("BodyPix model failed to load:", error);
-            alert("AIモデルの読み込みに失敗しました。ネットワーク接続を確認してください。");
         }
     };
     
@@ -803,21 +817,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // キャンバスイベント設定
-    canvas.addEventListener('mousedown', handleDrawStart);
-    canvas.addEventListener('mousemove', handleDrawMove);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', hideBrushIndicator);
+    // ----------------------------------------------------
+    // 初期化処理
+    // ----------------------------------------------------
+    initCanvasEventListeners(); // 初期の描画イベントを適用
+    loadBodyPix();              // AIモデルのロードを開始
+    // ----------------------------------------------------
+    // メニュー開閉・各種ボタンのイベント（修正統合版）
+    // ----------------------------------------------------
+    const targetMenu = sideMenuPanel || sideMenuDrawer;
 
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', stopDrawing); 
-    window.addEventListener('touchcancel', stopDrawing); 
+    // メニュー開閉処理（統合）
+    if (menuToggleBtn && targetMenu) {
+        menuToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            targetMenu.classList.toggle('hidden');
+            
+            if (targetMenu.classList.contains('hidden')) {
+                menuToggleBtn.textContent = 'メニュー ☰';
+            } else {
+                menuToggleBtn.textContent = '閉じる ×';
+            }
+        });
 
+        // メニュー外クリックで閉じる処理
+        window.addEventListener('click', (e) => {
+            const isClickInsideMenu = targetMenu.contains(e.target);
+            const isClickOnToggle = menuToggleBtn.contains(e.target);
+            if (!isClickInsideMenu && !isClickOnToggle && !targetMenu.classList.contains('hidden')) {
+                closeMenu();
+            }
+        });
+    }
+
+    // ダウンロード処理（統合）
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            if (downloadBtn.disabled) return;
+            
+            const dataURL = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = 'transparent_image.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    }
+
+    // 元に戻す・やり直しボタン
     if (undoBtn) undoBtn.addEventListener('click', undo);
     if (redoBtn) redoBtn.addEventListener('click', redo);
 
-    // ショートカットキー設定
+    // タッチデバイス用キャンバス離脱時の停止補助
+    window.addEventListener('touchend', stopDrawing); 
+    window.addEventListener('touchcancel', stopDrawing); 
+
+    // ショートカットキー設定 (Ctrl+Z / Ctrl+Y / Cmd+Z / Cmd+Shift+Z)
     window.addEventListener('keydown', (e) => {
         const isControl = e.ctrlKey || e.metaKey;
         if (isControl) {
@@ -834,35 +890,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    if(downloadBtn) downloadBtn.addEventListener('click', () => {
-        if (downloadBtn.disabled) return;
-        const dataURL = canvas.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = dataURL;
-        a.download = 'transparent_image.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    });
-
-    if (menuToggleBtn && sideMenuPanel) {
-        menuToggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sideMenuPanel.classList.toggle('hidden');
-            if (sideMenuPanel.classList.contains('hidden')) {
-                menuToggleBtn.textContent = 'メニュー ☰';
-            } else {
-                menuToggleBtn.textContent = '閉じる ×';
-            }
-        });
-        window.addEventListener('click', (e) => {
-            const isClickInsideMenu = sideMenuPanel.contains(e.target);
-            const isClickOnToggle = menuToggleBtn.contains(e.target);
-            if (!isClickInsideMenu && !isClickOnToggle) {
-                closeMenu();
-            }
-        });
-    }
-    
+    // ----------------------------------------------------
+    // 初期化実行
+    // ----------------------------------------------------
+    initCanvasEventListeners();
     loadBodyPix();
 });
