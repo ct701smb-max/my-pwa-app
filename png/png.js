@@ -824,26 +824,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // 初期化処理
+    // メニュー開閉・各種ボタンのイベント（修正確定版）
     // ----------------------------------------------------
-    initCanvasEventListeners(); // 初期の描画イベントを適用
-    loadBodyPix();              // AIモデルのロードを開始
-    // ----------------------------------------------------
-    // メニュー開閉・各種ボタンのイベント（修正統合版）
-    // ----------------------------------------------------
-    const targetMenu = sideMenuPanel || sideMenuDrawer;
+    const targetMenu = document.querySelector('.side-menu-drawer') || sideMenuPanel || sideMenuDrawer;
 
-    // メニュー開閉処理（スマホタッチ対応版）
+    // メニュー開閉処理
     if (menuToggleBtn && targetMenu) {
+        // 過去に残ったインラインスタイル (display: none 等) をリセット
+        menuToggleBtn.style.display = '';
+
+        // メニュー閉じる共通処理
+        const closeMenu = () => {
+            if (!targetMenu.classList.contains('hidden')) {
+                targetMenu.classList.add('hidden');
+            }
+        };
+
+        // トグルボタンクリック処理
         menuToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const isHidden = targetMenu.classList.toggle('hidden');
-            
-            if (window.innerWidth <= 768) {
-                menuToggleBtn.style.display = isHidden ? 'block' : 'none';
-            } else {
-                menuToggleBtn.textContent = isHidden ? 'メニュー ☰' : '閉じる ×';
-            }
+            // hidden クラスの切り替えのみ行う（画面表示の制御はCSSに完全委任）
+            targetMenu.classList.toggle('hidden');
         });
 
         // 外側タップ検知関数
@@ -859,12 +860,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // PCのクリックとスマホのタッチの両方で閉じる処理を登録
         window.addEventListener('click', handleOutsideTap);
         window.addEventListener('touchstart', (e) => {
-            // キャンバス以外の場所をタップした時も閉じる
             if (!targetMenu.contains(e.target) && !menuToggleBtn.contains(e.target)) {
                 handleOutsideTap(e);
             }
         }, { passive: true });
     }
+
+    // ----------------------------------------------------
+    // 初期化処理
+    // ----------------------------------------------------
+    initCanvasEventListeners(); // 初期の描画イベントを適用
+    loadBodyPix();               // AIモデルのロードを開始
 
     // ダウンロード処理（統合）
     if (downloadBtn) {
