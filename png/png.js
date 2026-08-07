@@ -749,6 +749,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const drawTools = ['eraser', 'restore', 'lasso', 'rect', 'circle'];
     
     const handleDrawStart = (e) => {
+        // ★追加: メニューが開いている場合は、描画を実行せずメニューを閉じて終了する
+        if (targetMenu && !targetMenu.classList.contains('hidden')) {
+            closeMenu();
+            return;
+        }
+
         if (downloadBtn && !downloadBtn.disabled) {
             if (drawTools.includes(currentTool)) {
                 isDrawing = true;
@@ -827,27 +833,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     const targetMenu = sideMenuPanel || sideMenuDrawer;
 
-    // メニュー開閉処理（統合）
+    // メニュー開閉処理（スマホタッチ対応版）
     if (menuToggleBtn && targetMenu) {
         menuToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            targetMenu.classList.toggle('hidden');
+            const isHidden = targetMenu.classList.toggle('hidden');
             
-            if (targetMenu.classList.contains('hidden')) {
-                menuToggleBtn.textContent = 'メニュー ☰';
+            if (window.innerWidth <= 768) {
+                menuToggleBtn.style.display = isHidden ? 'block' : 'none';
             } else {
-                menuToggleBtn.textContent = '閉じる ×';
+                menuToggleBtn.textContent = isHidden ? 'メニュー ☰' : '閉じる ×';
             }
         });
 
-        // メニュー外クリックで閉じる処理
-        window.addEventListener('click', (e) => {
+        // 外側タップ検知関数
+        const handleOutsideTap = (e) => {
             const isClickInsideMenu = targetMenu.contains(e.target);
             const isClickOnToggle = menuToggleBtn.contains(e.target);
+            
             if (!isClickInsideMenu && !isClickOnToggle && !targetMenu.classList.contains('hidden')) {
                 closeMenu();
             }
-        });
+        };
+
+        // PCのクリックとスマホのタッチの両方で閉じる処理を登録
+        window.addEventListener('click', handleOutsideTap);
+        window.addEventListener('touchstart', (e) => {
+            // キャンバス以外の場所をタップした時も閉じる
+            if (!targetMenu.contains(e.target) && !menuToggleBtn.contains(e.target)) {
+                handleOutsideTap(e);
+            }
+        }, { passive: true });
     }
 
     // ダウンロード処理（統合）
