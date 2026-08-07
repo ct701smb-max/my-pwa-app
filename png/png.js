@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoRemoveThresholdInput = document.getElementById('auto-remove-threshold');
     const thresholdValueSpan = document.getElementById('threshold-value');
 
-    if (!canvas || !imageLoader || !brushSizeInput || !ctx || !colorSamplerIndicator) {
+    if (!canvas || !imageLoader || !brushSizeInput || !ctx || !colorSamplerIndicator || !autoRemoveThresholdInput) {
         console.error("Critical DOM elements are missing. Check your HTML structure.");
         return;
     }
@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastX = null;
     let lastY = null;
     let originalImageData = null;
+    let segmentationThreshold = autoRemoveThresholdInput ? parseFloat(autoRemoveThresholdInput.value) : 0.7;
+    let bodyPixNet = null; 
 
     // 投げ縄・図形ツール用の座標保存
     let lassoPoints = [];
@@ -415,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.putImageData(imageData, startX, startY);
     };
 
+    // 四角形・円形マスクの確定処理（指定範囲外を透過）
     const applyShapeCrop = () => {
         if (!shapeStartPoint || !shapeEndPoint) return;
 
@@ -436,10 +439,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTool === 'rect') {
             tempCtx.rect(x, y, w, h);
         } else if (currentTool === 'circle') {
+            // 【変更】始点を左上、終点を右下とした四角形に内接する円を計算
             const centerX = x + w / 2;
             const centerY = y + h / 2;
             const radiusX = Math.abs(w / 2);
             const radiusY = Math.abs(h / 2);
+            // 正円にするため、幅と高さの大きい方を基準に半径を決定（好みに応じてMath.minでも可）
             const radius = Math.max(radiusX, radiusY); 
             
             tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -453,12 +458,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = 0; i < pixels.length; i += 4) {
             if (maskPixels[i + 3] === 0) {
-                pixels[i + 3] = 0; 
+                pixels[i + 3] = 0; // マスク外の領域を透明化
             }
         }
         ctx.putImageData(mainImgData, 0, 0);
     };
 
+    // 図形ドラッグ中のプレビュー描画
     const drawShapePreview = () => {
         if (!shapeStartPoint || !shapeEndPoint) return;
         ctx.putImageData(history[historyIndex], 0, 0);
@@ -476,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTool === 'rect') {
             ctx.strokeRect(x, y, w, h);
         } else if (currentTool === 'circle') {
+            // 【変更】プレビュー側も同様に内接する円として描画
             const centerX = x + w / 2;
             const centerY = y + h / 2;
             const radiusX = Math.abs(w / 2);
@@ -644,41 +651,61 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // ----------------------------------------------------
-    // AI 汎用自動背景削除ロジック（@imgly/background-removal）
+    // AI/機械学習ロジック
     // ----------------------------------------------------
+    const loadBodyPix = async () => {
+        try {
+            bodyPixNet = await bodyPix.load({
+                architecture: 'MobileNetV1', 
+                outputStride: 16, 
+                multiplier: 0.75, 
+                quantBytes: 2 
+            });
+            console.log("BodyPix model loaded successfully.");
+        } catch (error) {
+            console.error("BodyPix model failed to load:", error);
+            alert("AIモデルの読み込みに失敗しました。ネットワーク接続を確認してください。");
+        }
+    };
+    
     const applyAutoBackgroundRemoval = async () => {
         if (!originalImageData) {
             alert("先に画像を読み込んでください。");
             return;
         }
+        if (!bodyPixNet) {
+            alert("AIモデルがまだ読み込み中です。しばらくお待ちください。");
+            return;
+        }
 
-        if (toolAutoRemoveBtn) toolAutoRemoveBtn.disabled = true;
+        saveState(); 
 
         try {
-            // ブラウザ内ONNXモデルで汎用被写体を自動切り抜き
-            const blob = await imglyRemoveBackground(canvas);
-            const url = URL.createObjectURL(blob);
-            const img = new Image();
+            const segmentation = await bodyPixNet.segmentPerson(canvas, {
+                flipHorizontal: false, 
+                internalResolution: 'high', 
+                segmentationThreshold: segmentationThreshold 
+            });
 
-            img.onload = () => {
-                saveState();
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const segmentationData = segmentation.data; 
+            const pixelCount = segmentationData.length;
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < pixelCount; i++) {
+                if (segmentationData[i] === 0) { 
+                    const alphaIndex = i * 4 + 3; 
+                    data[alphaIndex] = 0; 
+                }
+            }
 
-                URL.revokeObjectURL(url);
-                updateUndoRedoButtons();
-                saveState();
-
-                if (toolAutoRemoveBtn) toolAutoRemoveBtn.disabled = false;
-            };
-
-            img.src = url;
+            ctx.putImageData(imageData, 0, 0);
+            updateUndoRedoButtons();
+            saveState();
 
         } catch (error) {
             console.error("Automatic background removal failed:", error);
             alert("自動背景削除中にエラーが発生しました。");
-            if (toolAutoRemoveBtn) toolAutoRemoveBtn.disabled = false;
         }
     };
     
@@ -756,6 +783,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleTouchStart = (e) => { e.preventDefault(); handleDrawStart(e); };
     const handleTouchMove = (e) => { e.preventDefault(); handleDrawMove(e); };
 
+    if(autoRemoveThresholdInput) autoRemoveThresholdInput.addEventListener('input', (e) => {
+        segmentationThreshold = parseFloat(e.target.value);
+        if (thresholdValueSpan) thresholdValueSpan.textContent = e.target.value;
+    });
+
     if (reloadBtn) {
         reloadBtn.addEventListener('click', () => {
             location.reload(); 
@@ -771,10 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    // ----------------------------------------------------
     // キャンバスイベント設定
-    // ----------------------------------------------------
     canvas.addEventListener('mousedown', handleDrawStart);
     canvas.addEventListener('mousemove', handleDrawMove);
     canvas.addEventListener('mouseup', stopDrawing);
@@ -788,9 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (undoBtn) undoBtn.addEventListener('click', undo);
     if (redoBtn) redoBtn.addEventListener('click', redo);
 
-    // ----------------------------------------------------
     // ショートカットキー設定
-    // ----------------------------------------------------
     window.addEventListener('keydown', (e) => {
         const isControl = e.ctrlKey || e.metaKey;
         if (isControl) {
@@ -807,10 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ----------------------------------------------------
-    // ダウンロード & メニュー制御
-    // ----------------------------------------------------
-    if (downloadBtn) downloadBtn.addEventListener('click', () => {
+    if(downloadBtn) downloadBtn.addEventListener('click', () => {
         if (downloadBtn.disabled) return;
         const dataURL = canvas.toDataURL('image/png');
         const a = document.createElement('a');
@@ -839,5 +863,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
+    
+    loadBodyPix();
 });
