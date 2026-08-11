@@ -70,25 +70,43 @@
 
         <hr>
 
-        <div id="fileControls">
-            <h3>ファイル並び替え・削除 (ドラッグ＆ドロップ)</h3>
-            <button id="sortByNameButton">ファイル名順でソート ⬆️</button> 
-            <button id="duplicateButton" disabled>現在の画像を複製してリストに追加</button>
-            </div>
+     <div id="fileControls">
+    <h3>ファイル並び替え・削除 (ドラッグ＆ドロップ)</h3>
+    <!-- 1. ファイル名ソート ＆ 複製ボタンを横並び -->
+    <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+        <button id="sortByNameButton" style="flex: 1; min-width: 0; min-height: unset !important; height: 32px !important; padding: 2px 6px !important; font-size: 0.85em; margin: 0;">名前順 ⬆️</button> 
+        <button id="duplicateButton" disabled style="flex: 1; min-width: 0; min-height: unset !important; height: 32px !important; padding: 2px 6px !important; font-size: 0.85em; margin: 0;">複製して追加</button>
+    </div>
+</div>
+
+
+
 
         <ul id="fileList" class="sortable-list">
-            </ul>
+        </ul>
         
         <hr>
 
-        <div id="presetControls">
-    <button id="presetFull">画像の全体</button>
-    <button id="cropButton" disabled>✅トリミング完了</button>
-    <button id="presetLeftHalf">左半分</button>
-    <button id="presetRightHalf">右半分</button>
-    <button id="presetCenterSquare">正方形</button>
-</div>
+        <div id="presetControls" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- 2. 画像全体 ＆ トリミング完了を横並び -->
+            <div style="display: flex; gap: 5px; width: 100%;">
+                <button id="presetFull" style="flex: 1; min-width: 0;">画像の全体</button>
+                <button id="cropButton" disabled style="flex: 1; min-width: 0;">✅トリミング完了</button>
+            </div>
+            <!-- 3. 左半分、正方形、右半分を横並び -->
+            <div style="display: flex; gap: 5px; width: 100%;">
+                <button id="presetLeftHalf" style="flex: 1; min-width: 0;">左半分</button>
+                <button id="presetCenterSquare" style="flex: 1; min-width: 0;">正方形</button>
+                <button id="presetRightHalf" style="flex: 1; min-width: 0;">右半分</button>
+            </div>
+        </div>
 
+<div id="memoryControls" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin: 10px 0; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px;">
+    <button id="saveMemory1Button" style="background-color: #6c757d; font-size: 0.85em; min-width: 130px; min-height: 40px;">📌 範囲1を記憶</button>
+    <button id="applyMemory1Button" style="background-color: #17a2b8; font-size: 0.85em; min-width: 130px; min-height: 40px;" disabled>📋 範囲1を適用</button>
+    <button id="saveMemory2Button" style="background-color: #6c757d; font-size: 0.85em; min-width: 130px; min-height: 40px;">📌 範囲2を記憶</button>
+    <button id="applyMemory2Button" style="background-color: #17a2b8; font-size: 0.85em; min-width: 130px; min-height: 40px;" disabled>📋 範囲2を適用</button>
+</div>
         <hr>
 
         <div id="imageDisplay">

@@ -17,10 +17,21 @@ const fileList = document.getElementById('fileList');
 const saveCurrentImageButton = document.getElementById('saveCurrentImageButton');
 const cropAlert = document.getElementById('cropAlert');
 
+// 追加：2つのカスタム範囲記憶・適用ボタン
+const saveMemory1Button = document.getElementById('saveMemory1Button');
+const applyMemory1Button = document.getElementById('applyMemory1Button');
+const saveMemory2Button = document.getElementById('saveMemory2Button');
+const applyMemory2Button = document.getElementById('applyMemory2Button');
+
 let imageFiles = [];
 let croppedImages = [];
 let currentIndex = 0;
 let cropper = null;
+
+// カスタム範囲および連続引き継ぎ用の変数
+let memoryData1 = null;
+let memoryData2 = null;
+let lastUsedCropData = null;
 
 // ===========================================
 // ユーティリティ関数
@@ -137,6 +148,12 @@ function updateUI() {
     duplicateButton.disabled = controlDisabled;
     sortByNameButton.disabled = controlDisabled;
 
+    // カスタム記憶ボタンの有効/無効制御
+    if (saveMemory1Button) saveMemory1Button.disabled = controlDisabled;
+    if (saveMemory2Button) saveMemory2Button.disabled = controlDisabled;
+    if (applyMemory1Button) applyMemory1Button.disabled = controlDisabled || !memoryData1;
+    if (applyMemory2Button) applyMemory2Button.disabled = controlDisabled || !memoryData2;
+
     const isCurrentCropped = croppedImages[currentIndex] !== null;
     saveCurrentImageButton.disabled = !isCurrentCropped;
 
@@ -174,12 +191,18 @@ function loadAndInitCropper(index) {
 
         currentImage.addEventListener('ready', () => {
             const imageData = cropper.getImageData();
-            cropper.setData({
-                x: 0,
-                y: 0,
-                width: imageData.naturalWidth,
-                height: imageData.naturalHeight
-            });
+            
+            // 連続で同じ範囲を引き継ぐ、または直前の範囲があれば適用する
+            if (lastUsedCropData) {
+                cropper.setData(lastUsedCropData);
+            } else {
+                cropper.setData({
+                    x: 0,
+                    y: 0,
+                    width: imageData.naturalWidth,
+                    height: imageData.naturalHeight
+                });
+            }
         });
 
         updateUI();
@@ -235,15 +258,12 @@ function handleDragEnd(e) {
  * ファイルとトリミングデータを配列内で並び替える
  */
 function reorderFiles(fromIndex, toIndex) {
-    // 1. imageFiles の並び替え
     const fileToMove = imageFiles.splice(fromIndex, 1)[0];
     imageFiles.splice(toIndex, 0, fileToMove);
 
-    // 2. croppedImages の並び替え
     const croppedToMove = croppedImages.splice(fromIndex, 1)[0];
     croppedImages.splice(toIndex, 0, croppedToMove);
 
-    // 3. 現在表示中のインデックスを追跡・修正
     if (currentIndex === fromIndex) {
         currentIndex = toIndex;
     } else if (currentIndex > fromIndex && currentIndex <= toIndex) {
@@ -270,7 +290,6 @@ imageInput.addEventListener('change', (e) => {
         croppedImages.push(null);
     }
     
-    // ファイル選択インプットをリセットして、同じファイルを再選択できるようにする
     e.target.value = ''; 
 
     if (imageFiles.length > 0 && startLength === 0) {
@@ -286,10 +305,12 @@ imageInput.addEventListener('change', (e) => {
 // --- 2. トリミング完了ボタン ---
 cropButton.addEventListener('click', () => {
     if (cropper) {
+        // 現在のトリミング枠データを次の画像用に保持（連続引き継ぎ）
+        lastUsedCropData = cropper.getData();
+
         const croppedCanvas = cropper.getCroppedCanvas();
         const dataURL = croppedCanvas.toDataURL('image/png', 0.9);
         
-        // ... 既存のcroppedImagesへの保存ロジック ...
         croppedImages[currentIndex] = { 
             dataURL: dataURL,
             originalFileName: imageFiles[currentIndex].name,
@@ -297,17 +318,12 @@ cropButton.addEventListener('click', () => {
         };
 
         if (currentIndex < imageFiles.length - 1) {
-            // 次の画像へ移動する場合
             currentIndex++;
             loadAndInitCropper(currentIndex);
-            // 💡 トリミング完了のポップアップ
-            showTemporaryAlert("✅ トリミング完了！ 次の画像へ"); // 👈 **この行を追加**
+            showTemporaryAlert("✅ トリミング完了！ 次の画像へ");
         } else {
-            // 全てのトリミングが完了した場合
             updateUI();
-            // 💡 アラートをポップアップに置き換える
-            // alert("全画像のトリミングが完了しました！一括ダウンロードボタンを押してください。"); // 削除またはコメントアウト
-            showTemporaryAlert("🎉 全画像のトリミング完了！", 3000); // 👈 **この行に置き換え**
+            showTemporaryAlert("🎉 全画像のトリミング完了！", 3000);
         }
     }
 });
@@ -344,11 +360,7 @@ presetCenterSquareButton.addEventListener('click', () => {
 
     const width = imageData.naturalWidth;
     const height = imageData.naturalHeight;
-
-    // 縦と横の短い方を正方形の一辺のサイズにする
     const squareSize = Math.min(width, height);
-
-    // 画像の中央に来るように x, y 座標を計算
     const x = (width - squareSize) / 2;
     const y = (height - squareSize) / 2;
 
@@ -382,6 +394,39 @@ presetLeftHalfButton.addEventListener('click', () => {
     });
 });
 
+// --- 4.5. カスタム範囲1・2の記憶と適用 ---
+if (saveMemory1Button && applyMemory1Button) {
+    saveMemory1Button.addEventListener('click', () => {
+        if (!cropper) return;
+        memoryData1 = cropper.getData();
+        applyMemory1Button.disabled = false;
+        showTemporaryAlert("📌 範囲1を記憶しました");
+    });
+
+    applyMemory1Button.addEventListener('click', () => {
+        if (!cropper || !memoryData1) return;
+        setCropData(memoryData1);
+        lastUsedCropData = memoryData1; // 次の画像への連続引き継ぎ用にも保持
+        showTemporaryAlert("📋 範囲1を適用しました");
+    });
+}
+
+if (saveMemory2Button && applyMemory2Button) {
+    saveMemory2Button.addEventListener('click', () => {
+        if (!cropper) return;
+        memoryData2 = cropper.getData();
+        applyMemory2Button.disabled = false;
+        showTemporaryAlert("📌 範囲2を記憶しました");
+    });
+
+    applyMemory2Button.addEventListener('click', () => {
+        if (!cropper || !memoryData2) return;
+        setCropData(memoryData2);
+        lastUsedCropData = memoryData2; // 次の画像への連続引き継ぎ用にも保持
+        showTemporaryAlert("📋 範囲2を適用しました");
+    });
+}
+
 // --- 5. 現在の画像を複製してリストに追加 ---
 duplicateButton.addEventListener('click', () => {
     if (imageFiles.length === 0) return;
@@ -399,9 +444,7 @@ duplicateButton.addEventListener('click', () => {
         extension = originalName.substring(lastDotIndex);
     }
 
-    // ファイル名に (copy N) をつけて一意性を高める
     const newFileName = `${baseName} (copy ${imageFiles.length + 1})${extension}`;
-    // Fileオブジェクトは不変なので、新しい名前で新しいFileオブジェクトを作成する
     const duplicatedFile = new File([currentFile], newFileName, { type: currentFile.type });
 
     imageFiles.push(duplicatedFile);
@@ -421,7 +464,6 @@ sortByNameButton.addEventListener('click', () => {
     const indices = imageFiles.map((_, index) => index);
     const currentFile = imageFiles[currentIndex]; 
 
-    // ファイル名を基準にインデックスをソート (大文字・小文字を区別しない)
     indices.sort((a, b) => {
         const nameA = imageFiles[a].name.toLowerCase();
         const nameB = imageFiles[b].name.toLowerCase();
@@ -456,7 +498,7 @@ sortByNameButton.addEventListener('click', () => {
 });
 
 
-// --- 7. 全ファイルをZIPで一括ダウンロード (🎯 重複ファイル名に連番を付与) ---
+// --- 7. 全ファイルをZIPで一括ダウンロード ---
 saveAllButton.addEventListener('click', () => {
     if (!croppedImages.every(img => img !== null)) {
         alert("まだトリミングが完了していない画像があります。");
@@ -469,7 +511,6 @@ saveAllButton.addEventListener('click', () => {
     saveAllButton.textContent = "ZIPファイル作成中...";
     saveAllButton.disabled = true;
 
-    // 最終的なファイル名を記録し、重複をチェックするSet
     const finalFileNames = new Set(); 
 
     croppedImages.forEach((imgData) => {
@@ -477,7 +518,6 @@ saveAllButton.addEventListener('click', () => {
             const originalFileName = imgData.originalFileName;
             const newExtension = imgData.dataURL.includes('image/png') ? '.png' : '.jpeg';
 
-            // 1. 拡張子より前のファイル名部分を取得
             const lastDotIndex = originalFileName.lastIndexOf('.');
             const nameWithoutExt = lastDotIndex !== -1 
                                  ? originalFileName.substring(0, lastDotIndex) 
@@ -487,24 +527,17 @@ saveAllButton.addEventListener('click', () => {
             let finalFileName = baseName + newExtension;
             let counter = 1;
 
-            // 2. 重複チェックと連番付与のロジック
             while (finalFileNames.has(finalFileName)) {
-                // ファイル名がすでに存在する場合、(N) をつけて再チェック
                 baseName = `${nameWithoutExt}(${counter})`;
                 finalFileName = baseName + newExtension;
                 counter++;
             }
             
-            // 3. 確定したファイル名を記録し、ZIPファイルに追加
             finalFileNames.add(finalFileName);
-
             const blob = dataURLtoBlob(imgData.dataURL);
-
             folder.file(finalFileName, blob);
         }
     });
-
-
     
     zip.generateAsync({type: "blob"})
        .then(function(content) {
@@ -529,7 +562,6 @@ saveAllButton.addEventListener('click', () => {
 });
 
 saveCurrentImageButton.addEventListener('click', () => {
-    // 現在表示されている画像のインデックスを渡して、ダウンロードを実行する
     downloadSingleImage(currentIndex);
 });
 
@@ -548,12 +580,9 @@ function downloadSingleImage(index) {
     const originalFileName = imgData.originalFileName;
     const newExtension = imgData.dataURL.includes('image/png') ? '.png' : '.jpeg';
 
-    // 既存のファイル名から拡張子を取り除く
     const lastDotIndex = originalFileName.lastIndexOf('.');
     const nameWithoutExt = lastDotIndex !== -1 ? originalFileName.substring(0, lastDotIndex) : originalFileName;
-
-    // ダウンロードするファイル名を決定
-    const downloadFileName = nameWithoutExt + "_cropped" + newExtension; // 例: original_cropped.jpeg
+    const downloadFileName = nameWithoutExt + "_cropped" + newExtension;
 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -561,7 +590,7 @@ function downloadSingleImage(index) {
     a.href = url;
     a.download = downloadFileName;
     document.body.appendChild(a);
-    a.click(); // ダウンロードを実行
+    a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
