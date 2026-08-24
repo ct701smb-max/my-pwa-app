@@ -80,6 +80,15 @@
             transition: width 0.5s, height 0.5s, background-color 0.5s, border-color 0.5s;
         }
 
+        .facility-wall {
+            position: absolute;
+            border-radius: 22px;
+            z-index: -2;
+            pointer-events: none;
+            box-sizing: border-box;
+            transition: all 0.5s;
+        }
+
         .facility-icon {
             position: absolute;
             top: -5px;
@@ -165,7 +174,52 @@
             }
         }
 
-        /* ギザギザ吹き出し風の被ダメージポップアップ */
+        /* 血液の赤い点（スプラッタパーティクル） */
+        .blood-splatter {
+            position: absolute;
+            background-color: #c0392b;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9;
+            pointer-events: none;
+            box-shadow: 0 0 3px rgba(192, 57, 43, 0.8);
+            animation: splatter-anim 0.5s ease-out forwards;
+        }
+
+        @keyframes splatter-anim {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) translate(var(--blood-x), var(--blood-y)) scale(0.3);
+                opacity: 0;
+            }
+        }
+
+        /* 火花エフェクト（より明るく黄金色に光るように修正） */
+        .spark-particle {
+            position: absolute;
+            background-color: #fff200;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 0 10px #ffea00, 0 0 20px #ff9900;
+            animation: spark-anim 0.4s ease-out forwards;
+        }
+
+        @keyframes spark-anim {
+            0% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) translate(var(--spark-x), var(--spark-y)) scale(0.3);
+                opacity: 0;
+            }
+        }
+
         .damage-popup {
             position: absolute;
             background: #e74c3c;
@@ -269,11 +323,9 @@
         @keyframes player-pyoko-pyoko {
             0% { 
                 transform: scaleX(-1) translateY(0px) rotate(-3deg); 
-                filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.4)) drop-shadow(0px 8px 4px rgba(0,0,0,0.3));
             }
             100% { 
                 transform: scaleX(-1) translateY(-6px) rotate(3deg) scaleY(1.02); 
-                filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.4)) drop-shadow(0px 15px 8px rgba(0,0,0,0.2));
             }
         }
 
@@ -341,12 +393,8 @@
         }
 
         @keyframes animal-run {
-            0% { 
-                transform: translateY(0px) rotate(-4deg) scale(var(--scale-dir, 1), 0.95); 
-            }
-            100% { 
-                transform: translateY(-4px) rotate(4deg) scale(var(--scale-dir, 1), 1.05); 
-            }
+            0% { transform: translateY(0px) rotate(-4deg) scale(var(--scale-dir, 1), 0.95); }
+            100% { transform: translateY(-4px) rotate(4deg) scale(var(--scale-dir, 1), 1.05); }
         }
 
         .enemy-hp-bar {
@@ -562,6 +610,7 @@
             <div class="snow" style="top: 400px; left: 1200px; width: 6px; height: 6px;"></div>
 
             <div id="base-facility">
+                <div id="facility-wall" class="facility-wall"></div>
                 <div id="facility-ground" class="facility-ground"></div>
                 <div id="facility-icon" class="facility-icon">⛺</div>
 
@@ -614,7 +663,7 @@
     </div>
 
      <div class="message-container">
-        <div id="message">野生のイノシシが襲ってくる！施設内は安全！</div>
+        <div id="message">拠点をアップグレードして立派な柵や壁を築こう！</div>
     </div>
 
     <div class="joystick-wrapper" id="joystick-wrapper">
@@ -636,15 +685,21 @@
             coin: 0,
             level: 1,
             axeLevel: 1, 
-            facilityNames: ["Lv.1 ボロいテント", "Lv.2 暖かい小屋", "Lv.3 要塞シェルター", "🌟 避難所完成！"],
+            facilityNames: ["Lv.1 ボロいテント (木組みの柵)", "Lv.2 暖かい小屋 (頑丈な石壁)", "Lv.3 要塞シェルター (鉄壁の要塞)", "🌟 避難所完成！ (神聖な黄金壁)"],
             facilityIcons: ["⛺", "🛖", "🏰", "🌟"],
             groundSizesW: [280, 380, 480, 580], 
             groundSizesH: [200, 260, 320, 380], 
             groundColors: [
-                { bg: "rgba(255, 255, 255, 0.6)", border: "3px dashed rgba(52, 152, 219, 0.6)" },   
-                { bg: "rgba(230, 245, 230, 0.7)", border: "3px dashed rgba(46, 204, 113, 0.7)" },   
-                { bg: "rgba(245, 235, 220, 0.7)", border: "3px solid rgba(230, 126, 34, 0.8)" },    
-                { bg: "rgba(255, 245, 200, 0.8)", border: "4px solid rgba(241, 196, 15, 0.9)" }     
+                { bg: "rgba(255, 255, 255, 0.6)", border: "none" },   
+                { bg: "rgba(230, 245, 230, 0.7)", border: "none" },   
+                { bg: "rgba(245, 235, 220, 0.7)", border: "none" },    
+                { bg: "rgba(255, 245, 200, 0.8)", border: "none" }     
+            ],
+            wallStyles: [
+                { border: "4px dashed #8B5A2B", bg: "rgba(139, 90, 43, 0.08)", shadow: "0 0 10px rgba(139, 90, 43, 0.3)" },
+                { border: "6px solid #7f8c8d", bg: "rgba(127, 140, 141, 0.12)", shadow: "0 4px 15px rgba(0,0,0,0.15)" },
+                { border: "8px solid #2c3e50", bg: "rgba(44, 62, 80, 0.18)", shadow: "0 6px 20px rgba(0,0,0,0.3)" },
+                { border: "10px double #f1c40f", bg: "rgba(241, 196, 15, 0.22)", shadow: "0 0 25px rgba(241,196,15,0.6)" }
             ],
             requiredWoods: [30, 60, 100, 0], 
             axeUpgradeCosts: [20, 50, 100, 200, 350, 500, 750, 1000, 1500], 
@@ -745,12 +800,20 @@
             document.getElementById('facility-icon').innerText = gameState.facilityIcons[idx];
             
             const ground = document.getElementById('facility-ground');
+            const wall = document.getElementById('facility-wall');
             const w = gameState.groundSizesW[idx];
             const h = gameState.groundSizesH[idx];
+            
             ground.style.width = `${w}px`;
             ground.style.height = `${h}px`;
             ground.style.backgroundColor = gameState.groundColors[idx].bg;
-            ground.style.border = gameState.groundColors[idx].border;
+
+            const wallPadding = 16;
+            wall.style.width = `${w + wallPadding}px`;
+            wall.style.height = `${h + wallPadding}px`;
+            wall.style.border = gameState.wallStyles[idx].border;
+            wall.style.backgroundColor = gameState.wallStyles[idx].bg;
+            wall.style.boxShadow = gameState.wallStyles[idx].shadow;
 
             const subSize = 65;
             const marginX = 25; 
@@ -1002,7 +1065,66 @@
             }
         }
 
-        // 被ダメージ時のギザギザ吹き出し演出
+        // 血の赤い点のエフェクト
+        function spawnBloodSplatter(x, y, count = 8) {
+            const container = document.getElementById('effects-container');
+            for (let i = 0; i < count; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'blood-splatter';
+                
+                const size = 3 + Math.random() * 4;
+                dot.style.width = `${size}px`;
+                dot.style.height = `${size}px`;
+                
+                dot.style.left = `${x}px`;
+                dot.style.top = `${y}px`;
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 25 + Math.random() * 45;
+                const bloodX = Math.cos(angle) * dist;
+                const bloodY = Math.sin(angle) * dist;
+
+                dot.style.setProperty('--blood-x', `${bloodX}px`);
+                dot.style.setProperty('--blood-y', `${bloodY}px`);
+
+                container.appendChild(dot);
+
+                setTimeout(() => {
+                    dot.remove();
+                }, 500);
+            }
+        }
+
+        // 黄色く光る火花のエフェクト
+        function spawnSpark(x, y, count = 6) {
+            const container = document.getElementById('effects-container');
+            for (let i = 0; i < count; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark-particle';
+                
+                const size = 5 + Math.random() * 5;
+                spark.style.width = `${size}px`;
+                spark.style.height = `${size}px`;
+                
+                spark.style.left = `${x}px`;
+                spark.style.top = `${y}px`;
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 35 + Math.random() * 55;
+                const sparkX = Math.cos(angle) * dist;
+                const sparkY = Math.sin(angle) * dist;
+
+                spark.style.setProperty('--spark-x', `${sparkX}px`);
+                spark.style.setProperty('--spark-y', `${sparkY}px`);
+
+                container.appendChild(spark);
+
+                setTimeout(() => {
+                    spark.remove();
+                }, 400);
+            }
+        }
+
         function spawnDamagePopup(x, y, damageVal) {
             const container = document.getElementById('effects-container');
             const popup = document.createElement('div');
@@ -1182,16 +1304,16 @@
                     if (targetEnemy && targetEnemy.hp > 0) {
                         targetEnemy.hp -= proj.damage;
                         
-                        gameState.meat += 1;
-                        spawnFloatingItems(targetEnemy.x, targetEnemy.y, '🍖', 1);
+                        spawnBloodSplatter(targetEnemy.x, targetEnemy.y, 5);
+                        spawnSpark(targetEnemy.x, targetEnemy.y, 5);
+
+                        let meatEarned = Math.max(1, Math.floor(proj.damage / 3));
+                        gameState.meat += meatEarned;
+                        spawnFloatingItems(targetEnemy.x, targetEnemy.y, '🍖', meatEarned);
 
                         const fillEl = document.getElementById(`enemy-hp-fill-${targetEnemy.id}`);
                         if (fillEl) fillEl.style.width = `${Math.max(0, (targetEnemy.hp / targetEnemy.maxHp) * 100)}%`;
                         if (targetEnemy.hp <= 0) {
-                            let meatBonus = targetEnemy.meat;
-                            gameState.meat += meatBonus;
-                            spawnFloatingItems(targetEnemy.x, targetEnemy.y, '🍖', Math.min(3, meatBonus));
-
                             killEnemy(targetEnemy);
                         }
                     }
@@ -1274,7 +1396,6 @@
                         gameState.heat -= en.damage;
                         en.damageCooldown = 1.2;
                         
-                        // ギザギザ吹き出し演出を表示（メッセージは出さない）
                         spawnDamagePopup(gameState.playerX, gameState.playerY, en.damage);
 
                         if (gameState.heat <= 0) {
@@ -1289,8 +1410,12 @@
                     en.hp -= damageToEnemy;
                     en.hitCooldown = enemyHitCooldownTime;
 
-                    gameState.meat += 1;
-                    spawnFloatingItems(en.x, en.y, '🍖', 1);
+                    spawnBloodSplatter(en.x, en.y, 8);
+                    spawnSpark(en.x, en.y, 6);
+
+                    let meatEarned = damageToEnemy;
+                    gameState.meat += meatEarned;
+                    spawnFloatingItems(en.x, en.y, '🍖', Math.min(3, meatEarned));
 
                     const fillEl = document.getElementById(`enemy-hp-fill-${en.id}`);
                     if (fillEl) {
@@ -1298,10 +1423,6 @@
                     }
 
                     if (en.hp <= 0) {
-                        let meatBonus = en.meat;
-                        gameState.meat += meatBonus;
-                        spawnFloatingItems(en.x, en.y, '🍖', Math.min(3, meatBonus));
-
                         killEnemy(en);
                     }
                 }
@@ -1399,12 +1520,12 @@
             initTrees(); 
             adjustEnemyCount();
             
-            let newBeastName = "";
-            if (gameState.level === 2) newBeastName = "「🐃 ウシ」";
-            if (gameState.level === 3) newBeastName = "「🦣 マンモス」";
-            if (gameState.level === 4) newBeastName = "「🦖 恐竜」";
+            let wallName = "";
+            if (gameState.level === 2) wallName = "「頑丈な石壁」";
+            if (gameState.level === 3) wallName = "「鉄壁の要塞」";
+            if (gameState.level === 4) wallName = "「神聖な黄金壁」";
 
-            setMessage(`🎉 施設が「${gameState.facilityNames[gameState.level - 1]}」に進化！群れの数が増え、新たな強敵 ${newBeastName} が現れ始めた！`);
+            setMessage(`🎉 拠点が進化し、${wallName} が築き上げられた！外からの寒さも和らぐ！`);
         }
 
         function respawnTreeLater(tree) {
