@@ -98,6 +98,11 @@
         .cat-b:hover .pdf-title { color: #059669; } /* B: emerald */
         .cat-c:hover .pdf-title { color: #0284c7; } /* C: sky */
         .cat-d:hover .pdf-title { color: #4f46e5; } /* D: indigo */
+
+        /* モーダル背景アニメーション */
+        .modal-backdrop {
+            transition: opacity 0.3s ease-out;
+        }
     </style>
 </head>
 <body class="min-h-screen antialiased flex flex-col items-center p-4 sm:p-8">
@@ -151,7 +156,7 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Googleマップ</p>
             </a>
 
-            <!--5.Google gemini-->
+            <!-- 5. Google gemini -->
             <a href="https://gemini.google.com/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-10 w-10 sm:h-12 sm:w-12">
@@ -172,7 +177,7 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Gemini</p>
             </a>
 
-            <!--6.ウェザーニュース-->
+            <!-- 6. ウェザーニュース -->
             <a href="https://weathernews.jp/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-cloud-sun text-4xl sm:text-5xl text-blue-500"></i>
@@ -187,7 +192,6 @@
                 </div>
                 <p class="text-sm font-medium text-center truncate w-full px-1">GitHub</p>
             </a>
-
                 
             <!-- 8. 設定 (汎用アイコン) -->
             <a href="./web/wiki.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
@@ -200,7 +204,6 @@
             <!-- 9. 透過画像 (Opacityアニメーションの例) -->
             <a href="./png/png.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
-                    <!-- プレースホルダー画像を使用し、CSSで半透明にする -->
                     <i class="fas fa-clone text-4xl sm:text-5xl text-red-500"></i>
                 </div>
                 <p class="text-sm font-medium text-center truncate w-full px-1">透過画像</p>
@@ -209,7 +212,6 @@
             <!-- 10. トリミング -->
             <a href="./PDF/cropper.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
-                  
                     <i class="fas fa-crop text-4xl sm:text-5xl text-blue-500"></i>
                 </div>
                 <p class="text-sm font-medium text-center truncate w-full px-1">トリミング</p>
@@ -226,14 +228,13 @@
             <!-- 12. カラーピッカー -->
             <a href="./color/color.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
-                    <!-- Font Awesomeのスポイトアイコン (fa-eye-dropper) に変更し、色を調整 -->
                     <i class="fas fa-eye-dropper text-4xl sm:text-5xl text-indigo-500"></i>
                 </div>
                 <p class="text-sm font-medium text-center truncate w-full px-1">カラーピッカー</p>
             </a>
                 
-            <!-- 13. CADアイコン (余白を削りサイズを他のアイコンと統一) -->
-            <a href="./CAD/cad.html" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
+            <!-- 13. CADアイコン -->
+            <a href="./CAD/cad.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <svg
                         class="w-10 h-10 sm:w-12 sm:h-12 transform scale-125"
@@ -249,17 +250,11 @@
                                 <stop offset="100%" stop-color="#785428"/>
                             </linearGradient>
                         </defs>
-                        <!-- translateを中央寄りに調整し、スケールを少し上げて枠内に最適化 -->
                         <g transform="translate(11, 7) scale(1.05)">
-                            <!-- 上面 -->
                             <polygon points="32,6 54,18 32,30 14,20" fill="url(#woodGrad)" />
-                            <!-- 左面 -->
                             <polygon points="14,20 32,30 26,40 8,30" fill="#F3D19E" />
-                            <!-- 右面 -->
                             <polygon points="32,30 54,18 54,48 32,60" fill="url(#shadowGrad)" />
-                            <!-- 左下 -->
                             <polygon points="8,30 26,40 26,60 8,50" fill="#966F3B" />
-                            <!-- CADマーカー -->
                             <circle cx="32" cy="60" r="5" fill="#00D2FF" opacity="0.9"/>
                             <line x1="27" y1="60" x2="37" y2="60" stroke="#FFFFFF" stroke-width="2"/>
                             <line x1="32" y1="55" x2="32" y2="65" stroke="#FFFFFF" stroke-width="2"/>
@@ -285,7 +280,7 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">電卓</p>
             </a>
 
-<!-- 16. フォント (追加項目) -->
+            <!-- 16. フォント-->
             <a href="./font/font.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-font text-4xl sm:text-5xl text-purple-600"></i>
@@ -293,12 +288,11 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">フォント</p>
             </a>
             
-            <!-- 17. Webエディタ (サイズを修正) -->
+            <!-- 17. Webエディタ -->
             <a href="./editor/editor.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-10 h-10 sm:w-12 sm:h-12">
                         <defs>
-                            <!-- グラデーション定義 -->
                             <linearGradient id="primary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" stop-color="#1976D2" />
                                 <stop offset="100%" stop-color="#2E7D32" />
@@ -309,26 +303,15 @@
                                 <stop offset="100%" stop-color="#ED6C02" />
                             </linearGradient>
 
-                            <!-- ドロップシャドウ -->
                             <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
                                 <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
                             </filter>
                         </defs>
 
-                        <!-- シンボルマーク背景アイコン（丸角グラデーション） -->
                         <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#primary-grad)" filter="url(#shadow)" />
-
-                        <!-- コード ＆ Web ノードシンボル -->
-                        <!-- 左ブラケット < -->
                         <path d="M 36 34 L 22 50 L 36 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
-
-                        <!-- 右ブラケット > -->
                         <path d="M 64 34 L 78 50 L 64 66" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
-
-                        <!-- スラッシュ / -->
                         <path d="M 57 30 L 43 70" fill="none" stroke="url(#accent-grad)" stroke-width="6" stroke-linecap="round" />
-
-                        <!-- Webノード（コネクションポイント） -->
                         <circle cx="50" cy="20" r="3.5" fill="#FFFFFF" />
                         <circle cx="20" cy="50" r="3.5" fill="#FFFFFF" />
                         <circle cx="80" cy="50" r="3.5" fill="#FFFFFF" />
@@ -341,10 +324,18 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Webエディタ</p>
             </a>
 
-        
+    <!-- 18. ゲーム (モーダル起動用アイコン) -->
+            <button onclick="toggleGameModal(true)" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group text-left">
+                <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
+                    <i class="fas fa-gamepad text-4xl sm:text-5xl text-purple-600"></i>
+                </div>
+                <p class="text-sm font-medium text-center truncate w-full px-1">ゲーム</p>
+            </button>
+            
         </div>
         <br>
-   <!-- 授業用資料集（PDFファイル等）セクション -->
+
+        <!-- 授業用資料集（PDFファイル等）セクション -->
         <section class="border-t border-gray-200 pt-10">
             <div class="flex items-center mb-6">
                 <i class="fas fa-folder-open text-indigo-600 text-3xl mr-3"></i>
@@ -382,23 +373,23 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-<!-- A-資料1 -->
-<a href="./docs/A-01-等角図.pdf" target="_blank" class="pdf-card cat-a">
-    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">設計図</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- A-資料1 -->
+                        <a href="./docs/A-01-等角図.pdf" target="_blank" class="pdf-card cat-a">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">設計図</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
-<!-- A-資料2 -->
-<a href="./docs/A-02-工具の名称と使い方.pdf" target="_blank" class="pdf-card cat-a">
-    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">工具の名称と使い方</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- A-資料2 -->
+                        <a href="./docs/A-02-工具の名称と使い方.pdf" target="_blank" class="pdf-card cat-a">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">工具の名称と使い方</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
                     </div>
                 </div>
@@ -411,14 +402,14 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-<!-- B-資料1 -->
-<a href="./docs/B-01生物育成.pdf" target="_blank" class="pdf-card cat-b">
-    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">生物育成</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- B-資料1 -->
+                        <a href="./docs/B-01生物育成.pdf" target="_blank" class="pdf-card cat-b">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">生物育成</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
                     </div>
                 </div>
 
@@ -430,32 +421,32 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-<!-- C-資料1 -->
-<a href="./docs/C-01-発電と核エネルギー.pdf" target="_blank" class="pdf-card cat-c">
-    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">発電と核エネルギー</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- C-資料1 -->
+                        <a href="./docs/C-01-発電と核エネルギー.pdf" target="_blank" class="pdf-card cat-c">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">発電と核エネルギー</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
-<!-- C-資料2 -->
-<a href="./docs/C-02-エネルギー変換.pdf" target="_blank" class="pdf-card cat-c">
-    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">電気エネルギー</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- C-資料2 -->
+                        <a href="./docs/C-02-エネルギー変換.pdf" target="_blank" class="pdf-card cat-c">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">電気エネルギー</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
-<!-- C-資料3 -->
-<a href="./docs/C-03-電子回路.pdf" target="_blank" class="pdf-card cat-c">
-    <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">電子回路</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- C-資料3 -->
+                        <a href="./docs/C-03-電子回路.pdf" target="_blank" class="pdf-card cat-c">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">電子回路</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
                         
                     </div>
                 </div>
@@ -468,50 +459,50 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-<!-- D-資料1 -->
-<a href="./docs/D-01-情報の技術.pdf" target="_blank" class="pdf-card cat-d">
-<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">情報の技術</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- D-資料1 -->
+                        <a href="./docs/D-01-情報の技術.pdf" target="_blank" class="pdf-card cat-d">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">情報の技術</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
-<!-- D-資料2 -->
-<a href="./docs/D-02-情報モラルと知的財産権.pdf" target="_blank" class="pdf-card cat-d">
-<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">情報モラルと知的財産権</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- D-資料2 -->
+                        <a href="./docs/D-02-情報モラルと知的財産権.pdf" target="_blank" class="pdf-card cat-d">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">情報モラルと知的財産権</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
-<!-- D-資料3 -->
-<a href="./docs/D-03-SNS学びのポイント.pdf" target="_blank" class="pdf-card cat-d">
-<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">SNS学びのポイント</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- D-資料3 -->
+                        <a href="./docs/D-03-SNS学びのポイント.pdf" target="_blank" class="pdf-card cat-d">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">SNS学びのポイント</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
-<!-- D-資料4 -->
-<a href="./docs/D-04-プログラミング.pdf" target="_blank" class="pdf-card cat-d">
-<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">プログラミング</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- D-資料4 -->
+                        <a href="./docs/D-04-プログラミング.pdf" target="_blank" class="pdf-card cat-d">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">プログラミング</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
 
-<!-- D-資料5 -->
-<a href="./docs/D-05-AI.pdf" target="_blank" class="pdf-card cat-d">
-<div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
-    <div class="overflow-hidden">
-    <h4 class="pdf-title">AI時代の幕開け</h4>
-    <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
-</div>
-</a>
+                        <!-- D-資料5 -->
+                        <a href="./docs/D-05-AI.pdf" target="_blank" class="pdf-card cat-d">
+                            <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
+                            <div class="overflow-hidden">
+                                <h4 class="pdf-title">AI時代の幕開け</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">PDFファイル</p>
+                            </div>
+                        </a>
                         
                     </div>
                 </div>
@@ -519,36 +510,127 @@
             </div>
         </section>
 
-        <!-- タブ切り替え制御スクリプト -->
-        <script>
-            function showCategory(cat) {
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.add('hidden');
-                });
-
-                const targetContent = document.getElementById(`content-${cat}`);
-                if (targetContent) {
-                    targetContent.classList.remove('hidden');
-                }
-
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.className = "tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-white text-gray-600 border-gray-200 hover:bg-gray-50";
-                });
-
-                const activeBtn = document.getElementById(`btn-${cat}`);
-                if (activeBtn) {
-                    const activeStyles = {
-                        'a': 'bg-amber-500 text-white border-amber-500 shadow-md',
-                        'b': 'bg-emerald-500 text-white border-emerald-500 shadow-md',
-                        'c': 'bg-sky-500 text-white border-sky-500 shadow-md',
-                        'd': 'bg-indigo-500 text-white border-indigo-500 shadow-md'
-                    };
-                    activeBtn.className = `tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${activeStyles[cat]}`;
-                }
-            }
-        </script>    
-
     </main>
+
+    <!-- ゲーム選択モーダル -->
+    <div id="game-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm modal-backdrop">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-gray-100 transform transition-all relative">
+            <!-- 閉じるボタン -->
+            <button onclick="toggleGameModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <!-- モーダルヘッダー -->
+            <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                <div class="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600">
+                    <i class="fas fa-gamepad text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">ゲーム一覧</h3>
+                    <p class="text-xs text-gray-500">プレイしたいゲームを選択してください</p>
+                </div>
+            </div>
+
+            <!-- ゲームリスト（4つの枠） -->
+            <div class="space-y-3">
+                <!-- ゲーム1: オセロ -->
+                <a href="./game/osero.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
+                    <div class="w-12 h-12 rounded-xl bg-slate-700 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
+                        <i class="fas fa-circle-half-stroke"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-gray-800 group-hover:text-purple-600 transition">オセロ</h4>
+                        <p class="text-xs text-gray-400">ボードゲーム</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
+                </a>
+
+                <!-- ゲーム2: ウボンゴ -->
+                <a href="./game/ubongo.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
+                        <i class="fas fa-shapes"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-gray-800 group-hover:text-purple-600 transition">ウボンゴ</h4>
+                        <p class="text-xs text-gray-400">パズルゲーム</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
+                </a>
+
+                <!-- ゲーム3: サバイバルゲーム -->
+                <a href="./game/survival.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-gray-800 group-hover:text-purple-600 transition">サバイバルゲーム</h4>
+                        <p class="text-xs text-gray-400">アクションゲーム</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
+                </a>
+
+                <!-- ゲーム4: インベーダー -->
+                <a href="./game/shot.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
+                    <div class="w-12 h-12 rounded-xl bg-violet-600 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-gray-800 group-hover:text-purple-600 transition">インベーダー</h4>
+                        <p class="text-xs text-gray-400">シューティングゲーム</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- スクリプトエリア -->
+    <script>
+        // カテゴリ切り替えスクリプト
+        function showCategory(cat) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            const targetContent = document.getElementById(`content-${cat}`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-white text-gray-600 border-gray-200 hover:bg-gray-50";
+            });
+
+            const activeBtn = document.getElementById(`btn-${cat}`);
+            if (activeBtn) {
+                const activeStyles = {
+                    'a': 'bg-amber-500 text-white border-amber-500 shadow-md',
+                    'b': 'bg-emerald-500 text-white border-emerald-500 shadow-md',
+                    'c': 'bg-sky-500 text-white border-sky-500 shadow-md',
+                    'd': 'bg-indigo-500 text-white border-indigo-500 shadow-md'
+                };
+                activeBtn.className = `tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${activeStyles[cat]}`;
+            }
+        }
+
+        // モーダル表示切り替えスクリプト
+        function toggleGameModal(show) {
+            const modal = document.getElementById('game-modal');
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // 背景クリックでモーダルを閉じる設定
+        document.getElementById('game-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                toggleGameModal(false);
+            }
+        });
+    </script>    
+
     <script src="./system/register.js"></script>
 </body>
 </html>
