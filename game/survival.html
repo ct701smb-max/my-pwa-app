@@ -165,6 +165,44 @@
             }
         }
 
+        /* ギザギザ吹き出し風の被ダメージポップアップ */
+        .damage-popup {
+            position: absolute;
+            background: #e74c3c;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 900;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transform: translate(-50%, -50%);
+            z-index: 25;
+            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            clip-path: polygon(
+                0% 20%, 20% 0%, 35% 15%, 50% 0%, 65% 15%, 80% 0%, 100% 20%, 
+                85% 35%, 100% 50%, 85% 65%, 100% 80%, 80% 100%, 
+                65% 85%, 50% 100%, 35% 85%, 20% 100%, 0% 80%, 
+                15% 65%, 0% 50%, 15% 35%
+            );
+            animation: damage-pop 0.7s ease-out forwards;
+        }
+
+        @keyframes damage-pop {
+            0% {
+                transform: translate(-50%, -50%) scale(0.4) rotate(-10deg);
+                opacity: 1;
+            }
+            40% {
+                transform: translate(-50%, -50%) translateY(-25px) scale(1.3) rotate(8deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) translateY(-50px) scale(1) rotate(0deg);
+                opacity: 0;
+            }
+        }
+
         .zone-board {
             position: absolute;
             bottom: -18px;
@@ -629,7 +667,6 @@
         let trees = [];
         let enemies = [];
 
-        // 敵の種類ごとの定義（サイズとHPをより大きく迫力あるバランスに調整）
         const ENEMY_TYPES = {
             boar: { icon: '🐗', hp: 4, speed: 120, size: '1.6rem', damage: 5, meat: 1 },
             bull: { icon: '🐃', hp: 12, speed: 90, size: '2.5rem', damage: 9, meat: 3 },
@@ -864,7 +901,6 @@
             return chosenKey;
         }
 
-        // 施設レベルに応じて敵の同時出現数を増加 (Lv1:8匹, Lv2:13匹, Lv3:18匹, Lv4:25匹)
         function getMaxEnemyCount() {
             const counts = [8, 13, 18, 25];
             return counts[gameState.level - 1];
@@ -964,6 +1000,21 @@
                     item.remove();
                 }, 600);
             }
+        }
+
+        // 被ダメージ時のギザギザ吹き出し演出
+        function spawnDamagePopup(x, y, damageVal) {
+            const container = document.getElementById('effects-container');
+            const popup = document.createElement('div');
+            popup.className = 'damage-popup';
+            popup.innerText = `-${damageVal}`;
+            popup.style.left = `${x}px`;
+            popup.style.top = `${y}px`;
+            container.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+            }, 700);
         }
 
         const joystickBase = document.getElementById('joystick-base');
@@ -1130,12 +1181,16 @@
                 if (dist < 15 || !targetEnemy || targetEnemy.hp <= 0) {
                     if (targetEnemy && targetEnemy.hp > 0) {
                         targetEnemy.hp -= proj.damage;
+                        
+                        gameState.meat += 1;
+                        spawnFloatingItems(targetEnemy.x, targetEnemy.y, '🍖', 1);
+
                         const fillEl = document.getElementById(`enemy-hp-fill-${targetEnemy.id}`);
                         if (fillEl) fillEl.style.width = `${Math.max(0, (targetEnemy.hp / targetEnemy.maxHp) * 100)}%`;
                         if (targetEnemy.hp <= 0) {
-                            let meatAmount = targetEnemy.meat;
-                            gameState.meat += meatAmount;
-                            spawnFloatingItems(targetEnemy.x, targetEnemy.y, '🍖', Math.min(3, meatAmount));
+                            let meatBonus = targetEnemy.meat;
+                            gameState.meat += meatBonus;
+                            spawnFloatingItems(targetEnemy.x, targetEnemy.y, '🍖', Math.min(3, meatBonus));
 
                             killEnemy(targetEnemy);
                         }
@@ -1218,7 +1273,10 @@
                     if (!inFacilityPlayer && (!en.damageCooldown || en.damageCooldown <= 0)) {
                         gameState.heat -= en.damage;
                         en.damageCooldown = 1.2;
-                        setMessage(`💥 敵から強力な攻撃を受けた！ (-${en.damage})`);
+                        
+                        // ギザギザ吹き出し演出を表示（メッセージは出さない）
+                        spawnDamagePopup(gameState.playerX, gameState.playerY, en.damage);
+
                         if (gameState.heat <= 0) {
                             gameState.heat = 0;
                             triggerGameOver();
@@ -1231,16 +1289,18 @@
                     en.hp -= damageToEnemy;
                     en.hitCooldown = enemyHitCooldownTime;
 
+                    gameState.meat += 1;
+                    spawnFloatingItems(en.x, en.y, '🍖', 1);
+
                     const fillEl = document.getElementById(`enemy-hp-fill-${en.id}`);
                     if (fillEl) {
                         fillEl.style.width = `${Math.max(0, (en.hp / en.maxHp) * 100)}%`;
                     }
 
                     if (en.hp <= 0) {
-                        let meatAmount = en.meat;
-                        gameState.meat += meatAmount;
-
-                        spawnFloatingItems(en.x, en.y, '🍖', Math.min(3, meatAmount));
+                        let meatBonus = en.meat;
+                        gameState.meat += meatBonus;
+                        spawnFloatingItems(en.x, en.y, '🍖', Math.min(3, meatBonus));
 
                         killEnemy(en);
                     }
@@ -1364,10 +1424,8 @@
             const wrapperEl = document.getElementById(`enemy-${en.id}`);
             if (wrapperEl) wrapperEl.remove();
 
-            // 配列から削除
             enemies = enemies.filter(e => e.id !== en.id);
 
-            // 少し遅れて新しい敵をリスポーン（数維持）
             setTimeout(() => {
                 if (gameState.isDead) return;
                 if (enemies.length < getMaxEnemyCount()) {
