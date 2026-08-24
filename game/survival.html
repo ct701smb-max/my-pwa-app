@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ホワイトアウトサバイバル風ミニゲーム</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --panel-text: #2c3e50;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #e8eff0;
+            color: #2c3e50;
+            user-select: none;
+            touch-action: none;
+        }
+
+        #game-field {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #f0f4f5, #d5dedf);
+            overflow: hidden;
+        }
+
+        #world {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            will-change: transform;
+        }
+
+        .ground-snow-patch {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .snow {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        #base-facility {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        .facility-ground {
+            position: absolute;
+            border-radius: 20px;
+            z-index: -1;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            transition: width 0.5s, height 0.5s, background-color 0.5s, border-color 0.5s;
+        }
+
+        .facility-icon {
+            position: absolute;
+            top: -5px;
+            font-size: 2.2rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            transition: transform 0.3s;
+            z-index: 2;
+        }
+
+        .sub-zone {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            transition: all 0.5s;
+        }
+
+        #upgrade-zone {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid rgba(46, 204, 113, 0.7);
+            z-index: 1;
+        }
+
+        #axe-zone {
+            background: rgba(52, 152, 219, 0.2);
+            border: 2px solid rgba(52, 152, 219, 0.7);
+            z-index: 1;
+        }
+
+        #coin-zone {
+            background: rgba(243, 156, 18, 0.2);
+            border: 2px solid rgba(243, 156, 18, 0.7);
+            z-index: 1;
+        }
+
+        .external-zone {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            transform: translate(-50%, -50%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 5;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+
+        .arrow-projectile {
+            position: absolute;
+            font-size: 1.1rem;
+            transform: translate(-50%, -50%);
+            z-index: 7;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .floating-item {
+            position: absolute;
+            font-size: 1.2rem;
+            transform: translate(-50%, -50%);
+            z-index: 8;
+            pointer-events: none;
+            animation: float-away 0.6s ease-out forwards;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
+        }
+
+        @keyframes float-away {
+            0% {
+                transform: translate(-50%, -50%) scale(0.6);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) translate(var(--anim-x), var(--anim-y)) scale(1.2) rotate(15deg);
+                opacity: 0;
+            }
+        }
+
+        .zone-board {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(44, 62, 80, 0.9);
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.5rem;
+            font-weight: bold;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .character-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .character {
+            position: relative;
+            font-size: 2.5rem;
+            z-index: 3;
+            filter: 
+                drop-shadow(0px 2px 0px rgba(0,0,0,0.4))
+                drop-shadow(0px 10px 6px rgba(0,0,0,0.3));
+            transition: transform 0.1s ease-out;
+            transform-origin: bottom center;
+            transform: scaleX(-1); 
+        }
+
+        .character::before {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            filter: blur(2px);
+            z-index: -1;
+            transition: opacity 0.2s;
+        }
+
+        .character-container.moving .character {
+            animation: player-pyoko-pyoko 0.3s ease-in-out infinite alternate;
+        }
+
+        .character-container:not(.moving) .character::before {
+            opacity: 0.5;
+        }
+
+        @keyframes player-pyoko-pyoko {
+            0% { 
+                transform: scaleX(-1) translateY(0px) rotate(-3deg); 
+                filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.4)) drop-shadow(0px 8px 4px rgba(0,0,0,0.3));
+            }
+            100% { 
+                transform: scaleX(-1) translateY(-6px) rotate(3deg) scaleY(1.02); 
+                filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.4)) drop-shadow(0px 15px 8px rgba(0,0,0,0.2));
+            }
+        }
+
+        .orbit-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            animation: spin-reverse 1.2s linear infinite;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .axe-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+            transform-origin: center center;
+        }
+
+        .axe-glow {
+            animation: axe-shining 0.6s infinite alternate;
+        }
+
+        @keyframes axe-shining {
+            0% { filter: drop-shadow(0 0 4px #f1c40f) drop-shadow(0 0 10px #e74c3c) brightness(1.2); }
+            100% { filter: drop-shadow(0 0 8px #00d2d3) drop-shadow(0 0 16px #ff9ff3) brightness(1.6); }
+        }
+
+        @keyframes spin-reverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .tree {
+            position: absolute;
+            font-size: 3.2rem;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            filter: drop-shadow(0 12px 6px rgba(0, 0, 0, 0.25)) 
+                    drop-shadow(0 4px 2px rgba(0, 0, 0, 0.15)) 
+                    brightness(1.05);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .enemy {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            will-change: transform, left, top;
+        }
+
+        .enemy-avatar {
+            display: inline-block;
+            filter: drop-shadow(0 8px 4px rgba(0, 0, 0, 0.3)) 
+                    drop-shadow(0 3px 1px rgba(0, 0, 0, 0.2)) 
+                    brightness(1.05);
+            animation: animal-run 0.3s ease-in-out infinite alternate;
+            transform-origin: bottom center;
+        }
+
+        @keyframes animal-run {
+            0% { 
+                transform: translateY(0px) rotate(-4deg) scale(var(--scale-dir, 1), 0.95); 
+            }
+            100% { 
+                transform: translateY(-4px) rotate(4deg) scale(var(--scale-dir, 1), 1.05); 
+            }
+        }
+
+        .enemy-hp-bar {
+            width: 40px;
+            height: 5px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 2px;
+        }
+
+        .enemy-hp-fill {
+            height: 100%;
+            background: #e74c3c;
+            width: 100%;
+            transition: width 0.1s;
+        }
+
+        #base-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            margin: -25px 0 0 -25px;
+            z-index: 15;
+            pointer-events: none;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .indicator-arrow {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
+            animation: bounce-arrow 1s infinite alternate;
+        }
+
+        @keyframes bounce-arrow {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.2); }
+        }
+
+        .top-ui {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 440px;
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 10px 15px;
+            box-sizing: border-box;
+            backdrop-filter: blur(5px);
+            z-index: 20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .bar-container {
+            width: 100%;
+            background: #dfe6e9;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+            margin-top: 2px;
+            margin-bottom: 6px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        #heat-fill { background: var(--danger-color); }
+
+        .message-container {
+            position: absolute;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        #message {
+            display: inline-block;
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #d35400;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            opacity: 1;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .joystick-wrapper {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 20;
+            transition: opacity 0.3s;
+        }
+
+        #joystick-base {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            position: relative;
+            touch-action: none;
+            cursor: pointer;
+            backdrop-filter: blur(3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        #joystick-stick {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-color);
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 26px;
+            left: 26px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        #gameover-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 30;
+            display: none;
+            width: 90%;
+            max-width: 320px;
+        }
+
+        .reload-btn {
+            background: var(--danger-color);
+            border: none;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 30px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+            animation: pulse 1.5s infinite;
+            white-space: nowrap;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .reload-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-field">
+        <div id="base-indicator">
+            <div class="indicator-arrow" id="indicator-arrow">🏠</div>
+        </div>
+
+        <div id="world">
+            <div class="ground-snow-patch" style="top: -200px; left: -300px; width: 250px; height: 180px;"></div>
+            <div class="ground-snow-patch" style="top: 400px; left: 500px; width: 300px; height: 220px;"></div>
+            <div class="ground-snow-patch" style="top: -600px; left: 600px; width: 400px; height: 300px;"></div>
+            <div class="ground-snow-patch" style="top: 500px; left: -700px; width: 350px; height: 250px;"></div>
+
+            <div class="snow" style="top: 200px; left: 300px; width: 5px; height: 5px;"></div>
+            <div class="snow" style="top: -400px; left: 800px; width: 7px; height: 7px;"></div>
+            <div class="snow" style="top: 600px; left: -500px; width: 6px; height: 6px;"></div>
+            <div class="snow" style="top: -300px; left: -200px; width: 4px; height: 4px;"></div>
+            <div class="snow" style="top: 400px; left: 1200px; width: 6px; height: 6px;"></div>
+
+            <div id="base-facility">
+                <div id="facility-ground" class="facility-ground"></div>
+                <div id="facility-icon" class="facility-icon">⛺</div>
+
+                <div id="upgrade-zone" class="sub-zone">
+                    📈
+                    <div id="upgrade-board" class="zone-board" style="background: #2ecc71;">あと 30 🪵</div>
+                </div>
+
+                <div id="axe-zone" class="sub-zone">
+                    🪓
+                    <div id="axe-board" class="zone-board" style="background: #3498db;">20G</div>
+                </div>
+
+                <div id="coin-zone" class="sub-zone">
+                    💰
+                    <div class="zone-board" style="background: #f39c12;">1🪵/🍖=5/10G</div>
+                </div>
+            </div>
+
+            <div id="external-zones-container"></div>
+            <div id="projectiles-container"></div>
+            <div id="trees-container"></div>
+            <div id="enemies-container"></div>
+            <div id="effects-container"></div>
+        </div>
+
+        <div id="player-container" class="character-container">
+            <div id="orbit-container" class="orbit-container"></div>
+            <div id="player" class="character">🧌</div>
+        </div>
+    </div>
+
+    <div class="top-ui">
+        <div class="status-row">
+            <span>🔥 暖かさ (HP)</span>
+            <span id="heat-text">100 / 100</span>
+        </div>
+        <div class="bar-container">
+            <div id="heat-fill" class="bar-fill"></div>
+        </div>
+        <div class="status-row" style="font-size: 0.85rem; color: #576574;">
+            <span>🪵 木: <span id="wood-text" style="color: #e67e22;">0</span></span>
+            <span>🍖 肉: <span id="meat-text" style="color: #c0392b;">0</span></span>
+            <span>💰 所持金: <span id="coin-text" style="color: #f1c40f;">0 G</span></span>
+            <span>🪓 斧: <span id="axe-level-text" style="color: #3498db;">Lv.1 (1本)</span></span>
+        </div>
+        <div class="status-row" style="font-size: 0.75px; color: #718093; margin-top: 3px;">
+            <span>🏠 <span id="level-text" style="color: #27ae60;">Lv.1 ボロいテント</span></span>
+        </div>
+    </div>
+
+     <div class="message-container">
+        <div id="message">野生のイノシシが襲ってくる！施設内は安全！</div>
+    </div>
+
+    <div class="joystick-wrapper" id="joystick-wrapper">
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
+        </div>
+    </div>
+
+    <div id="gameover-container">
+        <button class="reload-btn" onclick="location.reload()">🔄 もう一度挑戦する</button>
+    </div>
+
+    <script>
+        let gameState = {
+            heat: 100,
+            maxHeat: 100,
+            wood: 0,
+            meat: 0,
+            coin: 0,
+            level: 1,
+            axeLevel: 1, 
+            facilityNames: ["Lv.1 ボロいテント", "Lv.2 暖かい小屋", "Lv.3 要塞シェルター", "🌟 避難所完成！"],
+            facilityIcons: ["⛺", "🛖", "🏰", "🌟"],
+            groundSizesW: [280, 380, 480, 580], 
+            groundSizesH: [200, 260, 320, 380], 
+            groundColors: [
+                { bg: "rgba(255, 255, 255, 0.6)", border: "3px dashed rgba(52, 152, 219, 0.6)" },   
+                { bg: "rgba(230, 245, 230, 0.7)", border: "3px dashed rgba(46, 204, 113, 0.7)" },   
+                { bg: "rgba(245, 235, 220, 0.7)", border: "3px solid rgba(230, 126, 34, 0.8)" },    
+                { bg: "rgba(255, 245, 200, 0.8)", border: "4px solid rgba(241, 196, 15, 0.9)" }     
+            ],
+            requiredWoods: [30, 60, 100, 0], 
+            axeUpgradeCosts: [20, 50, 100, 200, 350, 500, 750, 1000, 1500], 
+
+            playerX: 0,
+            playerY: 0,
+            isDead: false
+        };
+
+        let externalZones = [];
+        let projectiles = [];
+
+        let joystick = {
+            active: false,
+            dirX: 0,
+            dirY: 0,
+            maxDistance: 35
+        };
+
+        let trees = [];
+        let enemies = [];
+
+        // 敵の種類ごとの定義（サイズとHPをより大きく迫力あるバランスに調整）
+        const ENEMY_TYPES = {
+            boar: { icon: '🐗', hp: 4, speed: 120, size: '1.6rem', damage: 5, meat: 1 },
+            bull: { icon: '🐃', hp: 12, speed: 90, size: '2.5rem', damage: 9, meat: 3 },
+            mammoth: { icon: '🦣', hp: 28, speed: 65, size: '3.6rem', damage: 16, meat: 6 },
+            dino: { icon: '🦖', hp: 55, speed: 50, size: '4.8rem', damage: 25, meat: 12 }
+        };
+
+        function initFacility() {
+            const facilityEl = document.getElementById('base-facility');
+            facilityEl.style.left = `0px`;
+            facilityEl.style.top = `0px`;
+            updateFacilityVisual();
+            updateAxeVisual();
+            initExternalZones();
+        }
+
+        function initExternalZones() {
+            externalZones = [
+                { id: 1, type: 'hospital', x: 0, y: -300, level: 0, cost: 50, currency: 'coin', icon: '🏥', name: '病院' },
+                { id: 2, type: 'turret', x: -150, y: -260, level: 0, maxLevel: 3, cost: 20, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 3, type: 'turret', x: 150, y: -260, level: 0, maxLevel: 3, cost: 20, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 4, type: 'turret', x: -340, y: -130, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 5, type: 'turret', x: 340, y: -130, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 6, type: 'turret', x: -340, y: 130, level: 0, maxLevel: 3, cost: 30, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 7, type: 'turret', x: 340, y: 130, level: 0, maxLevel: 3, cost: 30, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 8, type: 'turret', x: -150, y: 220, level: 0, maxLevel: 3, cost: 35, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 9, type: 'turret', x: 150, y: 220, level: 0, maxLevel: 3, cost: 35, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 10, type: 'turret', x: -340, y: -260, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 11, type: 'turret', x: 340, y: -260, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' }
+            ];
+            renderExternalZones();
+        }
+
+        function renderExternalZones() {
+            const container = document.getElementById('external-zones-container');
+            container.innerHTML = '';
+
+            externalZones.forEach(zone => {
+                const el = document.createElement('div');
+                el.className = 'external-zone';
+                el.style.left = `${zone.x}px`;
+                el.style.top = `${zone.y}px`;
+
+                if (zone.type === 'hospital') {
+                    if (zone.level === 0) {
+                        el.style.background = 'rgba(231, 76, 60, 0.2)';
+                        el.style.border = '2px dashed rgba(231, 76, 60, 0.7)';
+                        el.innerHTML = `🏥<div class="zone-board" style="background:#e74c3c;">未建:${zone.cost}G</div>`;
+                    } else {
+                        el.style.background = 'rgba(46, 204, 113, 0.25)';
+                        el.style.border = '2px solid rgba(46, 204, 113, 0.8)';
+                        el.innerHTML = `🏥<div class="zone-board" style="background:#2ecc71;">HP全回復</div>`;
+                    }
+                } else if (zone.type === 'turret') {
+                    el.style.background = zone.level > 0 ? 'rgba(52, 152, 219, 0.25)' : 'rgba(231, 76, 60, 0.2)';
+                    el.style.border = zone.level > 0 ? '2px solid rgba(52, 152, 219, 0.8)' : '2px dashed rgba(231, 76, 60, 0.7)';
+
+                    let iconChar = '🏹';
+                    if (zone.level === 2) iconChar = '🔫';
+                    if (zone.level === 3) iconChar = '💣';
+
+                    if (zone.level === 0) {
+                        el.innerHTML = `${iconChar}<div class="zone-board" style="background:#e74c3c;">未建:${zone.cost}🪵</div>`;
+                    } else if (zone.level < 3) {
+                        el.innerHTML = `${iconChar}<div class="zone-board" style="background:#3498db;">Lv.${zone.level} (${zone.cost}🪵)</div>`;
+                    } else {
+                        el.innerHTML = `${iconChar}<div class="zone-board" style="background:#f1c40f;">MAX Lv.3</div>`;
+                    }
+                }
+                container.appendChild(el);
+            });
+        }
+
+        function updateFacilityVisual() {
+            const idx = gameState.level - 1;
+            document.getElementById('facility-icon').innerText = gameState.facilityIcons[idx];
+            
+            const ground = document.getElementById('facility-ground');
+            const w = gameState.groundSizesW[idx];
+            const h = gameState.groundSizesH[idx];
+            ground.style.width = `${w}px`;
+            ground.style.height = `${h}px`;
+            ground.style.backgroundColor = gameState.groundColors[idx].bg;
+            ground.style.border = gameState.groundColors[idx].border;
+
+            const subSize = 65;
+            const marginX = 25; 
+
+            const upZone = document.getElementById('upgrade-zone');
+            upZone.style.width = `${subSize}px`;
+            upZone.style.height = `${subSize}px`;
+            upZone.style.left = `${-w / 2 + marginX}px`;
+            upZone.style.top = `${-subSize / 2 + 10}px`;
+
+            const axeZone = document.getElementById('axe-zone');
+            axeZone.style.width = `${subSize}px`;
+            axeZone.style.height = `${subSize}px`;
+            axeZone.style.left = `${-subSize / 2}px`;
+            axeZone.style.top = `${h / 2 - subSize - 15}px`;
+
+            const coinZone = document.getElementById('coin-zone');
+            coinZone.style.width = `${subSize}px`;
+            coinZone.style.height = `${subSize}px`;
+            coinZone.style.left = `${w / 2 - marginX - subSize}px`;
+            coinZone.style.top = `${-subSize / 2 + 10}px`;
+
+            const board = document.getElementById('upgrade-board');
+            if (gameState.level < 4) {
+                board.style.display = 'block';
+                board.innerText = `あと ${gameState.requiredWoods[idx]} 🪵`;
+            } else {
+                board.style.display = 'none';
+                upZone.style.display = 'none';
+            }
+        }
+
+        function getAxeDynamicConfig() {
+            let lvl = gameState.axeLevel;
+            let radius = 30;
+            let fontSize = 1.1;
+
+            if (lvl >= 6) {
+                let extra = lvl - 5; 
+                radius = 30 + extra * 12; 
+                fontSize = 1.1 + extra * 0.35; 
+            }
+            return { radius, fontSize };
+        }
+
+        function updateAxeVisual() {
+            const container = document.getElementById('orbit-container');
+            container.innerHTML = '';
+
+            const count = Math.min(5, gameState.axeLevel);
+            const config = getAxeDynamicConfig();
+            const radius = config.radius;
+            const fontSize = config.fontSize;
+
+            const spinDuration = Math.max(0.3, 1.2 - (gameState.axeLevel - 1) * 0.08);
+            container.style.animationDuration = `${spinDuration}s`;
+
+            for (let i = 0; i < count; i++) {
+                const angleDeg = (360 / count) * i;
+                const angleRad = (angleDeg * Math.PI) / 180;
+
+                const x = Math.cos(angleRad) * radius;
+                const y = Math.sin(angleRad) * radius;
+
+                const axe = document.createElement('div');
+                axe.className = 'axe-icon';
+                if (gameState.axeLevel >= 10) {
+                    axe.classList.add('axe-glow');
+                }
+                axe.innerHTML = '🪓';
+                axe.style.fontSize = `${fontSize}rem`;
+                axe.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${angleDeg + 90}deg)`;
+                container.appendChild(axe);
+            }
+
+            const axeBoard = document.getElementById('axe-board');
+            if (gameState.axeLevel < 10) {
+                axeBoard.style.display = 'block';
+                axeBoard.innerText = `${gameState.axeUpgradeCosts[gameState.axeLevel - 1]}G`;
+            } else {
+                axeBoard.style.display = 'none';
+                document.getElementById('axe-zone').style.display = 'none';
+            }
+        }
+
+        function initTrees() {
+            trees = [];
+            const container = document.getElementById('trees-container');
+            container.innerHTML = '';
+
+            const count = 70;
+            const worldRange = 1600;
+
+            for (let i = 0; i < count; i++) {
+                let x = (Math.random() - 0.5) * worldRange;
+                let y = (Math.random() - 0.5) * worldRange;
+                
+                let limitW = gameState.groundSizesW[gameState.level - 1] / 2 + 50;
+                let limitH = gameState.groundSizesH[gameState.level - 1] / 2 + 50;
+                
+                if (Math.abs(x) < limitW && Math.abs(y) < limitH) {
+                    let angle = Math.atan2(y, x);
+                    x = Math.cos(angle) * (limitW + 60 + Math.random() * 80);
+                    y = Math.sin(angle) * (limitH + 60 + Math.random() * 80);
+                }
+
+                trees.push({
+                    id: i,
+                    x: x,
+                    y: y,
+                    hp: 3,    
+                    maxHp: 3,
+                    hitCooldown: 0 
+                });
+            }
+            renderTrees();
+        }
+
+        function renderTrees() {
+            const container = document.getElementById('trees-container');
+            container.innerHTML = '';
+
+            trees.forEach(tree => {
+                const el = document.createElement('div');
+                el.className = 'tree';
+                el.id = `tree-${tree.id}`;
+                el.style.left = `${tree.x}px`;
+                el.style.top = `${tree.y}px`;
+                
+                if (tree.hp <= 0) {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = 'block';
+                    el.style.opacity = (tree.hp / tree.maxHp) * 0.4 + 0.6;
+                    el.innerHTML = '🌲';
+                }
+                container.appendChild(el);
+            });
+        }
+
+        function getRandomAvailableEnemyType() {
+            let pool = ['boar'];
+            if (gameState.level >= 2) pool.push('bull');
+            if (gameState.level >= 3) pool.push('mammoth');
+            if (gameState.level >= 4) pool.push('dino');
+
+            let chosenKey = pool[Math.floor(Math.random() * pool.length)];
+            return chosenKey;
+        }
+
+        // 施設レベルに応じて敵の同時出現数を増加 (Lv1:8匹, Lv2:13匹, Lv3:18匹, Lv4:25匹)
+        function getMaxEnemyCount() {
+            const counts = [8, 13, 18, 25];
+            return counts[gameState.level - 1];
+        }
+
+        function initEnemies() {
+            enemies = [];
+            const container = document.getElementById('enemies-container');
+            container.innerHTML = '';
+
+            let targetCount = getMaxEnemyCount();
+            for (let i = 0; i < targetCount; i++) {
+                let typeKey = getRandomAvailableEnemyType();
+                let angle = Math.random() * Math.PI * 2;
+                let dist = 450 + Math.random() * 600;
+                spawnSpecificEnemy(i, typeKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
+            }
+        }
+
+        function adjustEnemyCount() {
+            let targetCount = getMaxEnemyCount();
+            while (enemies.length < targetCount) {
+                let newId = enemies.length > 0 ? Math.max(...enemies.map(e => e.id)) + 1 : 0;
+                let typeKey = getRandomAvailableEnemyType();
+                let angle = Math.random() * Math.PI * 2;
+                let dist = 550 + Math.random() * 600;
+                spawnSpecificEnemy(newId, typeKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
+            }
+        }
+
+        function spawnSpecificEnemy(id, typeKey, x, y) {
+            let base = ENEMY_TYPES[typeKey];
+
+            enemies.push({
+                id: id,
+                type: typeKey,
+                x: x,
+                y: y,
+                hp: base.hp,
+                maxHp: base.hp,
+                speed: base.speed,
+                size: base.size,
+                damage: base.damage,
+                meat: base.meat,
+                hitCooldown: 0,
+                damageCooldown: 0,
+                lastDirX: 1
+            });
+
+            const container = document.getElementById('enemies-container');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'enemy';
+            wrapper.id = `enemy-${id}`;
+            wrapper.style.left = `${x}px`;
+            wrapper.style.top = `${y}px`;
+
+            const hpBar = document.createElement('div');
+            hpBar.className = 'enemy-hp-bar';
+            const hpFill = document.createElement('div');
+            hpFill.className = 'enemy-hp-fill';
+            hpFill.id = `enemy-hp-fill-${id}`;
+            hpFill.style.width = `100%`;
+            hpBar.appendChild(hpFill);
+
+            const avatar = document.createElement('div');
+            avatar.className = 'enemy-avatar';
+            avatar.id = `enemy-avatar-${id}`;
+            avatar.style.fontSize = base.size;
+            avatar.style.setProperty('--scale-dir', '-1');
+            avatar.innerHTML = base.icon;
+
+            wrapper.appendChild(hpBar);
+            wrapper.appendChild(avatar);
+            container.appendChild(wrapper);
+        }
+
+        function spawnFloatingItems(x, y, icon, count = 2) {
+            const container = document.getElementById('effects-container');
+            for (let i = 0; i < count; i++) {
+                const item = document.createElement('div');
+                item.className = 'floating-item';
+                item.innerText = icon;
+                item.style.left = `${x}px`;
+                item.style.top = `${y}px`;
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 40 + Math.random() * 50;
+                const animX = Math.cos(angle) * dist;
+                const animY = Math.sin(angle) * dist;
+
+                item.style.setProperty('--anim-x', `${animX}px`);
+                item.style.setProperty('--anim-y', `${animY}px`);
+
+                container.appendChild(item);
+
+                setTimeout(() => {
+                    item.remove();
+                }, 600);
+            }
+        }
+
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickStick = document.getElementById('joystick-stick');
+
+        joystickBase.addEventListener('pointerdown', startJoystick);
+        window.addEventListener('pointermove', moveJoystick);
+        window.addEventListener('pointerup', endJoystick);
+
+        function startJoystick(e) {
+            if (gameState.isDead) return;
+            joystick.active = true;
+            updateJoystickPosition(e);
+        }
+
+        function moveJoystick(e) {
+            if (!joystick.active) return;
+            updateJoystickPosition(e);
+        }
+
+        function endJoystick() {
+            if (!joystick.active) return;
+            joystick.active = false;
+            joystick.dirX = 0;
+            joystick.dirY = 0;
+            joystickStick.style.transform = `translate(0px, 0px)`;
+        }
+
+        function updateJoystickPosition(e) {
+            const rect = joystickBase.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let dx = e.clientX - centerX;
+            let dy = e.clientY - centerY;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > joystick.maxDistance) {
+                dx = (dx / distance) * joystick.maxDistance;
+                dy = (dy / distance) * joystick.maxDistance;
+            }
+
+            joystickStick.style.transform = `translate(${dx}px, ${dy}px)`;
+            joystick.dirX = dx / joystick.maxDistance;
+            joystick.dirY = dy / joystick.maxDistance;
+        }
+
+        let lastTime = performance.now();
+        let turretTimers = {};
+
+        function gameLoop(timestamp) {
+            if (gameState.isDead) return;
+
+            let deltaTime = (timestamp - lastTime) / 1000;
+            if (deltaTime > 0.1) deltaTime = 0.1;
+            lastTime = timestamp;
+
+            const playerContainer = document.getElementById('player-container');
+
+            if (joystick.dirX !== 0 || joystick.dirY !== 0) {
+                let moveSpeed = 250;
+                gameState.playerX += joystick.dirX * moveSpeed * deltaTime;
+                gameState.playerY += joystick.dirY * moveSpeed * deltaTime;
+                updateWorldTransform();
+
+                if (!playerContainer.classList.contains('moving')) {
+                    playerContainer.classList.add('moving');
+                }
+            } else {
+                if (playerContainer.classList.contains('moving')) {
+                    playerContainer.classList.remove('moving');
+                }
+            }
+
+            const config = getAxeDynamicConfig();
+            const hitRadius = 58 + (config.radius - 30); 
+            const enemyHitCooldownTime = 0.4;
+
+            trees.forEach(tree => {
+                if (tree.hp > 0) {
+                    if (tree.hitCooldown > 0) tree.hitCooldown -= deltaTime;
+                    let dist = Math.hypot(tree.x - gameState.playerX, tree.y - gameState.playerY);
+                    
+                    if (dist < hitRadius && tree.hitCooldown <= 0) {
+                        tree.hp--;
+                        tree.hitCooldown = 0.3; 
+
+                        gameState.wood += 2;
+                        spawnFloatingItems(tree.x, tree.y, '🪵', 2);
+
+                        const el = document.getElementById(`tree-${tree.id}`);
+                        if (el) {
+                            el.style.transform = `translate(-50%, -50%) scale(1.15)`;
+                            setTimeout(() => { if (el) el.style.transform = `translate(-50%, -50%) scale(1)`; }, 100);
+                        }
+
+                        if (tree.hp <= 0) {
+                            if (el) el.style.display = 'none';
+                            respawnTreeLater(tree);
+                        } else {
+                            if (el) el.style.opacity = (tree.hp / tree.maxHp) * 0.4 + 0.6;
+                        }
+                    }
+                }
+            });
+
+            const w = gameState.groundSizesW[gameState.level - 1];
+            const h = gameState.groundSizesH[gameState.level - 1];
+
+            externalZones.forEach(zone => {
+                if (zone.type === 'turret' && zone.level > 0) {
+                    if (!turretTimers[zone.id]) turretTimers[zone.id] = 0;
+                    turretTimers[zone.id] -= deltaTime;
+
+                    if (turretTimers[zone.id] <= 0) {
+                        let closestEnemy = null;
+                        let minDist = 350 + zone.level * 60;
+                        enemies.forEach(en => {
+                            if (en.hp > 0) {
+                                let d = Math.hypot(en.x - zone.x, en.y - zone.y);
+                                if (d < minDist) {
+                                    minDist = d;
+                                    closestEnemy = en;
+                                }
+                            }
+                        });
+
+                        if (closestEnemy) {
+                            let interval = 1.2;
+                            let damage = 2;
+                            let projIcon = '🏹';
+                            if (zone.level === 2) { interval = 0.8; damage = 5; projIcon = '⚡'; }
+                            if (zone.level === 3) { interval = 0.5; damage = 10; projIcon = '💣'; }
+
+                            turretTimers[zone.id] = Math.max(0.2, interval - zone.level * 0.05);
+                            
+                            projectiles.push({
+                                x: zone.x,
+                                y: zone.y,
+                                targetX: closestEnemy.x,
+                                targetY: closestEnemy.y,
+                                targetEnemyId: closestEnemy.id,
+                                speed: 500,
+                                damage: damage,
+                                icon: projIcon
+                            });
+                        }
+                    }
+                }
+            });
+
+            const projContainer = document.getElementById('projectiles-container');
+            projContainer.innerHTML = '';
+            
+            projectiles.forEach((proj, index) => {
+                let targetEnemy = enemies.find(e => e.id === proj.targetEnemyId);
+                let tx = targetEnemy ? targetEnemy.x : proj.targetX;
+                let ty = targetEnemy ? targetEnemy.y : proj.targetY;
+
+                let dx = tx - proj.x;
+                let dy = ty - proj.y;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist < 15 || !targetEnemy || targetEnemy.hp <= 0) {
+                    if (targetEnemy && targetEnemy.hp > 0) {
+                        targetEnemy.hp -= proj.damage;
+                        const fillEl = document.getElementById(`enemy-hp-fill-${targetEnemy.id}`);
+                        if (fillEl) fillEl.style.width = `${Math.max(0, (targetEnemy.hp / targetEnemy.maxHp) * 100)}%`;
+                        if (targetEnemy.hp <= 0) {
+                            let meatAmount = targetEnemy.meat;
+                            gameState.meat += meatAmount;
+                            spawnFloatingItems(targetEnemy.x, targetEnemy.y, '🍖', Math.min(3, meatAmount));
+
+                            killEnemy(targetEnemy);
+                        }
+                    }
+                    projectiles.splice(index, 1);
+                } else {
+                    proj.x += (dx / dist) * proj.speed * deltaTime;
+                    proj.y += (dy / dist) * proj.speed * deltaTime;
+
+                    const pEl = document.createElement('div');
+                    pEl.className = 'arrow-projectile';
+                    pEl.style.left = `${proj.x}px`;
+                    pEl.style.top = `${proj.y}px`;
+                    let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+                    pEl.style.transform = `translate(-50%, -50%) rotate(${angle + 45}deg)`;
+                    pEl.innerHTML = proj.icon;
+                    projContainer.appendChild(pEl);
+                }
+            });
+
+            externalZones.forEach(zone => {
+                if (zone.type === 'hospital') {
+                    let dist = Math.hypot(gameState.playerX - zone.x, gameState.playerY - zone.y);
+                    if (dist <= 40) {
+                        if (zone.level === 0) {
+                            if (gameState.coin >= zone.cost) {
+                                gameState.coin -= zone.cost;
+                                zone.level = 1;
+                                setMessage(`🏥 病院を建設しました！いつでもHPが全回復できます！`);
+                                renderExternalZones();
+                            }
+                        } else {
+                            if (!zone.usedRecently) {
+                                gameState.heat = gameState.maxHeat;
+                                zone.usedRecently = true;
+                                setMessage(`🏥 病院で治療を受け、HPが完全に回復した！`);
+                                setTimeout(() => { zone.usedRecently = false; }, 3000);
+                            }
+                        }
+                    }
+                }
+            });
+
+            enemies.forEach(en => {
+                if (en.hitCooldown > 0) en.hitCooldown -= deltaTime;
+                if (en.damageCooldown > 0) en.damageCooldown -= deltaTime;
+
+                let dx = gameState.playerX - en.x;
+                let dy = gameState.playerY - en.y;
+                let angleToPlayer = Math.atan2(dy, dx);
+                let moveX = Math.cos(angleToPlayer) * en.speed * deltaTime;
+                let moveY = Math.sin(angleToPlayer) * en.speed * deltaTime;
+                let nextX = en.x + moveX;
+                let nextY = en.y + moveY;
+
+                if (Math.abs(dx) > 0.1) {
+                    en.lastDirX = dx > 0 ? -1 : 1;
+                    const avatarEl = document.getElementById(`enemy-avatar-${en.id}`);
+                    if (avatarEl) {
+                        avatarEl.style.setProperty('--scale-dir', en.lastDirX);
+                    }
+                }
+
+                let inFacilityNext = (Math.abs(nextX) <= w / 2 + 15 && Math.abs(nextY) <= h / 2 + 15);
+                if (!inFacilityNext) {
+                    en.x = nextX;
+                    en.y = nextY;
+                }
+
+                const wrapper = document.getElementById(`enemy-${en.id}`);
+                if (wrapper) {
+                    wrapper.style.left = `${en.x}px`;
+                    wrapper.style.top = `${en.y}px`;
+                }
+
+                let distToPlayer = Math.hypot(dx, dy);
+                
+                if (distToPlayer < 45) {
+                    let inFacilityPlayer = (Math.abs(gameState.playerX) <= w / 2 && Math.abs(gameState.playerY) <= h / 2);
+                    if (!inFacilityPlayer && (!en.damageCooldown || en.damageCooldown <= 0)) {
+                        gameState.heat -= en.damage;
+                        en.damageCooldown = 1.2;
+                        setMessage(`💥 敵から強力な攻撃を受けた！ (-${en.damage})`);
+                        if (gameState.heat <= 0) {
+                            gameState.heat = 0;
+                            triggerGameOver();
+                        }
+                    }
+                }
+
+                if (distToPlayer < hitRadius && en.hitCooldown <= 0) {
+                    let damageToEnemy = gameState.axeLevel; 
+                    en.hp -= damageToEnemy;
+                    en.hitCooldown = enemyHitCooldownTime;
+
+                    const fillEl = document.getElementById(`enemy-hp-fill-${en.id}`);
+                    if (fillEl) {
+                        fillEl.style.width = `${Math.max(0, (en.hp / en.maxHp) * 100)}%`;
+                    }
+
+                    if (en.hp <= 0) {
+                        let meatAmount = en.meat;
+                        gameState.meat += meatAmount;
+
+                        spawnFloatingItems(en.x, en.y, '🍖', Math.min(3, meatAmount));
+
+                        killEnemy(en);
+                    }
+                }
+            });
+
+            const subSize = 65;
+            const marginX = 25;
+
+            externalZones.forEach(zone => {
+                if (zone.type === 'turret') {
+                    let dist = Math.hypot(gameState.playerX - zone.x, gameState.playerY - zone.y);
+                    if (dist <= 35 && gameState.wood > 0 && zone.level < zone.maxLevel) {
+                        gameState.wood--;
+                        zone.cost--;
+                        if (zone.cost <= 0) {
+                            zone.level++;
+                            if (zone.level < zone.maxLevel) {
+                                zone.cost = (zone.level + 1) * 15;
+                                let name = zone.level === 2 ? '銃' : '防衛タレット';
+                                setMessage(`🔫 防衛タレットがLv.${zone.level}(${name})に強化された！`);
+                            } else {
+                                setMessage(`💣 防衛タレットがMAX Lv.3(大砲)に強化された！`);
+                            }
+                        }
+                        renderExternalZones();
+                    }
+                }
+            });
+
+            let upCenterX = -w / 2 + marginX + subSize / 2;
+            let upCenterY = 10;
+            if (Math.abs(gameState.playerX - upCenterX) <= subSize / 2 && Math.abs(gameState.playerY - upCenterY) <= subSize / 2) {
+                if (gameState.wood > 0 && gameState.level < 4) {
+                    gameState.wood--;
+                    gameState.requiredWoods[gameState.level - 1]--;
+                    if (gameState.requiredWoods[gameState.level - 1] <= 0) {
+                        levelUp();
+                    } else {
+                        updateFacilityVisual();
+                    }
+                }
+            }
+
+            let axeCenterX = 0;
+            let axeCenterY = h / 2 - subSize / 2 - 15;
+            if (Math.abs(gameState.playerX - axeCenterX) <= subSize / 2 && Math.abs(gameState.playerY - axeCenterY) <= subSize / 2) {
+                if (gameState.axeLevel < 10) {
+                    let cost = gameState.axeUpgradeCosts[gameState.axeLevel - 1];
+                    if (gameState.coin >= cost) {
+                        gameState.coin -= cost;
+                        gameState.axeLevel++;
+                        updateAxeVisual();
+                        if (gameState.axeLevel === 10) {
+                            setMessage(`🌟 斧がMAX Lv.10に到達！神々しく輝く伝説の斧になった！`);
+                        } else {
+                            setMessage(`🪓 斧パワーアップ！ Lv.${gameState.axeLevel}`);
+                        }
+                    }
+                }
+            }
+
+            let coinCenterX = w / 2 - marginX - subSize / 2;
+            let coinCenterY = 10;
+            if (Math.abs(gameState.playerX - coinCenterX) <= subSize / 2 && Math.abs(gameState.playerY - coinCenterY) <= subSize / 2) {
+                if (gameState.wood > 0) { gameState.wood--; gameState.coin += 5; }
+                if (gameState.meat > 0) { gameState.meat--; gameState.coin += 10; }
+            }
+
+            let inFacility = (Math.abs(gameState.playerX) <= w / 2 && Math.abs(gameState.playerY) <= h / 2);
+            if (!inFacility) {
+                let heatDecreaseRate = 2.5 * deltaTime;
+                if (gameState.level === 2) heatDecreaseRate = 1.2 * deltaTime;
+                else if (gameState.level === 3) heatDecreaseRate = 1.0 * deltaTime;
+                else if (gameState.level === 4) heatDecreaseRate = 0.5 * deltaTime;
+
+                gameState.heat -= heatDecreaseRate;
+                if (gameState.heat <= 0) {
+                    gameState.heat = 0;
+                    triggerGameOver();
+                }
+            } else {
+                gameState.heat = Math.min(gameState.maxHeat, gameState.heat + 2.0 * deltaTime);
+            }
+
+            updateUI();
+            updateIndicator();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function levelUp() {
+            gameState.level++;
+            gameState.heat = gameState.maxHeat; 
+            updateFacilityVisual();
+            initTrees(); 
+            adjustEnemyCount();
+            
+            let newBeastName = "";
+            if (gameState.level === 2) newBeastName = "「🐃 ウシ」";
+            if (gameState.level === 3) newBeastName = "「🦣 マンモス」";
+            if (gameState.level === 4) newBeastName = "「🦖 恐竜」";
+
+            setMessage(`🎉 施設が「${gameState.facilityNames[gameState.level - 1]}」に進化！群れの数が増え、新たな強敵 ${newBeastName} が現れ始めた！`);
+        }
+
+        function respawnTreeLater(tree) {
+            setTimeout(() => {
+                if (gameState.isDead) return;
+                let angle = Math.random() * Math.PI * 2;
+                let distance = 350 + Math.random() * 900;
+                tree.x = Math.cos(angle) * distance;
+                tree.y = Math.sin(angle) * distance;
+                tree.hp = tree.maxHp;
+                tree.hitCooldown = 0;
+                renderTrees();
+            }, 4000);
+        }
+
+        function killEnemy(en) {
+            const wrapperEl = document.getElementById(`enemy-${en.id}`);
+            if (wrapperEl) wrapperEl.remove();
+
+            // 配列から削除
+            enemies = enemies.filter(e => e.id !== en.id);
+
+            // 少し遅れて新しい敵をリスポーン（数維持）
+            setTimeout(() => {
+                if (gameState.isDead) return;
+                if (enemies.length < getMaxEnemyCount()) {
+                    let newId = enemies.length > 0 ? Math.max(...enemies.map(e => e.id)) + 1 : 0;
+                    let chosenKey = getRandomAvailableEnemyType();
+                    let base = ENEMY_TYPES[chosenKey];
+
+                    let angle = Math.random() * Math.PI * 2;
+                    let distance = 600 + Math.random() * 600;
+
+                    spawnSpecificEnemy(newId, chosenKey, Math.cos(angle) * distance, Math.sin(angle) * distance);
+                }
+            }, 5000);
+        }
+
+        function triggerGameOver() {
+            gameState.isDead = true;
+            joystick.active = false;
+            joystick.dirX = 0;
+            joystick.dirY = 0;
+            joystickStick.style.transform = `translate(0px, 0px)`;
+
+            document.getElementById('joystick-wrapper').style.opacity = '0';
+            document.getElementById('joystick-wrapper').style.pointerEvents = 'none';
+            document.getElementById('gameover-container').style.display = 'block';
+            document.getElementById('base-indicator').style.display = 'none';
+
+            const player = document.getElementById('player');
+            player.style.filter = 'grayscale(100%) drop-shadow(0 4px 4px rgba(0,0,0,0.2))';
+            player.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+
+            setMessage("💀 倒されてしまいました…");
+        }
+
+        function updateWorldTransform() {
+            const world = document.getElementById('world');
+            const screenCenterX = window.innerWidth / 2;
+            const screenCenterY = window.innerHeight / 2;
+            world.style.transform = `translate(${screenCenterX - gameState.playerX}px, ${screenCenterY - gameState.playerY}px)`;
+        }
+
+        function updateIndicator() {
+            const indicator = document.getElementById('base-indicator');
+            const screenCenterX = window.innerWidth / 2;
+            const screenCenterY = window.innerHeight / 2;
+
+            let baseScreenX = screenCenterX - gameState.playerX;
+            let baseScreenY = screenCenterY - gameState.playerY;
+
+            let margin = 50;
+            let isOffScreen = (
+                baseScreenX < margin || baseScreenX > window.innerWidth - margin ||
+                baseScreenY < margin || baseScreenY > window.innerHeight - margin
+            );
+
+            if (isOffScreen) {
+                indicator.style.display = 'flex';
+                let angle = Math.atan2(0 - gameState.playerY, 0 - gameState.playerX);
+                let indRadius = Math.min(screenCenterX, screenCenterY) - 70;
+                
+                let indX = screenCenterX + Math.cos(angle) * indRadius;
+                let indY = screenCenterY + Math.sin(angle) * indRadius;
+
+                indicator.style.left = `${indX}px`;
+                indicator.style.top = `${indY}px`;
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('heat-text').innerText = `${Math.max(0, Math.floor(gameState.heat))} / ${gameState.maxHeat}`;
+            document.getElementById('wood-text').innerText = gameState.wood;
+            document.getElementById('meat-text').innerText = gameState.meat;
+            document.getElementById('coin-text').innerText = `${gameState.coin} G`;
+            document.getElementById('level-text').innerText = gameState.facilityNames[gameState.level - 1];
+            document.getElementById('axe-level-text').innerText = `Lv.${gameState.axeLevel} (威力:${gameState.axeLevel})`;
+            
+            let heatPercent = (gameState.heat / gameState.maxHeat) * 100;
+            document.getElementById('heat-fill').style.width = `${Math.max(0, heatPercent)}%`;
+
+            const board = document.getElementById('upgrade-board');
+            if (gameState.level < 4) {
+                board.innerText = `あと ${gameState.requiredWoods[gameState.level - 1]} 🪵`;
+            }
+
+            const axeBoard = document.getElementById('axe-board');
+            if (gameState.axeLevel < 10) {
+                axeBoard.innerText = `${gameState.axeUpgradeCosts[gameState.axeLevel - 1]}G`;
+            }
+        }
+
+        function setMessage(text) {
+            const msgEl = document.getElementById('message');
+            msgEl.innerText = text;
+            msgEl.style.opacity = '1';
+
+            clearTimeout(window.msgTimer);
+            window.msgTimer = setTimeout(() => {
+                if (!gameState.isDead) {
+                    msgEl.style.opacity = '0';
+                }
+            }, 3000);
+        }
+
+        initFacility();
+        initTrees();
+        initEnemies();
+        updateUI();
+        updateWorldTransform();
+
+        requestAnimationFrame(gameLoop);
+
+        window.addEventListener('resize', () => {
+            if (!gameState.isDead) {
+                updateWorldTransform();
+            }
+        });
+    </script>
+</body>
+</html>
