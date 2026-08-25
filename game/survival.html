@@ -100,13 +100,14 @@
 
         .sub-zone {
             position: absolute;
-            width: 65px;
-            height: 65px;
+            width: 55px;
+            height: 55px;
+            transform: translate(-50%, -50%);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
             transition: all 0.5s;
         }
@@ -126,6 +127,12 @@
         #coin-zone {
             background: rgba(243, 156, 18, 0.2);
             border: 2px solid rgba(243, 156, 18, 0.7);
+            z-index: 1;
+        }
+
+        #meat-zone {
+            background: rgba(192, 57, 43, 0.2);
+            border: 2px solid rgba(192, 57, 43, 0.7);
             z-index: 1;
         }
 
@@ -174,7 +181,6 @@
             }
         }
 
-        /* 血液の赤い点（スプラッタパーティクル） */
         .blood-splatter {
             position: absolute;
             background-color: #c0392b;
@@ -197,7 +203,6 @@
             }
         }
 
-        /* 火花エフェクト（より明るく黄金色に光るように修正） */
         .spark-particle {
             position: absolute;
             background-color: #fff200;
@@ -283,6 +288,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+
+        #player-aura {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            pointer-events: none;
+            z-index: 2;
+            transition: all 0.3s ease;
+            display: none;
         }
 
         .character {
@@ -621,12 +640,17 @@
 
                 <div id="axe-zone" class="sub-zone">
                     🪓
-                    <div id="axe-board" class="zone-board" style="background: #3498db;">20G</div>
+                    <div id="axe-board" class="zone-board" style="background: #3498db;">200G</div>
                 </div>
 
                 <div id="coin-zone" class="sub-zone">
                     💰
                     <div class="zone-board" style="background: #f39c12;">1🪵/🍖=5/10G</div>
+                </div>
+
+                <div id="meat-zone" class="sub-zone">
+                    🛡️
+                    <div id="meat-board" class="zone-board" style="background: #e74c3c;">250🍖</div>
                 </div>
             </div>
 
@@ -638,6 +662,7 @@
         </div>
 
         <div id="player-container" class="character-container">
+            <div id="player-aura"></div>
             <div id="orbit-container" class="orbit-container"></div>
             <div id="player" class="character">🧌</div>
         </div>
@@ -655,7 +680,7 @@
             <span>🪵 木: <span id="wood-text" style="color: #e67e22;">0</span></span>
             <span>🍖 肉: <span id="meat-text" style="color: #c0392b;">0</span></span>
             <span>💰 所持金: <span id="coin-text" style="color: #f1c40f;">0 G</span></span>
-            <span>🪓 斧: <span id="axe-level-text" style="color: #3498db;">Lv.1 (1本)</span></span>
+            <span>🛡️ オーラ: <span id="aura-level-text" style="color: #e74c3c;">未展開</span></span>
         </div>
         <div class="status-row" style="font-size: 0.75px; color: #718093; margin-top: 3px;">
             <span>🏠 <span id="level-text" style="color: #27ae60;">Lv.1 ボロいテント</span></span>
@@ -663,7 +688,7 @@
     </div>
 
      <div class="message-container">
-        <div id="message">拠点をアップグレードして立派な柵や壁を築こう！</div>
+        <div id="message">拠点で肉を消費して防御オーラを展開しよう！</div>
     </div>
 
     <div class="joystick-wrapper" id="joystick-wrapper">
@@ -685,6 +710,8 @@
             coin: 0,
             level: 1,
             axeLevel: 1, 
+            auraLevel: 0, 
+            auraUpgradeCosts: [250, 600, 1200],
             facilityNames: ["Lv.1 ボロいテント (木組みの柵)", "Lv.2 暖かい小屋 (頑丈な石壁)", "Lv.3 要塞シェルター (鉄壁の要塞)", "🌟 避難所完成！ (神聖な黄金壁)"],
             facilityIcons: ["⛺", "🛖", "🏰", "🌟"],
             groundSizesW: [280, 380, 480, 580], 
@@ -702,7 +729,7 @@
                 { border: "10px double #f1c40f", bg: "rgba(241, 196, 15, 0.22)", shadow: "0 0 25px rgba(241,196,15,0.6)" }
             ],
             requiredWoods: [30, 60, 100, 0], 
-            axeUpgradeCosts: [20, 50, 100, 200, 350, 500, 750, 1000, 1500], 
+            axeUpgradeCosts: [200, 500, 1000, 2000, 3500, 5000, 7500, 10000, 15000],
 
             playerX: 0,
             playerY: 0,
@@ -740,17 +767,17 @@
 
         function initExternalZones() {
             externalZones = [
-                { id: 1, type: 'hospital', x: 0, y: -300, level: 0, cost: 50, currency: 'coin', icon: '🏥', name: '病院' },
-                { id: 2, type: 'turret', x: -150, y: -260, level: 0, maxLevel: 3, cost: 20, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 3, type: 'turret', x: 150, y: -260, level: 0, maxLevel: 3, cost: 20, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 4, type: 'turret', x: -340, y: -130, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 5, type: 'turret', x: 340, y: -130, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 6, type: 'turret', x: -340, y: 130, level: 0, maxLevel: 3, cost: 30, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 7, type: 'turret', x: 340, y: 130, level: 0, maxLevel: 3, cost: 30, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 8, type: 'turret', x: -150, y: 220, level: 0, maxLevel: 3, cost: 35, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 9, type: 'turret', x: 150, y: 220, level: 0, maxLevel: 3, cost: 35, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 10, type: 'turret', x: -340, y: -260, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' },
-                { id: 11, type: 'turret', x: 340, y: -260, level: 0, maxLevel: 3, cost: 25, currency: 'wood', icon: '🏹', name: '防衛タレット' }
+                { id: 1, type: 'hospital', x: 0, y: -300, level: 0, cost: 500, currency: 'coin', icon: '🏥', name: '病院' },
+                { id: 2, type: 'turret', x: -150, y: -260, level: 0, maxLevel: 3, cost: 200, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 3, type: 'turret', x: 150, y: -260, level: 0, maxLevel: 3, cost: 200, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 4, type: 'turret', x: -340, y: -130, level: 0, maxLevel: 3, cost: 250, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 5, type: 'turret', x: 340, y: -130, level: 0, maxLevel: 3, cost: 250, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 6, type: 'turret', x: -340, y: 130, level: 0, maxLevel: 3, cost: 300, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 7, type: 'turret', x: 340, y: 130, level: 0, maxLevel: 3, cost: 300, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 8, type: 'turret', x: -150, y: 220, level: 0, maxLevel: 3, cost: 350, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 9, type: 'turret', x: 150, y: 220, level: 0, maxLevel: 3, cost: 350, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 10, type: 'turret', x: -340, y: -260, level: 0, maxLevel: 3, cost: 250, currency: 'wood', icon: '🏹', name: '防衛タレット' },
+                { id: 11, type: 'turret', x: 340, y: -260, level: 0, maxLevel: 3, cost: 250, currency: 'wood', icon: '🏹', name: '防衛タレット' }
             ];
             renderExternalZones();
         }
@@ -784,9 +811,9 @@
                     if (zone.level === 3) iconChar = '💣';
 
                     if (zone.level === 0) {
-                        el.innerHTML = `${iconChar}<div class="zone-board" style="background:#e74c3c;">未建:${zone.cost}🪵</div>`;
+                        el.innerHTML = `${iconChar}<div class="zone-board" style="background:#e74c3c;">未建:${zone.cost}🪵/G</div>`;
                     } else if (zone.level < 3) {
-                        el.innerHTML = `${iconChar}<div class="zone-board" style="background:#3498db;">Lv.${zone.level} (${zone.cost}🪵)</div>`;
+                        el.innerHTML = `${iconChar}<div class="zone-board" style="background:#3498db;">Lv.${zone.level} (${zone.cost}🪵/G)</div>`;
                     } else {
                         el.innerHTML = `${iconChar}<div class="zone-board" style="background:#f1c40f;">MAX Lv.3</div>`;
                     }
@@ -815,26 +842,24 @@
             wall.style.backgroundColor = gameState.wallStyles[idx].bg;
             wall.style.boxShadow = gameState.wallStyles[idx].shadow;
 
-            const subSize = 65;
-            const marginX = 25; 
+            const offsetW = w / 3.2; 
+            const offsetH = h / 3.2;
 
             const upZone = document.getElementById('upgrade-zone');
-            upZone.style.width = `${subSize}px`;
-            upZone.style.height = `${subSize}px`;
-            upZone.style.left = `${-w / 2 + marginX}px`;
-            upZone.style.top = `${-subSize / 2 + 10}px`;
+            upZone.style.left = `${-offsetW}px`;
+            upZone.style.top = `${-offsetH}px`;
 
             const axeZone = document.getElementById('axe-zone');
-            axeZone.style.width = `${subSize}px`;
-            axeZone.style.height = `${subSize}px`;
-            axeZone.style.left = `${-subSize / 2}px`;
-            axeZone.style.top = `${h / 2 - subSize - 15}px`;
+            axeZone.style.left = `${offsetW}px`;
+            axeZone.style.top = `${-offsetH}px`;
+
+            const meatZone = document.getElementById('meat-zone');
+            meatZone.style.left = `${-offsetW}px`;
+            meatZone.style.top = `${offsetH}px`;
 
             const coinZone = document.getElementById('coin-zone');
-            coinZone.style.width = `${subSize}px`;
-            coinZone.style.height = `${subSize}px`;
-            coinZone.style.left = `${w / 2 - marginX - subSize}px`;
-            coinZone.style.top = `${-subSize / 2 + 10}px`;
+            coinZone.style.left = `${offsetW}px`;
+            coinZone.style.top = `${offsetH}px`;
 
             const board = document.getElementById('upgrade-board');
             if (gameState.level < 4) {
@@ -846,37 +871,39 @@
             }
         }
 
-        function getAxeDynamicConfig() {
-            let lvl = gameState.axeLevel;
-            let radius = 30;
-            let fontSize = 1.1;
-
-            if (lvl >= 6) {
-                let extra = lvl - 5; 
-                radius = 30 + extra * 12; 
-                fontSize = 1.1 + extra * 0.35; 
-            }
-            return { radius, fontSize };
-        }
-
         function updateAxeVisual() {
             const container = document.getElementById('orbit-container');
             container.innerHTML = '';
 
-            const count = Math.min(5, gameState.axeLevel);
-            const config = getAxeDynamicConfig();
-            const radius = config.radius;
-            const fontSize = config.fontSize;
+            let axesConfig = [];
+
+            if (gameState.axeLevel <= 5) {
+                let count = gameState.axeLevel;
+                for (let i = 0; i < count; i++) {
+                    axesConfig.push({ radius: 30, fontSize: 1.1, angleIndex: i, total: count });
+                }
+            } else {
+                let innerCount = 5;
+                let outerTotalTarget = gameState.axeLevel - 5; 
+
+                for (let i = 0; i < innerCount; i++) {
+                    axesConfig.push({ radius: 32, fontSize: 1.2, angleIndex: i, total: innerCount });
+                }
+
+                for (let i = 0; i < outerTotalTarget; i++) {
+                    axesConfig.push({ radius: 78, fontSize: 1.8, angleIndex: i, total: outerTotalTarget });
+                }
+            }
 
             const spinDuration = Math.max(0.3, 1.2 - (gameState.axeLevel - 1) * 0.08);
             container.style.animationDuration = `${spinDuration}s`;
 
-            for (let i = 0; i < count; i++) {
-                const angleDeg = (360 / count) * i;
+            axesConfig.forEach(cfg => {
+                const angleDeg = (360 / cfg.total) * cfg.angleIndex;
                 const angleRad = (angleDeg * Math.PI) / 180;
 
-                const x = Math.cos(angleRad) * radius;
-                const y = Math.sin(angleRad) * radius;
+                const x = Math.cos(angleRad) * cfg.radius;
+                const y = Math.sin(angleRad) * cfg.radius;
 
                 const axe = document.createElement('div');
                 axe.className = 'axe-icon';
@@ -884,10 +911,10 @@
                     axe.classList.add('axe-glow');
                 }
                 axe.innerHTML = '🪓';
-                axe.style.fontSize = `${fontSize}rem`;
+                axe.style.fontSize = `${cfg.fontSize}rem`;
                 axe.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${angleDeg + 90}deg)`;
                 container.appendChild(axe);
-            }
+            });
 
             const axeBoard = document.getElementById('axe-board');
             if (gameState.axeLevel < 10) {
@@ -899,13 +926,49 @@
             }
         }
 
+        function updateAuraVisual() {
+            const auraEl = document.getElementById('player-aura');
+            const meatBoard = document.getElementById('meat-board');
+
+            if (gameState.auraLevel > 0) {
+                auraEl.style.display = 'block';
+                let size = 65 + gameState.auraLevel * 20; 
+                auraEl.style.width = `${size}px`;
+                auraEl.style.height = `${size}px`;
+
+                if (gameState.auraLevel === 1) {
+                    auraEl.style.background = 'rgba(52, 152, 219, 0.2)';
+                    auraEl.style.border = '2px dashed #3498db';
+                    auraEl.style.boxShadow = '0 0 10px rgba(52,152,219,0.4)';
+                } else if (gameState.auraLevel === 2) {
+                    auraEl.style.background = 'rgba(46, 204, 113, 0.25)';
+                    auraEl.style.border = '2px solid #2ecc71';
+                    auraEl.style.boxShadow = '0 0 15px rgba(46,204,113,0.6)';
+                } else if (gameState.auraLevel === 3) {
+                    auraEl.style.background = 'rgba(241, 196, 15, 0.3)';
+                    auraEl.style.border = '3px double #f1c40f';
+                    auraEl.style.boxShadow = '0 0 25px rgba(241,196,15,0.8)';
+                }
+            } else {
+                auraEl.style.display = 'none';
+            }
+
+            if (gameState.auraLevel < 3) {
+                meatBoard.style.display = 'block';
+                meatBoard.innerText = `${gameState.auraUpgradeCosts[gameState.auraLevel]}🍖`;
+            } else {
+                meatBoard.style.display = 'none';
+                document.getElementById('meat-zone').style.display = 'none';
+            }
+        }
+
         function initTrees() {
             trees = [];
             const container = document.getElementById('trees-container');
             container.innerHTML = '';
 
-            const count = 70;
-            const worldRange = 1600;
+            const count = 100; // 処理落ち軽減のため木の数も適度に調整
+            const worldRange = 2200;
 
             for (let i = 0; i < count; i++) {
                 let x = (Math.random() - 0.5) * worldRange;
@@ -965,7 +1028,7 @@
         }
 
         function getMaxEnemyCount() {
-            const counts = [8, 13, 18, 25];
+            const counts = [15, 25, 35, 50]; // 処理落ちしないよう敵の最大数を調整
             return counts[gameState.level - 1];
         }
 
@@ -978,7 +1041,7 @@
             for (let i = 0; i < targetCount; i++) {
                 let typeKey = getRandomAvailableEnemyType();
                 let angle = Math.random() * Math.PI * 2;
-                let dist = 450 + Math.random() * 600;
+                let dist = 450 + Math.random() * 800;
                 spawnSpecificEnemy(i, typeKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
             }
         }
@@ -989,7 +1052,7 @@
                 let newId = enemies.length > 0 ? Math.max(...enemies.map(e => e.id)) + 1 : 0;
                 let typeKey = getRandomAvailableEnemyType();
                 let angle = Math.random() * Math.PI * 2;
-                let dist = 550 + Math.random() * 600;
+                let dist = 550 + Math.random() * 800;
                 spawnSpecificEnemy(newId, typeKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
             }
         }
@@ -1065,7 +1128,6 @@
             }
         }
 
-        // 血の赤い点のエフェクト
         function spawnBloodSplatter(x, y, count = 8) {
             const container = document.getElementById('effects-container');
             for (let i = 0; i < count; i++) {
@@ -1095,7 +1157,6 @@
             }
         }
 
-        // 黄色く光る火花のエフェクト
         function spawnSpark(x, y, count = 6) {
             const container = document.getElementById('effects-container');
             for (let i = 0; i < count; i++) {
@@ -1211,8 +1272,11 @@
                 }
             }
 
-            const config = getAxeDynamicConfig();
-            const hitRadius = 58 + (config.radius - 30); 
+            // 6段階目以降の斧の当たり判定を、外側リングの位置や大きさに合わせて正確に計算するように修正
+            let innerHitRadius = 45;
+            let outerHitRadiusMin = 50;
+            let outerHitRadiusMax = 100;
+
             const enemyHitCooldownTime = 0.4;
 
             trees.forEach(tree => {
@@ -1220,7 +1284,8 @@
                     if (tree.hitCooldown > 0) tree.hitCooldown -= deltaTime;
                     let dist = Math.hypot(tree.x - gameState.playerX, tree.y - gameState.playerY);
                     
-                    if (dist < hitRadius && tree.hitCooldown <= 0) {
+                    let canHitTree = (dist < innerHitRadius) || (gameState.axeLevel >= 6 && dist >= outerHitRadiusMin && dist <= outerHitRadiusMax);
+                    if (canHitTree && tree.hitCooldown <= 0) {
                         tree.hp--;
                         tree.hitCooldown = 0.3; 
 
@@ -1393,10 +1458,13 @@
                 if (distToPlayer < 45) {
                     let inFacilityPlayer = (Math.abs(gameState.playerX) <= w / 2 && Math.abs(gameState.playerY) <= h / 2);
                     if (!inFacilityPlayer && (!en.damageCooldown || en.damageCooldown <= 0)) {
-                        gameState.heat -= en.damage;
+                        let reduction = gameState.auraLevel * 3;
+                        let finalDamage = Math.max(1, en.damage - reduction);
+
+                        gameState.heat -= finalDamage;
                         en.damageCooldown = 1.2;
                         
-                        spawnDamagePopup(gameState.playerX, gameState.playerY, en.damage);
+                        spawnDamagePopup(gameState.playerX, gameState.playerY, finalDamage);
 
                         if (gameState.heat <= 0) {
                             gameState.heat = 0;
@@ -1405,7 +1473,8 @@
                     }
                 }
 
-                if (distToPlayer < hitRadius && en.hitCooldown <= 0) {
+                let canHitEnemy = (distToPlayer < innerHitRadius) || (gameState.axeLevel >= 6 && distToPlayer >= outerHitRadiusMin && distToPlayer <= outerHitRadiusMax);
+                if (canHitEnemy && en.hitCooldown <= 0) {
                     let damageToEnemy = gameState.axeLevel; 
                     en.hp -= damageToEnemy;
                     en.hitCooldown = enemyHitCooldownTime;
@@ -1428,19 +1497,22 @@
                 }
             });
 
-            const subSize = 65;
-            const marginX = 25;
-
             externalZones.forEach(zone => {
                 if (zone.type === 'turret') {
                     let dist = Math.hypot(gameState.playerX - zone.x, gameState.playerY - zone.y);
-                    if (dist <= 35 && gameState.wood > 0 && zone.level < zone.maxLevel) {
-                        gameState.wood--;
-                        zone.cost--;
+                    if (dist <= 35 && zone.level < zone.maxLevel) {
+                        if (gameState.wood >= 1) {
+                            gameState.wood--;
+                            zone.cost--;
+                        } else if (gameState.coin >= 5) {
+                            gameState.coin -= 5;
+                            zone.cost--;
+                        }
+
                         if (zone.cost <= 0) {
                             zone.level++;
                             if (zone.level < zone.maxLevel) {
-                                zone.cost = (zone.level + 1) * 15;
+                                zone.cost = (zone.level + 1) * 150;
                                 let name = zone.level === 2 ? '銃' : '防衛タレット';
                                 setMessage(`🔫 防衛タレットがLv.${zone.level}(${name})に強化された！`);
                             } else {
@@ -1452,8 +1524,12 @@
                 }
             });
 
-            let upCenterX = -w / 2 + marginX + subSize / 2;
-            let upCenterY = 10;
+            const subSize = 55;
+            const offsetW = w / 3.2;
+            const offsetH = h / 3.2;
+
+            let upCenterX = -offsetW;
+            let upCenterY = -offsetH;
             if (Math.abs(gameState.playerX - upCenterX) <= subSize / 2 && Math.abs(gameState.playerY - upCenterY) <= subSize / 2) {
                 if (gameState.wood > 0 && gameState.level < 4) {
                     gameState.wood--;
@@ -1466,8 +1542,8 @@
                 }
             }
 
-            let axeCenterX = 0;
-            let axeCenterY = h / 2 - subSize / 2 - 15;
+            let axeCenterX = offsetW;
+            let axeCenterY = -offsetH;
             if (Math.abs(gameState.playerX - axeCenterX) <= subSize / 2 && Math.abs(gameState.playerY - axeCenterY) <= subSize / 2) {
                 if (gameState.axeLevel < 10) {
                     let cost = gameState.axeUpgradeCosts[gameState.axeLevel - 1];
@@ -1476,7 +1552,7 @@
                         gameState.axeLevel++;
                         updateAxeVisual();
                         if (gameState.axeLevel === 10) {
-                            setMessage(`🌟 斧がMAX Lv.10に到達！神々しく輝く伝説の斧になった！`);
+                            setMessage(`🌟 斧がMAX Lv.10に到達！内側5本・外側5本が神々しく輝く伝説の斧になった！`);
                         } else {
                             setMessage(`🪓 斧パワーアップ！ Lv.${gameState.axeLevel}`);
                         }
@@ -1484,8 +1560,22 @@
                 }
             }
 
-            let coinCenterX = w / 2 - marginX - subSize / 2;
-            let coinCenterY = 10;
+            let meatCenterX = -offsetW;
+            let meatCenterY = offsetH;
+            if (Math.abs(gameState.playerX - meatCenterX) <= subSize / 2 && Math.abs(gameState.playerY - meatCenterY) <= subSize / 2) {
+                if (gameState.auraLevel < 3) {
+                    let cost = gameState.auraUpgradeCosts[gameState.auraLevel];
+                    if (gameState.meat >= cost) {
+                        gameState.meat -= cost;
+                        gameState.auraLevel++;
+                        updateAuraVisual();
+                        setMessage(`🛡️ 防御オーラが Lv.${gameState.auraLevel} にパワーアップした！`);
+                    }
+                }
+            }
+
+            let coinCenterX = offsetW;
+            let coinCenterY = offsetH;
             if (Math.abs(gameState.playerX - coinCenterX) <= subSize / 2 && Math.abs(gameState.playerY - coinCenterY) <= subSize / 2) {
                 if (gameState.wood > 0) { gameState.wood--; gameState.coin += 5; }
                 if (gameState.meat > 0) { gameState.meat--; gameState.coin += 10; }
@@ -1493,15 +1583,20 @@
 
             let inFacility = (Math.abs(gameState.playerX) <= w / 2 && Math.abs(gameState.playerY) <= h / 2);
             if (!inFacility) {
-                let heatDecreaseRate = 2.5 * deltaTime;
-                if (gameState.level === 2) heatDecreaseRate = 1.2 * deltaTime;
-                else if (gameState.level === 3) heatDecreaseRate = 1.0 * deltaTime;
-                else if (gameState.level === 4) heatDecreaseRate = 0.5 * deltaTime;
+                if (gameState.auraLevel < 3) {
+                    let heatDecreaseRate = 2.5 * deltaTime;
+                    if (gameState.level === 2) heatDecreaseRate = 1.2 * deltaTime;
+                    else if (gameState.level === 3) heatDecreaseRate = 1.0 * deltaTime;
+                    else if (gameState.level === 4) heatDecreaseRate = 0.5 * deltaTime;
 
-                gameState.heat -= heatDecreaseRate;
-                if (gameState.heat <= 0) {
-                    gameState.heat = 0;
-                    triggerGameOver();
+                    if (gameState.auraLevel === 1) heatDecreaseRate *= 0.9;
+                    else if (gameState.auraLevel === 2) heatDecreaseRate *= 0.7;
+
+                    gameState.heat -= heatDecreaseRate;
+                    if (gameState.heat <= 0) {
+                        gameState.heat = 0;
+                        triggerGameOver();
+                    }
                 }
             } else {
                 gameState.heat = Math.min(gameState.maxHeat, gameState.heat + 2.0 * deltaTime);
@@ -1532,7 +1627,7 @@
             setTimeout(() => {
                 if (gameState.isDead) return;
                 let angle = Math.random() * Math.PI * 2;
-                let distance = 350 + Math.random() * 900;
+                let distance = 350 + Math.random() * 1200;
                 tree.x = Math.cos(angle) * distance;
                 tree.y = Math.sin(angle) * distance;
                 tree.hp = tree.maxHp;
@@ -1555,7 +1650,7 @@
                     let base = ENEMY_TYPES[chosenKey];
 
                     let angle = Math.random() * Math.PI * 2;
-                    let distance = 600 + Math.random() * 600;
+                    let distance = 600 + Math.random() * 800;
 
                     spawnSpecificEnemy(newId, chosenKey, Math.cos(angle) * distance, Math.sin(angle) * distance);
                 }
@@ -1623,7 +1718,10 @@
             document.getElementById('meat-text').innerText = gameState.meat;
             document.getElementById('coin-text').innerText = `${gameState.coin} G`;
             document.getElementById('level-text').innerText = gameState.facilityNames[gameState.level - 1];
-            document.getElementById('axe-level-text').innerText = `Lv.${gameState.axeLevel} (威力:${gameState.axeLevel})`;
+            
+            let auraText = "未展開";
+            if (gameState.auraLevel > 0) auraText = `Lv.${gameState.auraLevel}`;
+            document.getElementById('aura-level-text').innerText = auraText;
             
             let heatPercent = (gameState.heat / gameState.maxHeat) * 100;
             document.getElementById('heat-fill').style.width = `${Math.max(0, heatPercent)}%`;
@@ -1636,6 +1734,11 @@
             const axeBoard = document.getElementById('axe-board');
             if (gameState.axeLevel < 10) {
                 axeBoard.innerText = `${gameState.axeUpgradeCosts[gameState.axeLevel - 1]}G`;
+            }
+
+            const meatBoard = document.getElementById('meat-board');
+            if (gameState.auraLevel < 3) {
+                meatBoard.innerText = `${gameState.auraUpgradeCosts[gameState.auraLevel]}🍖`;
             }
         }
 
