@@ -8,190 +8,348 @@
     body {
       font-family: sans-serif;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       padding: 10px;
       margin: 0;
       box-sizing: border-box;
+      align-items: center;
+      touch-action: pan-y;
     }
-    #left-panel {
-      flex: 1 1 100%;
-      max-width: 600px;
-    }
-    #right-panel {
+    #container {
       width: 100%;
-      max-width: 200px;
-      margin-top: 20px;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      position: relative;
     }
+
+    /* ヘッダーエリア */
+    .header-area {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 8px;
+      margin-bottom: 5px;
+    }
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #2c3e50;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+    .rule-btn {
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.2s;
+    }
+    .rule-btn:hover {
+      background-color: #2980b9;
+    }
+
+    /* モーダル画面のスタイル */
+    #rule-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    .modal-content {
+      background-color: white;
+      padding: 20px 25px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      position: relative;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+      color: #2c3e50;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 8px;
+    }
+    .modal-content p, .modal-content li {
+      font-size: 0.95rem;
+      color: #34495e;
+      line-height: 1.6;
+    }
+    .modal-content ul {
+      padding-left: 20px;
+      margin: 10px 0;
+    }
+    .close-modal-btn {
+      background-color: #e74c3c;
+      color: white;
+      width: 100%;
+      padding: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      margin-top: 15px;
+      font-size: 1rem;
+    }
+    .close-modal-btn:hover {
+      background-color: #c0392b;
+    }
+
     canvas {
       border: 1px solid #333;
       background-color: #f9f9f9;
-      height: auto; /* 縦横比を保つ */
       display: block;
-    }
-    .piece-button {
-      display: block;
-      margin: 8px 0;
-      padding: 12px 8px;
       width: 100%;
-      font-size: 1rem;
-      touch-action: manipulation;
-      user-select: none;
-      cursor: pointer;
-      border-radius: 4px;
-      border: 1px solid #3498db;
-      background-color: #fff;
-      transition: background-color 0.3s ease;
-    }
-    .piece-button:active {
-      background-color: #3498db;
-      color: white;
     }
     button {
       font-size: 1rem;
-      padding: 12px;
+      padding: 10px;
       border-radius: 4px;
       border: none;
       cursor: pointer;
       user-select: none;
     }
-    #right-panel > button {
-      width: 100%;
-      margin-bottom: 20px;
-      background-color: #e74c3c;
+    #piece-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .piece-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      font-size: 1rem;
+      font-weight: bold;
+      background-color: #ecf0f1;
+      border: 2px solid #3498db;
+      color: #2c3e50;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    .piece-button:hover:not(:disabled) {
+      background-color: #3498db;
       color: white;
     }
-    @media (min-width: 600px) {
-      body {
-        flex-wrap: nowrap;
-      }
-      #left-panel {
-        flex: 1;
-        max-width: none;
-      }
-      #right-panel {
-        width: 200px;
-        margin-top: 0;
-        margin-left: 10px;
-      }
+    .piece-button:disabled {
+      background-color: #bdc3c7;
+      border-color: #95a5a6;
+      color: #7f8c8d;
+      cursor: not-allowed;
+    }
+    .grid-forms-row {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .grid-input-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .grid-input-group label {
+      font-weight: bold;
+    }
+    .spin-control {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .spin-btn {
+      background-color: #e0e0e0;
+      border: none;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .spin-btn:active {
+      background-color: #cbd5e1;
+    }
+    .spin-control input[type="number"] {
+      width: 40px;
+      border: none;
+      text-align: center;
+      font-size: 1rem;
+      padding: 6px 0;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .spin-control input[type="number"]::-webkit-outer-spin-button,
+    .spin-control input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
-#piece-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-  gap: 8px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 8px;
-}
+    #top-action-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 40px;
+    }
+    #message-area {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #27ae60;
+      text-align: center;
+      white-space: nowrap;
+    }
+    #save-image-btn {
+      background-color: #27ae60;
+      color: white;
+      font-weight: bold;
+      display: none;
+      width: 100%;
+    }
 
-.piece-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  font-size: 1rem;
-  font-weight: bold;
-  background-color: #ecf0f1;
-  border: 2px solid #3498db;
-  color: #2c3e50;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.piece-button:hover {
-  background-color: #3498db;
-  color: white;
-}
-
-.piece-button:active {
-  transform: scale(0.96);
-  background-color: #2980b9;
-  color: white;
-}
-
-.piece-button:focus {
-  outline: 2px solid #2980b9;
-}
-
+    #ubongo-pop {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.3);
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #e74c3c;
+      text-shadow: 3px 3px 0 #f1c40f, -3px -3px 0 #f1c40f, 3px -3px 0 #f1c40f, -3px 3px 0 #f1c40f, 5px 5px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 100;
+      white-space: nowrap;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+    }
+    #ubongo-pop.show {
+      transform: translate(-50%, -50%) scale(1.2);
+      opacity: 1;
+    }
+    #ubongo-pop.fade-out {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+      transition: opacity 1s ease, transform 1s ease;
+    }
   </style>
 </head>
 <body>
-<table><tr><td>
-<div id="grid-settings" style="margin-bottom: 20px;">
-  <h3>グリッドサイズ</h3>
-  <label>
-    列: <input type="number" id="input-cols" value="10" min="1" max="50" style="width: 60px;" />
-  </label>
-  <label>
-    行: <input type="number" id="input-rows" value="6" min="1" max="50" style="width: 60px;" />
-  </label>
-  <button id="update-grid" style="margin-top: 5px; display: block;">グリッド更新</button>
+
+<!-- ルール説明モーダル（背景クリックで閉じる機能を追加） -->
+<div id="rule-modal" onclick="handleModalClick(event)">
+  <div class="modal-content">
+    <h2>🧩 遊び方・ルール</h2>
+    <p>指定されたグリッド（マス目）のすき間が一切ないように、選んだパズルピースをぴったり埋め込むボードパズルゲームです。</p>
+    
+    <ul>
+      <li><strong>ピースの追加:</strong> 下の「ピース追加」ボタンからピースを盤面に出せます。</li>
+      <li><strong>操作方法:</strong>
+        <ul>
+          <li><strong>移動:</strong> ピースをタッチ・ドラッグして動かします。</li>
+          <li><strong>回転:</strong> ピースを選択中に <code>r</code> キー、または下部のビス「回転(r)」ボタン。</li>
+          <li><strong>反転:</strong> ピースを選択中に <code>f</code> キー、または下部の「反転(f)」ボタン。</li>
+          <li><strong>削除:</strong> ピースを選択中に <code>Delete</code> / <code>Backspace</code> キー、または下部の「削除(Del)」ボタン。</li>
+           <li><strong>全削除:</strong> 下部の「全削除」ボタン。</li>
+        </ul>
+      </li>
+      <li><strong>グリッド制限:</strong> グリッドの総セル数は全パーツの合計セル数（60）まで変更可能です。</li>
+    </ul>
+    
+    <button class="close-modal-btn" onclick="toggleModal(false)">閉じる</button>
+  </div>
 </div>
-</td>
-<td>
-<div id="right-panel">
-  <h3>
-    <button id="toggle-piece-list" aria-expanded="true" 
-            style="font-size:16px; background:none; border:none; cursor:pointer;">
-      ▼ ピース選択
-   </button>
-  </h3>
-  <div id="piece-list" style="max-height: 200px; overflow-y: auto;">
-    <!-- ピースボタンがここに入る -->
+
+<div id="container">
+  <!-- ヘッダーエリア（タイトル ＆ ルール説明ボタン） -->
+  <div class="header-area">
+    <h1 class="app-title">🧩 Ubongo Puzzle</h1>
+    <button class="rule-btn" onclick="toggleModal(true)">ルール説明</button>
   </div>
 
-  
+  <div id="ubongo-pop">ウボンゴ!!</div>
+
+  <div>
+    <h3 style="margin: 0 0 8px 0;">グリッドサイズ</h3>
+    <div class="grid-forms-row">
+      <div class="grid-input-group">
+        <label for="input-cols">列:</label>
+        <div class="spin-control">
+          <button type="button" class="spin-btn" onclick="stepInput('input-cols', -1)">◀</button>
+          <input type="number" id="input-cols" value="6" min="1" max="50" />
+          <button type="button" class="spin-btn" onclick="stepInput('input-cols', 1)">▶</button>
+        </div>
+      </div>
+      <div class="grid-input-group">
+        <label for="input-rows">行:</label>
+        <div class="spin-control">
+          <button type="button" class="spin-btn" onclick="stepInput('input-rows', -1)">◀</button>
+          <input type="number" id="input-rows" value="5" min="1" max="50" />
+          <button type="button" class="spin-btn" onclick="stepInput('input-rows', 1)">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <button id="update-grid" style="background-color: #2980b9; color: white; width: 100%;">グリッド更新</button>
+  </div>
+
+  <div>
+    <h3 style="margin: 0 0 8px 0;">ピース追加</h3>
+    <div id="piece-list"></div>
+  </div>
+
+  <div id="top-action-area">
+    <div id="message-area"></div>
+    <button id="save-image-btn" onclick="saveAsImage()">📷 クリア画像を保存する</button>
+  </div>
+
+  <canvas id="ubongo-canvas"></canvas>
 </div>
-</td></tr></table>
-<br>
-<div id="left-panel">
-  <button onclick="deleteSelectedPiece()" style="margin-bottom: 10px; background-color: #e74c3c; color: white; width: 30%;">
-    削除(Del)
-  </button>
-  <button id="rotate-btn" style="margin-bottom: 10px; width: 30%;">回転 (r)</button>
-  <button id="flip-btn" style="margin-bottom: 20px; width: 30%;">反転 (f)</button>
-
-  <canvas id="ubongo-canvas" style="margin: 5px auto;"></canvas>
-</div>
-
-
-
 
 <script>
 const canvas = document.getElementById("ubongo-canvas");
 const ctx = canvas.getContext("2d");
 
-// 元のグリッドサイズと列数、行数
-const baseGridSize = 40;
-let cols = 10;
-let rows = 6;
+let cols = 6;
+let rows = 5;
 
-document.getElementById("update-grid").addEventListener("click", () => {
-  const newCols = parseInt(document.getElementById("input-cols").value);
-  const newRows = parseInt(document.getElementById("input-rows").value);
+const fixedDisplaySize = 200; 
 
-  if (newCols > 0 && newRows > 0) {
-    cols = newCols;
-    rows = newRows;
-    gridSize = resizeCanvas();
-    render();
-  } else {
-    alert("行数と列数は1以上の数値を入力してください。");
-  }
-});
+let gridGridSize = 40;
+const dockGridSize = 24;
 
-// 動的にcanvasサイズを決める関数（横幅に合わせて調整）
-function resizeCanvas() {
-  const parentWidth = canvas.parentElement.clientWidth;
-  const maxWidth = cols * baseGridSize;
-  const canvasWidth = Math.min(parentWidth, maxWidth);
-  const gridSize = canvasWidth / cols;
-  canvas.width = canvasWidth;
-  canvas.height = gridSize * rows;
-  return gridSize;
+function getGridOffsetX() {
+  const totalW = cols * gridGridSize;
+  return (canvas.width - totalW) / 2;
 }
-let gridSize = resizeCanvas();
+
+function getGridOffsetY() {
+  const totalH = rows * gridGridSize;
+  return Math.max(0, (fixedDisplaySize - totalH) / 2);
+}
+
+function getDockStartY() {
+  return fixedDisplaySize + 30;
+}
 
 const pieceShapes = [
   { id: 1, label: "L", shape: [[1,0],[1,0],[1,0],[1,1]] },
@@ -208,33 +366,107 @@ const pieceShapes = [
   { id:12, label: "V", shape: [[1],[1],[1,1,1]] }
 ];
 
-const pieceColors = {
-  L: "#e74c3c", // 赤
-  I: "#3498db", // 青
-  Y: "#2ecc71", // 緑
-  P: "#f1c40f", // 黄
-  U: "#9b59b6", // 紫
-  W: "#e67e22", // オレンジ
-  N: "#1afc9c", // エメラルド
-  X: "#34495e", // ネイビー
-  T: "#fd79a8", // ピンク
-  F: "#16a085", // 深緑
-  Z: "#d35400", // ダークオレンジ
-  V: "#3e44ad"  // ダークパープル
+const maxTotalCells = pieceShapes.reduce((sum, p) => {
+  return sum + p.shape.reduce((rowSum, row) => rowSum + row.filter(v => v === 1).length, 0);
+}, 0);
+
+window.stepInput = function(id, step) {
+  const input = document.getElementById(id);
+  let val = parseInt(input.value) || 1;
+  val = Math.max(1, Math.min(maxTotalCells, val + step));
+  input.value = val;
 };
 
-const pieces = [];
+// モーダルの開閉制御用関数
+window.toggleModal = function(show) {
+  const modal = document.getElementById("rule-modal");
+  modal.style.display = show ? "flex" : "none";
+};
+
+// モーダルの枠外（背景）がクリックされたときに閉じる関数
+window.handleModalClick = function(event) {
+  const modal = document.getElementById("rule-modal");
+  // クリックされたのが背景（#rule-modal自身）である場合のみ閉じる
+  if (event.target === modal) {
+    toggleModal(false);
+  }
+};
+
+let hasWonBefore = false;
+
+document.getElementById("update-grid").addEventListener("click", () => {
+  const colsVal = document.getElementById("input-cols").value;
+  const rowsVal = document.getElementById("input-rows").value;
+  const newCols = parseInt(colsVal);
+  const newRows = parseInt(rowsVal);
+
+  if (newCols > 0 && newRows > 0) {
+    if (newCols * newRows > maxTotalCells) {
+      alert(`指定されたグリッドの総セル数 (${newCols * newRows}) が、全パーツの合計セル数 (${maxTotalCells}) を超えているため設定できません。`);
+      document.getElementById("input-cols").value = cols;
+      document.getElementById("input-rows").value = rows;
+      return;
+    }
+
+    cols = newCols;
+    rows = newRows;
+    
+    pieces = [];
+    selectedPiece = null;
+    draggingPiece = null;
+    hasWonBefore = false;
+
+    resizeCanvas();
+    render();
+    renderPieceButtons();
+  } else {
+    alert("行数と列数は1以上の数値を入力してください。");
+  }
+});
+
+function resizeCanvas() {
+  const containerWidth = document.getElementById("container").clientWidth;
+  
+  gridGridSize = Math.min(containerWidth / cols, fixedDisplaySize / rows);
+
+  canvas.width = containerWidth;
+  canvas.height = Math.max(getDockStartY() + 350, window.innerHeight * 0.8);
+}
+
+resizeCanvas();
+
+const pieceColors = {
+  L: "#e74c3c", I: "#3498db", Y: "#2ecc71", P: "#f1c40f",
+  U: "#9b59b6", W: "#e67e22", N: "#1afc9c", X: "#34495e",
+  T: "#fd79a8", F: "#16a085", Z: "#d35400", V: "#3e44ad"
+};
+
+let pieces = [];
 let selectedPiece = null;
 let draggingPiece = null;
-let originalPosition = { x: 0, y: 0 }; // ピースを元に戻すための位置を保存
+let dragStartX = 0;
+let dragStartY = 0;
 
 function createPiece(shape, label) {
+  const dockY = getDockStartY();
+  const startY = dockY + 55;
+  
+  const dockPieces = pieces.filter(p => p.y >= dockY - 15);
+  const index = dockPieces.length;
+  
+  const maxPerRow = Math.max(3, Math.floor((canvas.width - 20) / 90));
+  const colIndex = index % maxPerRow;
+  const rowIndex = Math.floor(index / maxPerRow);
+
+  const startX = 15 + colIndex * 90;
+  const targetY = startY + rowIndex * 90;
+
   return {
     id: Date.now() + Math.random(),
-    x: 10,
-    y: 10,
-    shape: JSON.parse(JSON.stringify(shape)), // deep copy
     label,
+    shape: JSON.parse(JSON.stringify(shape)),
+    x: startX,
+    y: targetY,
     dragging: false,
     offsetX: 0,
     offsetY: 0,
@@ -242,43 +474,256 @@ function createPiece(shape, label) {
   };
 }
 
-function drawGrid() {
+function drawGrid(isForExport = false) {
+  const offsetX = getGridOffsetX();
+  const offsetY = getGridOffsetY();
+
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+
   ctx.strokeStyle = "#ccc";
-  for (let x = 0; x <= canvas.width; x += gridSize) {
+  for (let x = 0; x <= cols * gridGridSize; x += gridGridSize) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
+    ctx.lineTo(x, rows * gridGridSize);
     ctx.stroke();
   }
-  for (let y = 0; y <= canvas.height; y += gridSize) {
+  for (let y = 0; y <= rows * gridGridSize; y += gridGridSize) {
     ctx.beginPath();
     ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
+    ctx.lineTo(cols * gridGridSize, y);
     ctx.stroke();
+  }
+
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, cols * gridGridSize, rows * gridGridSize);
+  ctx.lineWidth = 1;
+
+  ctx.restore();
+
+  const dockY = getDockStartY();
+  
+  if (!isForExport) {
+    ctx.strokeStyle = "#999";
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(0, dockY - 15, canvas.width, canvas.height - dockY + 15);
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "#555";
+    ctx.font = "13px sans-serif";
+    ctx.fillText("▼ 一時置きスペース", 10, dockY - 20);
+
+    ctx.fillStyle = "#f1f2f6";
+    ctx.fillRect(5, dockY - 5, canvas.width - 10, 48);
+    ctx.strokeStyle = "#dcdde1";
+    ctx.strokeRect(5, dockY - 5, canvas.width - 10, 48);
+
+    const btnWidth = (canvas.width - 40) / 4;
+    const btnHeight = 32;
+    const btnY = dockY + 3;
+    const btnConfigs = [
+      { label: "回転(r)", color: "#f1c40f", textColor: "#333", x: 15 },
+      { label: "反転(f)", color: "#e67e22", textColor: "#fff", x: 15 + btnWidth + 3 },
+      { label: "削除(Del)", color: "#e74c3c", textColor: "#fff", x: 15 + (btnWidth + 3) * 2 },
+      { label: "全削除", color: "#c0392b", textColor: "#fff", x: 15 + (btnWidth + 3) * 3 }
+    ];
+
+    ctx.font = "bold 13px sans-serif";
+    btnConfigs.forEach(btn => {
+      ctx.fillStyle = btn.color;
+      ctx.fillRect(btn.x, btnY, btnWidth, btnHeight);
+      ctx.strokeStyle = "#b2bec3";
+      ctx.strokeRect(btn.x, btnY, btnWidth, btnHeight);
+
+      ctx.fillStyle = btn.textColor;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(btn.label, btn.x + btnWidth / 2, btnY + btnHeight / 2);
+    });
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 }
 
 function drawPiece(p) {
+  const dockY = getDockStartY();
+  const currentSize = (p.y < dockY - 15) ? gridGridSize : dockGridSize;
+
   for (let r = 0; r < p.shape.length; r++) {
     for (let c = 0; c < p.shape[r].length; c++) {
       if (p.shape[r][c]) {
         ctx.fillStyle = p.color;
-        ctx.fillRect(p.x + c * gridSize, p.y + r * gridSize, gridSize, gridSize);
+        ctx.fillRect(p.x + c * currentSize, p.y + r * currentSize, currentSize, currentSize);
         ctx.strokeStyle = (p === selectedPiece) ? "red" : "#000";
         ctx.lineWidth = (p === selectedPiece) ? 3 : 1;
-        ctx.strokeRect(p.x + c * gridSize, p.y + r * gridSize, gridSize, gridSize);
+        ctx.strokeRect(p.x + c * currentSize, p.y + r * currentSize, currentSize, currentSize);
       }
     }
   }
+}
+
+function checkWinCondition(excludingPiece = null) {
+  const board = Array.from({ length: rows }, () => Array(cols).fill(0));
+  let pieceCount = 0;
+  const offsetX = getGridOffsetX();
+  const offsetY = getGridOffsetY();
+
+  for (let p of pieces) {
+    if (p === excludingPiece) continue;
+
+    const dockY = getDockStartY();
+    if (p.y >= dockY - 15) continue;
+
+    pieceCount++;
+    const startC = Math.round((p.x - offsetX) / gridGridSize);
+    const startR = Math.round((p.y - offsetY) / gridGridSize);
+
+    for (let r = 0; r < p.shape.length; r++) {
+      for (let c = 0; c < p.shape[r].length; c++) {
+        if (p.shape[r][c]) {
+          const targetR = startR + r;
+          const targetC = startC + c;
+
+          if (targetR < 0 || targetR >= rows || targetC < 0 || targetC >= cols) {
+            return false;
+          }
+          if (board[targetR][targetC] === 1) {
+            return false;
+          }
+          board[targetR][targetC] = 1;
+        }
+      }
+    }
+  }
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (board[r][c] === 0) return false;
+    }
+  }
+
+  return pieceCount > 0;
+}
+
+let popTimeout = null;
+let fadeTimeout = null;
+
+function triggerUbongoPop() {
+  const popEl = document.getElementById("ubongo-pop");
+  popEl.classList.remove("show", "fade-out");
+  void popEl.offsetWidth;
+  popEl.classList.add("show");
+
+  clearTimeout(popTimeout);
+  clearTimeout(fadeTimeout);
+
+  popTimeout = setTimeout(() => {
+    popEl.classList.add("fade-out");
+    fadeTimeout = setTimeout(() => {
+      popEl.classList.remove("show", "fade-out");
+    }, 1000);
+  }, 1000);
 }
 
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawGrid();
   pieces.forEach(drawPiece);
+
+  const msgArea = document.getElementById("message-area");
+  const saveBtn = document.getElementById("save-image-btn");
+
+  const isWin = checkWinCondition(draggingPiece);
+  if (isWin) {
+    msgArea.textContent = "🎉 クリア！おめでとうございます！";
+    saveBtn.style.display = "block";
+    
+    if (!hasWonBefore) {
+      hasWonBefore = true;
+      triggerUbongoPop();
+    }
+  } else {
+    msgArea.textContent = "";
+    saveBtn.style.display = "none";
+    hasWonBefore = false;
+  }
 }
 
-// マウス・タッチイベント
+window.saveAsImage = function() {
+  const prevSelected = selectedPiece;
+  selectedPiece = null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid(true);
+
+  const dockY = getDockStartY();
+  const activePieces = [];
+  pieces.forEach(p => {
+    if (p.y < dockY - 15) {
+      drawPiece(p);
+      activePieces.push(p);
+    }
+  });
+
+  const exportCanvas = document.createElement("canvas");
+  const exportCtx = exportCanvas.getContext("2d");
+  
+  const headerHeight = 40;
+  const labelHeight = 35;
+  const pieceAreaHeight = 70;
+  
+  exportCanvas.width = canvas.width;
+  exportCanvas.height = fixedDisplaySize + headerHeight + labelHeight + pieceAreaHeight + 20;
+
+  exportCtx.fillStyle = "#ffffff";
+  exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  exportCtx.fillStyle = "#2c3e50";
+  exportCtx.font = "bold 16px sans-serif";
+  exportCtx.fillText(`Ubongoグリッドサイズ: ${cols}列 × ${rows}行`, 15, 28);
+
+  exportCtx.drawImage(
+    canvas, 
+    0, 0, canvas.width, fixedDisplaySize, 
+    0, headerHeight, canvas.width, fixedDisplaySize
+  );
+
+  const listStartY = headerHeight + fixedDisplaySize + 15;
+  
+  exportCtx.fillStyle = "#2c3e50";
+  exportCtx.font = "bold 14px sans-serif";
+  exportCtx.fillText("使用したピース:", 15, listStartY + 15);
+
+  let currentX = 135;
+  const currentY = listStartY + 2;
+  const miniSize = 12;
+
+  activePieces.forEach(p => {
+    const maxCols = Math.max(...p.shape.map(r => r.length));
+
+    for (let r = 0; r < p.shape.length; r++) {
+      for (let c = 0; c < p.shape[r].length; c++) {
+        if (p.shape[r][c]) {
+          exportCtx.fillStyle = p.color;
+          exportCtx.fillRect(currentX + c * miniSize, currentY + r * miniSize, miniSize, miniSize);
+          exportCtx.strokeStyle = "#000";
+          exportCtx.lineWidth = 1;
+          exportCtx.strokeRect(currentX + c * miniSize, currentY + r * miniSize, miniSize, miniSize);
+        }
+      }
+    }
+    currentX += maxCols * miniSize + 15;
+  });
+
+  const link = document.createElement("a");
+  link.download = `ubongo_${cols}x${rows}_clear.png`;
+  link.href = exportCanvas.toDataURL("image/png");
+  link.click();
+
+  selectedPiece = prevSelected;
+  render();
+};
+
 function getEventPosition(e) {
   const rect = canvas.getBoundingClientRect();
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -287,32 +732,72 @@ function getEventPosition(e) {
 }
 
 function getPieceDimensions(p) {
-  const shapeWidth = Math.max(...p.shape.map(row => row.length));
-  const shapeHeight = p.shape.length;
+  const dockY = getDockStartY();
+  const currentSize = (p.y < dockY - 15) ? gridGridSize : dockGridSize;
   return {
-    width: shapeWidth,
-    height: shapeHeight
+    width: Math.max(...p.shape.map(row => row.length)) * currentSize,
+    height: p.shape.length * currentSize
   };
 }
 
 function onStart(e) {
   const { x, y } = getEventPosition(e);
+  const dockY = getDockStartY();
+
+  if (y >= dockY - 5 && y <= dockY + 43) {
+    const btnWidth = (canvas.width - 40) / 4;
+    const btnY = dockY + 3;
+    const btnHeight = 32;
+
+    if (y >= btnY && y <= btnY + btnHeight) {
+      if (x >= 15 && x < 15 + btnWidth) {
+        if (selectedPiece) {
+          selectedPiece.shape = rotate(selectedPiece.shape);
+          render();
+        }
+        e.preventDefault();
+        return;
+      } else if (x >= 15 + btnWidth + 3 && x < 15 + (btnWidth + 3) * 2) {
+        if (selectedPiece) {
+          selectedPiece.shape = flip(selectedPiece.shape);
+          render();
+        }
+        e.preventDefault();
+        return;
+      } else if (x >= 15 + (btnWidth + 3) * 2 && x < 15 + (btnWidth + 3) * 3) {
+        deleteSelectedPiece();
+        e.preventDefault();
+        return;
+      } else if (x >= 15 + (btnWidth + 3) * 3 && x <= 15 + (btnWidth + 3) * 3 + btnWidth) {
+        pieces = [];
+        selectedPiece = null;
+        render();
+        renderPieceButtons();
+        e.preventDefault();
+        return;
+      }
+    }
+  }
+
   let clicked = false;
   for (let i = pieces.length - 1; i >= 0; i--) {
     const p = pieces[i];
     const { width, height } = getPieceDimensions(p);
     if (
-      x >= p.x && x <= p.x + width * gridSize &&
-      y >= p.y && y <= p.y + height * gridSize
+      x >= p.x && x <= p.x + width &&
+      y >= p.y && y <= p.y + height
     ) {
       draggingPiece = p;
       selectedPiece = p;
-      originalPosition = { x: p.x, y: p.y }; // 元の位置を保存
       p.dragging = true;
       p.offsetX = x - p.x;
       p.offsetY = y - p.y;
+      
+      dragStartX = p.x;
+      dragStartY = p.y;
+
       pieces.splice(i, 1);
-      pieces.push(p); // bring to front
+      pieces.push(p);
       render();
       clicked = true;
       break;
@@ -323,7 +808,10 @@ function onStart(e) {
     draggingPiece = null;
     render();
   }
-  e.preventDefault();
+  
+  if (draggingPiece) {
+    e.preventDefault();
+  }
 }
 
 function onMove(e) {
@@ -332,98 +820,95 @@ function onMove(e) {
     draggingPiece.x = x - draggingPiece.offsetX;
     draggingPiece.y = y - draggingPiece.offsetY;
     render();
+    e.preventDefault();
   }
-  e.preventDefault();
 }
 
-// 衝突判定ロジック
-function isOverlapping(piece1, piece2) {
-  const p1_grid_x = Math.round(piece1.x / gridSize);
-  const p1_grid_y = Math.round(piece1.y / gridSize);
-  const p2_grid_x = Math.round(piece2.x / gridSize);
-  const p2_grid_y = Math.round(piece2.y / gridSize);
+function onEnd() {
+  if (draggingPiece) {
+    const dockY = getDockStartY();
+    const isTargetGrid = draggingPiece.y < dockY - 15;
+    const offsetX = getGridOffsetX();
+    const offsetY = getGridOffsetY();
 
-  for (let r1 = 0; r1 < piece1.shape.length; r1++) {
-    for (let c1 = 0; c1 < piece1.shape[r1].length; c1++) {
-      if (piece1.shape[r1][c1]) {
-        const x1 = p1_grid_x + c1;
-        const y1 = p1_grid_y + r1;
+    if (isTargetGrid) {
+      const snappedX = Math.round((draggingPiece.x - offsetX) / gridGridSize) * gridGridSize + offsetX;
+      const snappedY = Math.round((draggingPiece.y - offsetY) / gridGridSize) * gridGridSize + offsetY;
+      draggingPiece.x = snappedX;
+      draggingPiece.y = snappedY;
 
-        for (let r2 = 0; r2 < piece2.shape.length; r2++) {
-          for (let c2 = 0; c2 < piece2.shape[r2].length; c2++) {
-            if (piece2.shape[r2][c2]) {
-              const x2 = p2_grid_x + c2;
-              const y2 = p2_grid_y + r2;
+      let outOfBounds = false;
+      const startC = Math.round((draggingPiece.x - offsetX) / gridGridSize);
+      const startR = Math.round((draggingPiece.y - offsetY) / gridGridSize);
 
-              if (x1 === x2 && y1 === y2) {
-                return true; // 重なりあり
+      for (let r = 0; r < draggingPiece.shape.length; r++) {
+        for (let c = 0; c < draggingPiece.shape[r].length; c++) {
+          if (draggingPiece.shape[r][c]) {
+            const targetR = startR + r;
+            const targetC = startC + c;
+            if (targetR < 0 || targetR >= rows || targetC < 0 || targetC >= cols) {
+              outOfBounds = true;
+            }
+          }
+        }
+      }
+
+      let overlapping = false;
+      if (!outOfBounds) {
+        for (let other of pieces) {
+          if (other === draggingPiece) continue;
+          if (other.y >= dockY - 15) continue;
+
+          const otherC = Math.round((other.x - offsetX) / gridGridSize);
+          const otherR = Math.round((other.y - offsetY) / gridGridSize);
+
+          for (let r1 = 0; r1 < draggingPiece.shape.length; r1++) {
+            for (let c1 = 0; c1 < draggingPiece.shape[r1].length; c1++) {
+              if (draggingPiece.shape[r1][c1]) {
+                const curR = startR + r1;
+                const curC = startC + c1;
+
+                for (let r2 = 0; r2 < other.shape.length; r2++) {
+                  for (let c2 = 0; c2 < other.shape[r2].length; c2++) {
+                    if (other.shape[r2][c2]) {
+                      if (otherR + r2 === curR && otherC + c2 === curC) {
+                        overlapping = true;
+                      }
+                    }
+                  }
+                }
               }
             }
           }
         }
       }
-    }
-  }
-  return false; // 重なりなし
-}
 
-// ⭐ ここに枠外判定ロジックを追加 ⭐
-function isOutOfBound(piece) {
-  const gridX = Math.round(piece.x / gridSize);
-  const gridY = Math.round(piece.y / gridSize);
-  const { width, height } = getPieceDimensions(piece);
-
-  // ピースの各ブロックがグリッド内に収まっているかチェック
-  for (let r = 0; r < piece.shape.length; r++) {
-    for (let c = 0; c < piece.shape[r].length; c++) {
-      if (piece.shape[r][c]) {
-        const x = gridX + c;
-        const y = gridY + r;
-
-        if (x < 0 || x >= cols || y < 0 || y >= rows) {
-          return true; // 枠からはみ出している
-        }
+      if (outOfBounds || overlapping) {
+        draggingPiece.x = dragStartX;
+        draggingPiece.y = dragStartY;
       }
-    }
-  }
-  return false; // 枠内に収まっている
-}
 
+    } else {
+      const snappedX = Math.round(draggingPiece.x / dockGridSize) * dockGridSize;
+      const snappedY = Math.round(draggingPiece.y / dockGridSize) * dockGridSize;
+      draggingPiece.x = snappedX;
+      draggingPiece.y = snappedY;
 
-function onEnd() {
-  if (draggingPiece) {
-    const newX = Math.round(draggingPiece.x / gridSize) * gridSize;
-    const newY = Math.round(draggingPiece.y / gridSize) * gridSize;
-
-    // 一時的に新しい位置に移動
-    const tempX = draggingPiece.x;
-    const tempY = draggingPiece.y;
-    draggingPiece.x = newX;
-    draggingPiece.y = newY;
-
-    // 重なっているか、または枠外にはみ出しているかチェック
-    let invalidPosition = false;
-    // 1. 他のピースと重なっているかチェック
-    for (let i = 0; i < pieces.length; i++) {
-      const otherPiece = pieces[i];
-      if (otherPiece !== draggingPiece && isOverlapping(draggingPiece, otherPiece)) {
-        invalidPosition = true;
-        break;
+      const pDim = getPieceDimensions(draggingPiece);
+      const minDockAllowedY = dockY + 50;
+      if (
+        draggingPiece.x < 0 || 
+        draggingPiece.x + pDim.width > canvas.width || 
+        draggingPiece.y < minDockAllowedY || 
+        draggingPiece.y + pDim.height > canvas.height
+      ) {
+        draggingPiece.x = dragStartX;
+        draggingPiece.y = dragStartY;
       }
-    }
-    // 2. 枠外にはみ出しているかチェック
-    if (!invalidPosition) {
-      invalidPosition = isOutOfBound(draggingPiece);
-    }
-
-
-    if (invalidPosition) {
-      // 重なっていたらまたは枠外なら元の位置に戻す
-      draggingPiece.x = originalPosition.x;
-      draggingPiece.y = originalPosition.y;
     }
 
     draggingPiece.dragging = false;
+    draggingPiece = null;
     render();
   }
 }
@@ -440,15 +925,13 @@ function flip(matrix) {
   return padded.map(row => [...row].reverse());
 }
 
-// イベントバインド
 canvas.addEventListener("mousedown", onStart);
 canvas.addEventListener("mousemove", onMove);
 canvas.addEventListener("mouseup", onEnd);
-canvas.addEventListener("touchstart", onStart);
-canvas.addEventListener("touchmove", onMove);
+canvas.addEventListener("touchstart", onStart, { passive: false });
+canvas.addEventListener("touchmove", onMove, { passive: false });
 canvas.addEventListener("touchend", onEnd);
 
-// キーボード：選択中ピースを回転 or 反転
 window.addEventListener("keydown", (e) => {
   if (!selectedPiece) return;
   if (e.key === "r") {
@@ -460,7 +943,6 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-// 選択中ピースを削除する関数
 window.deleteSelectedPiece = function() {
   if (!selectedPiece) return;
   const index = pieces.indexOf(selectedPiece);
@@ -468,10 +950,10 @@ window.deleteSelectedPiece = function() {
     pieces.splice(index, 1);
     selectedPiece = null;
     render();
+    renderPieceButtons();
   }
 };
 
-// キーボード Delete or Backspace で削除
 window.addEventListener("keydown", (e) => {
   if (e.key === "Delete" || e.key === "Backspace") {
     deleteSelectedPiece();
@@ -479,10 +961,10 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-// ピースリストを作成
 const listEl = document.getElementById("piece-list");
 function renderPieceButtons() {
   listEl.innerHTML = "";
+
   pieceShapes.forEach(({ shape, label }) => {
     const btn = document.createElement("button");
     btn.textContent = label;
@@ -490,70 +972,29 @@ function renderPieceButtons() {
     btn.title = `ピース ${label}`;
     btn.setAttribute("aria-label", `ピース ${label}`);
 
+    const isUsed = pieces.some(p => p.label === label);
+    if (isUsed) {
+      btn.disabled = true;
+    }
+
     btn.addEventListener("click", () => {
       const newPiece = createPiece(shape, label);
       pieces.push(newPiece);
       selectedPiece = newPiece;
       render();
+      renderPieceButtons();
     });
 
     listEl.appendChild(btn);
   });
 }
 
-// 画面リサイズ時にcanvasサイズとgridSizeを調整
 window.addEventListener("resize", () => {
-  gridSize = resizeCanvas();
+  resizeCanvas();
   render();
 });
 
-document.getElementById("rotate-btn").addEventListener("click", () => {
-  if (selectedPiece) {
-    selectedPiece.shape = rotate(selectedPiece.shape);
-    render();
-  }
-});
-
-document.getElementById("flip-btn").addEventListener("click", () => {
-  if (selectedPiece) {
-    selectedPiece.shape = flip(selectedPiece.shape);
-    render();
-  }
-});
-
-const toggleBtn = document.getElementById("toggle-piece-list");
-const pieceList = document.getElementById("piece-list");
-
-toggleBtn.addEventListener("click", () => {
-  if (pieceList.style.display === "none") {
-    pieceList.style.display = "grid";
-    toggleBtn.textContent = "× 閉じる";
-    toggleBtn.setAttribute("aria-expanded", "true");
-  } else {
-    pieceList.style.display = "none";
-    toggleBtn.textContent = "▼ ピース選択";
-    toggleBtn.setAttribute("aria-expanded", "false");
-  }
-});
-
-pieceShapes.forEach(({ shape, label }) => {
-  const btn = document.createElement("button");
-  btn.textContent = label;
-  btn.className = "piece-button";
-  btn.title = `ピース ${label}`;
-  btn.setAttribute("aria-label", `ピース ${label}`);
-
-  btn.addEventListener("click", () => {
-    const newPiece = createPiece(shape, label);
-    pieces.push(newPiece);
-    selectedPiece = newPiece;
-    render();
-  });
-
-  listEl.appendChild(btn);
-});
-
-// 初期表示
+renderPieceButtons();
 render();
 </script>
 
