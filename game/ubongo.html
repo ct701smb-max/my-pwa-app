@@ -375,15 +375,16 @@
 const canvas = document.getElementById("ubongo-canvas");
 const ctx = canvas.getContext("2d");
 
-let cols = 6;
-let rows = 4;
+let cols = 4;
+let rows = 5;
 let isEraserMode = false;
 
 let boardMask = [
-  [1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 1, 1]
+  [1, 1, 1, 1],
+  [1, 1, 1, 1],
+  [1, 1, 1, 1],
+  [1, 1, 1, 1],
+  [1, 1, 1, 1]
 ];
 
 const fixedDisplaySize = 200; 
