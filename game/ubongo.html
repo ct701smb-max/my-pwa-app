@@ -157,6 +157,25 @@
       color: #7f8c8d;
       cursor: not-allowed;
     }
+    .add-all-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      padding: 0 12px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      background-color: #27ae60;
+      border: 2px solid #219653;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .add-all-button:hover {
+      background-color: #219653;
+    }
+
     .grid-forms-row {
       display: flex;
       gap: 15px;
@@ -202,6 +221,24 @@
     .spin-control input[type="number"]::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
+    }
+
+    .grid-buttons-row {
+      display: flex;
+      gap: 10px;
+    }
+    .grid-buttons-row button {
+      flex: 1;
+    }
+
+    #auto-solve-btn {
+      background-color: #9b59b6;
+      color: white;
+      font-weight: bold;
+      width: 100%;
+    }
+    #auto-solve-btn:hover {
+      background-color: #8e44ad;
     }
 
     #top-action-area {
@@ -253,24 +290,24 @@
 </head>
 <body>
 
-<!-- ルール説明モーダル（背景クリックで閉じる機能を追加） -->
+<!-- ルール説明モーダル -->
 <div id="rule-modal" onclick="handleModalClick(event)">
   <div class="modal-content">
     <h2>🧩 遊び方・ルール</h2>
     <p>指定されたグリッド（マス目）のすき間が一切ないように、選んだパズルピースをぴったり埋め込むボードパズルゲームです。</p>
     
     <ul>
-      <li><strong>ピースの追加:</strong> 下の「ピース追加」ボタンからピースを盤面に出せます。</li>
+      <li><strong>ボードの自動生成:</strong> 「ランダム形を生成」ボタンを押すと、ウボンゴのようなユニークな凸凹ボードが自動で作られます（総マス数は最大60まで）。</li>
+      <li><strong>ピースの追加:</strong> 個別ボタン、または「全ピース追加」ボタンで一度にピースを盤面に出せます。</li>
+      <li><strong>自動回答:</strong> 「自動回答」ボタンを押すたびに、別の異なる配置パターン（解）が順番に切り替わって表示されます。</li>
       <li><strong>操作方法:</strong>
         <ul>
           <li><strong>移動:</strong> ピースをタッチ・ドラッグして動かします。</li>
-          <li><strong>回転:</strong> ピースを選択中に <code>r</code> キー、または下部のビス「回転(r)」ボタン。</li>
-          <li><strong>反転:</strong> ピースを選択中に <code>f</code> キー、または下部の「反転(f)」ボタン。</li>
-          <li><strong>削除:</strong> ピースを選択中に <code>Delete</code> / <code>Backspace</code> キー、または下部の「削除(Del)」ボタン。</li>
-           <li><strong>全削除:</strong> 下部の「全削除」ボタン。</li>
+          <li><strong>回転:</strong> ピースを選択中に <code>r</code> キー、または下部の回転(r)ボタン。</li>
+          <li><strong>反転:</strong> ピースを選択中に <code>f</code> キー、または下部の反転(f)ボタン。</li>
+          <li><strong>削除:</strong> ピースを選択中に <code>Delete</code> / <code>Backspace</code> キー、または下部の削除(Del)ボタン。</li>
         </ul>
       </li>
-      <li><strong>グリッド制限:</strong> グリッドの総セル数は全パーツの合計セル数（60）まで変更可能です。</li>
     </ul>
     
     <button class="close-modal-btn" onclick="toggleModal(false)">閉じる</button>
@@ -278,7 +315,7 @@
 </div>
 
 <div id="container">
-  <!-- ヘッダーエリア（タイトル ＆ ルール説明ボタン） -->
+  <!-- ヘッダーエリア -->
   <div class="header-area">
     <h1 class="app-title">🧩 Ubongo Puzzle</h1>
     <button class="rule-btn" onclick="toggleModal(true)">ルール説明</button>
@@ -287,13 +324,13 @@
   <div id="ubongo-pop">ウボンゴ!!</div>
 
   <div>
-    <h3 style="margin: 0 0 8px 0;">グリッドサイズ</h3>
+    <h3 style="margin: 0 0 8px 0;">グリッドサイズ設定</h3>
     <div class="grid-forms-row">
       <div class="grid-input-group">
         <label for="input-cols">列:</label>
         <div class="spin-control">
           <button type="button" class="spin-btn" onclick="stepInput('input-cols', -1)">◀</button>
-          <input type="number" id="input-cols" value="6" min="1" max="50" />
+          <input type="number" id="input-cols" value="6" min="1" max="15" />
           <button type="button" class="spin-btn" onclick="stepInput('input-cols', 1)">▶</button>
         </div>
       </div>
@@ -301,20 +338,25 @@
         <label for="input-rows">行:</label>
         <div class="spin-control">
           <button type="button" class="spin-btn" onclick="stepInput('input-rows', -1)">◀</button>
-          <input type="number" id="input-rows" value="5" min="1" max="50" />
+          <input type="number" id="input-rows" value="4" min="1" max="15" />
           <button type="button" class="spin-btn" onclick="stepInput('input-rows', 1)">▶</button>
         </div>
       </div>
     </div>
   </div>
 
-  <div>
-    <button id="update-grid" style="background-color: #2980b9; color: white; width: 100%;">グリッド更新</button>
+  <div class="grid-buttons-row">
+    <button id="update-grid" style="background-color: #2980b9; color: white;">長方形グリッド更新</button>
+    <button id="random-shape-btn" style="background-color: #e67e22; color: white;">🎲 ランダム形を生成</button>
   </div>
 
   <div>
     <h3 style="margin: 0 0 8px 0;">ピース追加</h3>
     <div id="piece-list"></div>
+  </div>
+
+  <div>
+    <button id="auto-solve-btn" onclick="autoSolve()">✨ 自動回答</button>
   </div>
 
   <div id="top-action-area">
@@ -330,7 +372,14 @@ const canvas = document.getElementById("ubongo-canvas");
 const ctx = canvas.getContext("2d");
 
 let cols = 6;
-let rows = 5;
+let rows = 4;
+
+let boardMask = [
+  [1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1]
+];
 
 const fixedDisplaySize = 200; 
 
@@ -366,27 +415,32 @@ const pieceShapes = [
   { id:12, label: "V", shape: [[1],[1],[1,1,1]] }
 ];
 
-const maxTotalCells = pieceShapes.reduce((sum, p) => {
-  return sum + p.shape.reduce((rowSum, row) => rowSum + row.filter(v => v === 1).length, 0);
-}, 0);
-
 window.stepInput = function(id, step) {
   const input = document.getElementById(id);
   let val = parseInt(input.value) || 1;
-  val = Math.max(1, Math.min(maxTotalCells, val + step));
+  val = Math.max(1, Math.min(15, val + step));
+  
+  // 変更後の値で総マス数（行×列）が60を超えるかチェック
+  const otherId = (id === 'input-cols') ? 'input-rows' : 'input-cols';
+  const otherVal = parseInt(document.getElementById(otherId).value) || 1;
+  const targetCols = (id === 'input-cols') ? val : otherVal;
+  const targetRows = (id === 'input-rows') ? val : otherVal;
+
+  if (targetCols * targetRows > 60) {
+    alert("グリッドの総マス数は最大60までに制限されています。");
+    return;
+  }
+
   input.value = val;
 };
 
-// モーダルの開閉制御用関数
 window.toggleModal = function(show) {
   const modal = document.getElementById("rule-modal");
   modal.style.display = show ? "flex" : "none";
 };
 
-// モーダルの枠外（背景）がクリックされたときに閉じる関数
 window.handleModalClick = function(event) {
   const modal = document.getElementById("rule-modal");
-  // クリックされたのが背景（#rule-modal自身）である場合のみ閉じる
   if (event.target === modal) {
     toggleModal(false);
   }
@@ -394,41 +448,121 @@ window.handleModalClick = function(event) {
 
 let hasWonBefore = false;
 
+let lastSolutionCache = {
+  key: "",
+  solutions: [],
+  currentIndex: 0
+};
+
+// 長方形グリッドに更新
 document.getElementById("update-grid").addEventListener("click", () => {
-  const colsVal = document.getElementById("input-cols").value;
-  const rowsVal = document.getElementById("input-rows").value;
-  const newCols = parseInt(colsVal);
-  const newRows = parseInt(rowsVal);
+  const newCols = parseInt(document.getElementById("input-cols").value);
+  const newRows = parseInt(document.getElementById("input-rows").value);
+
+  if (newCols * newRows > 60) {
+    alert("グリッドの総マス数は最大60までに制限されています。");
+    return;
+  }
 
   if (newCols > 0 && newRows > 0) {
-    if (newCols * newRows > maxTotalCells) {
-      alert(`指定されたグリッドの総セル数 (${newCols * newRows}) が、全パーツの合計セル数 (${maxTotalCells}) を超えているため設定できません。`);
-      document.getElementById("input-cols").value = cols;
-      document.getElementById("input-rows").value = rows;
-      return;
-    }
-
     cols = newCols;
     rows = newRows;
+    boardMask = Array.from({ length: rows }, () => Array(cols).fill(1));
     
-    pieces = [];
-    selectedPiece = null;
-    draggingPiece = null;
-    hasWonBefore = false;
-
-    resizeCanvas();
-    render();
-    renderPieceButtons();
+    resetGameState();
   } else {
     alert("行数と列数は1以上の数値を入力してください。");
   }
 });
 
+// ランダム形（変則ボード）の自動生成
+document.getElementById("random-shape-btn").addEventListener("click", () => {
+  const newCols = parseInt(document.getElementById("input-cols").value);
+  const newRows = parseInt(document.getElementById("input-rows").value);
+
+  if (newCols * newRows > 60) {
+    alert("グリッドの総マス数は最大60までに制限されています。");
+    return;
+  }
+
+  if (newCols < 2 || newRows < 2) {
+    alert("ランダム形を生成するには、行・列ともに2以上のサイズにしてください。");
+    return;
+  }
+
+  cols = newCols;
+  rows = newRows;
+
+  let mask = Array.from({ length: rows }, () => Array(cols).fill(1));
+
+  const removalAttempts = Math.floor((cols * rows) / 4);
+  for (let attempt = 0; attempt < removalAttempts; attempt++) {
+    let r = Math.floor(Math.random() * rows);
+    let c = Math.floor(Math.random() * cols);
+    
+    if (r === 0 || r === rows - 1 || c === 0 || c === cols - 1) {
+      if (mask[r][c] === 1) {
+        mask[r][c] = 0;
+        if (!checkConnected(mask)) {
+          mask[r][c] = 1;
+        }
+      }
+    }
+  }
+
+  boardMask = mask;
+  resetGameState();
+});
+
+function checkConnected(mask) {
+  let startR = -1, startC = -1, totalOnes = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (mask[r][c] === 1) {
+        totalOnes++;
+        if (startR === -1) { startR = r; startC = c; }
+      }
+    }
+  }
+  if (totalOnes === 0) return false;
+
+  let visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+  let queue = [[startR, startC]];
+  visited[startR][startC] = true;
+  let count = 0;
+
+  while (queue.length > 0) {
+    let [cr, cc] = queue.shift();
+    count++;
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (let [dr, dc] of dirs) {
+      let nr = cr + dr, nc = cc + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+        if (mask[nr][nc] === 1 && !visited[nr][nc]) {
+          visited[nr][nc] = true;
+          queue.push([nr, nc]);
+        }
+      }
+    }
+  }
+  return count === totalOnes;
+}
+
+function resetGameState() {
+  pieces = [];
+  selectedPiece = null;
+  draggingPiece = null;
+  hasWonBefore = false;
+  lastSolutionCache = { key: "", solutions: [], currentIndex: 0 };
+
+  resizeCanvas();
+  render();
+  renderPieceButtons();
+}
+
 function resizeCanvas() {
   const containerWidth = document.getElementById("container").clientWidth;
-  
   gridGridSize = Math.min(containerWidth / cols, fixedDisplaySize / rows);
-
   canvas.width = containerWidth;
   canvas.height = Math.max(getDockStartY() + 350, window.innerHeight * 0.8);
 }
@@ -447,6 +581,34 @@ let draggingPiece = null;
 let dragStartX = 0;
 let dragStartY = 0;
 
+function trimShape(matrix) {
+  if (!matrix || matrix.length === 0) return [[1]];
+  let minR = matrix.length, maxR = -1, minC = matrix[0].length, maxC = -1;
+
+  for (let r = 0; r < matrix.length; r++) {
+    for (let c = 0; c < matrix[r].length; c++) {
+      if (matrix[r][c] === 1) {
+        if (r < minR) minR = r;
+        if (r > maxR) maxR = r;
+        if (c < minC) minC = c;
+        if (c > maxC) maxC = c;
+      }
+    }
+  }
+
+  if (maxR === -1) return [[1]];
+
+  const trimmed = [];
+  for (let r = minR; r <= maxR; r++) {
+    const row = [];
+    for (let c = minC; c <= maxC; c++) {
+      row.push(matrix[r][c]);
+    }
+    trimmed.push(row);
+  }
+  return trimmed;
+}
+
 function createPiece(shape, label) {
   const dockY = getDockStartY();
   const startY = dockY + 55;
@@ -461,10 +623,12 @@ function createPiece(shape, label) {
   const startX = 15 + colIndex * 90;
   const targetY = startY + rowIndex * 90;
 
+  lastSolutionCache = { key: "", solutions: [], currentIndex: 0 };
+
   return {
     id: Date.now() + Math.random(),
     label,
-    shape: JSON.parse(JSON.stringify(shape)),
+    shape: trimShape(shape),
     x: startX,
     y: targetY,
     dragging: false,
@@ -474,6 +638,18 @@ function createPiece(shape, label) {
   };
 }
 
+window.addAllPieces = function() {
+  pieceShapes.forEach(({ shape, label }) => {
+    const isAlreadyAdded = pieces.some(p => p.label === label);
+    if (!isAlreadyAdded) {
+      const newPiece = createPiece(shape, label);
+      pieces.push(newPiece);
+    }
+  });
+  render();
+  renderPieceButtons();
+};
+
 function drawGrid(isForExport = false) {
   const offsetX = getGridOffsetX();
   const offsetY = getGridOffsetY();
@@ -481,25 +657,40 @@ function drawGrid(isForExport = false) {
   ctx.save();
   ctx.translate(offsetX, offsetY);
 
-  ctx.strokeStyle = "#ccc";
-  for (let x = 0; x <= cols * gridGridSize; x += gridGridSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, rows * gridGridSize);
-    ctx.stroke();
-  }
-  for (let y = 0; y <= rows * gridGridSize; y += gridGridSize) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(cols * gridGridSize, y);
-    ctx.stroke();
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (boardMask[r][c] === 1) {
+        ctx.fillStyle = "#f9f9f9";
+        ctx.fillRect(c * gridGridSize, r * gridGridSize, gridGridSize, gridGridSize);
+        ctx.strokeStyle = "#ccc";
+        ctx.strokeRect(c * gridGridSize, r * gridGridSize, gridGridSize, gridGridSize);
+      }
+    }
   }
 
   ctx.strokeStyle = "#333";
   ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, cols * gridGridSize, rows * gridGridSize);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (boardMask[r][c] === 1) {
+        let x = c * gridGridSize;
+        let y = r * gridGridSize;
+        if (r === 0 || boardMask[r - 1][c] === 0) {
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + gridGridSize, y); ctx.stroke();
+        }
+        if (r === rows - 1 || boardMask[r + 1][c] === 0) {
+          ctx.beginPath(); ctx.moveTo(x, y + gridGridSize); ctx.lineTo(x + gridGridSize, y + gridGridSize); ctx.stroke();
+        }
+        if (c === 0 || boardMask[r][c - 1] === 0) {
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + gridGridSize); ctx.stroke();
+        }
+        if (c === cols - 1 || boardMask[r][c + 1] === 0) {
+          ctx.beginPath(); ctx.moveTo(x + gridGridSize, y); ctx.lineTo(x + gridGridSize, y + gridGridSize); ctx.stroke();
+        }
+      }
+    }
+  }
   ctx.lineWidth = 1;
-
   ctx.restore();
 
   const dockY = getDockStartY();
@@ -564,8 +755,16 @@ function drawPiece(p) {
 }
 
 function checkWinCondition(excludingPiece = null) {
+  let targetTotalCells = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (boardMask[r][c] === 1) targetTotalCells++;
+    }
+  }
+
   const board = Array.from({ length: rows }, () => Array(cols).fill(0));
   let pieceCount = 0;
+  let filledCellsCount = 0;
   const offsetX = getGridOffsetX();
   const offsetY = getGridOffsetY();
 
@@ -588,22 +787,20 @@ function checkWinCondition(excludingPiece = null) {
           if (targetR < 0 || targetR >= rows || targetC < 0 || targetC >= cols) {
             return false;
           }
+          if (boardMask[targetR][targetC] === 0) {
+            return false;
+          }
           if (board[targetR][targetC] === 1) {
             return false;
           }
           board[targetR][targetC] = 1;
+          filledCellsCount++;
         }
       }
     }
   }
 
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (board[r][c] === 0) return false;
-    }
-  }
-
-  return pieceCount > 0;
+  return pieceCount > 0 && filledCellsCount === targetTotalCells;
 }
 
 let popTimeout = null;
@@ -644,10 +841,233 @@ function render() {
       triggerUbongoPop();
     }
   } else {
-    msgArea.textContent = "";
+    if (!msgArea.textContent.includes("計算中") && !msgArea.textContent.includes("パターン")) {
+      msgArea.textContent = "";
+    }
     saveBtn.style.display = "none";
     hasWonBefore = false;
   }
+}
+
+async function autoSolve() {
+  if (pieces.length === 0) {
+    alert("ピースが配置されていません。ピースを追加してください。");
+    return;
+  }
+
+  let targetTotalCells = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (boardMask[r][c] === 1) targetTotalCells++;
+    }
+  }
+
+  const msgArea = document.getElementById("message-area");
+  const autoBtn = document.getElementById("auto-solve-btn");
+
+  const currentPiecesKey = `${cols}x${rows}_` + JSON.stringify(boardMask) + "_" + pieces.map(p => p.label).sort().join(",");
+
+  if (lastSolutionCache.key !== currentPiecesKey) {
+    msgArea.textContent = "🔍 新しいパターンを計算中...";
+    autoBtn.disabled = true;
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    function getUniqueOrientations(shape) {
+      const setOfStrings = new Set();
+      const result = [];
+      let current = JSON.parse(JSON.stringify(shape));
+      
+      for (let i = 0; i < 2; i++) {
+        for (let j = 0; j < 4; j++) {
+          const trimmed = trimShape(current);
+          const str = JSON.stringify(trimmed);
+          if (!setOfStrings.has(str)) {
+            setOfStrings.add(str);
+            result.push(trimmed);
+          }
+          current = rotate(current);
+        }
+        current = flip(shape);
+      }
+      return result.sort((a, b) => {
+        const countA = a.reduce((s, row) => s + row.filter(v => v === 1).length, 0);
+        const countB = b.reduce((s, row) => s + row.filter(v => v === 1).length, 0);
+        return countB - countA;
+      });
+    }
+
+    const availablePiecesData = pieces.map((p, idx) => {
+      const baseObj = pieceShapes.find(ps => ps.label === p.label);
+      const baseShape = baseObj ? baseObj.shape : p.shape;
+      const orientations = getUniqueOrientations(baseShape);
+      const cellCount = orientations[0].reduce((sum, row) => sum + row.filter(v => v === 1).length, 0);
+      return {
+        originalIndex: idx,
+        label: p.label,
+        cellCount,
+        orientations
+      };
+    });
+
+    const board = Array.from({ length: rows }, () => Array(cols).fill(0));
+    const foundSolutions = [];
+
+    function searchCombinationsAndPlacement(pieceListIndex, currentChosenPieces) {
+      if (foundSolutions.length >= 10) return;
+
+      const currentCells = currentChosenPieces.reduce((sum, p) => sum + p.cellCount, 0);
+      if (currentCells > targetTotalCells) return;
+
+      if (currentCells === targetTotalCells) {
+        tryPlaceCombination(currentChosenPieces, foundSolutions);
+        return;
+      }
+
+      if (pieceListIndex >= availablePiecesData.length) return;
+
+      let maxPossibleCells = currentCells;
+      for (let i = pieceListIndex; i < availablePiecesData.length; i++) {
+        maxPossibleCells += availablePiecesData[i].cellCount;
+      }
+      if (maxPossibleCells < targetTotalCells) return;
+
+      currentChosenPieces.push(availablePiecesData[pieceListIndex]);
+      searchCombinationsAndPlacement(pieceListIndex + 1, currentChosenPieces);
+      currentChosenPieces.pop();
+
+      searchCombinationsAndPlacement(pieceListIndex + 1, currentChosenPieces);
+    }
+
+    function tryPlaceCombination(chosenPieces, solutionsArray) {
+      if (solutionsArray.length >= 10) return;
+      const sorted = [...chosenPieces].sort((a, b) => b.cellCount - a.cellCount);
+      const placements = [];
+
+      function placeNext(idx) {
+        if (solutionsArray.length >= 10) return true;
+        if (idx === sorted.length) {
+          solutionsArray.push({ chosenPieces: sorted, placements: [...placements] });
+          return true;
+        }
+
+        const pData = sorted[idx];
+        for (let shape of pData.orientations) {
+          const sRows = shape.length;
+          const sCols = shape[0].length;
+
+          for (let r = 0; r <= rows - sRows; r++) {
+            for (let c = 0; c <= cols - sCols; c++) {
+              
+              let canPlace = true;
+              for (let sr = 0; sr < sRows; sr++) {
+                for (let sc = 0; sc < sCols; sc++) {
+                  if (shape[sr][sc] === 1) {
+                    const tr = r + sr;
+                    const tc = c + sc;
+                    if (boardMask[tr][tc] === 0 || board[tr][tc] === 1) {
+                      canPlace = false;
+                      break;
+                    }
+                  }
+                }
+                if (!canPlace) break;
+              }
+
+              if (canPlace) {
+                for (let sr = 0; sr < sRows; sr++) {
+                  for (let sc = 0; sc < sCols; sc++) {
+                    if (shape[sr][sc] === 1) {
+                      board[r + sr][c + sc] = 1;
+                    }
+                  }
+                }
+
+                placements.push({ pData, shape, r, c });
+
+                if (placeNext(idx + 1)) {
+                  placements.pop();
+                  for (let sr = 0; sr < sRows; sr++) {
+                    for (let sc = 0; sc < sCols; sc++) {
+                      if (shape[sr][sc] === 1) {
+                        board[r + sr][c + sc] = 0;
+                      }
+                    }
+                  }
+                  return true;
+                }
+
+                placements.pop();
+                for (let sr = 0; sr < sRows; sr++) {
+                  for (let sc = 0; sc < sCols; sc++) {
+                    if (shape[sr][sc] === 1) {
+                      board[r + sr][c + sc] = 0;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      placeNext(0);
+    }
+
+    searchCombinationsAndPlacement(0, []);
+    autoBtn.disabled = false;
+
+    if (foundSolutions.length === 0) {
+      msgArea.textContent = "";
+      alert("この盤面の形に隙間なく埋まるピースの組み合わせは見つかりませんでした。（ピースを追加するか、別の形を生成してください）");
+      return;
+    }
+
+    lastSolutionCache = {
+      key: currentPiecesKey,
+      solutions: foundSolutions,
+      currentIndex: 0
+    };
+  }
+
+  const solution = lastSolutionCache.solutions[lastSolutionCache.currentIndex];
+  const patternNum = lastSolutionCache.currentIndex + 1;
+  const totalPatterns = lastSolutionCache.solutions.length;
+
+  const offsetX = getGridOffsetX();
+  const offsetY = getGridOffsetY();
+
+  const usedOriginalIndices = new Set(solution.placements.map(pl => pl.pData.originalIndex));
+
+  solution.placements.forEach(pl => {
+    const p = pieces[pl.pData.originalIndex];
+    p.shape = pl.shape;
+    p.x = offsetX + pl.c * gridGridSize;
+    p.y = offsetY + pl.r * gridGridSize;
+  });
+
+  const dockY = getDockStartY();
+  let unusedDockIndex = 0;
+  const maxPerRow = Math.max(3, Math.floor((canvas.width - 20) / 90));
+
+  pieces.forEach((p, idx) => {
+    if (!usedOriginalIndices.has(idx)) {
+      const colIndex = unusedDockIndex % maxPerRow;
+      const rowIndex = Math.floor(unusedDockIndex / maxPerRow);
+      p.x = 15 + colIndex * 90;
+      p.y = (dockY + 55) + rowIndex * 90;
+      unusedDockIndex++;
+    }
+  });
+
+  selectedPiece = null;
+  draggingPiece = null;
+
+  msgArea.textContent = `✨ パターン ${patternNum} / ${totalPatterns} を表示中`;
+
+  lastSolutionCache.currentIndex = (lastSolutionCache.currentIndex + 1) % totalPatterns;
+
+  render();
 }
 
 window.saveAsImage = function() {
@@ -680,7 +1100,7 @@ window.saveAsImage = function() {
 
   exportCtx.fillStyle = "#2c3e50";
   exportCtx.font = "bold 16px sans-serif";
-  exportCtx.fillText(`Ubongoグリッドサイズ: ${cols}列 × ${rows}行`, 15, 28);
+  exportCtx.fillText(`Ubongo パズルクリア`, 15, 28);
 
   exportCtx.drawImage(
     canvas, 
@@ -716,7 +1136,7 @@ window.saveAsImage = function() {
   });
 
   const link = document.createElement("a");
-  link.download = `ubongo_${cols}x${rows}_clear.png`;
+  link.download = `ubongo_clear.png`;
   link.href = exportCanvas.toDataURL("image/png");
   link.click();
 
@@ -752,14 +1172,14 @@ function onStart(e) {
     if (y >= btnY && y <= btnY + btnHeight) {
       if (x >= 15 && x < 15 + btnWidth) {
         if (selectedPiece) {
-          selectedPiece.shape = rotate(selectedPiece.shape);
+          selectedPiece.shape = trimShape(rotate(selectedPiece.shape));
           render();
         }
         e.preventDefault();
         return;
       } else if (x >= 15 + btnWidth + 3 && x < 15 + (btnWidth + 3) * 2) {
         if (selectedPiece) {
-          selectedPiece.shape = flip(selectedPiece.shape);
+          selectedPiece.shape = trimShape(flip(selectedPiece.shape));
           render();
         }
         e.preventDefault();
@@ -771,6 +1191,7 @@ function onStart(e) {
       } else if (x >= 15 + (btnWidth + 3) * 3 && x <= 15 + (btnWidth + 3) * 3 + btnWidth) {
         pieces = [];
         selectedPiece = null;
+        lastSolutionCache = { key: "", solutions: [], currentIndex: 0 };
         render();
         renderPieceButtons();
         e.preventDefault();
@@ -846,7 +1267,7 @@ function onEnd() {
           if (draggingPiece.shape[r][c]) {
             const targetR = startR + r;
             const targetC = startC + c;
-            if (targetR < 0 || targetR >= rows || targetC < 0 || targetC >= cols) {
+            if (targetR < 0 || targetR >= rows || targetC < 0 || targetC >= cols || boardMask[targetR][targetC] === 0) {
               outOfBounds = true;
             }
           }
@@ -935,10 +1356,10 @@ canvas.addEventListener("touchend", onEnd);
 window.addEventListener("keydown", (e) => {
   if (!selectedPiece) return;
   if (e.key === "r") {
-    selectedPiece.shape = rotate(selectedPiece.shape);
+    selectedPiece.shape = trimShape(rotate(selectedPiece.shape));
     render();
   } else if (e.key === "f") {
-    selectedPiece.shape = flip(selectedPiece.shape);
+    selectedPiece.shape = trimShape(flip(selectedPiece.shape));
     render();
   }
 });
@@ -949,6 +1370,7 @@ window.deleteSelectedPiece = function() {
   if (index !== -1) {
     pieces.splice(index, 1);
     selectedPiece = null;
+    lastSolutionCache = { key: "", solutions: [], currentIndex: 0 };
     render();
     renderPieceButtons();
   }
@@ -987,6 +1409,25 @@ function renderPieceButtons() {
 
     listEl.appendChild(btn);
   });
+
+  const addAllBtn = document.createElement("button");
+  addAllBtn.textContent = "全ピース追加";
+  addAllBtn.className = "add-all-button";
+  addAllBtn.title = "全ピース追加";
+  addAllBtn.setAttribute("aria-label", "全ピース追加");
+  
+  const allUsed = pieceShapes.every(({ label }) => pieces.some(p => p.label === label));
+  if (allUsed) {
+    addAllBtn.disabled = true;
+    addAllBtn.style.opacity = "0.5";
+    addAllBtn.style.cursor = "not-allowed";
+  }
+
+  addAllBtn.addEventListener("click", () => {
+    addAllPieces();
+  });
+
+  listEl.appendChild(addAllBtn);
 }
 
 window.addEventListener("resize", () => {
