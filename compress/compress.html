@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+  <title>データ圧縮ツール</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip (ZIP圧縮用) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- browser-image-compression (画像圧縮用) -->
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
+  <!-- pdf.js (PDFレンダリング用) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- pdf-lib (PDF再構築用) -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <!-- FFmpeg.wasm (動画圧縮用) -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen py-4 px-2 sm:py-10 sm:px-4">
+
+  <div class="max-w-5xl mx-auto bg-white rounded-xl sm:rounded-2xl shadow-xl border border-slate-100 p-4 sm:p-6 md:p-8">
+    <!-- ヘッダー -->
+    <div class="text-center mb-6 sm:mb-8">
+      <h1 class="text-lg sm:text-2xl md:text-3xl font-bold text-slate-900 mb-2 flex items-center justify-center gap-2 flex-wrap">
+        <a href="../index.html" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition shrink-0" aria-label="ホーム">
+          <i class="fa fa-home text-sm" aria-hidden="true"></i>
+        </a>
+        <span>画像・PDF・動画 一括圧縮ツール</span>
+      </h1>
+      <p class="text-slate-500 text-xs sm:text-sm">フォルダごとの読み込みに対応。画像・PDF・動画は高画質を維持して軽量化し、その他のファイルは元のまま保持します。</p>
+    </div>
+
+    <!-- ドラッグ＆ドロップエリア -->
+    <div id="dropZone" class="border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 transition-all rounded-xl p-4 sm:p-8 text-center cursor-pointer mb-6">
+      <svg class="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-indigo-500 mb-2 sm:mb-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+      </svg>
+      <p class="text-slate-700 font-medium text-xs sm:text-base mb-1 pointer-events-none">ここにファイルまたはフォルダをドラッグ＆ドロップ</p>
+      <p class="text-slate-400 text-[10px] sm:text-xs mb-3 sm:mb-4 pointer-events-none">（画像・PDF・動画は自動軽量化 / その他のファイルはそのまま読み込み）</p>
+      
+      <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 mb-4">
+        <button id="selectFilesBtn" type="button" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
+          ファイルを選択
+        </button>
+        <button id="selectFolderBtn" type="button" class="w-full sm:w-auto bg-slate-700 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
+          フォルダを選択
+        </button>
+      </div>
+
+      <!-- 変換可能サイズの明記領域 -->
+      <div class="pt-3 border-t border-indigo-100 text-xs text-slate-500 max-w-lg mx-auto pointer-events-none">
+        <span class="font-semibold text-slate-600 block mb-1 text-[11px] sm:text-xs">【推奨ファイルサイズ上限】</span>
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4 text-slate-500 text-xs">
+          <span>🖼️ 画像: <strong class="text-slate-700">100MB以下</strong></span>
+          <span>📄 PDF: <strong class="text-slate-700">100MB以下</strong></span>
+          <span>🎥 動画: <strong class="text-slate-700">200MB以下</strong></span>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1">※ブラウザメモリ制限のため、上限を超える動画は処理エラーになります。</p>
+      </div>
+
+      <input type="file" id="fileInput" multiple class="hidden">
+      <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden">
+    </div>
+
+    <!-- アクション & 進捗表示 -->
+    <div id="actionArea" class="hidden mb-6">
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mb-4">
+        <div class="text-xs sm:text-sm font-medium text-slate-600 text-center sm:text-left">
+          読み込み済み: <span id="fileCount" class="font-bold text-slate-900">0</span> ファイル
+        </div>
+        <div class="flex gap-2 sm:gap-3">
+          <button id="clearBtn" type="button" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition">クリア</button>
+          <button id="startBtn" type="button" class="flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">一括処理・圧縮を開始</button>
+          <button id="downloadAllBtn" type="button" class="hidden flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 sm:gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            ZIPで一括ダウンロード
+          </button>
+        </div>
+      </div>
+
+      <!-- プログレスバー -->
+      <div id="progressContainer" class="hidden bg-slate-100 rounded-full h-2.5 sm:h-3 overflow-hidden mb-2">
+        <div id="progressBar" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
+      </div>
+      <p id="statusText" class="text-[11px] sm:text-xs text-slate-500 text-right"></p>
+    </div>
+
+    <!-- ファイルリストテーブル -->
+    <div id="tableContainer" class="hidden overflow-x-auto border border-slate-200 rounded-xl">
+      <table class="w-full text-left text-xs sm:text-sm text-slate-600">
+        <thead class="bg-slate-50 text-slate-700 text-[11px] sm:text-xs uppercase font-semibold border-b border-slate-200">
+          <tr>
+            <th class="py-2.5 px-3 whitespace-nowrap">ファイル名</th>
+            <th class="py-2.5 px-3 whitespace-nowrap">種別</th>
+            <th class="py-2.5 px-3 whitespace-nowrap">元のサイズ</th>
+            <th class="py-2.5 px-3 whitespace-nowrap">処理後サイズ</th>
+            <th class="py-2.5 px-3 whitespace-nowrap">削減率</th>
+            <th class="py-2.5 px-3 text-center whitespace-nowrap">状態 / 個別操作</th>
+          </tr>
+        </thead>
+        <tbody id="fileListTable" class="divide-y divide-slate-100">
+          <!-- JSで動的に追加 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
+    const selectFilesBtn = document.getElementById('selectFilesBtn');
+    const selectFolderBtn = document.getElementById('selectFolderBtn');
+    const actionArea = document.getElementById('actionArea');
+    const tableContainer = document.getElementById('tableContainer');
+    const fileListTable = document.getElementById('fileListTable');
+    const fileCount = document.getElementById('fileCount');
+    const startBtn = document.getElementById('startBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('statusText');
+
+    let filesList = [];
+    let processedResults = [];
+    let ffmpegInstance = null;
+
+    // --- FFmpegの遅延初期化 ---
+    async function getFFmpeg() {
+      if (!ffmpegInstance) {
+        statusText.textContent = '動画処理エンジン(FFmpeg)を準備中...';
+        const { createFFmpeg } = FFmpeg;
+        ffmpegInstance = createFFmpeg({ log: false });
+        await ffmpegInstance.load();
+      }
+      return ffmpegInstance;
+    }
+
+    // --- クリックイベント制御 ---
+    selectFilesBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+
+    selectFolderBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if ('showDirectoryPicker' in window) {
+        try {
+          const dirHandle = await window.showDirectoryPicker();
+          const files = [];
+          await readDirectoryHandle(dirHandle, files);
+          addFilesToList(files);
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            folderInput.click();
+          }
+        }
+      } else {
+        folderInput.click();
+      }
+    });
+
+    dropZone.addEventListener('click', (e) => {
+      if (e.target === dropZone || e.target.classList.contains('pointer-events-none')) {
+        fileInput.click();
+      }
+    });
+
+    async function readDirectoryHandle(dirHandle, fileArray) {
+      for await (const entry of dirHandle.values()) {
+        if (entry.kind === 'file') {
+          const file = await entry.getFile();
+          fileArray.push(file);
+        } else if (entry.kind === 'directory') {
+          await readDirectoryHandle(entry, fileArray);
+        }
+      }
+    }
+
+    // ドラッグ＆ドロップ処理
+    dropZone.addEventListener('dragover', (e) => { 
+      e.preventDefault(); 
+      dropZone.classList.add('border-indigo-500', 'bg-indigo-100/50'); 
+    });
+    dropZone.addEventListener('dragleave', () => { 
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-100/50'); 
+    });
+
+    dropZone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-100/50');
+
+      const items = e.dataTransfer.items;
+      if (items) {
+        const files = await getAllFilesFromDataTransfer(items);
+        addFilesToList(files);
+      } else {
+        addFilesToList(Array.from(e.dataTransfer.files));
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      addFilesToList(Array.from(e.target.files));
+    });
+
+    folderInput.addEventListener('change', (e) => {
+      addFilesToList(Array.from(e.target.files));
+    });
+
+    clearBtn.addEventListener('click', resetAll);
+
+    async function getAllFilesFromDataTransfer(items) {
+      const filePromises = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
+          if (entry) {
+            await readEntryRecursive(entry, filePromises);
+          } else {
+            const f = item.getAsFile();
+            if (f) filePromises.push(Promise.resolve(f));
+          }
+        }
+      }
+      return Promise.all(filePromises);
+    }
+
+    function readEntryRecursive(entry, filePromises) {
+      return new Promise((resolve) => {
+        if (entry.isFile) {
+          entry.file((file) => {
+            filePromises.push(Promise.resolve(file));
+            resolve();
+          });
+        } else if (entry.isDirectory) {
+          const dirReader = entry.createReader();
+          dirReader.readEntries(async (entries) => {
+            for (const ent of entries) {
+              await readEntryRecursive(ent, filePromises);
+            }
+            resolve();
+          });
+        } else {
+          resolve();
+        }
+      });
+    }
+
+    function isVideoFile(file) {
+      if (file.type.startsWith('video/')) return true;
+      const ext = file.name.toLowerCase();
+      return ext.endsWith('.mp4') || ext.endsWith('.mov') || ext.endsWith('.webm') || ext.endsWith('.mkv') || ext.endsWith('.avi');
+    }
+
+    function addFilesToList(newFiles) {
+      const validFiles = newFiles.filter(f => f.name !== '.DS_Store' && !f.name.startsWith('._'));
+      if (validFiles.length === 0) return;
+
+      filesList = [...filesList, ...validFiles];
+      updateUI();
+    }
+
+    function updateUI() {
+      if (filesList.length > 0) {
+        actionArea.classList.remove('hidden');
+        tableContainer.classList.remove('hidden');
+      }
+      fileCount.textContent = filesList.length;
+
+      fileListTable.innerHTML = '';
+      filesList.forEach((file, index) => {
+        const fileCategory = getFileCategory(file);
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition-colors";
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-medium text-slate-800 truncate max-w-[120px] sm:max-w-xs whitespace-nowrap" title="${file.name}">${file.name}</td>
+          <td class="py-2.5 px-3 text-[11px] sm:text-xs font-semibold whitespace-nowrap">
+            <span class="${fileCategory.badgeClass}">${fileCategory.label}</span>
+          </td>
+          <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap text-xs sm:text-sm">${formatBytes(file.size)}</td>
+          <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap text-xs sm:text-sm" id="new-size-${index}">-</td>
+          <td class="py-2.5 px-3 font-semibold text-slate-600 whitespace-nowrap text-xs sm:text-sm" id="ratio-${index}">-</td>
+          <td class="py-2.5 px-3 text-center whitespace-nowrap" id="action-cell-${index}">
+            <span class="inline-block px-2 py-0.5 text-[11px] sm:text-xs rounded-full bg-slate-100 text-slate-600">未処理</span>
+          </td>
+        `;
+        fileListTable.appendChild(tr);
+      });
+    }
+
+    function getFileCategory(file) {
+      if (file.type.startsWith('image/')) {
+        return { label: '画像', badgeClass: 'px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200' };
+      } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        return { label: 'PDF', badgeClass: 'px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200' };
+      } else if (isVideoFile(file)) {
+        return { label: '動画', badgeClass: 'px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200' };
+      } else {
+        return { label: '対象外 (非圧縮)', badgeClass: 'px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200' };
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 圧縮処理実行
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      progressContainer.classList.remove('hidden');
+      processedResults = [];
+
+      for (let i = 0; i < filesList.length; i++) {
+        const file = filesList[i];
+        const actionCell = document.getElementById(`action-cell-${i}`);
+        const newSizeEl = document.getElementById(`new-size-${i}`);
+        const ratioEl = document.getElementById(`ratio-${i}`);
+
+        actionCell.innerHTML = `<span class="inline-block px-2 py-0.5 text-[11px] sm:text-xs rounded-full bg-amber-100 text-amber-700 animate-pulse">処理中...</span>`;
+
+        let resultBlob;
+        let isCompressible = false;
+
+        try {
+          if (file.type.startsWith('image/')) {
+            isCompressible = true;
+            resultBlob = await compressImage(file);
+          } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+            isCompressible = true;
+            resultBlob = await compressPDF(file);
+          } else if (isVideoFile(file)) {
+            isCompressible = true;
+            statusText.textContent = `動画をエンコード中 (${file.name})...`;
+            resultBlob = await compressVideo(file);
+          } else {
+            isCompressible = false;
+            resultBlob = file;
+          }
+
+          if (resultBlob.size > file.size) {
+            resultBlob = file;
+          }
+
+          let outputName = file.name;
+          if (isVideoFile(file)) {
+            const dotIdx = file.name.lastIndexOf('.');
+            outputName = (dotIdx !== -1 ? file.name.substring(0, dotIdx) : file.name) + '.mp4';
+          }
+
+          processedResults.push({ name: outputName, blob: resultBlob });
+
+          newSizeEl.textContent = formatBytes(resultBlob.size);
+
+          if (isCompressible) {
+            const savedRatio = Math.round((1 - resultBlob.size / file.size) * 100);
+            ratioEl.textContent = savedRatio > 0 ? `-${savedRatio}%` : '0%';
+            ratioEl.className = savedRatio > 0 ? "py-2.5 px-3 font-semibold text-emerald-600 whitespace-nowrap text-xs sm:text-sm" : "py-2.5 px-3 font-semibold text-slate-600 whitespace-nowrap text-xs sm:text-sm";
+          } else {
+            ratioEl.textContent = "対象外";
+            ratioEl.className = "py-2.5 px-3 font-normal text-slate-400 whitespace-nowrap text-xs sm:text-sm";
+          }
+
+          actionCell.innerHTML = `
+            <button onclick="downloadSingleFile(${i})" class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] sm:text-xs font-semibold transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              保存
+            </button>
+          `;
+
+        } catch (error) {
+          console.error('処理エラー:', error);
+          processedResults.push({ name: file.name, blob: file });
+          newSizeEl.textContent = formatBytes(file.size);
+          ratioEl.textContent = "エラー";
+          
+          actionCell.innerHTML = `
+            <button onclick="downloadSingleFile(${i})" title="${error.message}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] sm:text-xs font-semibold transition">
+              元ファイルを保存
+            </button>
+          `;
+        }
+
+        const progress = Math.round(((i + 1) / filesList.length) * 100);
+        progressBar.style.width = `${progress}%`;
+        statusText.textContent = `${i + 1} / ${filesList.length} 完了 (${progress}%)`;
+      }
+
+      startBtn.classList.add('hidden');
+      downloadAllBtn.classList.remove('hidden');
+    });
+
+    window.downloadSingleFile = function(index) {
+      const item = processedResults[index];
+      if (!item) return;
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(item.blob);
+      link.download = item.name;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    };
+
+    async function compressImage(file) {
+      const options = {
+        maxSizeMB: 10,
+        maxWidthOrHeight: 3840,
+        useWebWorker: true,
+        initialQuality: 0.82
+      };
+      return await imageCompression(file, options);
+    }
+
+    async function compressPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdfDoc = await loadingTask.promise;
+
+      const outPdf = await PDFLib.PDFDocument.create();
+
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        const page = await pdfDoc.getPage(pageNum);
+        const scale = 1.5;
+        const viewport = page.getViewport({ scale: scale });
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        const jpgImageBytes = await fetch(jpgDataUrl).then(res => res.arrayBuffer());
+        const jpgImage = await outPdf.embedJpg(jpgImageBytes);
+
+        const origViewport = page.getViewport({ scale: 1.0 });
+        const pdfPage = outPdf.addPage([origViewport.width, origViewport.height]);
+
+        pdfPage.drawImage(jpgImage, {
+          x: 0,
+          y: 0,
+          width: origViewport.width,
+          height: origViewport.height,
+        });
+      }
+
+      const pdfBytes = await outPdf.save();
+      return new Blob([pdfBytes], { type: 'application/pdf' });
+    }
+
+    // --- 動画圧縮 (サイズ制限チェック追加) ---
+    async function compressVideo(file) {
+      // 250MB (250 * 1024 * 1024 バイト) を超える動画はメモリオーバーフロー防止のためエラー
+      const maxVideoSize = 250 * 1024 * 1024;
+      if (file.size > maxVideoSize) {
+        throw new Error('動画のサイズが大きすぎます（ブラウザ制限のため200MB以下を推奨）');
+      }
+
+      const ffmpeg = await getFFmpeg();
+      const { fetchFile } = FFmpeg;
+
+      const ext = file.name.substring(file.name.lastIndexOf('.')) || '.mp4';
+      const inName = `input_${Date.now()}${ext}`;
+      const outName = `output_${Date.now()}.mp4`;
+
+      ffmpeg.FS('writeFile', inName, await fetchFile(file));
+
+      // 高画質保持パラメータ (H.264 / CRF 22 / AAC 160k)
+      await ffmpeg.run(
+        '-i', inName,
+        '-vcodec', 'libx264',
+        '-crf', '22',
+        '-preset', 'ultrafast',
+        '-acodec', 'aac',
+        '-b:a', '160k',
+        outName
+      );
+
+      const data = ffmpeg.FS('readFile', outName);
+
+      try {
+        ffmpeg.FS('unlink', inName);
+        ffmpeg.FS('unlink', outName);
+      } catch (e) {}
+
+      return new Blob([data.buffer], { type: 'video/mp4' });
+    }
+
+    downloadAllBtn.addEventListener('click', async () => {
+      const zip = new JSZip();
+      const usedNames = new Set();
+
+      processedResults.forEach(item => {
+        let fileName = item.name;
+        if (usedNames.has(fileName)) {
+          const dotIndex = fileName.lastIndexOf('.');
+          const base = dotIndex !== -1 ? fileName.substring(0, dotIndex) : fileName;
+          const ext = dotIndex !== -1 ? fileName.substring(dotIndex) : '';
+          let count = 1;
+          while (usedNames.has(`${base}_${count}${ext}`)) count++;
+          fileName = `${base}_${count}${ext}`;
+        }
+        usedNames.add(fileName);
+
+        zip.file(fileName, item.blob);
+      });
+
+      statusText.textContent = 'ZIPファイルを作成中...';
+      const content = await zip.generateAsync({ type: 'blob' });
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = `compressed_files_${new Date().toISOString().slice(0,10)}.zip`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      statusText.textContent = '一括ダウンロードが完了しました！';
+    });
+
+    function resetAll() {
+      filesList = [];
+      processedResults = [];
+      fileInput.value = '';
+      folderInput.value = '';
+      actionArea.classList.add('hidden');
+      tableContainer.classList.add('hidden');
+      startBtn.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+      startBtn.disabled = false;
+      downloadAllBtn.classList.add('hidden');
+      progressContainer.classList.add('hidden');
+      progressBar.style.width = '0%';
+      statusText.textContent = '';
+    }
+  </script>
+</body>
+</html>
