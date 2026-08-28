@@ -120,12 +120,13 @@
       width: 100%;
     }
     button {
-      font-size: 1rem;
-      padding: 10px;
+      font-size: 0.9rem;
+      padding: 10px 4px;
       border-radius: 4px;
       border: none;
       cursor: pointer;
       user-select: none;
+      white-space: nowrap;
     }
     #piece-list {
       display: flex;
@@ -225,10 +226,11 @@
 
     .grid-buttons-row {
       display: flex;
-      gap: 10px;
+      gap: 6px;
     }
     .grid-buttons-row button {
       flex: 1;
+      text-align: center;
     }
 
     #auto-solve-btn {
@@ -297,7 +299,8 @@
     <p>指定されたグリッド（マス目）のすき間が一切ないように、選んだパズルピースをぴったり埋め込むボードパズルゲームです。</p>
     
     <ul>
-      <li><strong>ボードの自動生成:</strong> 「ランダム形を生成」ボタンを押すと、ウボンゴのようなユニークな凸凹ボードが自動で作られます（総マス数は最大60まで）。</li>
+      <li><strong>ボードの変形:</strong> 「セル削除」ボタンをONにすると、ボードのマスをクリックして自由に消去・復元（形を変更）できます（最大60マスまで）。</li>
+      <li><strong>ランダム形生成:</strong> 「🎲 ランダム形」ボタンでウボンゴ風の凸凹ボードを自動作成できます。</li>
       <li><strong>ピースの追加:</strong> 個別ボタン、または「全ピース追加」ボタンで一度にピースを盤面に出せます。</li>
       <li><strong>自動回答:</strong> 「自動回答」ボタンを押すたびに、別の異なる配置パターン（解）が順番に切り替わって表示されます。</li>
       <li><strong>操作方法:</strong>
@@ -346,8 +349,9 @@
   </div>
 
   <div class="grid-buttons-row">
-    <button id="update-grid" style="background-color: #2980b9; color: white;">長方形グリッド更新</button>
-    <button id="random-shape-btn" style="background-color: #e67e22; color: white;">🎲 ランダム形を生成</button>
+    <button id="update-grid" style="background-color: #2980b9; color: white;">グリッド更新</button>
+    <button id="toggle-eraser-btn" style="background-color: #7f8c8d; color: white;">✂️ セル削除: OFF</button>
+    <button id="random-shape-btn" style="background-color: #e67e22; color: white;">🎲 ランダム形</button>
   </div>
 
   <div>
@@ -373,6 +377,7 @@ const ctx = canvas.getContext("2d");
 
 let cols = 6;
 let rows = 4;
+let isEraserMode = false;
 
 let boardMask = [
   [1, 1, 1, 1, 1, 1],
@@ -420,7 +425,6 @@ window.stepInput = function(id, step) {
   let val = parseInt(input.value) || 1;
   val = Math.max(1, Math.min(15, val + step));
   
-  // 変更後の値で総マス数（行×列）が60を超えるかチェック
   const otherId = (id === 'input-cols') ? 'input-rows' : 'input-cols';
   const otherVal = parseInt(document.getElementById(otherId).value) || 1;
   const targetCols = (id === 'input-cols') ? val : otherVal;
@@ -453,6 +457,19 @@ let lastSolutionCache = {
   solutions: [],
   currentIndex: 0
 };
+
+// セル削除モードの切り替えボタン
+const eraserBtn = document.getElementById("toggle-eraser-btn");
+eraserBtn.addEventListener("click", () => {
+  isEraserMode = !isEraserMode;
+  if (isEraserMode) {
+    eraserBtn.textContent = "✂️ セル削除: ON";
+    eraserBtn.style.backgroundColor = "#c0392b";
+  } else {
+    eraserBtn.textContent = "✂️ セル削除: OFF";
+    eraserBtn.style.backgroundColor = "#7f8c8d";
+  }
+});
 
 // 長方形グリッドに更新
 document.getElementById("update-grid").addEventListener("click", () => {
@@ -663,6 +680,11 @@ function drawGrid(isForExport = false) {
         ctx.fillStyle = "#f9f9f9";
         ctx.fillRect(c * gridGridSize, r * gridGridSize, gridGridSize, gridGridSize);
         ctx.strokeStyle = "#ccc";
+        ctx.strokeRect(c * gridGridSize, r * gridGridSize, gridGridSize, gridGridSize);
+      } else {
+        ctx.fillStyle = "#e0e0e0";
+        ctx.fillRect(c * gridGridSize, r * gridGridSize, gridGridSize, gridGridSize);
+        ctx.strokeStyle = "#d0d0d0";
         ctx.strokeRect(c * gridGridSize, r * gridGridSize, gridGridSize, gridGridSize);
       }
     }
@@ -1019,7 +1041,7 @@ async function autoSolve() {
 
     if (foundSolutions.length === 0) {
       msgArea.textContent = "";
-      alert("この盤面の形に隙間なく埋まるピースの組み合わせは見つかりませんでした。（ピースを追加するか、別の形を生成してください）");
+      alert("この盤面の形に隙間なく埋まるピースの組み合わせは見つかりませんでした。（ピースを追加するか、別の形に調整してください）");
       return;
     }
 
@@ -1163,6 +1185,21 @@ function getPieceDimensions(p) {
 function onStart(e) {
   const { x, y } = getEventPosition(e);
   const dockY = getDockStartY();
+
+  if (isEraserMode && y < fixedDisplaySize) {
+    const offsetX = getGridOffsetX();
+    const offsetY = getGridOffsetY();
+    const clickedC = Math.floor((x - offsetX) / gridGridSize);
+    const clickedR = Math.floor((y - offsetY) / gridGridSize);
+
+    if (clickedR >= 0 && clickedR < rows && clickedC >= 0 && clickedC < cols) {
+      boardMask[clickedR][clickedC] = boardMask[clickedR][clickedC] === 1 ? 0 : 1;
+      lastSolutionCache = { key: "", solutions: [], currentIndex: 0 };
+      render();
+      e.preventDefault();
+      return;
+    }
+  }
 
   if (y >= dockY - 5 && y <= dockY + 43) {
     const btnWidth = (canvas.width - 40) / 4;
