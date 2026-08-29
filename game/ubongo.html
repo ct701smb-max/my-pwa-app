@@ -1111,19 +1111,38 @@ window.saveAsImage = function() {
   const exportCanvas = document.createElement("canvas");
   const exportCtx = exportCanvas.getContext("2d");
   
-  const headerHeight = 40;
-  const labelHeight = 35;
-  const pieceAreaHeight = 70;
+  const headerHeight = 45;
+  const labelHeight = 30;
+  
+  let currentX = 15;
+  let currentY = 0;
+  const miniSize = 14;
+  const spacing = 15;
+  const rowHeight = 55; // 行の高さを広げてピースが上下で重ならないように修正
+  const maxAllowedWidth = canvas.width - 30;
+  
+  let pieceRowLines = 1;
+  activePieces.forEach(p => {
+    const maxCols = Math.max(...p.shape.map(r => r.length));
+    const pieceW = maxCols * miniSize;
+    if (currentX + pieceW > maxAllowedWidth) {
+      pieceRowLines++;
+      currentX = 15;
+    }
+    currentX += pieceW + spacing;
+  });
+
+  const pieceAreaHeight = pieceRowLines * rowHeight + 15;
   
   exportCanvas.width = canvas.width;
-  exportCanvas.height = fixedDisplaySize + headerHeight + labelHeight + pieceAreaHeight + 20;
+  exportCanvas.height = fixedDisplaySize + headerHeight + labelHeight + pieceAreaHeight;
 
   exportCtx.fillStyle = "#ffffff";
   exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
   exportCtx.fillStyle = "#2c3e50";
-  exportCtx.font = "bold 16px sans-serif";
-  exportCtx.fillText(`Ubongo パズルクリア`, 15, 28);
+  exportCtx.font = "bold 15px sans-serif";
+  exportCtx.fillText(`Ubongo パズルクリア (${cols}×${rows}グリッド)`, 15, 28);
 
   exportCtx.drawImage(
     canvas, 
@@ -1131,20 +1150,26 @@ window.saveAsImage = function() {
     0, headerHeight, canvas.width, fixedDisplaySize
   );
 
-  const listStartY = headerHeight + fixedDisplaySize + 15;
+  const listStartY = headerHeight + fixedDisplaySize + 10;
   
   exportCtx.fillStyle = "#2c3e50";
   exportCtx.font = "bold 14px sans-serif";
   exportCtx.fillText("使用したピース:", 15, listStartY + 15);
 
-  let currentX = 135;
-  const currentY = listStartY + 2;
-  const miniSize = 12;
+  currentX = 15;
+  currentY = listStartY + 30;
 
   activePieces.forEach(p => {
     const maxCols = Math.max(...p.shape.map(r => r.length));
+    const maxRows = p.shape.length;
+    const pieceW = maxCols * miniSize;
 
-    for (let r = 0; r < p.shape.length; r++) {
+    if (currentX + pieceW > maxAllowedWidth) {
+      currentX = 15;
+      currentY += rowHeight;
+    }
+
+    for (let r = 0; r < maxRows; r++) {
       for (let c = 0; c < p.shape[r].length; c++) {
         if (p.shape[r][c]) {
           exportCtx.fillStyle = p.color;
@@ -1155,17 +1180,19 @@ window.saveAsImage = function() {
         }
       }
     }
-    currentX += maxCols * miniSize + 15;
+    currentX += pieceW + spacing;
   });
 
   const link = document.createElement("a");
-  link.download = `ubongo_clear.png`;
+  link.download = `ubongo_${cols}x${rows}_clear.png`;
   link.href = exportCanvas.toDataURL("image/png");
   link.click();
 
   selectedPiece = prevSelected;
   render();
 };
+
+
 
 function getEventPosition(e) {
   const rect = canvas.getBoundingClientRect();
