@@ -181,6 +181,7 @@
       display: flex;
       gap: 15px;
       align-items: center;
+      flex-wrap: wrap;
     }
     .grid-input-group {
       display: flex;
@@ -222,6 +223,24 @@
     .spin-control input[type="number"]::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
+    }
+
+    .cell-count-badge {
+      font-weight: bold;
+      font-size: 0.9rem;
+      padding: 6px 10px;
+      border-radius: 4px;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .cell-count-badge.multiple-of-5 {
+      background-color: #ebf8ff;
+      color: #2b6cb0;
+      border: 1px solid #90cdf4;
+    }
+    .cell-count-badge.not-multiple-of-5 {
+      background-color: #fff5f5;
+      color: #c53030;
+      border: 1px solid #feb2b2;
     }
 
     .grid-buttons-row {
@@ -300,7 +319,7 @@
     
     <ul>
       <li><strong>ボードの変形:</strong> 「セル削除」ボタンをONにすると、ボードのマスをクリックして自由に消去・復元（形を変更）できます（最大60マスまで）。</li>
-      <li><strong>ランダム形生成:</strong> 「🎲 ランダム形」ボタンでウボンゴ風の凸凹ボードを自動作成できます。</li>
+      <li><strong>ランダム形生成:</strong> 「🎲 ランダム形」ボタンでウボンゴ風の凸凹ボードを自動作成できます（セル数が5の倍数になります）。</li>
       <li><strong>ピースの追加:</strong> 個別ボタン、または「全ピース追加」ボタンで一度にピースを盤面に出せます。</li>
       <li><strong>自動回答:</strong> 「自動回答」ボタンを押すたびに、別の異なる配置パターン（解）が順番に切り替わって表示されます。</li>
       <li><strong>操作方法:</strong>
@@ -345,6 +364,7 @@
           <button type="button" class="spin-btn" onclick="stepInput('input-rows', 1)">▶</button>
         </div>
       </div>
+      <div id="cell-count-display" class="cell-count-badge multiple-of-5">セル数: 20</div>
     </div>
   </div>
 
@@ -391,6 +411,22 @@ const fixedDisplaySize = 200;
 
 let gridGridSize = 40;
 const dockGridSize = 24;
+
+function updateCellCountDisplay() {
+  let activeCells = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (boardMask[r][c] === 1) activeCells++;
+    }
+  }
+  const badge = document.getElementById("cell-count-display");
+  badge.textContent = `セル数: ${activeCells}`;
+  if (activeCells > 0 && activeCells % 5 === 0) {
+    badge.className = "cell-count-badge multiple-of-5";
+  } else {
+    badge.className = "cell-count-badge not-multiple-of-5";
+  }
+}
 
 function getGridOffsetX() {
   const totalW = cols * gridGridSize;
@@ -486,14 +522,14 @@ document.getElementById("update-grid").addEventListener("click", () => {
     cols = newCols;
     rows = newRows;
     boardMask = Array.from({ length: rows }, () => Array(cols).fill(1));
-    
+    updateCellCountDisplay();
     resetGameState();
   } else {
     alert("行数と列数は1以上の数値を入力してください。");
   }
 });
 
-// ランダム形（変則ボード）の自動生成
+// ランダム形（変則ボード）の自動生成（5の倍数のセルになるように調整）
 document.getElementById("random-shape-btn").addEventListener("click", () => {
   const newCols = parseInt(document.getElementById("input-cols").value);
   const newRows = parseInt(document.getElementById("input-rows").value);
@@ -512,23 +548,63 @@ document.getElementById("random-shape-btn").addEventListener("click", () => {
   rows = newRows;
 
   let mask = Array.from({ length: rows }, () => Array(cols).fill(1));
+  let currentTotal = cols * rows;
+  let targetTotal = Math.floor(currentTotal / 5) * 5;
+  if (targetTotal === 0) targetTotal = 5;
 
-  const removalAttempts = Math.floor((cols * rows) / 4);
-  for (let attempt = 0; attempt < removalAttempts; attempt++) {
+  let removeCount = currentTotal - targetTotal;
+  let attempts = 0;
+
+  while (removeCount > 0 && attempts < 200) {
+    attempts++;
     let r = Math.floor(Math.random() * rows);
     let c = Math.floor(Math.random() * cols);
     
-    if (r === 0 || r === rows - 1 || c === 0 || c === cols - 1) {
-      if (mask[r][c] === 1) {
-        mask[r][c] = 0;
-        if (!checkConnected(mask)) {
-          mask[r][c] = 1;
+    if ((r === 0 || r === rows - 1 || c === 0 || c === cols - 1) && mask[r][c] === 1) {
+      mask[r][c] = 0;
+      if (checkConnected(mask)) {
+        removeCount--;
+      } else {
+        mask[r][c] = 1;
+      }
+    }
+  }
+
+  // 万が一削りきれなかった場合はランダムにON/OFFを調整して5の倍数にする
+  while (true) {
+    let activeCells = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (mask[r][c] === 1) activeCells++;
+      }
+    }
+    if (activeCells % 5 === 0) break;
+
+    if (activeCells % 5 > 0) {
+      // 余り分を減らす
+      let candidates = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (mask[r][c] === 1 && (r === 0 || r === rows - 1 || c === 0 || c === cols - 1)) {
+            candidates.push({r, c});
+          }
         }
+      }
+      if (candidates.length > 0) {
+        let chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        mask[chosen.r][chosen.c] = 0;
+        if (!checkConnected(mask)) {
+          mask[chosen.r][chosen.c] = 1;
+          break; // 安全策
+        }
+      } else {
+        break;
       }
     }
   }
 
   boardMask = mask;
+  updateCellCountDisplay();
   resetGameState();
 });
 
@@ -1118,7 +1194,7 @@ window.saveAsImage = function() {
   let currentY = 0;
   const miniSize = 14;
   const spacing = 15;
-  const rowHeight = 55; // 行の高さを広げてピースが上下で重ならないように修正
+  const rowHeight = 55;
   const maxAllowedWidth = canvas.width - 30;
   
   let pieceRowLines = 1;
@@ -1192,8 +1268,6 @@ window.saveAsImage = function() {
   render();
 };
 
-
-
 function getEventPosition(e) {
   const rect = canvas.getBoundingClientRect();
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1222,6 +1296,7 @@ function onStart(e) {
 
     if (clickedR >= 0 && clickedR < rows && clickedC >= 0 && clickedC < cols) {
       boardMask[clickedR][clickedC] = boardMask[clickedR][clickedC] === 1 ? 0 : 1;
+      updateCellCountDisplay();
       lastSolutionCache = { key: "", solutions: [], currentIndex: 0 };
       render();
       e.preventDefault();
@@ -1501,6 +1576,7 @@ window.addEventListener("resize", () => {
 });
 
 renderPieceButtons();
+updateCellCountDisplay();
 render();
 </script>
 
