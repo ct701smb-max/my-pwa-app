@@ -15,8 +15,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <!-- pdf-lib (PDF再構築用) -->
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <!-- FFmpeg.wasm (動画圧縮用) -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 </head>
 
 <body class="bg-slate-50 text-slate-800 min-h-screen py-4 px-2 sm:py-10 sm:px-4">
@@ -28,9 +26,9 @@
         <a href="../index.html" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition shrink-0" aria-label="ホーム">
           <i class="fa fa-home text-sm" aria-hidden="true"></i>
         </a>
-        <span>画像・PDF・動画 一括圧縮ツール</span>
+        <span>画像・PDF 一括圧縮ツール</span>
       </h1>
-      <p class="text-slate-500 text-xs sm:text-sm">フォルダごとの読み込みに対応。画像・PDF・動画は高画質を維持して軽量化し、その他のファイルは元のまま保持します。</p>
+      <p class="text-slate-500 text-xs sm:text-sm">フォルダごとの読み込みに対応。画像とPDFは画質を極力落とさずに最大限軽量化し、その他のファイルは元のまま保持します。</p>
     </div>
 
     <!-- ドラッグ＆ドロップエリア -->
@@ -39,7 +37,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
       </svg>
       <p class="text-slate-700 font-medium text-xs sm:text-base mb-1 pointer-events-none">ここにファイルまたはフォルダをドラッグ＆ドロップ</p>
-      <p class="text-slate-400 text-[10px] sm:text-xs mb-3 sm:mb-4 pointer-events-none">（画像・PDF・動画は自動軽量化 / その他のファイルはそのまま読み込み）</p>
+      <p class="text-slate-400 text-[10px] sm:text-xs mb-3 sm:mb-4 pointer-events-none">（画像・PDFは最大限軽量化 / その他のファイルはそのまま読み込み）</p>
       
       <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 mb-4">
         <button id="selectFilesBtn" type="button" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
@@ -54,11 +52,10 @@
       <div class="pt-3 border-t border-indigo-100 text-xs text-slate-500 max-w-lg mx-auto pointer-events-none">
         <span class="font-semibold text-slate-600 block mb-1 text-[11px] sm:text-xs">【推奨ファイルサイズ上限】</span>
         <div class="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4 text-slate-500 text-xs">
-          <span>🖼️ 画像: <strong class="text-slate-700">100MB以下</strong></span>
-          <span>📄 PDF: <strong class="text-slate-700">100MB以下</strong></span>
-          <span>🎥 動画: <strong class="text-slate-700">200MB以下</strong></span>
+          <span>🖼️ 画像: <strong class="text-slate-700">300MB以下</strong></span>
+          <span>📄 PDF: <strong class="text-slate-700">300MB以下</strong></span>
         </div>
-        <p class="text-[10px] text-slate-400 mt-1">※ブラウザメモリ制限のため、上限を超える動画は処理エラーになります。</p>
+        <p class="text-[10px] text-slate-400 mt-1">※ブラウザのメモリ状況により、巨大なファイルは処理に時間がかかるかエラーになる場合があります。</p>
       </div>
 
       <input type="file" id="fileInput" multiple class="hidden">
@@ -129,18 +126,6 @@
 
     let filesList = [];
     let processedResults = [];
-    let ffmpegInstance = null;
-
-    // --- FFmpegの遅延初期化 ---
-    async function getFFmpeg() {
-      if (!ffmpegInstance) {
-        statusText.textContent = '動画処理エンジン(FFmpeg)を準備中...';
-        const { createFFmpeg } = FFmpeg;
-        ffmpegInstance = createFFmpeg({ log: false });
-        await ffmpegInstance.load();
-      }
-      return ffmpegInstance;
-    }
 
     // --- クリックイベント制御 ---
     selectFilesBtn.addEventListener('click', (e) => {
@@ -253,12 +238,6 @@
       });
     }
 
-    function isVideoFile(file) {
-      if (file.type.startsWith('video/')) return true;
-      const ext = file.name.toLowerCase();
-      return ext.endsWith('.mp4') || ext.endsWith('.mov') || ext.endsWith('.webm') || ext.endsWith('.mkv') || ext.endsWith('.avi');
-    }
-
     function addFilesToList(newFiles) {
       const validFiles = newFiles.filter(f => f.name !== '.DS_Store' && !f.name.startsWith('._'));
       if (validFiles.length === 0) return;
@@ -300,8 +279,6 @@
         return { label: '画像', badgeClass: 'px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200' };
       } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
         return { label: 'PDF', badgeClass: 'px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200' };
-      } else if (isVideoFile(file)) {
-        return { label: '動画', badgeClass: 'px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200' };
       } else {
         return { label: '対象外 (非圧縮)', badgeClass: 'px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200' };
       }
@@ -340,10 +317,6 @@
           } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
             isCompressible = true;
             resultBlob = await compressPDF(file);
-          } else if (isVideoFile(file)) {
-            isCompressible = true;
-            statusText.textContent = `動画をエンコード中 (${file.name})...`;
-            resultBlob = await compressVideo(file);
           } else {
             isCompressible = false;
             resultBlob = file;
@@ -354,11 +327,6 @@
           }
 
           let outputName = file.name;
-          if (isVideoFile(file)) {
-            const dotIdx = file.name.lastIndexOf('.');
-            outputName = (dotIdx !== -1 ? file.name.substring(0, dotIdx) : file.name) + '.mp4';
-          }
-
           processedResults.push({ name: outputName, blob: resultBlob });
 
           newSizeEl.textContent = formatBytes(resultBlob.size);
@@ -414,10 +382,10 @@
 
     async function compressImage(file) {
       const options = {
-        maxSizeMB: 10,
-        maxWidthOrHeight: 3840,
+        maxSizeMB: 20,
+        maxWidthOrHeight: 4096,
         useWebWorker: true,
-        initialQuality: 0.82
+        initialQuality: 0.95
       };
       return await imageCompression(file, options);
     }
@@ -431,7 +399,7 @@
 
       for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
         const page = await pdfDoc.getPage(pageNum);
-        const scale = 1.5;
+        const scale = 2.0;
         const viewport = page.getViewport({ scale: scale });
 
         const canvas = document.createElement('canvas');
@@ -441,7 +409,7 @@
 
         await page.render({ canvasContext: context, viewport: viewport }).promise;
 
-        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
         const jpgImageBytes = await fetch(jpgDataUrl).then(res => res.arrayBuffer());
         const jpgImage = await outPdf.embedJpg(jpgImageBytes);
 
@@ -458,44 +426,6 @@
 
       const pdfBytes = await outPdf.save();
       return new Blob([pdfBytes], { type: 'application/pdf' });
-    }
-
-    // --- 動画圧縮 (サイズ制限チェック追加) ---
-    async function compressVideo(file) {
-      // 250MB (250 * 1024 * 1024 バイト) を超える動画はメモリオーバーフロー防止のためエラー
-      const maxVideoSize = 250 * 1024 * 1024;
-      if (file.size > maxVideoSize) {
-        throw new Error('動画のサイズが大きすぎます（ブラウザ制限のため200MB以下を推奨）');
-      }
-
-      const ffmpeg = await getFFmpeg();
-      const { fetchFile } = FFmpeg;
-
-      const ext = file.name.substring(file.name.lastIndexOf('.')) || '.mp4';
-      const inName = `input_${Date.now()}${ext}`;
-      const outName = `output_${Date.now()}.mp4`;
-
-      ffmpeg.FS('writeFile', inName, await fetchFile(file));
-
-      // 高画質保持パラメータ (H.264 / CRF 22 / AAC 160k)
-      await ffmpeg.run(
-        '-i', inName,
-        '-vcodec', 'libx264',
-        '-crf', '22',
-        '-preset', 'ultrafast',
-        '-acodec', 'aac',
-        '-b:a', '160k',
-        outName
-      );
-
-      const data = ffmpeg.FS('readFile', outName);
-
-      try {
-        ffmpeg.FS('unlink', inName);
-        ffmpeg.FS('unlink', outName);
-      } catch (e) {}
-
-      return new Blob([data.buffer], { type: 'video/mp4' });
     }
 
     downloadAllBtn.addEventListener('click', async () => {
