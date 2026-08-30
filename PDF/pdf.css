@@ -51,18 +51,27 @@ p {
     margin-bottom: 20px;
 }
 
-/* フォーム要素の共通スタイル */
-#imageUpload {
-    margin: 10px 0 20px 0;
-    padding: 10px;
+/* フォーム要素の共通スタイル (ファイル選択・フォルダ選択ボタン用) */
+.upload-controls input[type="file"] {
+    display: none;
+}
+
+.file-select-btn {
+    display: block;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 15px;
+    text-align: center;
     border-radius: 6px;
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid var(--border-light);
-    background-color: var(--background-white);
     cursor: pointer;
-    font-size: 1rem;
-    color: var(--text-dark);
+    font-size: 0.95rem;
+    font-weight: 500;
+    box-sizing: border-box;
+    transition: background-color 0.3s;
+}
+
+.file-select-btn:hover {
+    background-color: var(--primary-hover);
 }
 
 #convertBtn {

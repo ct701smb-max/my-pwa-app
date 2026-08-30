@@ -17,11 +17,20 @@
 
     <div class="container">
         <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> 画像からPDFへの変換</h1>
-        <p>画像を選択で【ページの向き】を設定、ドラッグで並び順を調整。画像ファイルとPDFファイルの結合も可能。</p>
+        <p>ファイルまたはフォルダを選択で【ページの向き】を設定、ドラッグで並び順を調整。画像ファイルとPDFファイルの結合も可能。</p>
         
         <a href="cropper.html" class="sort-controls" style="text-decoration: none;"><button>画像のトリミング</button></a>
         
-        <input type="file" id="imageUpload" accept="image/*,application/pdf" multiple>
+        <div class="upload-controls" style="display: flex; gap: 10px; width: 100%; max-width: 400px; margin: 10px 0 20px 0;">
+            <div style="flex: 1; text-align: left;">
+                <label for="imageUpload" class="file-select-btn" style="display: block; background-color: var(--primary-color); color: white; padding: 10px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">ファイルを選択</label>
+                <input type="file" id="imageUpload" accept="image/*,application/pdf" multiple style="display: none;">
+            </div>
+            <div style="flex: 1; text-align: left;">
+                <label for="folderUpload" class="file-select-btn" style="display: block; background-color: #555555; color: white; padding: 10px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">フォルダを選択</label>
+                <input type="file" id="folderUpload" accept="image/*,application/pdf" multiple webkitdirectory directory style="display: none;">
+            </div>
+        </div>
 
         <div class="sort-controls">
             <button id="sortFilenameAscBtn" title="ファイル名昇順 (A→Z)">ファイル名順 (A↓)</button>
@@ -72,9 +81,9 @@
             <input type="text" id="pdfFilename" placeholder="例: documents_combined">
             <small>.pdfが自動で付きます</small>
         </div>
-<div class="sort-controls">
-        <button id="reloadBtn" onclick="location.reload()">🔄 アプリを更新</button>
-</div>
+        <div class="sort-controls">
+            <button id="reloadBtn" onclick="location.reload()">🔄 アプリを更新</button>
+        </div>
         <div id="progressContainerPdf" class="progress-container" style="display: none;">
             <p id="progressTextPdf" class="progress-text">準備中...</p>
             <div class="progress-bar-background">

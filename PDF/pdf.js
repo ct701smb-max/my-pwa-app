@@ -1,10 +1,11 @@
 const { PDFDocument, degrees } = window.PDFLib;
 const { jsPDF } = window.jspdf;
-// piexifjs がグローバル変数 piexif として利用できることを前提とします (今回はEXIF自動回転防止のため使用しません)
+// piexifjs がグローバル変数 piexif として利用できることを前提とします
 const piexif = window.piexif;
 
 // DOM要素を取得
 const imageUpload = document.getElementById('imageUpload');
+const folderUpload = document.getElementById('folderUpload');
 const convertBtn = document.getElementById('convertBtn');
 const previewArea = document.getElementById('previewArea');
 const pdfFilenameInput = document.getElementById('pdfFilename');
@@ -13,12 +14,12 @@ const sortFilenameDescBtn = document.getElementById('sortFilenameDescBtn');
 // このコントロールエリアを、画像ごとのページ向き設定に使用します
 const imageOrientationControls = document.getElementById('imageOrientationControls');
 
-// ★修正: ファイル読み込み用バナー関連のDOM要素 (上部)
+// ファイル読み込み用バナー関連のDOM要素 (上部)
 const progressContainerFile = document.getElementById('progressContainerFile');
 const progressBarFile = document.getElementById('progressBarFile');
 const progressTextFile = document.getElementById('progressTextFile');
 
-// ★修正: PDF変換用バナー関連のDOM要素 (下部)
+// PDF変換用バナー関連のDOM要素 (下部)
 const progressContainerPdf = document.getElementById('progressContainerPdf');
 const progressBarPdf = document.getElementById('progressBarPdf');
 const progressTextPdf = document.getElementById('progressTextPdf');
@@ -26,7 +27,7 @@ const progressTextPdf = document.getElementById('progressTextPdf');
 // 画像とPDFドキュメントを保持する配列 (一意なIDで管理)
 let uploadedDocuments = [];
 
-// ドラッグ＆ドロップ関連の変数 (ロジック本体は変わっていません)
+// ドラッグ＆ドロップ関連の変数
 let dragStartIndex = -1;
 let initialTouchY = null;
 let initialTouchX = null;
@@ -69,12 +70,12 @@ loadFont();
 
 
 // ------------------------------------
-// --- 個別ページ設定のUI制御とロジック (変更なし) ---
+// --- 個別ページ設定のUI制御とロジック ---
 // ------------------------------------
 
 /**
  * プレビュー要素がクリックされたときに個別のページ向き設定を表示し、
- * 初期チェック状態をグローバル設定に合わせるように修正
+ * 初期チェック状態をグローバル設定に合わせる
  * @param {object} docObj - ドキュメントオブジェクト
  */
 function displayImageOrientationControls(docObj) {
@@ -85,23 +86,20 @@ function displayImageOrientationControls(docObj) {
     
     // グローバル設定をチェック
     const globalOrientationElement = document.querySelector('input[name="globalPdfOrientation"]:checked');
-    const globalOrientation = globalOrientationElement ? globalOrientationElement.value : 'p'; // グローバル設定がない場合は 'p'
+    const globalOrientation = globalOrientationElement ? globalOrientationElement.value : 'p';
 
     // 画像のピクセルサイズから、画像本来の向きを再判定 (表示用)
     const isImageLandscape = docObj.image.width > docObj.image.height;
     
-    // 現在の個別設定（ユーザーがクリックして変更した場合の値、または初期値）
+    // 現在の個別設定
     const currentPageOrientation = docObj.pageOrientation;
     
     // 個別設定のラジオボタンの初期チェック状態を決定
-    // 1. ユーザーが既に個別設定を変更していれば、その値 (currentPageOrientation) を使う
-    // 2. 変更していなければ、グローバル設定 (globalOrientation) の値を初期チェック状態とする
     const initialCheckOrientation = docObj.pageOrientationWasChanged ? currentPageOrientation : globalOrientation;
     
-    // 最終的に適用されるべき向き (表示上の警告メッセージに使用 - 個別設定が優先)
+    // 最終的に適用されるべき向き
     const effectiveOrientation = docObj.pageOrientationWasChanged ? currentPageOrientation : globalOrientation;
     
-    // 画像の向きとページの向きが異なる場合は、ユーザーに注意を促すメッセージを表示
     let warningMessage = '';
     
     if (effectiveOrientation === 'p' && isImageLandscape) {
@@ -118,7 +116,6 @@ function displayImageOrientationControls(docObj) {
     } else {
         globalNote = `<small style="display: block; font-size: 0.8rem; color: #3498db; margin-bottom: 5px;">※ 現在、全体設定（${globalOrientation === 'p' ? '縦' : '横'}）に合わせています。変更する場合のみクリックしてください。</small>`;
     }
-
 
     imageOrientationControls.innerHTML = `
         <h3 style="font-size: 1rem; margin-bottom: 8px; text-align:center;">ファイル: ${docObj.fileName}</h3>
@@ -144,12 +141,10 @@ function displayImageOrientationControls(docObj) {
     imageOrientationControls.querySelectorAll(`input[name="pageOrientation_${docObj.id}"]`).forEach(radio => {
         radio.addEventListener('change', (e) => {
             const newOrientation = e.target.value;
-            // 個別の設定を更新し、変更フラグを立てる
             const doc = uploadedDocuments.find(doc => doc.id === docObj.id);
             doc.pageOrientation = newOrientation;
-            doc.pageOrientationWasChanged = true; // 変更されたフラグ
+            doc.pageOrientationWasChanged = true;
             
-            // 変更後、UIを更新して注意メッセージを反映
             displayImageOrientationControls(doc);
         });
     });
@@ -209,7 +204,7 @@ function createPreviewElement(docObj, index) {
     let content;
     if (docObj.type === 'image') {
         const imgElement = document.createElement('img');
-        imgElement.src = docObj.dataUrl; // 修正済みのData URLを使用
+        imgElement.src = docObj.dataUrl;
         imgElement.classList.add('preview-image');
         content = imgElement;
     } else {
@@ -234,7 +229,7 @@ function createPreviewElement(docObj, index) {
     fileNameSpan.title = docObj.fileName;
 
     wrapper.appendChild(numberSpan);
-    wrapper.appendChild(content); // 画像またはPDFアイコンを追加
+    wrapper.appendChild(content);
     wrapper.appendChild(deleteBtn);
     wrapper.appendChild(fileNameSpan);
 
@@ -253,46 +248,70 @@ function createPreviewElement(docObj, index) {
 }
 
 
-// ファイルが選択されたときの処理
-imageUpload.addEventListener('change', (event) => {
-    const files = event.target.files;
-    
+/**
+ * 共通のファイル処理コア関数
+ * @param {File[]} files 処理対象のファイル配列
+ * @param {boolean} isFolder フォルダ選択からの実行かどうか
+ */
+function processFiles(files, isFolder = false) {
     if (files.length > 0) {
-        // --- ファイルが選択された場合の処理 ---
         convertBtn.disabled = false;
         
-        // ★ 1. ファイル処理開始時に【ファイル用バナー】を表示・初期化
+        // 自然順ソート（ファイル名昇順 / フォルダ選択時は相対パスを優先）
+        files.sort((a, b) => {
+            const pathA = a.webkitRelativePath || a.name;
+            const pathB = b.webkitRelativePath || b.name;
+            return pathA.localeCompare(pathB, 'ja', { numeric: true });
+        });
+
+        // フォルダ選択時の処理：webkitRelativePathからルートフォルダ名を抽出してPDF名に自動セット
+        if (isFolder) {
+            for (let i = 0; i < files.length; i++) {
+                const relPath = files[i].webkitRelativePath;
+                if (relPath && relPath.includes('/')) {
+                    const folderName = relPath.split('/')[0];
+                    if (folderName && (!pdfFilenameInput.value || pdfFilenameInput.value.trim() === '')) {
+                        pdfFilenameInput.value = folderName;
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // ファイル処理開始時に【ファイル用バナー】を表示・初期化
         progressContainerFile.style.display = 'block';
         progressBarFile.style.width = '0%';
-        // 初期状態のテキストを正しく設定
         progressTextFile.textContent = `ファイルを読み込み中... (0 / ${files.length} ファイル) 0%`; 
         
-        // PDF変換用バナーは非表示にしておく
         progressContainerPdf.style.display = 'none';
         
-        let processedCount = 0; // 処理済みファイルカウンター
+        let processedCount = 0;
 
-        const filePromises = Array.from(files).map(file => {
+        const filePromises = files.map(file => {
             return new Promise(resolve => {
                 const reader = new FileReader();
                 
-                // ファイル処理が完了するたびにプログレスを更新するラッパー
                 const updateProgressAndResolve = (result) => {
                     processedCount++;
                     let progress = 0;
-    if (files.length > 0) {
-        progress = Math.round((processedCount / files.length) * 100);
-    }
+                    if (files.length > 0) {
+                        progress = Math.round((processedCount / files.length) * 100);
+                    }
                     
-                    // ★ ファイル用バナーを更新
                     progressBarFile.style.width = `${progress}%`;
                     progressTextFile.textContent = `ファイルを読み込み中... (${processedCount} / ${files.length} ファイル) ${progress}%`;
                     resolve(result);
                 };
 
+                // Macの隠しファイル（.DS_Storeなど）や無関係なファイルを除外する安全策
+                if (file.name.startsWith('.')) {
+                    updateProgressAndResolve(null);
+                    return;
+                }
+
                 if (file.type === 'application/pdf') {
                     reader.onload = (e) => {
-                        updateProgressAndResolve({ // プログレスを更新して解決
+                        updateProgressAndResolve({
                             type: 'pdf',
                             id: Date.now() + '-' + Math.random().toString(36).substring(2, 9),
                             arrayBuffer: e.target.result,
@@ -308,7 +327,6 @@ imageUpload.addEventListener('change', (event) => {
                         const dataUrl = e.target.result;
                         const img = new Image();
                         
-                        // 画像ロード後、Canvasに描画することでEXIF情報を剥がし、強制回転を防ぐ
                         img.onload = async () => {
                             let finalDataUrl = dataUrl;
                             const mimeType = file.type;
@@ -330,7 +348,7 @@ imageUpload.addEventListener('change', (event) => {
                             
                             const defaultOrientation = canvas.width > canvas.height ? 'l' : 'p';
 
-                            updateProgressAndResolve({ // プログレスを更新して解決
+                            updateProgressAndResolve({
                                 type: 'image',
                                 id: Date.now() + '-' + Math.random().toString(36).substring(2, 9),
                                 dataUrl: finalDataUrl,
@@ -342,7 +360,6 @@ imageUpload.addEventListener('change', (event) => {
                             });
                         };
                         img.onerror = () => {
-                            // 画像ロード失敗時もプログレスを更新
                             console.error(`画像の読み込みに失敗しました: ${file.name}`);
                             updateProgressAndResolve(null);
                         }
@@ -351,24 +368,22 @@ imageUpload.addEventListener('change', (event) => {
                     reader.readAsDataURL(file);
 
                 } else {
-                    updateProgressAndResolve(null); // サポートされていないファイルもプログレスを更新
+                    updateProgressAndResolve(null);
                 }
             });
         });
 
-        // ★ 2. すべてのPromiseが完了した後に【ファイル用バナー】を非表示
         Promise.all(filePromises).then(newDocuments => {
             newDocuments.filter(doc => doc !== null).forEach((docObj) => {
                 uploadedDocuments.push(docObj);
             });
             rebuildPreview();
 
-            // 最終表示と非表示
             progressTextFile.textContent = '✅ ファイル読み込み完了！';
             setTimeout(() => {
                 progressContainerFile.style.display = 'none';
                 convertBtn.disabled = uploadedDocuments.length === 0;
-            }, 1000); // 完了メッセージを1秒間表示
+            }, 1000);
         }).catch(error => {
             console.error("ファイル処理中にエラーが発生しました:", error);
             progressTextFile.textContent = '❌ ファイル処理エラー';
@@ -381,13 +396,25 @@ imageUpload.addEventListener('change', (event) => {
     } else if (uploadedDocuments.length === 0) {
         convertBtn.disabled = true;
     }
-    
+}
+
+// ファイル単体選択時のイベント
+imageUpload.addEventListener('change', (event) => {
+    const files = Array.from(event.target.files);
+    processFiles(files, false);
+    event.target.value = null;
+});
+
+// フォルダごと選択時のイベント
+folderUpload.addEventListener('change', (event) => {
+    const files = Array.from(event.target.files);
+    processFiles(files, true);
     event.target.value = null;
 });
 
 
 // ------------------------------------
-// --- ドラッグ＆ドロップ（PC/タッチ共通）ロジック (変更なし) ---
+// --- ドラッグ＆ドロップ（PC/タッチ共通）ロジック ---
 // ------------------------------------
 function handleDragStart(e) {
     dragStartIndex = Number(this.dataset.index);
@@ -540,7 +567,6 @@ function handleTouchEnd(e) {
             const fileId = currentDraggingElement.dataset.fileId;
             const docObj = uploadedDocuments.find(doc => doc.id === fileId);
             if (docObj) {
-                // タップ/クリックでページ向き設定を表示
                 displayImageOrientationControls(docObj);
             }
         }
@@ -579,7 +605,7 @@ function handleTouchEnd(e) {
 
 
 // ------------------------------------
-// --- ユーティリティ関数 (変更なし) ---
+// --- ユーティリティ関数 ---
 // ------------------------------------
 function startAutoscroll(direction) {
     if (autoscrollTimer) return;
@@ -681,18 +707,15 @@ async function createPDF() {
     convertBtn.disabled = true;
     convertBtn.textContent = '結合処理を開始...';
     
-    // ★ ファイル用バナーを非表示にし、PDF変換用バナーを表示・初期化する
     progressContainerFile.style.display = 'none';
     progressContainerPdf.style.display = 'block';
     progressBarPdf.style.width = '0%';
     progressTextPdf.textContent = `準備中... (0 / ${uploadedDocuments.length} ページ)`;
     
 
-    // グローバルなPDF向き設定を読み取る
     const globalOrientationElement = document.querySelector('input[name="globalPdfOrientation"]:checked');
-    const globalPdfOrientation = globalOrientationElement ? globalOrientationElement.value : 'p'; // デフォルトは縦
+    const globalPdfOrientation = globalOrientationElement ? globalOrientationElement.value : 'p';
 
-    // imageFit の値 ('fill' (余白なし) または 'fit' (見切れなし)) を受け取る
     const imageFit = document.querySelector('input[name="imageFit"]:checked').value;
     
     let outputFilename = pdfFilenameInput.value.trim() || 'combined_document';
@@ -705,62 +728,48 @@ async function createPDF() {
         
         let pdfLibFont = null;
         if (fontBytes) {
-            finalPdfDoc.registerFontkit(window.fontkit); // fontkitを登録
+            finalPdfDoc.registerFontkit(window.fontkit);
             pdfLibFont = await finalPdfDoc.embedFont(fontBytes);
         }
 
-        // A4サイズの定義 (point単位)
         const A4_WIDTH = 595.28;
         const A4_HEIGHT = 841.89;
         
-        // ★進行状況のカウンター
         let completedCount = 0;
         const totalDocuments = uploadedDocuments.length;
         
         for (const docObj of uploadedDocuments) {
             if (docObj.type === 'image') {
-                
-                // **** 修正後の優先順位ロジック (個別優先) ****
-                // 1. 個別設定の変更フラグが立っている場合、個別設定 (docObj.pageOrientation) を最優先
-                // 2. 変更フラグがない場合は、グローバル設定 (globalPdfOrientation) を使用
                 const pageOrientation = docObj.pageOrientationWasChanged 
                                              ? docObj.pageOrientation 
                                              : globalPdfOrientation;
                 
-                // 指定されたページ向きに応じて、PDFのページサイズを決定
-                const maxW = pageOrientation === 'p' ? A4_WIDTH : A4_HEIGHT; // 縦向きなら幅595、横向きなら幅841
-                const maxH = pageOrientation === 'p' ? A4_HEIGHT : A4_WIDTH; // 縦向きなら高さ841、横向きなら高さ595
+                const maxW = pageOrientation === 'p' ? A4_WIDTH : A4_HEIGHT;
+                const maxH = pageOrientation === 'p' ? A4_HEIGHT : A4_WIDTH;
 
                 const img = docObj.image;
-                const effectiveWidth = img.width; // EXIF補正を無視した画像の幅
-                const effectiveHeight = img.height; // EXIF補正を無視した画像の高さ
+                const effectiveWidth = img.width;
+                const effectiveHeight = img.height;
 
-                // 2. ページレイアウト計算
                 let w, h;
                 
                 if (imageFit === 'fill') {
-                    // **[余白ゼロ/強制引き伸ばし]** アスペクト比を無視し、ページ全体にフィットさせる
                     w = maxW;
                     h = maxH;
                 } else {
-                    // 'fit' **[見切れなし/余白あり]** アスペクト比を維持し、画像全体がページに収まるようにする
                     const scaleRatio = Math.min(maxW / effectiveWidth, maxH / effectiveHeight);
                     w = effectiveWidth * scaleRatio;
                     h = effectiveHeight * scaleRatio;
                 }
                 
-                // 画像を中央に配置するためのX, Y座標を計算
                 const x = (maxW - w) / 2;
                 const y = (maxH - h) / 2;
                 
-                // 3. PDF-libで新しいページを作成し、画像を埋め込む
-                // maxW, maxH で定義されたサイズ (個別に指定された縦または横) のページが作成される
                 const page = finalPdfDoc.addPage([maxW, maxH]);
                 
                 let embeddedImage;
                 let imageType = docObj.format === 'PNG' ? 'PNG' : 'JPEG';
 
-                // Data URLからBase64部分を取得
                 const base64Data = docObj.dataUrl.split(',')[1];
                 const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
                 
@@ -770,7 +779,6 @@ async function createPDF() {
                     embeddedImage = await finalPdfDoc.embedJpg(imageBytes);
                 }
 
-                // 4. 画像を描画 
                 page.drawImage(embeddedImage, {
                     x: x,
                     y: y,
@@ -779,33 +787,27 @@ async function createPDF() {
                 });
                 
             } else if (docObj.type === 'pdf') {
-                // PDFファイルの結合 (pdf-libを使用)
                 const existingPdfDoc = await PDFDocument.load(docObj.arrayBuffer);
                 const copiedPages = await finalPdfDoc.copyPages(existingPdfDoc, existingPdfDoc.getPageIndices());
                 
-                // PDF結合の場合は、元のページの向きを維持
                 copiedPages.forEach(page => finalPdfDoc.addPage(page));
             }
             
-            // ★PDF変換用バナーの進行状況を更新
             completedCount++;
             const progress = Math.round((completedCount / totalDocuments) * 100);
             
             progressBarPdf.style.width = `${progress}%`;
             progressTextPdf.textContent = `ページ生成中... (${completedCount} / ${totalDocuments} ページ) ${progress}%`;
             
-            // 進行状況の表示を更新するため、小さな遅延を設ける (ブラウザにレンダリングの機会を与える)
             await new Promise(resolve => setTimeout(resolve, 10)); 
         }
         
         if (finalPdfDoc.getPageCount() === 0) {
-            throw new Error("PDFページが生成されませんでした。処理できるファイルがありません。");
+            throw new Error("PDFページが生成されました。処理できるファイルがありません。");
         }
         
-        // ★最終処理の進捗表示
         progressTextPdf.textContent = '最終処理中... (ファイル保存)';
         progressBarPdf.style.width = '100%';
-        // 最終処理が非常に高速な場合があるため、視覚的なフィードバックとして少し待つ
         await new Promise(resolve => setTimeout(resolve, 500)); 
 
         const pdfBytes = await finalPdfDoc.save();
@@ -823,11 +825,9 @@ async function createPDF() {
         console.error("PDF生成中に致命的なエラーが発生しました:", error);
         alert(`PDF生成中にエラーが発生しました。\n詳細はコンソールをご確認ください。\nエラー: ${error.message}`);
     } finally {
-        // ★ 完了時、またはエラー時にPDF変換用バナーを非表示に戻す
         convertBtn.textContent = 'PDFに変換してダウンロード';
         convertBtn.disabled = uploadedDocuments.length === 0;
         
-        // 完了表示を数秒間見せた後、バナーを隠す
         progressTextPdf.textContent = '✅ 完了しました！ダウンロードを開始します。';
         setTimeout(() => {
             progressContainerPdf.style.display = 'none';
@@ -835,5 +835,4 @@ async function createPDF() {
     }
 }
 
-// 変換ボタンにイベントリスナーを設定
 convertBtn.addEventListener('click', createPDF);
