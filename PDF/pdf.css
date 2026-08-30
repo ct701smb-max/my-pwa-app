@@ -112,7 +112,6 @@ p {
     max-width: 400px;
     box-sizing: border-box;
     background-color: #fcfcfc;
-    /* ★修正点1: margin-selectorを左揃えにする */
     text-align: left; 
 }
 
@@ -126,7 +125,7 @@ p {
     font-weight: 600;
 }
 
-/* ★追加: margin-selector内の各オプションを調整 (左揃えのため) */
+/* margin-selector内の各オプションを調整 (左揃えのため) */
 .margin-selector div {
     padding-left: 5px; 
     margin: 8px 0;
@@ -136,7 +135,7 @@ p {
 .orientation-selector label, 
 .margin-selector label, 
 .image-orientation-selector label {
-    display: inline-block; /* 横並び (inline-blockに戻す) */
+    display: inline-block; /* 横並び */
     margin: 5px 12px;
     padding: 5px 0;
     cursor: pointer;
@@ -147,7 +146,6 @@ p {
 /* ラジオボタンのスタイル */
 .orientation-selector input[type="radio"], 
 .margin-selector input[type="radio"] {
-    /* display: block; の設定を削除し、デフォルトの inline に戻す */
     margin: 0; 
 }
 
@@ -180,10 +178,9 @@ input[type="radio"]:checked + label {
     margin-top: 5px;
 }
 
-/* プレビューエリア (縦折り返し表示) */
+/* プレビューエリア (縦幅を約半分に変更) */
 #previewArea {
-    /* プレビューエリアに高さを設定し、その中だけでスクロールを有効にする */
-    max-height: calc(100vh - 250px); 
+    max-height: 130px; 
     overflow-y: scroll; 
 }
 .preview-area {
@@ -191,9 +188,9 @@ input[type="radio"]:checked + label {
     margin-bottom: 20px;
     border: 2px dashed var(--border-light);
     background-color: var(--background-white);
-    padding: 15px 10px;
-    min-height: 100px;
-    max-height: 40vh;
+    padding: 12px 10px;
+    min-height: 80px;
+    max-height: 20vh; /* 縦幅を約半分に短縮 */
     overflow-y: auto;
     border-radius: 8px;
     width: 100%;
@@ -242,7 +239,7 @@ input[type="radio"]:checked + label {
     align-items: center;
     position: relative; 
     min-width: 90px;
-    cursor: grab; 
+    cursor: pointer; /* 選択方式に変更するためカーソルをpointerに変更 */
     padding: 8px; 
     border-radius: 6px;
     background-color: var(--background-light);
@@ -262,9 +259,11 @@ input[type="radio"]:checked + label {
     transform: scale(1.02);
 }
 
-.preview-image-wrapper:active,
-.preview-image-wrapper.dragging {
-    cursor: grabbing;
+/* 選択移動モードで移動対象として選ばれているファイルのスタイル */
+.preview-image-wrapper.move-source {
+    border: 2px solid #e67e22;
+    background-color: #fef5e7;
+    box-shadow: 0 0 8px rgba(230, 126, 34, 0.5);
 }
 
 /* 並び順の番号を表示するためのスタイル */
@@ -298,34 +297,9 @@ input[type="radio"]:checked + label {
     display: block;
     padding: 0 2px;
     
-    /* ファイル名自体のテキスト選択を無効化 */
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-}
-
-/* ドラッグ中の要素のスタイル - 座標追従のために修正 */
-.dragging {
-    opacity: 0.8; 
-    position: fixed !important; 
-    z-index: 20; 
-    transform: none !important; 
-    pointer-events: none; 
-}
-
-/* ドロップ先の候補のスタイル */
-.drag-over {
-    border: 2px dashed var(--primary-color);
-    background-color: #e6f2f2; 
-}
-
-/* ドラッグ中に元の場所を保持するためのプレースホルダ */
-.placeholder {
-    background-color: rgba(0, 128, 128, 0.2); 
-    border: 2px dashed var(--primary-color);
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    /* サイズはJavaScriptで設定される */
 }
 
 /* プレビュー画像 */
@@ -451,8 +425,8 @@ input[type="radio"]:checked + label {
 
 .progress-bar {
     height: 100%;
-    width: 0%; /* 初期値 */
+    width: 0%;
     background-color: var(--primary-color);
-    transition: width 0.3s ease; /* 滑らかなアニメーション */
+    transition: width 0.3s ease;
     border-radius: 6px;
 }

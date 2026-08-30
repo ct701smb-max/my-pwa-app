@@ -17,10 +17,8 @@
 
     <div class="container">
         <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> 画像からPDFへの変換</h1>
-        <p>ファイルまたはフォルダを選択で【ページの向き】を設定、ドラッグで並び順を調整。画像ファイルとPDFファイルの結合も可能。</p>
-        
-        <a href="cropper.html" class="sort-controls" style="text-decoration: none;"><button>画像のトリミング</button></a>
-        
+        <p>プレビューエリアを選択で拡大、移動元と移動先のファイルを選択して並び順を変更可能。<br>画像ファイルとPDFファイルの結合も可能。</p>
+                
         <div class="upload-controls" style="display: flex; gap: 10px; width: 100%; max-width: 400px; margin: 10px 0 20px 0;">
             <div style="flex: 1; text-align: left;">
                 <label for="imageUpload" class="file-select-btn" style="display: block; background-color: var(--primary-color); color: white; padding: 10px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">ファイルを選択</label>
@@ -43,6 +41,16 @@
                 <div id="progressBarFile" class="progress-bar"></div>
             </div>
         </div>
+        
+        <!-- ファイル移動モード用の操作コントロール（プレビューエリアが全画面/拡大されたときのみ表示・有効化） -->
+        <div id="moveControlsContainer" style="display: none; background: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center;">
+            <p id="moveStatusText" style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: #333;">ファイル移動モード: 移動したいファイルを選択してください</p>
+            <div style="display: flex; justify-content: center; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <button id="cancelMoveBtn" style="padding: 4px 10px; font-size: 0.8rem; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; display: none;">選択解除</button>
+            </div>
+        </div>
+
+        <!-- プレビューエリア：clickイベントのバブリングを妨げないよう変更 -->
         <div id="previewArea" class="preview-area">
         </div>
 

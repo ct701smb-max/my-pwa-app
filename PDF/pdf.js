@@ -14,6 +14,11 @@ const sortFilenameDescBtn = document.getElementById('sortFilenameDescBtn');
 // このコントロールエリアを、画像ごとのページ向き設定に使用します
 const imageOrientationControls = document.getElementById('imageOrientationControls');
 
+// ファイル移動モード関連のDOM要素
+const moveControlsContainer = document.getElementById('moveControlsContainer');
+const moveStatusText = document.getElementById('moveStatusText');
+const cancelMoveBtn = document.getElementById('cancelMoveBtn');
+
 // ファイル読み込み用バナー関連のDOM要素 (上部)
 const progressContainerFile = document.getElementById('progressContainerFile');
 const progressBarFile = document.getElementById('progressBarFile');
@@ -27,22 +32,8 @@ const progressTextPdf = document.getElementById('progressTextPdf');
 // 画像とPDFドキュメントを保持する配列 (一意なIDで管理)
 let uploadedDocuments = [];
 
-// ドラッグ＆ドロップ関連の変数
-let dragStartIndex = -1;
-let initialTouchY = null;
-let initialTouchX = null;
-let currentDraggingElement = null;
-const TOUCH_DRAG_THRESHOLD = 10;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
-let isDragging = false;
-let rafId = null;
-let currentTouchX = 0;
-let currentTouchY = 0;
-const AUTOSCROLL_THRESHOLD = 50;
-const AUTOSCROLL_SPEED = 10;
-const AUTOSCROLL_INTERVAL = 30;
-let autoscrollTimer = null;
+// ファイル選択方式による移動用変数
+let selectedMoveSourceId = null; // 移動元として選択されたファイルID
 
 // 日本語フォント設定
 const FONT_PATH = 'assets/fonts/NotoSansJP-Regular.ttf';
@@ -151,39 +142,120 @@ function displayImageOrientationControls(docObj) {
 }
 
 
-// プレビューエリアのクリックリスナー
+// ------------------------------------
+// --- プレビューエリアクリック・フルスクリーン管理 ---
+// ------------------------------------
+
+// プレビューエリア自体のクリック（背景クリックで全画面切り替え）
 previewArea.addEventListener('click', (e) => {
-    const wrapper = e.target.closest('.preview-image-wrapper');
-    if (wrapper) {
-        const fileId = wrapper.dataset.fileId;
-        const docObj = uploadedDocuments.find(doc => doc.id === fileId);
-        if (docObj) {
-            displayImageOrientationControls(docObj);
-        }
-    } else {
+    // 各ファイルラッパーが直接クリックされた場合はバブリングで処理されるため、
+    // プレビューエリアの背景部分がクリックされたときのみ全画面をトグル
+    if (e.target === previewArea) {
         toggleFullscreen(previewArea);
     }
 });
 
+// フルスクリーン状態が変化したときの処理
 document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && currentDraggingElement && currentDraggingElement.classList.contains('dragging')) {
-        handleTouchEnd(null);
+    const isFullscreen = !!document.fullscreenElement;
+    if (isFullscreen) {
+        moveControlsContainer.style.display = 'block';
+    } else {
+        moveControlsContainer.style.display = 'none';
+        resetMoveSelection(); // フルスクリーン解除時は移動選択をリセット
     }
 });
 
+function toggleFullscreen(element) {
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        element.requestFullscreen().catch(err => {
+            console.error(`全画面表示を有効にできませんでした: ${err.message} (${err.name})`);
+            alert("ブラウザの設定により全画面表示がブロックされました。");
+        });
+    }
+}
+
+
+// ------------------------------------
+// --- 選択方式によるファイル移動ロジック ---
+// ------------------------------------
 
 /**
- * requestAnimationFrameによって実行されるアニメーションループ (ドラッグ中の要素の位置更新)
+ * ファイルプレビュー要素がクリックされたときの処理
  */
-function updateDragPosition() {
-    if (!currentDraggingElement || !isDragging) {
-        rafId = null;
+function handlePreviewItemClick(docObj, wrapperElement) {
+    const isFullscreen = !!document.fullscreenElement;
+
+    // プレビューエリアが拡大（フルスクリーン）されていないときは、従来の個別向き設定のみ
+    if (!isFullscreen) {
+        displayImageOrientationControls(docObj);
         return;
     }
-    currentDraggingElement.style.left = `${currentTouchX - dragOffsetX}px`;
-    currentDraggingElement.style.top = `${currentTouchY - dragOffsetY}px`;
-    rafId = requestAnimationFrame(updateDragPosition);
+
+    // --- プレビューエリア拡大時のファイル移動ロジック ---
+    if (!selectedMoveSourceId) {
+        // ステップ1: まだ移動元が選ばれていない場合 -> このファイルを選択元にする
+        selectedMoveSourceId = docObj.id;
+        wrapperElement.classList.add('move-source');
+        moveStatusText.textContent = `「${docObj.fileName}」を選択中。移動先のファイルをクリックしてください。`;
+        cancelMoveBtn.style.display = 'inline-block';
+    } else {
+        // ステップ2: 既に移動元が選ばれている場合 -> このファイルを移動先として実行
+        if (selectedMoveSourceId === docObj.id) {
+            // 同じファイルがクリックされた場合は選択を解除
+            resetMoveSelection();
+            return;
+        }
+
+        const sourceIndex = uploadedDocuments.findIndex(d => d.id === selectedMoveSourceId);
+        const targetIndex = uploadedDocuments.findIndex(d => d.id === docObj.id);
+
+        if (sourceIndex !== -1 && targetIndex !== -1) {
+            // 移動先のファイルが移動元より「後ろ」にある場合は直後に、「前」にある場合は直前に配置する
+            const movePosition = targetIndex > sourceIndex ? 'after' : 'before';
+            
+            // 配列から移動元を取り出す
+            const [movedDoc] = uploadedDocuments.splice(sourceIndex, 1);
+
+            // ターゲットのインデックスを再取得（spliceによってインデックスがずれる可能性があるため再計算）
+            let newTargetIndex = uploadedDocuments.findIndex(d => d.id === docObj.id);
+
+            if (movePosition === 'after') {
+                newTargetIndex += 1;
+            }
+            // 'before' の場合は newTargetIndex のままでその直前に挿入される
+
+            // 指定位置に挿入
+            uploadedDocuments.splice(newTargetIndex, 0, movedDoc);
+
+            // プレビューとインデックスを再構築
+            rebuildPreview();
+        }
+
+        // 移動完了後に選択状態をリセット
+        resetMoveSelection();
+    }
 }
+
+/**
+ * 移動選択状態をリセットする
+ */
+function resetMoveSelection() {
+    selectedMoveSourceId = null;
+    document.querySelectorAll('.preview-image-wrapper').forEach(el => {
+        el.classList.remove('move-source');
+    });
+    moveStatusText.textContent = 'ファイル移動モード: 移動したいファイルを選択してください';
+    cancelMoveBtn.style.display = 'none';
+}
+
+cancelMoveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    resetMoveSelection();
+});
+
 
 /**
  * プレビュー要素を生成し、イベントリスナーを設定する関数
@@ -192,11 +264,15 @@ function createPreviewElement(docObj, index) {
     const wrapper = document.createElement('div');
     wrapper.classList.add('preview-image-wrapper');
     wrapper.classList.add(docObj.type === 'pdf' ? 'preview-pdf-wrapper' : 'preview-image-item');
-    wrapper.setAttribute('draggable', true);
     wrapper.dataset.index = index;
     wrapper.dataset.fileId = docObj.id;
     wrapper.classList.add('no-select');
     
+    // 既に移動元として選択されているファイルであればクラスを付与維持
+    if (selectedMoveSourceId === docObj.id) {
+        wrapper.classList.add('move-source');
+    }
+
     const numberSpan = document.createElement('span');
     numberSpan.classList.add('sequence-number');
     numberSpan.textContent = index + 1;
@@ -220,6 +296,9 @@ function createPreviewElement(docObj, index) {
     deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const currentIndex = Number(wrapper.dataset.index);
+        if (selectedMoveSourceId === docObj.id) {
+            resetMoveSelection();
+        }
         removeDocument(currentIndex);
     });
 
@@ -233,13 +312,12 @@ function createPreviewElement(docObj, index) {
     wrapper.appendChild(deleteBtn);
     wrapper.appendChild(fileNameSpan);
 
-    wrapper.addEventListener('dragstart', handleDragStart);
-    wrapper.addEventListener('dragover', handleDragOver);
-    wrapper.addEventListener('drop', handleDrop);
-    wrapper.addEventListener('dragend', handleDragEnd);
-    wrapper.addEventListener('touchstart', handleTouchStart);
-    wrapper.addEventListener('touchmove', handleTouchMove, { passive: false });
-    wrapper.addEventListener('touchend', handleTouchEnd);
+    // 選択方式によるクリックイベント
+    wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handlePreviewItemClick(docObj, wrapper);
+    });
+
     wrapper.addEventListener('contextmenu', (e) => {
         e.preventDefault();
     });
@@ -414,223 +492,8 @@ folderUpload.addEventListener('change', (event) => {
 
 
 // ------------------------------------
-// --- ドラッグ＆ドロップ（PC/タッチ共通）ロジック ---
-// ------------------------------------
-function handleDragStart(e) {
-    dragStartIndex = Number(this.dataset.index);
-    this.classList.add('dragging');
-    e.dataTransfer.setData('text/plain', dragStartIndex);
-}
-
-function handleDragOver(e) {
-    e.preventDefault();
-    this.classList.add('drag-over');
-}
-
-function handleDragEnd(e) {
-    document.querySelectorAll('.preview-image-wrapper').forEach(item => {
-        item.classList.remove('dragging', 'drag-over');
-    });
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    this.classList.remove('drag-over');
-
-    const dropEndIndex = Number(this.dataset.index);
-
-    if (dragStartIndex !== -1 && dragStartIndex !== dropEndIndex) {
-        const draggedItem = previewArea.children[dragStartIndex];
-        const targetItem = previewArea.children[dropEndIndex];
-        
-        if (dragStartIndex < dropEndIndex) {
-            previewArea.insertBefore(draggedItem, targetItem.nextSibling);
-        } else {
-            previewArea.insertBefore(draggedItem, targetItem);
-        }
-        
-        arrayMove(uploadedDocuments, dragStartIndex, dropEndIndex);
-
-        updatePreviewIndices();
-    }
-}
-
-function handleTouchStart(e) {
-    if (e.touches.length !== 1) return;
-    const wrapper = this;
-    dragStartIndex = Number(wrapper.dataset.index);
-    initialTouchX = e.touches[0].clientX;
-    initialTouchY = e.touches[0].clientY;
-    currentDraggingElement = wrapper;
-    const rect = wrapper.getBoundingClientRect();
-    dragOffsetX = initialTouchX - rect.left;
-    dragOffsetY = initialTouchY - rect.top;
-    
-    currentDraggingElement.touchDragTimer = setTimeout(() => {
-        currentDraggingElement.classList.add('dragging');
-        document.body.style.overflow = 'hidden';
-        
-        const placeholder = document.createElement('div');
-        placeholder.classList.add('placeholder');
-        placeholder.style.width = wrapper.offsetWidth + 'px';
-        placeholder.style.height = wrapper.offsetHeight + 'px';
-        
-        wrapper.parentNode.insertBefore(placeholder, wrapper);
-        
-        currentTouchX = initialTouchX;
-        currentTouchY = initialTouchY;
-        
-        isDragging = true;
-        if (!rafId) {
-            rafId = requestAnimationFrame(updateDragPosition);
-        }
-    }, 100);
-}
-
-function handleTouchMove(e) {
-    if (!currentDraggingElement || e.touches.length !== 1) return;
-    currentTouchX = e.touches[0].clientX;
-    currentTouchY = e.touches[0].clientY;
-    const diffX = Math.abs(currentTouchX - initialTouchX);
-    const diffY = Math.abs(currentTouchY - initialTouchY);
-
-    if (currentDraggingElement.touchDragTimer) {
-        if (diffX > TOUCH_DRAG_THRESHOLD || diffY > TOUCH_DRAG_THRESHOLD) {
-            clearTimeout(currentDraggingElement.touchDragTimer);
-            currentDraggingElement.touchDragTimer = null;
-            return;
-        }
-    }
-
-    if (currentDraggingElement.classList.contains('dragging')) {
-        e.preventDefault();
-        isDragging = true;
-        if (!rafId) {
-             rafId = requestAnimationFrame(updateDragPosition);
-        }
-
-        const clientY = currentTouchY;
-        const previewRect = previewArea.getBoundingClientRect();
-        let scrollDirection = 0;
-        if (clientY < previewRect.top + AUTOSCROLL_THRESHOLD) {
-            scrollDirection = -1;
-        } else if (clientY > previewRect.bottom - AUTOSCROLL_THRESHOLD) {
-            scrollDirection = 1;
-        }
-        if (scrollDirection !== 0) {
-            startAutoscroll(scrollDirection);
-        } else {
-            stopAutoscroll();
-        }
-
-        const targetElement = document.elementFromPoint(currentTouchX, currentTouchY);
-        if (targetElement) {
-            let dropTargetWrapper = targetElement.closest('.preview-image-wrapper');
-            if (dropTargetWrapper) {
-                const placeholder = previewArea.querySelector('.placeholder');
-                if (placeholder && dropTargetWrapper !== currentDraggingElement) {
-                    const rect = dropTargetWrapper.getBoundingClientRect();
-                    const targetCenterY = rect.top + rect.height / 2;
-                    const children = Array.from(previewArea.children);
-                    const placeholderIndex = children.indexOf(placeholder);
-                    const targetIndexInDom = children.indexOf(dropTargetWrapper);
-                    
-                    if (placeholderIndex !== targetIndexInDom) {
-                        if (currentTouchY > targetCenterY && placeholderIndex < targetIndexInDom) {
-                            previewArea.insertBefore(placeholder, dropTargetWrapper.nextSibling);
-                        } else if (currentTouchY < targetCenterY && placeholderIndex > targetIndexInDom) {
-                            previewArea.insertBefore(placeholder, dropTargetWrapper);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-function handleTouchEnd(e) {
-    if (!currentDraggingElement) return;
-
-    stopAutoscroll();
-    document.body.style.overflow = '';
-
-    if (rafId) {
-        cancelAnimationFrame(rafId);
-    }
-    isDragging = false;
-    rafId = null;
-
-    if (currentDraggingElement.touchDragTimer) {
-        clearTimeout(currentDraggingElement.touchDragTimer);
-        currentDraggingElement.touchDragTimer = null;
-        if (!currentDraggingElement.classList.contains('dragging')) {
-            const fileId = currentDraggingElement.dataset.fileId;
-            const docObj = uploadedDocuments.find(doc => doc.id === fileId);
-            if (docObj) {
-                displayImageOrientationControls(docObj);
-            }
-        }
-    }
-
-    if (currentDraggingElement.classList.contains('dragging')) {
-        const placeholder = previewArea.querySelector('.placeholder');
-        
-        if (placeholder) {
-            placeholder.parentNode.insertBefore(currentDraggingElement, placeholder);
-            placeholder.remove();
-            
-            const newOrder = Array.from(previewArea.children)
-                .filter(el => el.classList.contains('preview-image-wrapper'))
-                .map(el => {
-                    const fileId = el.dataset.fileId;
-                    return uploadedDocuments.find(doc => doc.id === fileId);
-                });
-                
-            uploadedDocuments = newOrder.filter(doc => doc);
-            
-            updatePreviewIndices();
-        }
-        
-        currentDraggingElement.removeAttribute('style');
-    }
-
-    currentDraggingElement.classList.remove('dragging', 'drag-over');
-    dragStartIndex = -1;
-    initialTouchY = null;
-    initialTouchX = null;
-    currentDraggingElement = null;
-    dragOffsetX = 0;
-    dragOffsetY = 0;
-}
-
-
-// ------------------------------------
 // --- ユーティリティ関数 ---
 // ------------------------------------
-function startAutoscroll(direction) {
-    if (autoscrollTimer) return;
-    autoscrollTimer = setInterval(() => {
-        previewArea.scrollBy(0, direction * AUTOSCROLL_SPEED);
-    }, AUTOSCROLL_INTERVAL);
-}
-function stopAutoscroll() {
-    if (autoscrollTimer) {
-        clearInterval(autoscrollTimer);
-        autoscrollTimer = null;
-    }
-}
-
-function toggleFullscreen(element) {
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-    }
-    else {
-        element.requestFullscreen().catch(err => {
-            console.error(`全画面表示を有効にできませんでした: ${err.message} (${err.name})`);
-            alert("ブラウザの設定により全画面表示がブロックされました。");
-        });
-    }
-}
 
 function rebuildPreview() {
     previewArea.innerHTML = '';
@@ -641,7 +504,9 @@ function rebuildPreview() {
     });
     
     updatePreviewIndices();
-    imageOrientationControls.innerHTML = '<p style="font-size: 0.9rem; color: #888; margin: 5px 0;">画像をクリックすると、このエリアに個別のページ向き設定が表示されます。</p>';
+    if (!document.fullscreenElement) {
+        imageOrientationControls.innerHTML = '<p style="font-size: 0.9rem; color: #888; margin: 5px 0;">画像をクリックすると、このエリアに個別のページ向き設定が表示されます。</p>';
+    }
 }
 
 function updatePreviewIndices() {
@@ -652,12 +517,6 @@ function updatePreviewIndices() {
     });
 }
 
-function arrayMove(arr, fromIndex, toIndex) {
-    const element = arr[fromIndex];
-    arr.splice(fromIndex, 1);
-    arr.splice(toIndex, 0, element);
-}
-
 function removeDocument(index) {
     if (index >= 0 && index < uploadedDocuments.length) {
         uploadedDocuments.splice(index, 1);
@@ -665,7 +524,9 @@ function removeDocument(index) {
         if (uploadedDocuments.length === 0) {
             convertBtn.disabled = true;
         }
-        imageOrientationControls.innerHTML = '<p style="font-size: 0.9rem; color: #888; margin: 5px 0;">画像をクリックすると、このエリアに個別のページ向き設定が表示されます。</p>';
+        if (!document.fullscreenElement) {
+            imageOrientationControls.innerHTML = '<p style="font-size: 0.9rem; color: #888; margin: 5px 0;">画像をクリックすると、このエリアに個別のページ向き設定が表示されます。</p>';
+        }
     }
 }
 
@@ -678,6 +539,7 @@ sortFilenameAscBtn.addEventListener('click', () => {
         }
         return 0;
     });
+    resetMoveSelection();
     rebuildPreview();
 });
 
@@ -690,6 +552,7 @@ sortFilenameDescBtn.addEventListener('click', () => {
         }
         return 0;
     });
+    resetMoveSelection();
     rebuildPreview();
 });
 
