@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高画質・高圧縮 動画コンプレッサー</title>
+    <!-- SharedArrayBufferエラー対策用 -->
+    <script src="https://unpkg.com/coi-serviceworker"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-xl w-full bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700">
+        <h1 class="text-2xl font-bold mb-2 text-center text-indigo-400">Web動画コンプレッサー</h1>
+        <p class="text-sm text-gray-400 mb-6 text-center">
+            人間の視覚特性に合わせた最適化で、画質を保ったまま限界までファイルサイズを圧縮します。
+        </p>
+
+        <!-- ファイル選択エリア -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="videoFile">動画ファイルを選択 (大容量対応)</label>
+            <input type="file" id="videoFile" accept="video/*" 
+                class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+        </div>
+
+        <!-- 圧縮設定情報 -->
+        <div class="bg-gray-900 p-4 rounded-xl mb-6 text-xs text-gray-300 space-y-1">
+            <p><strong>コーデック:</strong> H.264 (libx264) + AAC</p>
+            <p><strong>画質制御:</strong> CRF 28 (人の目で劣化を感じにくい限界値)</p>
+        </div>
+
+        <!-- 進捗状況 -->
+        <div id="progressContainer" class="hidden mb-6">
+            <div class="flex justify-between text-sm mb-1">
+                <span id="statusText">処理中...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- 実行ボタン -->
+        <button id="compressBtn" disabled 
+            class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:cursor-not-allowed font-semibold rounded-xl transition duration-200 shadow-lg">
+            圧縮を開始する
+        </button>
+
+        <!-- ダウンロードリンク表示エリア -->
+        <div id="resultContainer" class="mt-6 hidden text-center">
+            <p class="text-green-400 font-semibold mb-2">圧縮が完了しました！</p>
+            <a id="downloadLink" class="inline-block py-2 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition duration-200">
+                圧縮ファイルをダウンロード
+            </a>
+        </div>
+    </div>
+
+    <!-- FFmpeg.wasm の読み込み -->
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+
+    <script>
+        const { FFmpeg } = FFmpegWASM;
+        let ffmpeg = null;
+
+        const fileInput = document.getElementById('videoFile');
+        const compressBtn = document.getElementById('compressBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const statusText = document.getElementById('statusText');
+        const resultContainer = document.getElementById('resultContainer');
+        const downloadLink = document.getElementById('downloadLink');
+
+        let selectedFile = null;
+
+        fileInput.addEventListener('change', (e) => {
+            selectedFile = e.target.files[0];
+            compressBtn.disabled = !selectedFile;
+        });
+
+        async function initFFmpeg() {
+            if (ffmpeg) return;
+            statusText.textContent = '圧縮エンジンを読み込んでいます（初回は少し時間がかかります）...';
+            progressContainer.classList.remove('hidden');
+
+            ffmpeg = new FFmpeg();
+            
+            ffmpeg.on('progress', ({ progress }) => {
+                const percent = Math.round(progress * 100);
+                if (percent >= 0 && percent <= 100) {
+                    progressBar.style.width = `${percent}%`;
+                    progressPercent.textContent = `${percent}%`;
+                }
+            });
+
+            await ffmpeg.load({
+                coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js',
+                wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm',
+            });
+        }
+
+        compressBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            compressBtn.disabled = true;
+            fileInput.disabled = true;
+            resultContainer.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+
+            try {
+                await initFFmpeg();
+
+                statusText.textContent = 'ファイルを読み込んでいます...';
+                const inputName = 'input.mp4';
+                const outputName = 'output.mp4';
+
+                const data = await selectedFile.arrayBuffer();
+                await ffmpeg.writeFile(inputName, new Uint8Array(data));
+
+                statusText.textContent = '高画質を維持しながら圧縮中...';
+
+                await ffmpeg.exec([
+                    '-i', inputName,
+                    '-c:v', 'libx264',
+                    '-crf', '28',
+                    '-preset', 'medium',
+                    '-pix_fmt', 'yuv420p',
+                    '-c:a', 'aac',
+                    '-b:a', '128k',
+                    outputName
+                ]);
+
+                statusText.textContent = 'ファイルを作成中...';
+                const outputData = await ffmpeg.readFile(outputName);
+                const blob = new Blob([outputData.buffer], { type: 'video/mp4' });
+                const url = URL.createObjectURL(blob);
+
+                downloadLink.href = url;
+                downloadLink.download = `compressed_${selectedFile.name}`;
+                
+                progressContainer.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+
+            } catch (error)  {
+                console.error(error);
+                statusText.textContent = 'エラーが発生しました。F12キーでコンソールを確認してください。';
+            } finally {
+                compressBtn.disabled = false;
+                fileInput.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
