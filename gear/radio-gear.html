@@ -1318,220 +1318,322 @@ function initGear() {
 }
 
     // ==========================================
-    // ③ ラジオ・電波シミュレーター JS
-    // ==========================================
-    let radioCanvas = document.getElementById('radioCanvas');
-    let radioCtx = radioCanvas.getContext('2d');
-    let radioTime = 0;
+// ③ ラジオ・電波シミュレーター JS（音声対応版）
+// ==========================================
+let radioCanvas = document.getElementById('radioCanvas');
+let radioCtx = radioCanvas.getContext('2d');
+let radioTime = 0;
 
-    const FM_STATIONS = [
-        { freq: 76.5, name: "FM COCOLO" },
-        { freq: 80.2, name: "FM802" },
-        { freq: 85.1, name: "FM大阪" },
-        { freq: 88.1, name: "NHK大阪FM" },
-        { freq: 90.6, name: "MBSラジオ (ワイド)" },
-        { freq: 91.1, name: "OBCラジオ大阪 (ワイド)" },
-        { freq: 91.9, name: "ABCラジオ (ワイド)" }
-    ];
+// ------------------------------------------
+// Web Audio API & 音声再生用の変数
+// ------------------------------------------
+let audioCtx = null;
+let noiseNode = null;
+let noiseGain = null;
+const audioPlayer = new Audio();
+audioPlayer.loop = true;
+let currentAudioUrl = "";
 
-    const AM_STATIONS = [
-        { freq: 666,  name: "NHK大阪第1" },
-        { freq: 1008, name: "ABCラジオ" },
-        { freq: 1143, name: "KBS京都" },
-        { freq: 1179, name: "MBSラジオ" },
-        { freq: 1314, name: "OBCラジオ大阪" },
-        { freq: 1431, name: "WBS和歌山放送" }
-    ];
+// 各局のデータ（audioUrlに音声ファイルのパスを指定）
+const FM_STATIONS = [
+    { freq: 76.5, name: "FM COCOLO", audioUrl: "audio/cocolo.mp3" },
+    { freq: 80.2, name: "FM802", audioUrl: "audio/fm802.mp3" },
+    { freq: 85.1, name: "FM大阪", audioUrl: "audio/fmosaka.mp3" },
+    { freq: 88.1, name: "NHK大阪FM", audioUrl: "audio/nhkfm.mp3" },
+    { freq: 90.6, name: "MBSラジオ (ワイド)", audioUrl: "audio/mbs_fm.mp3" },
+    { freq: 91.1, name: "OBCラジオ大阪 (ワイド)", audioUrl: "audio/obc_fm.mp3" },
+    { freq: 91.9, name: "ABCラジオ (ワイド)", audioUrl: "audio/abc_fm.mp3" }
+];
 
-    function tuneToStation(freq, mode) {
-        const amRadio = document.querySelector('input[name="modulation"][value="AM"]');
-        const fmRadio = document.querySelector('input[name="modulation"][value="FM"]');
-        const slider = document.getElementById('tuningSlider');
+const AM_STATIONS = [
+    { freq: 666,  name: "NHK大阪第1", audioUrl: "audio/nhk1.mp3" },
+    { freq: 1008, name: "ABCラジオ", audioUrl: "audio/abc_am.mp3" },
+    { freq: 1143, name: "KBS京都", audioUrl: "audio/kbs.mp3" },
+    { freq: 1179, name: "MBSラジオ", audioUrl: "audio/mbs_am.mp3" },
+    { freq: 1314, name: "OBCラジオ大阪", audioUrl: "audio/obc_am.mp3" },
+    { freq: 1431, name: "WBS和歌山放送", audioUrl: "audio/wbs.mp3" }
+];
 
-        if (mode === 'AM' && amRadio && !amRadio.checked) {
-            amRadio.checked = true;
-            onModulationChange();
-        } else if (mode === 'FM' && fmRadio && !fmRadio.checked) {
-            fmRadio.checked = true;
-            onModulationChange();
+// ------------------------------------------
+// オーディオ初期化（初回ユーザー操作時に起動）
+// ------------------------------------------
+function initAudioEngine() {
+    if (audioCtx) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
         }
-
-        if (mode === 'AM') {
-            slider.value = freq.toString();
-        } else {
-            slider.value = Math.round(freq * 10).toString();
-        }
-        updateRadioParams();
+        return;
     }
 
-    function onModulationChange() {
-        const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
-        const slider = document.getElementById('tuningSlider');
-        const minLabel = document.getElementById('tuningMinLabel');
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContextClass();
 
-        if (isAM) {
-            slider.min = "531";
-            slider.max = "1440";
-            slider.step = "9"; 
-            slider.value = "666";
-            minLabel.textContent = "531 kHz";
-        } else {
-            slider.min = "760"; 
-            slider.max = "920"; 
-            slider.step = "1";   
-            slider.value = "800"; 
-            minLabel.textContent = "76.0 MHz";
-        }
-        updateRadioParams();
+    // 1秒分のホワイトノイズ（雑音）バッファを生成
+    const bufferSize = audioCtx.sampleRate;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1; // -1.0 〜 1.0 のランダム値
     }
 
-    function updateRadioParams() {
-        const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
-        const rawVal = parseFloat(document.getElementById('tuningSlider').value);
-        const valSpan = document.getElementById('tuningVal');
-        const infoDiv = document.getElementById('stationListInfo');
-        
-        if (isAM) {
-            valSpan.textContent = rawVal + ' kHz';
-            let buttonsHTML = AM_STATIONS.map(st => {
-                const activeClass = (rawVal === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
-                return `
-                    <button onclick="tuneToStation(${st.freq}, 'AM')" style="flex: 1 1 calc(25% - 8px); min-width: 100px; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-sizing: border-box; text-align: center; ${activeClass}">
-                        📻 ${st.freq} kHz<br><span style="font-size: 9px; font-weight: normal; opacity: 0.85; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${st.name}</span>
-                    </button>
-                `;
-            }).join('');
+    // ノイズ音源ノードの作成
+    noiseNode = audioCtx.createBufferSource();
+    noiseNode.buffer = noiseBuffer;
+    noiseNode.loop = true;
 
-            infoDiv.innerHTML = `
-                <strong style="display: block; margin-bottom: 8px;">📍 大阪近郊のAM放送局（クリックで自動合わせ）：</strong>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; box-sizing: border-box;">${buttonsHTML}</div>
-            `;
-        } else {
-            const mhz = (rawVal / 10).toFixed(1);
-            valSpan.textContent = mhz + ' MHz';
-            let buttonsHTML = FM_STATIONS.map(st => {
-                const currentSliderMHz = parseFloat(mhz);
-                const activeClass = (currentSliderMHz === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
-                return `
-                    <button onclick="tuneToStation(${st.freq}, 'FM')" style="flex: 1 1 calc(25% - 8px); min-width: 100px; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-sizing: border-box; text-align: center; ${activeClass}">
-                        📻 ${st.freq} MHz<br><span style="font-size: 9px; font-weight: normal; opacity: 0.85; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${st.name}</span>
-                    </button>
-                `;
-            }).join('');
+    // 音量調整ノードの作成
+    noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = 0; // 初期音量は0
 
-            infoDiv.innerHTML = `
-                <strong style="display: block; margin-bottom: 8px;">📍 大阪のFM放送局（クリックで自動合わせ）：</strong>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; box-sizing: border-box;">${buttonsHTML}</div>
-            `;
-        }
-    }
+    noiseNode.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noiseNode.start();
+}
 
-    function initRadio() {
-        document.getElementById('tuningSlider').addEventListener('input', updateRadioParams);
+// ------------------------------------------
+// チューニング & モード切り替え
+// ------------------------------------------
+function tuneToStation(freq, mode) {
+    initAudioEngine(); // ユーザー操作時にオーディオ起動
+
+    const amRadio = document.querySelector('input[name="modulation"][value="AM"]');
+    const fmRadio = document.querySelector('input[name="modulation"][value="FM"]');
+    const slider = document.getElementById('tuningSlider');
+
+    if (mode === 'AM' && amRadio && !amRadio.checked) {
+        amRadio.checked = true;
         onModulationChange();
-
-        function drawRadioLoop() {
-            if (activeTab !== 'radio') return;
-            const ctx = radioCtx;
-            const width = radioCanvas.width;
-            const height = radioCanvas.height;
-            const rawTuning = parseFloat(document.getElementById('tuningSlider').value);
-            const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
-
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(0, 0, width, height);
-
-            radioTime += 0.05;
-
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            for (let x = 0; x < width; x++) {
-                const y = height * 0.2 + Math.sin(x * 0.02 + radioTime) * 20;
-                if (x === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-            ctx.fillStyle = '#3b82f6';
-            ctx.font = '12px Arial';
-            ctx.fillText('元の音（音声信号）', 10, 25);
-
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-
-            const visualFreq = isAM ? (rawTuning / 100) : (rawTuning / 10);
-
-            for (let x = 0; x < width; x++) {
-                const soundSignal = Math.sin(x * 0.02 + radioTime); 
-                let y = height * 0.65;
-
-                if (isAM) {
-                    const amplitude = 30 + soundSignal * 15;
-                    y += Math.sin(x * (visualFreq * 0.03)) * amplitude;
-                } else {
-                    const freqModifier = (visualFreq * 0.01) + soundSignal * 0.03;
-                    y += Math.sin(x * freqModifier) * 30;
-                }
-
-                if (x === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-            ctx.fillStyle = '#ef4444';
-            ctx.font = '12px Arial';
-            ctx.fillText(isAM ? 'AM 電波（音の強弱で縦の振幅が変化する）' : 'FM 電波（音の強弱で横の波の密度が変化する）', 10, height * 0.45);
-
-            const currentFreq = isAM ? rawTuning : (rawTuning / 10);
-            const stations = isAM ? AM_STATIONS : FM_STATIONS;
-            
-            let tunedStation = null;
-            let isNear = false; 
-
-            for (let station of stations) {
-                const diff = Math.abs(currentFreq - station.freq);
-                if (diff < 0.05) { 
-                    tunedStation = station;
-                    break;
-                } else if (diff < (isAM ? 20 : 0.4)) { 
-                    isNear = true;
-                }
-            }
-
-            const statusDiv = document.getElementById('radioStatus');
-
-            if (tunedStation) {
-                const unit = isAM ? 'kHz' : 'MHz';
-                statusDiv.textContent = `🎵 チューニング成功！ 【${tunedStation.freq} ${unit} - ${tunedStation.name}】 の番組をクリアに受信中！`;
-                statusDiv.style.backgroundColor = '#dcfce7';
-                statusDiv.style.color = '#15803d';
-
-                ctx.fillStyle = '#22c55e';
-                ctx.beginPath();
-                ctx.arc(width - 40, 40, 15, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 10px Arial';
-                ctx.fillText('TUNED', width - 60, 43);
-            } else if (isNear) {
-                statusDiv.textContent = 'ザーー（雑音）... 電波がかすかに届いています。ダイヤルを少しずつ動かそう！';
-                statusDiv.style.backgroundColor = '#fef3c7';
-                statusDiv.style.color = '#d97706';
-            } else {
-                statusDiv.textContent = '受信中... ダイヤルを回して周波数を合わせてください（緑のランプが光る場所を探そう）';
-                statusDiv.style.backgroundColor = '#fee2e2';
-                statusDiv.style.color = '#dc2626';
-            }
-
-            animationFrameIds.radio = requestAnimationFrame(drawRadioLoop);
-        }
-        drawRadioLoop();
+    } else if (mode === 'FM' && fmRadio && !fmRadio.checked) {
+        fmRadio.checked = true;
+        onModulationChange();
     }
 
-    window.onload = function() {
+    if (mode === 'AM') {
+        slider.value = freq.toString();
+    } else {
+        slider.value = Math.round(freq * 10).toString();
+    }
+    updateRadioParams();
+}
+
+function onModulationChange() {
+    initAudioEngine();
+
+    const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
+    const slider = document.getElementById('tuningSlider');
+    const minLabel = document.getElementById('tuningMinLabel');
+
+    if (isAM) {
+        slider.min = "531";
+        slider.max = "1440";
+        slider.step = "9"; 
+        slider.value = "666";
+        minLabel.textContent = "531 kHz";
+    } else {
+        slider.min = "760"; 
+        slider.max = "920"; 
+        slider.step = "1";   
+        slider.value = "800"; 
+        minLabel.textContent = "76.0 MHz";
+    }
+    updateRadioParams();
+}
+
+function updateRadioParams() {
+    const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
+    const rawVal = parseFloat(document.getElementById('tuningSlider').value);
+    const valSpan = document.getElementById('tuningVal');
+    const infoDiv = document.getElementById('stationListInfo');
+    
+    if (isAM) {
+        valSpan.textContent = rawVal + ' kHz';
+        let buttonsHTML = AM_STATIONS.map(st => {
+            const activeClass = (rawVal === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
+            return `
+                <button onclick="tuneToStation(${st.freq}, 'AM')" style="flex: 1 1 calc(25% - 8px); min-width: 100px; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-sizing: border-box; text-align: center; ${activeClass}">
+                    📻 ${st.freq} kHz<br><span style="font-size: 9px; font-weight: normal; opacity: 0.85; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${st.name}</span>
+                </button>
+            `;
+        }).join('');
+
+        infoDiv.innerHTML = `
+            <strong style="display: block; margin-bottom: 8px;">📍 大阪近郊のAM放送局（クリックで自動合わせ）：</strong>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; box-sizing: border-box;">${buttonsHTML}</div>
+        `;
+    } else {
+        const mhz = (rawVal / 10).toFixed(1);
+        valSpan.textContent = mhz + ' MHz';
+        let buttonsHTML = FM_STATIONS.map(st => {
+            const currentSliderMHz = parseFloat(mhz);
+            const activeClass = (currentSliderMHz === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
+            return `
+                <button onclick="tuneToStation(${st.freq}, 'FM')" style="flex: 1 1 calc(25% - 8px); min-width: 100px; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-sizing: border-box; text-align: center; ${activeClass}">
+                    📻 ${st.freq} MHz<br><span style="font-size: 9px; font-weight: normal; opacity: 0.85; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${st.name}</span>
+                </button>
+            `;
+        }).join('');
+
+        infoDiv.innerHTML = `
+            <strong style="display: block; margin-bottom: 8px;">📍 大阪のFM放送局（クリックで自動合わせ）：</strong>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; box-sizing: border-box;">${buttonsHTML}</div>
+        `;
+    }
+}
+
+// ------------------------------------------
+// メインの描画 & 音声再生管理ループ
+// ------------------------------------------
+function initRadio() {
+    const slider = document.getElementById('tuningSlider');
+    
+    // スライダー操作時にAudioContextを有効化
+    slider.addEventListener('input', () => {
+        initAudioEngine();
+        updateRadioParams();
+    });
+
+    onModulationChange();
+
+    function drawRadioLoop() {
+        if (typeof activeTab !== 'undefined' && activeTab !== 'radio') return;
+        const ctx = radioCtx;
+        const width = radioCanvas.width;
+        const height = radioCanvas.height;
+        const rawTuning = parseFloat(document.getElementById('tuningSlider').value);
+        const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, width, height);
+
+        radioTime += 0.05;
+
+        // --- 波形描画: 音声信号 ---
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = 0; x < width; x++) {
+            const y = height * 0.2 + Math.sin(x * 0.02 + radioTime) * 20;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = '#3b82f6';
+        ctx.font = '12px Arial';
+        ctx.fillText('元の音（音声信号）', 10, 25);
+
+        // --- 波形描画: 搬送波 (AM/FM) ---
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        const visualFreq = isAM ? (rawTuning / 100) : (rawTuning / 10);
+
+        for (let x = 0; x < width; x++) {
+            const soundSignal = Math.sin(x * 0.02 + radioTime); 
+            let y = height * 0.65;
+
+            if (isAM) {
+                const amplitude = 30 + soundSignal * 15;
+                y += Math.sin(x * (visualFreq * 0.03)) * amplitude;
+            } else {
+                const freqModifier = (visualFreq * 0.01) + soundSignal * 0.03;
+                y += Math.sin(x * freqModifier) * 30;
+            }
+
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.font = '12px Arial';
+        ctx.fillText(isAM ? 'AM 電波（音の強弱で縦の振幅が変化する）' : 'FM 電波（音の強弱で横の波の密度が変化する）', 10, height * 0.45);
+
+        // --- 選局（チューニング）判定 & 音声コントロール ---
+        const currentFreq = isAM ? rawTuning : (rawTuning / 10);
+        const stations = isAM ? AM_STATIONS : FM_STATIONS;
+        
+        let tunedStation = null;
+        let isNear = false; 
+
+        for (let station of stations) {
+            const diff = Math.abs(currentFreq - station.freq);
+            if (diff < 0.05) { 
+                tunedStation = station;
+                break;
+            } else if (diff < (isAM ? 20 : 0.4)) { 
+                isNear = true;
+            }
+        }
+
+        const statusDiv = document.getElementById('radioStatus');
+
+        // 音声・ノイズの状態制御
+        if (tunedStation) {
+            // 【1. ピッタリ選局中】放送音声をクリアに再生・ノイズ消去
+            statusDiv.textContent = `🎵 チューニング成功！ 【${tunedStation.freq} ${isAM ? 'kHz' : 'MHz'} - ${tunedStation.name}】 の番組をクリアに受信中！`;
+            statusDiv.style.backgroundColor = '#dcfce7';
+            statusDiv.style.color = '#15803d';
+
+            // TUNEDランプを描画
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.arc(width - 40, 40, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 10px Arial';
+            ctx.fillText('TUNED', width - 60, 43);
+
+            // 音声再生切り替え
+            if (tunedStation.audioUrl && currentAudioUrl !== tunedStation.audioUrl) {
+                currentAudioUrl = tunedStation.audioUrl;
+                audioPlayer.src = currentAudioUrl;
+                audioPlayer.play().catch(() => {});
+            }
+            audioPlayer.volume = 1.0;
+
+            if (noiseGain) noiseGain.gain.value = 0.0; // ノイズ停止
+
+        } else if (isNear) {
+            // 【2. かすかに受信中】放送音声を小さく再生 ＋ 浅いノイズ
+            statusDiv.textContent = 'ザーー（雑音）... 電波がかすかに届いています。ダイヤルを少しずつ動かそう！';
+            statusDiv.style.backgroundColor = '#fef3c7';
+            statusDiv.style.color = '#d97706';
+
+            if (currentAudioUrl) {
+                audioPlayer.volume = 0.15; // 音声を小さく設定
+            }
+            if (noiseGain) noiseGain.gain.value = 0.03; // 薄いノイズ
+
+        } else {
+            // 【3. 圏外】放送音声を停止 ＋ 完全にザーー音（雑音）
+            statusDiv.textContent = '受信中... ダイヤルを回して周波数を合わせてください（緑のランプが光る場所を探そう）';
+            statusDiv.style.backgroundColor = '#fee2e2';
+            statusDiv.style.color = '#dc2626';
+
+            if (currentAudioUrl) {
+                audioPlayer.pause();
+                currentAudioUrl = "";
+            }
+            if (noiseGain) noiseGain.gain.value = 0.08; // 雑音再生
+        }
+
+        if (typeof animationFrameIds !== 'undefined') {
+            animationFrameIds.radio = requestAnimationFrame(drawRadioLoop);
+        } else {
+            requestAnimationFrame(drawRadioLoop);
+        }
+    }
+    drawRadioLoop();
+}
+
+window.onload = function() {
+    if (typeof switchTab === 'function') {
         switchTab('gear');
-    };
+    } else {
+        initRadio();
+    }
+};
 </script>
 
 </body>
