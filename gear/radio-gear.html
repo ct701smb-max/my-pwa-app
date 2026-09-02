@@ -465,14 +465,18 @@
         <div class="info-panel">
             <div class="info-title" id="info-panel-title">全体の速度伝達比</div>
             <div class="formula-box">
-                <!-- 駆動輪(歯車3) と 被動輪(歯車1) の関係に計算式表示を更新 -->
-                <div id="formula-label">歯車1 (被動輪) ÷ 歯車3 (駆動輪):</div>
-                <div class="formula" id="total-ratio">24 ÷ 32 = 0.75</div>
-            </div>
+    <div id="formula-label">歯車1 (被動輪) ÷ 歯車3 (駆動輪):</div>
+    <div class="formula" id="total-ratio">24 ÷ 32 = 0.75</div>
+
+    <div id="sub-formula-container" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.2); display: none;">
+        <div id="sub-formula-label" style="font-size: 0.85rem; color: #000;">速度伝達比 (被動輪 ÷ 駆動輪):</div>
+        <div class="formula" id="sub-ratio" style="font-size: 1.1rem; color: #000;">28 ÷ 40 = 0.70</div>
+    </div>
+</div>
             <div style="font-size: 0.9rem; line-height: 1.5;">
                 <p><strong>回転方向:</strong><br><span id="direction-text" style="color:var(--secondary); font-weight:bold; font-size:1.1rem;">同じ方向</span> に回ります！</p>
                 <p id="dynamic-desc">真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。</p>
-                <p id="dynamic-desc">被動輪が大きくなると速度伝達比が大きくなり、回転力（トルク）も大きくなります。</p>
+                <p id="dynamic-desc-speed" style="display:none;"></p>
             </div>
         </div>
         <div class="canvas-container">
@@ -488,17 +492,37 @@
             手で回すスピードは遅いため、内部の<strong>「大きな歯車」</strong>と<strong>「小さな歯車」</strong>を組み合わせて磁石を数十倍の速さで高速回転させています（増速機構）。しかし、勢いよく回しすぎると、過剰な負荷や摩擦熱によって<strong>プラスチックギヤが破損してしまいます！</strong><br>一定のリズムで回して、安全かつ効率よく発電する感覚を掴みましょう。
         </div>
 
-        <div class="canvas-container">
-            <canvas id="dynamoCanvas" width="650" height="320"></canvas>
+        <!-- 増速タブ切り替え -->
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button class="tab-btn active" id="modeDynamoGear" style="min-width: unset; padding: 8px;" onclick="switchDynamoMode('gear')">⚙️ 2連歯車（ダイナモ内部）</button>
+            <button class="tab-btn" id="modeDynamoBike" style="min-width: unset; padding: 8px;" onclick="switchDynamoMode('bike')">🚲 自転車の変速と発電</button>
         </div>
+
+        <!-- ダイナモ用変速コントロール（自転車モード用） -->
+<div class="controls dynamo-bike-ctrl" style="display: none; margin-bottom: 15px;">
+    <div class="control-group" style="grid-column: span 3;">
+        <label for="bikeShifter">自転車のリアギヤ (歯車セレクト)</label>
+        <div id="bikeShifter" class="bike-shifter">
+            <button type="button" class="shift-btn dynamo-shift-btn active" data-gear="1">1段 (軽い / 12枚)</button>
+            <button type="button" class="shift-btn dynamo-shift-btn" data-gear="2">2段 (16枚)</button>
+            <button type="button" class="shift-btn dynamo-shift-btn" data-gear="3">3段 (20枚)</button>
+            <button type="button" class="shift-btn dynamo-shift-btn" data-gear="4">4段 (24枚)</button>
+            <button type="button" class="shift-btn dynamo-shift-btn" data-gear="5">5段 (重い・速い / 28枚)</button>
+        </div>
+    </div>
+</div>
+
+<div class="canvas-container">
+    <canvas id="dynamoCanvas" width="650" height="320"></canvas>
+</div>
 
         <div class="controls" style="margin-top:20px;">
             <div class="control-group" style="grid-column: span 3;">
-                <label>手回しハンドルの回転速度（運動エネルギー）</label>
+                <label id="dynamo-input-label">手回しハンドルの回転速度（運動エネルギー）</label>
                 <div class="slider-row">
-                    <span>ゆっくり</span>
+                    <span id="dynamo-speed-min">ゆっくり</span>
                     <input type="range" id="speedSlider" min="0" max="12" value="2" step="0.5">
-                    <span style="color: #ef4444; font-weight: bold;">回しすぎ注意！</span>
+                    <span style="color: #ef4444; font-weight: bold;" id="dynamo-speed-max">回しすぎ注意！</span>
                 </div>
             </div>
             <div style="grid-column: span 3; display: flex; flex-direction: column; align-items: center; width: 100%;">
@@ -580,49 +604,32 @@
             <blockquote>「ギザギザのない、ツルツルの丸いゴム同士が押し合って回っている」と想像したときの、その仮想の円のこと。</blockquote>
             <p>歯車同士が実際に噛み合って回転の力を伝えている、最も中心的な円の直径部分にあたります。</p>
 
-            <!-- 【追加】文字の図をスタイリッシュな「絵（CSSグラフィック）」に差し替え -->
             <div style="background: #0f172a; padding: 20px; border-radius: 12px; margin: 15px 0; border: 1px solid #334155; color: #e2e8f0; text-align: center;">
                 <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 15px; color: #3b82f6; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
                     <span>● ピッチ円（仮想のゴムローラー）</span>
                     <span>● モジュール（歯のサイズ規格）</span>
                 </div>
                 
-                <!-- グラフィック表示エリア -->
                 <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px; margin: 15px 0;">
                     
-                    <!-- 左：ピッチ円のイメージ図-->
-<div style="display: flex; flex-direction: column; align-items: center; width: 180px;">
-    <div style="position: relative; width: 170px; height: 110px;">
-        
-        <!-- 左側の大きな円 (半径35px / 直径70px、左端から10px) -->
-        <div style="position: absolute; top: 25px; left: 10px; width: 70px; height: 70px; border: 2px dashed #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.1);">
-            <span style="font-size: 10px; color: #60a5fa; font-weight: bold;">大ゴム車</span>
-        </div>
-        
-        <!-- 右側の小さな円 (半径20px / 直径40px、左端から81px) -->
-        <div style="position: absolute; top: 40px; left: 81px; width: 40px; height: 40px; border: 2px dashed #f43f5e; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(244, 63, 94, 0.1);">
-            <span style="font-size: 9px; color: #f87171; font-weight: bold;">小</span>
-        </div>
-        
-        <!-- 円と円の間の「接点ドット」 -->
-        <div style="position: absolute; top: 56px; left: 77px; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; z-index: 15;"></div>
-        
-        <!-- ドットを指し示す「引き出し線（矢印）」と「文字ラベル」 -->
-        <div style="position: absolute; top: 5px; left: 45px; width: 70px; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 10;">
-            <span style="background: #10b981; font-size: 9px; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; white-space: nowrap; line-height: 1;">
-                接点
-            </span>
-            <!-- 下向きの三角矢印（CSSで描画） -->
-            <div style="width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #10b981; margin-top: 2px;"></div>
-        </div>
-        
-    </div>
-    <span style="font-size: 11px; margin-top: 8px; color: #94a3b8; text-align: center;">接点を基準に<br>凸凹（歯）を噛み合わせる！</span>
-</div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 180px;">
+                        <div style="position: relative; width: 170px; height: 110px;">
+                            <div style="position: absolute; top: 25px; left: 10px; width: 70px; height: 70px; border: 2px dashed #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.1);">
+                                <span style="font-size: 10px; color: #60a5fa; font-weight: bold;">大ゴム車</span>
+                            </div>
+                            <div style="position: absolute; top: 40px; left: 81px; width: 40px; height: 40px; border: 2px dashed #f43f5e; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(244, 63, 94, 0.1);">
+                                <span style="font-size: 9px; color: #f87171; font-weight: bold;">小</span>
+                            </div>
+                            <div style="position: absolute; top: 56px; left: 77px; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; z-index: 15;"></div>
+                            <div style="position: absolute; top: 5px; left: 45px; width: 70px; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 10;">
+                                <span style="background: #10b981; font-size: 9px; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; white-space: nowrap; line-height: 1;">接点</span>
+                                <div style="width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #10b981; margin-top: 2px;"></div>
+                            </div>
+                        </div>
+                        <span style="font-size: 11px; margin-top: 8px; color: #94a3b8; text-align: center;">接点を基準に<br>凸凹（歯）を噛み合わせる！</span>
+                    </div>
 
-                    <!-- 右：モジュールのイメージ図 -->
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-                        <!-- 大きい歯 -->
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <div style="display: flex; gap: 2px;">
                                 <div style="width: 14px; height: 14px; background: #f59e0b; border-radius: 2px 2px 0 0;"></div>
@@ -631,7 +638,6 @@
                             </div>
                             <span style="font-size: 11px; color: #f59e0b; font-family: monospace;">モジュール大 (Lサイズ)</span>
                         </div>
-                        <!-- 小さい歯 -->
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <div style="display: flex; gap: 2px;">
                                 <div style="width: 7px; height: 7px; background: #ec4899; border-radius: 1px 1px 0 0;"></div>
@@ -666,14 +672,11 @@
 
     function switchTab(tabName) {
         activeTab = tabName;
-        // すべてのタブコンテンツとナビボタンを非アクティブ化
         document.querySelectorAll('.mode-tabs > .tab-btn').forEach((btn, index) => {
             btn.classList.remove('active');
-            // onclick ではなくクラスで判定するため、切り替え処理自体は別でハンドリング
         });
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-        // 特定のナビボタンをアクティブにする
         const tabButtons = document.querySelectorAll('.mode-tabs > .tab-btn');
         if (tabName === 'gear') {
             tabButtons[0].classList.add('active');
@@ -686,7 +689,6 @@
             document.getElementById('tab-radio').classList.add('active');
         }
 
-        // アニメーションループの整理
         cancelAllAnimations();
         if (tabName === 'gear') initGear();
         if (tabName === 'dynamo') initDynamo();
@@ -702,7 +704,6 @@
         }
     }
 
-    // --- 💡 モーダル制御 ---
     const modalOverlay = document.getElementById('modalOverlay');
     document.getElementById('openModal').addEventListener('click', () => modalOverlay.classList.add('active'));
     document.getElementById('closeModal').addEventListener('click', () => modalOverlay.classList.remove('active'));
@@ -722,10 +723,16 @@ const modeBikeBtn = document.getElementById('modeBike');
 const normalCtrls = document.querySelectorAll('.normal-ctrl');
 const bikeCtrl = document.querySelector('.bike-ctrl');
 const dynamicDesc = document.getElementById('dynamic-desc');
+const dynamicDescSpeed = document.getElementById('dynamic-desc-speed');
 const formulaLabel = document.getElementById('formula-label');
 const infoPanelTitle = document.getElementById('info-panel-title');
 const modeExplanation = document.getElementById('mode-explanation');
 const directionText = document.getElementById('direction-text');
+
+// 追加：速度伝達比用の表示DOM要素
+const subFormulaContainer = document.getElementById('sub-formula-container');
+const subFormulaLabel = document.getElementById('sub-formula-label');
+const subRatioFormula = document.getElementById('sub-ratio');
 
 mode3GearBtn.addEventListener('click', () => {
     currentGearMode = '3gear';
@@ -735,6 +742,12 @@ mode3GearBtn.addEventListener('click', () => {
     bikeCtrl.style.display = 'none';
     infoPanelTitle.textContent = "全体の速度伝達比";
     formulaLabel.textContent = "歯車1 (被動輪) ÷ 歯車3 (駆動輪):";
+    
+    // 自転車用のサブ計算式（速度伝達比）を非表示
+    if (subFormulaContainer) subFormulaContainer.style.display = 'none';
+
+    dynamicDesc.style.display = 'block';
+    if (dynamicDescSpeed) dynamicDescSpeed.style.display = 'none';
     dynamicDesc.innerHTML = "真ん中の歯車2の歯数を変えても、全体の速度伝達比はまったく変わりません。";
     modeExplanation.innerHTML = `<strong>【学習のポイント：なぜアイドルギヤを使うのか？】</strong><br>1. <strong>回転方向の反転：</strong> 2つの歯車を直接噛み合わせると回転方向が逆になりますが、間にもう1つ歯車を挟むことで、<strong>「元の回転方向に戻す」</strong>ことができます。<br>2. <strong>距離の調整：</strong> ギヤ比を変えることなく、離れた場所に動力を伝えたいときに非常に便利です。`;
 });
@@ -745,8 +758,16 @@ modeBikeBtn.addEventListener('click', () => {
     mode3GearBtn.classList.remove('active');
     normalCtrls.forEach(el => el.style.display = 'none');
     bikeCtrl.style.display = 'flex';
-    infoPanelTitle.textContent = "自転車の変速比（ギヤレシオ）";
+    infoPanelTitle.textContent = "自転車の変速比と走行距離";
     formulaLabel.textContent = "変速比 (ペダル歯数 ÷ リア歯数):";
+    
+    // 自転車用のサブ計算式を表示枠として有効化
+    if (subFormulaContainer) subFormulaContainer.style.display = 'block';
+    if (subFormulaLabel) subFormulaLabel.textContent = "速度伝達比 (リア歯数 ÷ ペダル歯数):";
+
+    if (dynamicDesc) dynamicDesc.style.display = 'block';
+    if (dynamicDescSpeed) dynamicDescSpeed.style.display = 'block';
+    
     updateBikeDescription();
     modeExplanation.innerHTML = `
     <strong>【学習のポイント：自転車の変速のナゾ】</strong><br>
@@ -760,21 +781,39 @@ modeBikeBtn.addEventListener('click', () => {
 });
 
 document.querySelectorAll('.shift-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        bikeGear = parseInt(e.target.getAttribute('data-gear'));
-        updateBikeDescription();
-    });
+    // タブ1用のシフトボタンのみ処理
+    if (btn.closest('#tab-gear')) {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('#tab-gear .shift-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            bikeGear = parseInt(e.target.getAttribute('data-gear'));
+            updateBikeDescription();
+        });
+    }
 });
 
 function updateBikeDescription() {
     if(currentGearMode !== 'bike') return;
-    const frontTeeth = 40; // 右ペダル (歯車3)
-    const rearTeeth = bikeTeethMap[bikeGear]; // 左後輪 (歯車1)
-    const ratio = frontTeeth / rearTeeth;
-    dynamicDesc.innerHTML = `<strong>現在の状態:</strong><br>ペダル（右）を <strong>1回転</strong> させると、後輪（左）は <strong style="color:var(--secondary); font-size:1.1rem;">${ratio.toFixed(2)}回転</strong> します！<br>` + 
-    (bikeGear === 5 ? "🔥 最もハイスピードですが、ペダルは一番重くなります。" : bikeGear === 1 ? "⛰️ 一番スピードは遅いですが、軽い力で回せます（坂道用）。" : "");
+    const frontTeeth = 40; // 右ペダル (駆動輪)
+    const rearTeeth = bikeTeethMap[bikeGear]; // 左後輪 (被動輪)
+    
+    // 変速比（ペダル ÷ リア）
+    const gearRatio = frontTeeth / rearTeeth;
+    // 速度伝達比（リア ÷ ペダル）
+    const speedRatio = rearTeeth / frontTeeth;
+    
+    // 一般的なシティサイクル（26インチ：タイヤ外周 約2.1m）を想定した移動距離の計算
+    const tireCircumference = 2.1; 
+    const distancePerPedal = gearRatio * tireCircumference;
+
+    // 数式枠の計算結果を更新
+    if (totalRatioFormula) totalRatioFormula.textContent = `${frontTeeth} ÷ ${rearTeeth} = ${gearRatio.toFixed(2)}`;
+    if (subRatioFormula) subRatioFormula.textContent = `${rearTeeth} ÷ ${frontTeeth} = ${speedRatio.toFixed(2)}`;
+
+    dynamicDesc.innerHTML = `<strong>ペダル回転・変速比:</strong><br>ペダルを <strong>1回転</strong> させると、後輪は <strong style="color:var(--secondary); font-size:1.05rem;">${gearRatio.toFixed(2)}回転</strong> します。`;
+    
+    dynamicDescSpeed.innerHTML = `<strong>🚴‍♂️ 1こぎで進む距離（速度目安）:</strong><br>ペダル1回転で約 <strong style="color:var(--primary); font-size:1.1rem;">${distancePerPedal.toFixed(2)} m</strong> 進みます。<br>` + 
+    (bikeGear === 5 ? "🔥 最もハイスピード（一漕ぎでグングン進むが重い）" : bikeGear === 1 ? "⛰️ 軽い力で坂道をスイスイ登れる軽快な設定" : "👍 一番バランスの取れた通常走行用");
 }
 
 const gearCanvas = document.getElementById('gearCanvas');
@@ -790,7 +829,7 @@ const speedVal = document.getElementById('speed-val');
 const totalRatioFormula = document.getElementById('total-ratio');
 
 const MODULE = 6;
-let driveAngle = 0; // 入力軸（歯車3・駆動輪）の回転角度
+let driveAngle = 0;
 
 function drawGearBase(ctx, x, y, radius, teeth, angle, color, name) {
     ctx.save();
@@ -821,7 +860,6 @@ function drawGearBase(ctx, x, y, radius, teeth, angle, color, name) {
 
     ctx.restore();
     
-    // 文字を中心に置かず、歯車の下側（radius + 20px）へ配置
     ctx.save(); 
     ctx.font = 'bold 13px Arial'; 
     ctx.fillStyle = '#ffffff'; 
@@ -851,28 +889,25 @@ function initGear() {
         speedVal.textContent = speedMultiplier.toFixed(1);
 
         const baseSpeed = 0.012 * speedMultiplier;
-        driveAngle += baseSpeed; // 駆動軸（時計回り）を進める
+        driveAngle += baseSpeed;
 
         if (currentGearMode === '3gear') {
             directionText.textContent = "同じ方向";
             directionText.style.color = "var(--secondary)";
             
-            const t1 = parseInt(t1Input.value); // 左 (被動)
-            const t2 = parseInt(t2Input.value); // 中 (アイドル)
-            const t3 = parseInt(t3Input.value); // 右 (駆動)
+            const t1 = parseInt(t1Input.value);
+            const t2 = parseInt(t2Input.value);
+            const t3 = parseInt(t3Input.value);
             t1Val.textContent = t1; t2Val.textContent = t2; t3Val.textContent = t3;
 
             const r1 = (MODULE * t1) / 2;
             const r2 = (MODULE * t2) / 2;
             const r3 = (MODULE * t3) / 2;
 
-            // ギヤ比 (被動歯数 ÷ 駆動歯数)
             const gearRatio = t1 / t3;
-            totalRatioFormula.textContent = `${t1} ÷ ${t3} = ${gearRatio.toFixed(2)}`;
+            if (totalRatioFormula) totalRatioFormula.textContent = `${t1} ÷ ${t3} = ${gearRatio.toFixed(2)}`;
 
             const y = gearCanvas.height / 2 - 10;
-
-            // 3つの歯車全体が常に画面中央にくるよう x1 を動的計算
             const x1 = (gearCanvas.width / 2) - r2 - r3 + 2;
             const x2 = x1 + r1 + r2 - 2; 
             const x3 = x2 + r2 + r3 - 2;
@@ -888,14 +923,13 @@ function initGear() {
             directionText.textContent = "同じ方向";
             directionText.style.color = "var(--secondary)";
 
-            const t3 = 40; // 右: ペダル (駆動)
-            const t1 = bikeTeethMap[bikeGear]; // 左: 後輪 (被動)
+            const t3 = 40; 
+            const t1 = bikeTeethMap[bikeGear]; 
             
             const r3 = (MODULE * t3) / 2;
             const r1 = (MODULE * t1) / 2;
 
-            const bikeRatio = t3 / t1; // 変速比 (ペダル ÷ リア)
-            totalRatioFormula.textContent = `${t3} ÷ ${t1} = ${bikeRatio.toFixed(2)}`;
+            const bikeRatio = t3 / t1; 
 
             const x1 = 160, x3 = 480, y = gearCanvas.height / 2 - 10;
 
@@ -916,7 +950,7 @@ function initGear() {
     drawGear();
 }
 
-   // ==========================================
+    // ==========================================
     // ② ダイナモ発電 JS
     // ==========================================
     let dynamoCanvas = document.getElementById('dynamoCanvas');
@@ -926,53 +960,87 @@ function initGear() {
     let isBroken = false;
     let heatLevel = 0;
 
-    // ダイナモの状態を安全に初期化・リセットする共通関数
+    // ダイナモタブ内のモード切り替え用変数
+    let dynamoMode = 'gear'; // 'gear' または 'bike'
+    let dynamoBikeGear = 1;
+    const dynamoBikeTeethMap = { 1: 28, 2: 24, 3: 20, 4: 16, 5: 12 };
+
+    function switchDynamoMode(mode) {
+        dynamoMode = mode;
+        const modeGearBtn = document.getElementById('modeDynamoGear');
+        const modeBikeBtn = document.getElementById('modeDynamoBike');
+        const bikeCtrlDiv = document.querySelector('.dynamo-bike-ctrl');
+        const inputLabel = document.getElementById('dynamo-input-label');
+
+        if (mode === 'gear') {
+            modeGearBtn.classList.add('active');
+            modeBikeBtn.classList.remove('active');
+            bikeCtrlDiv.style.display = 'none';
+            inputLabel.textContent = "手回しハンドルの回転速度（運動エネルギー）";
+        } else {
+            modeBikeBtn.classList.add('active');
+            modeGearBtn.classList.remove('active');
+            bikeCtrlDiv.style.display = 'block';
+            inputLabel.textContent = "ペダルの入力速度（ペダリング）";
+        }
+        resetDynamoState();
+    }
+
+    document.querySelectorAll('.dynamo-shift-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const gear = parseInt(e.target.getAttribute('data-gear'));
+        dynamoBikeGear = gear;
+        
+        // 1段(12枚:小) ～ 5段(28枚:大) に連動
+        const teethMap = { 1: 12, 2: 16, 3: 20, 4: 24, 5: 28 };
+        gear1Teeth = teethMap[gear];
+
+        document.querySelectorAll('.dynamo-shift-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+    });
+});
+
     function resetDynamoState() {
         isBroken = false;
         heatLevel = 0;
         mainGearAngle = 0;
         subGearAngle = 0;
 
-        // スライダーの復活
         const slider = document.getElementById('speedSlider');
         if (slider) {
-            slider.value = 0;
+            slider.value = 2;
             slider.disabled = false;
         }
 
-        // リセットボタンを隠す
         const resetBtn = document.getElementById('resetGearBtn');
         if (resetBtn) {
             resetBtn.style.display = 'none';
         }
 
-        // ステータス表示の初期化
         const statusDiv = document.getElementById('generatorStatus');
         if (statusDiv) {
-            statusDiv.textContent = 'ハンドルが止まっています（発電量: 0%）';
-            statusDiv.style.backgroundColor = '#fee2e2';
-            statusDiv.style.color = '#dc2626';
+            statusDiv.textContent = '発電中...';
+            statusDiv.style.backgroundColor = '#fef3c7';
+            statusDiv.style.color = '#d97706';
         }
     }
 
-    // ページ読み込み時にリセットボタンのクリックイベントを確実にバインドする
     document.addEventListener('DOMContentLoaded', () => {
         const resetBtn = document.getElementById('resetGearBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', (e) => {
-                e.preventDefault(); // 予期せぬスクロールなどの挙動を防止
+                e.preventDefault();
                 resetDynamoState();
             });
         }
     });
 
-    // タブ①の美しい歯車アルゴリズムをダイナモ用にも適用！
     function drawDynamoGear(ctx, x, y, radius, teeth, angle, color, name) {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
 
-        const MODULE_DYNAMO = radius * 2 / teeth; // 半径からモジュールを逆算して完璧に噛み合わせる
+        const MODULE_DYNAMO = radius * 2 / teeth;
         const toothDepth = MODULE_DYNAMO * 2;
         const outerRadius = radius + toothDepth / 2;
         const innerRadius = radius - toothDepth / 2;
@@ -994,7 +1062,6 @@ function initGear() {
         ctx.fill(); 
         ctx.stroke();
 
-        // 軸とインジケーター（回転がわかりやすいようにする白いライン）
         ctx.beginPath(); 
         ctx.arc(0, 0, 8, 0, Math.PI * 2); 
         ctx.fillStyle = '#1e293b'; 
@@ -1013,137 +1080,135 @@ function initGear() {
         ctx.font = 'bold 11px Arial'; 
         ctx.fillStyle = '#ffffff'; 
         ctx.textAlign = 'center'; 
-        ctx.fillText(name, x, y + radius + 18); // 文字が被らないように下に配置
+        ctx.fillText(name, x, y + radius + 18);
         ctx.restore();
     }
 
     function initDynamo() {
-        // タブを開いた・切り替えたときにも、壊れた状態や熱をきれいにリセットして開始する
-        resetDynamoState();
+    resetDynamoState();
+    const slider = document.getElementById('speedSlider');
+    
+    function drawDynamoLoop() {
+        if (activeTab !== 'dynamo') return;
+        const ctx = dynamoCtx;
+        const width = dynamoCanvas.width;
+        const height = dynamoCanvas.height;
+        let speed = parseFloat(slider.value);
 
-        const slider = document.getElementById('speedSlider');
-        
-        function drawDynamoLoop() {
-            if (activeTab !== 'dynamo') return;
-            const ctx = dynamoCtx;
-            const width = dynamoCanvas.width;
-            const height = dynamoCanvas.height;
-            let speed = parseFloat(slider.value);
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, width, height);
 
-            ctx.clearRect(0, 0, width, height);
+        const centerX = width / 2;
+        const centerY = height / 2;
 
-            // 背景
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(0, 0, width, height);
-
-            const centerX = width / 2;
-            const centerY = height / 2;
-
-            // ギヤのパラメータ（綺麗に噛み合う配置）
-            const gear1X = centerX - 120;
-            const gear1R = 60; // 少し大きめにして見栄えを強化
-            const gear1Teeth = 30;
-
-            const gear2R = 20;
-            const gear2Teeth = 10;
-            // 2つの半径の合計から、少しだけ噛み合いの隙間（隙間2px）を引く
-            const gear2X = gear1X + gear1R + gear2R - 2; 
-
-            if (!isBroken) {
-                if (speed >= 10.5) {
-                    heatLevel += 1.5;
-                    if (heatLevel >= 100) {
-                        isBroken = true;
-                        speed = 0;
-                        slider.value = 0;
-                    }
-                } else {
-                    heatLevel = Math.max(0, heatLevel - 0.5);
+        // --- オーバーヒート判定と破壊フラグ管理 ---
+        if (!isBroken) {
+            if (speed >= 10.5) {
+                heatLevel += 1.5;
+                if (heatLevel >= 100) {
+                    isBroken = true;
+                    speed = 0;
+                    slider.value = 0;
                 }
             } else {
-                speed = 0;
-                slider.value = 0;
+                heatLevel = Math.max(0, heatLevel - 0.5);
             }
+        } else {
+            speed = 0;
+            slider.value = 0;
+        }
 
-            if (!isBroken) {
-                mainGearAngle += speed * 0.01;
-                // 3倍速で逆回転。噛み合いを綺麗に見せるための微調整オフセット (+ Math.PI / 10)
-                subGearAngle = -mainGearAngle * (gear1Teeth / gear2Teeth) + (Math.PI / gear2Teeth); 
+        // --- パラメータ・位置の計算 ---
+        const pedalX = centerX - 150;   // ペダル（フロントギヤ）位置
+        const rearX = centerX - 10;     // リアギヤ位置
+        const magnetX = centerX + 120;  // 磁石（ダイナモ発電機）位置
+        
+        let pedalTeeth = 40;
+        let pedalR = 60;
+        let rearTeeth, rearR, gearRatio;
+
+        if (dynamoMode === 'bike') {
+            // 自転車変速モード: 1段(12枚:小) ～ 5段(28枚:大)
+            rearTeeth = dynamoBikeTeethMap ? dynamoBikeTeethMap[dynamoBikeGear] : 12;
+            rearR = 20 + (rearTeeth - 12) * 2.2; 
+            
+            // ギヤ比：ペダル歯数(40) ÷ リア歯数
+            gearRatio = pedalTeeth / rearTeeth; 
+        } else {
+            // 手回しダイナモモード（直噛み合い）
+            pedalTeeth = 30;
+            pedalR = 55;
+            rearTeeth = 10;
+            rearR = 20;
+            gearRatio = 3; // 3倍速固定
+        }
+
+        // --- 回転角度の更新 ---
+        if (!isBroken) {
+            // 1. ペダル（メインギヤ）を反時計回りに回転（角度をマイナス方向へ加算）
+            mainGearAngle -= speed * 0.03;
+
+            if (dynamoMode === 'bike') {
+                // 自転車（チェーン駆動）：リアギヤもペダルと同じ「反時計回り」に回転
+                // （変速比に応じた速度で反時計回り）
+                subGearAngle -= speed * 0.03 * gearRatio; 
+            } else {
+                // 手回しダイナモ（歯車直噛み合い）：2つ目のギヤは「時計回り」（プラス方向へ加算）
+                subGearAngle += speed * 0.03 * gearRatio; 
             }
+        }
 
-            // 3連歯車と同じ「インボリュート風」デザインで2つのギヤを描画！
-            drawDynamoGear(ctx, gear1X, centerY, gear1R, gear1Teeth, mainGearAngle, isBroken ? '#475569' : '#3b82f6', '手回し大ギヤ(30枚)');
-            drawDynamoGear(ctx, gear2X, centerY, gear2R, gear2Teeth, subGearAngle, isBroken ? '#ef4444' : '#f43f5e', '増速小ギヤ(10枚)');
+        // --- 描画処理 ---
+        if (dynamoMode === 'bike') {
+            // 1. ペダルギヤ（フロントスプロケット）の描画［反時計回り］
+            drawDynamoGear(ctx, pedalX, centerY, pedalR, pedalTeeth, mainGearAngle, isBroken ? '#475569' : '#0284c7', `ペダルギヤ(${pedalTeeth}枚)`);
 
-            // 手回しハンドル（ギヤの上に重ねて描画）
+            // ペダルアーム［反時計回り］
             ctx.save();
-            ctx.translate(gear1X, centerY);
+            ctx.translate(pedalX, centerY);
             ctx.rotate(mainGearAngle);
             ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 8;
-            ctx.lineCap = 'round';
+            ctx.lineWidth = 6;
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(0, -gear1R + 15);
+            ctx.lineTo(0, -pedalR + 10);
             ctx.stroke();
             ctx.fillStyle = '#f8fafc';
             ctx.beginPath();
-            ctx.arc(0, -gear1R + 15, 10, 0, Math.PI * 2);
+            ctx.arc(0, -pedalR + 10, 8, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
-            // コイルと磁石
-            const magnetX = centerX + 110;
-            ctx.strokeStyle = '#f97316';
-            ctx.lineWidth = 6;
-            ctx.beginPath();
-            ctx.arc(magnetX, centerY, 45, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // 導線
+            // 2. チェーンの描画（フロントギヤとリアギヤを繋ぐ）
             ctx.strokeStyle = '#64748b';
             ctx.lineWidth = 3;
+            ctx.setLineDash([5, 4]); // チェーンの見た目を点線で表現
             ctx.beginPath();
-            ctx.moveTo(magnetX, centerY - 45);
-            ctx.lineTo(magnetX, centerY - 100);
-            ctx.lineTo(centerX - 100, centerY - 100);
-            ctx.lineTo(centerX - 100, centerY - 45);
+            ctx.moveTo(pedalX, centerY - pedalR);
+            ctx.lineTo(rearX, centerY - rearR);
+            ctx.moveTo(pedalX, centerY + pedalR);
+            ctx.lineTo(rearX, centerY + rearR);
+            ctx.stroke();
+            ctx.setLineDash([]); // 点線解除
+
+            // 3. リアギヤ（変速スプロケット）の描画［同じく反時計回り］
+            drawDynamoGear(ctx, rearX, centerY, rearR, rearTeeth, subGearAngle, isBroken ? '#475569' : '#3b82f6', `リアギヤ(${rearTeeth}枚)`);
+
+            // 4. 同軸シャフト（リアギヤから右のダイナモへ接続）
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(rearX, centerY);
+            ctx.lineTo(magnetX, centerY);
             ctx.stroke();
 
-            // 電球のソケット
-            ctx.fillStyle = '#334155';
-            ctx.beginPath();
-            ctx.arc(centerX - 100, centerY - 35, 20, 0, Math.PI * 2);
-            ctx.fill();
+        } else {
+            // 手回しダイナモモードの描画（2つの歯車が直に噛み合う）
+            const gear2X = pedalX + pedalR + rearR - 2;
+            drawDynamoGear(ctx, pedalX, centerY, pedalR, pedalTeeth, mainGearAngle, isBroken ? '#475569' : '#3b82f6', '手回し大ギヤ(30枚)');
+            drawDynamoGear(ctx, gear2X, centerY, rearR, rearTeeth, subGearAngle, isBroken ? '#ef4444' : '#f43f5e', '増速小ギヤ(10枚)');
 
-            // 電球発光
-            if (speed > 0 && !isBroken) {
-                const glowGradient = ctx.createRadialGradient(centerX - 100, centerY - 35, 5, centerX - 100, centerY - 35, 15 + speed * 4);
-                glowGradient.addColorStop(0, 'rgba(253, 224, 71, 1)');
-                glowGradient.addColorStop(1, 'rgba(253, 224, 71, 0)');
-                ctx.fillStyle = glowGradient;
-                ctx.beginPath();
-                ctx.arc(centerX - 100, centerY - 35, 15 + speed * 4, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // 回転磁石（小ギヤと連動）
-            ctx.save();
-            ctx.translate(magnetX, centerY);
-            ctx.rotate(subGearAngle);
-            ctx.fillStyle = '#ef4444';
-            ctx.fillRect(-35, -12, 35, 24);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText('N', -25, 5);
-            ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(0, -12, 35, 24);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText('S', 15, 5);
-            ctx.restore();
-
-            // 接続シャフト（点線）
             ctx.strokeStyle = 'rgba(255,255,255,0.2)';
             ctx.lineWidth = 2;
             ctx.setLineDash([4, 4]);
@@ -1152,53 +1217,105 @@ function initGear() {
             ctx.lineTo(magnetX, centerY);
             ctx.stroke();
             ctx.setLineDash([]);
-
-            // 発熱メーター
-            if (heatLevel > 0) {
-                ctx.fillStyle = '#fee2e2';
-                ctx.fillRect(centerX - 60, height - 30, 120, 15);
-                ctx.fillStyle = `rgb(${150 + heatLevel}, 50, 50)`;
-                ctx.fillRect(centerX - 60, height - 30, (heatLevel / 100) * 120, 15);
-                ctx.strokeStyle = '#ffffff';
-                ctx.strokeRect(centerX - 60, height - 30, 120, 15);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 10px Arial';
-                ctx.fillText(`ギヤの熱: ${Math.round(heatLevel)}%`, centerX - 40, height - 18);
-            }
-
-            // UI状態更新
-            const statusDiv = document.getElementById('generatorStatus');
-            const resetBtn = document.getElementById('resetGearBtn');
-
-            if (isBroken) {
-                statusDiv.textContent = '⚠️ 警告：回しすぎです！ギヤ（歯車）の噛み合わせが欠けて、壊れてしまいました！';
-                statusDiv.style.backgroundColor = '#fecaca';
-                statusDiv.style.color = '#b91c1c';
-                if (resetBtn) resetBtn.style.display = 'block';
-                slider.disabled = true;
-            } else {
-                if (resetBtn) resetBtn.style.display = 'none';
-                slider.disabled = false;
-                if (speed === 0) {
-                    statusDiv.textContent = 'ハンドルが止まっています（発電量: 0%）';
-                    statusDiv.style.backgroundColor = '#fee2e2';
-                    statusDiv.style.color = '#dc2626';
-                } else if (speed >= 10.5) {
-                    statusDiv.textContent = '💥 危ない！回すのが速すぎます！このままだとギヤが壊れます！';
-                    statusDiv.style.backgroundColor = '#ffedd5';
-                    statusDiv.style.color = '#ea580c';
-                } else {
-                    const voltage = Math.round(speed * 12);
-                    statusDiv.textContent = `ギヤ増速中！ ハンドル1回転で磁石が3倍速で回っています（発電電圧: 約${voltage}V）`;
-                    statusDiv.style.backgroundColor = '#dcfce7';
-                    statusDiv.style.color = '#15803d';
-                }
-            }
-
-            animationFrameIds.dynamo = requestAnimationFrame(drawDynamoLoop);
         }
-        drawDynamoLoop();
+
+        // 5. 発電機（回転磁石）
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(magnetX, centerY, 45, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 電球への配線
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(magnetX, centerY - 45);
+        ctx.lineTo(magnetX, centerY - 100);
+        ctx.lineTo(centerX - 100, centerY - 100);
+        ctx.lineTo(centerX - 100, centerY - 45);
+        ctx.stroke();
+
+        // 電球（LED）本体
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.arc(centerX - 100, centerY - 35, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 発光エフェクト
+        if (speed > 0 && !isBroken) {
+            const glowGradient = ctx.createRadialGradient(centerX - 100, centerY - 35, 5, centerX - 100, centerY - 35, 15 + speed * 4);
+            glowGradient.addColorStop(0, 'rgba(253, 224, 71, 1)');
+            glowGradient.addColorStop(1, 'rgba(253, 224, 71, 0)');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(centerX - 100, centerY - 35, 15 + speed * 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // N極/S極 磁石の回転［自転車モード時はリアギヤと同じ反時計回り］
+        ctx.save();
+        ctx.translate(magnetX, centerY);
+        ctx.rotate(subGearAngle);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(-35, -12, 35, 24);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText('N', -25, 5);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(0, -12, 35, 24);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText('S', 15, 5);
+        ctx.restore();
+
+        // ギヤの熱ゲージ
+        if (heatLevel > 0) {
+            ctx.fillStyle = '#fee2e2';
+            ctx.fillRect(centerX - 60, height - 30, 120, 15);
+            ctx.fillStyle = `rgb(${150 + heatLevel}, 50, 50)`;
+            ctx.fillRect(centerX - 60, height - 30, (heatLevel / 100) * 120, 15);
+            ctx.strokeStyle = '#ffffff';
+            ctx.strokeRect(centerX - 60, height - 30, 120, 15);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Arial';
+            ctx.fillText(`ギヤの熱: ${Math.round(heatLevel)}%`, centerX - 40, height - 18);
+        }
+
+        // UIステータステキスト更新
+        const statusDiv = document.getElementById('generatorStatus');
+        const resetBtn = document.getElementById('resetGearBtn');
+
+        if (isBroken) {
+            statusDiv.textContent = '⚠️ 警告：回しすぎです！ギヤ（歯車）の噛み合わせが欠けて、壊れてしまいました！';
+            statusDiv.style.backgroundColor = '#fecaca';
+            statusDiv.style.color = '#b91c1c';
+            if (resetBtn) resetBtn.style.display = 'block';
+            slider.disabled = true;
+        } else {
+            if (resetBtn) resetBtn.style.display = 'none';
+            slider.disabled = false;
+            if (speed === 0) {
+                statusDiv.textContent = dynamoMode === 'gear' ? 'ハンドルが止まっています（発電量: 0%）' : 'ペダルが止まっています（発電量: 0%）';
+                statusDiv.style.backgroundColor = '#fee2e2';
+                statusDiv.style.color = '#dc2626';
+            } else if (speed >= 10.5) {
+                statusDiv.textContent = '💥 危ない！回すのが速すぎます！このままだとギヤが壊れます！';
+                statusDiv.style.backgroundColor = '#ffedd5';
+                statusDiv.style.color = '#ea580c';
+            } else {
+                const voltage = Math.round(speed * 12 * gearRatio);
+                let modeDesc = dynamoMode === 'gear' ? 'ハンドル1回転で磁石が3倍速で回っています' : `自転車変速(第${dynamoBikeGear}段)で発電中`;
+                statusDiv.textContent = `${modeDesc}（発電電圧: 約${voltage}V）`;
+                statusDiv.style.backgroundColor = '#dcfce7';
+                statusDiv.style.color = '#15803d';
+            }
+        }
+
+        animationFrameIds.dynamo = requestAnimationFrame(drawDynamoLoop);
     }
+    drawDynamoLoop();
+}
 
     // ==========================================
     // ③ ラジオ・電波シミュレーター JS
@@ -1217,7 +1334,6 @@ function initGear() {
         { freq: 91.9, name: "ABCラジオ (ワイド)" }
     ];
 
-    // 【修正】大阪周辺で受信できるAM局（KBS京都、WBS和歌山）を追加して計6局に拡充
     const AM_STATIONS = [
         { freq: 666,  name: "NHK大阪第1" },
         { freq: 1008, name: "ABCラジオ" },
@@ -1227,30 +1343,24 @@ function initGear() {
         { freq: 1431, name: "WBS和歌山放送" }
     ];
 
-    // 特定の周波数（放送局）にダイレクト選局・チューニングする関数
     function tuneToStation(freq, mode) {
         const amRadio = document.querySelector('input[name="modulation"][value="AM"]');
         const fmRadio = document.querySelector('input[name="modulation"][value="FM"]');
         const slider = document.getElementById('tuningSlider');
 
-        // 1. まずAM/FMのモードを合わせる
         if (mode === 'AM' && amRadio && !amRadio.checked) {
             amRadio.checked = true;
-            onModulationChange(); // モードの初期化処理を呼ぶ
+            onModulationChange();
         } else if (mode === 'FM' && fmRadio && !fmRadio.checked) {
             fmRadio.checked = true;
-            onModulationChange(); // モードの初期化処理を呼ぶ
+            onModulationChange();
         }
 
-        // 2. スライダーの値を調整する
         if (mode === 'AM') {
             slider.value = freq.toString();
         } else {
-            // FMは周波数(例: 80.2)をスライダー値(802)に変換
             slider.value = Math.round(freq * 10).toString();
         }
-
-        // 3. UIの表示を更新する
         updateRadioParams();
     }
 
@@ -1259,7 +1369,6 @@ function initGear() {
         const slider = document.getElementById('tuningSlider');
         const minLabel = document.getElementById('tuningMinLabel');
 
-        // スライダーの範囲を1431kHz（和歌山放送）までカバーできるように、AMの最大値を1440に変更
         if (isAM) {
             slider.min = "531";
             slider.max = "1440";
@@ -1282,11 +1391,8 @@ function initGear() {
         const valSpan = document.getElementById('tuningVal');
         const infoDiv = document.getElementById('stationListInfo');
         
-        // ボタンを配置するための共通HTML生成処理
         if (isAM) {
             valSpan.textContent = rawVal + ' kHz';
-            
-            // AM用のボタン群を作成 (計6局。4列のグリッドで均等幅でピッタリ並ぶように配置)
             let buttonsHTML = AM_STATIONS.map(st => {
                 const activeClass = (rawVal === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
                 return `
@@ -1303,8 +1409,6 @@ function initGear() {
         } else {
             const mhz = (rawVal / 10).toFixed(1);
             valSpan.textContent = mhz + ' MHz';
-            
-            // FM用のボタン群を作成 (計7局)
             let buttonsHTML = FM_STATIONS.map(st => {
                 const currentSliderMHz = parseFloat(mhz);
                 const activeClass = (currentSliderMHz === st.freq) ? 'border: 2px solid #10b981; background: #dcfce7; color: #15803d;' : 'background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;';
@@ -1335,14 +1439,11 @@ function initGear() {
             const isAM = document.querySelector('input[name="modulation"]:checked').value === 'AM';
 
             ctx.clearRect(0, 0, width, height);
-
-            // 背景塗りつぶし
             ctx.fillStyle = '#1e293b';
             ctx.fillRect(0, 0, width, height);
 
             radioTime += 0.05;
 
-            // 1. 元の音の波（低周波のサイン波：青）
             ctx.strokeStyle = '#3b82f6';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1356,7 +1457,6 @@ function initGear() {
             ctx.font = '12px Arial';
             ctx.fillText('元の音（音声信号）', 10, 25);
 
-            // 2. 変調された電波のビジュアル
             ctx.strokeStyle = '#ef4444';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1383,7 +1483,6 @@ function initGear() {
             ctx.font = '12px Arial';
             ctx.fillText(isAM ? 'AM 電波（音の強弱で縦の振幅が変化する）' : 'FM 電波（音の強弱で横の波の密度が変化する）', 10, height * 0.45);
 
-            // 3. チューニング判定
             const currentFreq = isAM ? rawTuning : (rawTuning / 10);
             const stations = isAM ? AM_STATIONS : FM_STATIONS;
             
@@ -1430,7 +1529,6 @@ function initGear() {
         drawRadioLoop();
     }
 
-    // 初期ロード
     window.onload = function() {
         switchTab('gear');
     };
