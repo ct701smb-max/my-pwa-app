@@ -1215,7 +1215,109 @@ button:active {
   color: #fff;
 }
 
+/*提出ボタン*/
+.submit-link-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #4caf50; /* ボタンの背景色（緑系） */
+  color: #ffffff;
+  text-align: center;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
 
+.submit-link-btn:hover {
+  background-color: #45a049; /* ホバー時の背景色 */
+}
+
+/* 注記ボックス全体 */
+.notice-box {
+  margin: 12px 0;
+  padding: 14px 16px;
+  background-color: #fffde7; /* 視認性の高いやわらかい黄色 */
+  border: 1px solid #ffe082;
+  border-left: 5px solid #f57c00; /* 左側にアクセントライン */
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* ヘッダー部分 */
+.notice-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #e65100;
+  font-size: 0.95rem;
+}
+
+/* 提出物のリスト */
+.notice-list {
+  margin: 0 0 12px 0;
+  padding: 0;
+  list-style: none; /* デフォルトのポッチを消して番号で整理 */
+}
+
+.notice-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #ffe0b2; /* 項目間の区切り線 */
+  font-size: 0.88rem;
+}
+
+.notice-list li:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  font-weight: bold;
+  color: #333333;
+}
+
+/* 例示バッジ */
+.example-tag {
+  font-size: 0.78rem;
+  color: #555555;
+  background-color: #ffffff;
+  padding: 2px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: monospace; /* ファイル名らしく見せるフォント */
+}
+
+/* 説明テキスト */
+.example-note {
+  font-size: 0.78rem;
+  color: #666666;
+}
+
+/* フッター・注意事項 */
+.notice-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ffe0b2;
+}
+
+.footer-main {
+  margin: 0 0 4px 0;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #e65100;
+}
+
+.footer-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #757575;
+}
 /* ====================================================================
    11. 共通フッター & ユーティリティ
 =====================================================================*/
@@ -1761,7 +1863,37 @@ button:active {
   </div>
 
   <button id="save-pdf-btn" data-ja="📄 PDFでレポート作成実行" data-en="📄 Export Report as PDF" data-ja-title="レポートをPDFファイルで保存します" data-en-title="Generate and save report as PDF file">📄 PDFでレポート作成実行</button>
+<div class="notice-box">
+  <div class="notice-header">
+    <span class="notice-icon">📌</span>
+    <span class="notice-title">提出に必要なデータ（計3点）</span>
+  </div>
+
+  <ul class="notice-list">
+    <li>
+      <span class="item-name">1. 自分の作品の写真</span>
+      <span class="example-note">※パソコンのカメラで作品を撮影したもの</span>
+    </li>
+    <li>
+      <span class="item-name">2. ペンスタンドCADのPDF</span>
+      <span class="example-tag">例: cad-practice-1501.pdf</span>
+    </li>
+    <li>
+      <span class="item-name">3. 本番作品CADのPDF</span>
+      <span class="example-tag">例: cad-final-1501.pdf</span>
+    </li>
+    
+  </ul>
+
+  <div class="notice-footer">
+    <p class="footer-main">上記3つのデータを準備して、下のボタンから提出してください。</p>
+    <p class="footer-note">※提出先フォーム内でアンケートもあります。</p>
+  </div>
 </div>
+
+<a href="レポート提出用URL" target="_blank" rel="noopener noreferrer" class="submit-link-btn" id="submit-report-btn" data-ja="📤 レポートを提出する" data-en="📤 Submit Report">📤 レポートを提出する</a>
+</div>
+        
     </div>
 
 <!-- ==========================================
@@ -4650,7 +4782,10 @@ document.getElementById('copy-btn').onclick = () => {
 // C. すべての板の削除
 // ==========================================
   document.getElementById('clear-all-btn').onclick = () => {
-    const confirmMsg = currentLang === 'en' ? "⚠️ Are you sure you want to delete all boards?" : "⚠️ すべて削除しますか？";
+    const confirmMsg = currentLang === 'en' 
+      ? "⚠️ Are you sure you want to delete all boards?\nThis action cannot be undone." 
+      : "⚠️ すべての板を削除しますか？\nこの操作は元に戻せません。";
+
     if (confirm(confirmMsg)) {
       boards.forEach(b => {
         b.geometry.dispose();
@@ -4661,14 +4796,15 @@ document.getElementById('copy-btn').onclick = () => {
       boards = []; 
       control.detach(); 
       updateAllVisuals(); 
+      
+      // 空になった状態をローカルストレージ等の履歴に保存
       saveHistory(); 
       
-      document.getElementById('pos-x').value = 0; 
-      document.getElementById('pos-y').value = 0; 
-      document.getElementById('pos-z').value = 0;
-      document.getElementById('rot-x').value = 0; 
-      document.getElementById('rot-y').value = 0; 
-      document.getElementById('rot-z').value = 0;
+      // ローカルストレージを直接クリアする場合（キー名を使用している場合は適宜変更してください）
+      // localStorage.removeItem('boards');
+
+      // ページを更新
+      location.reload();
     }
   };
 
