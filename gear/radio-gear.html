@@ -7,402 +7,488 @@
     <title>歯車・電波学習シュミレーター</title>
     <style>
     :root {
-        --primary: #2563eb;
-        --primary-hover: #1d4ed8;
-        --idle: #eab308;
-        --secondary: #10b981;
-        --bg: #f8fafc;
-        --panel: #ffffff;
-        --text: #1e293b;
-        --text-muted: #64748b;
-        --border-color: #cbd5e1;
-    }
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --idle: #eab308;
+    --secondary: #10b981;
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #cbd5e1;
+}
 
-    body {
-        font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-        background-color: var(--bg);
-        color: var(--text);
-        margin: 0;
-        padding: 20px;
-        display: flex;
+body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.container {
+    max-width: 1020px;
+    width: 100%;
+    background: var(--panel);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    box-sizing: border-box;
+}
+
+/* ヘッダーエリアの配置調整 */
+.header-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--bg);
+    padding-bottom: 12px;
+    gap: 16px;
+}
+
+/* PC画面でボタン2つをきれいな横並びにする */
+.header-buttons {
+    display: flex;
+    flex-direction: row; /* 横並び指定 */
+    gap: 10px;
+    flex-shrink: 0; /* ボタン群が潰れるのを防ぐ */
+}
+
+/* モーダル内の動画サイズ調整（PC画面内に収める） */
+.modal-video-container {
+    width: 100%;
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-video-container video {
+    width: 100%;
+    max-width: 560px;       /* 横幅の上限 */
+    max-height: 60vh;       /* 画面縦幅の60%以内に収める（PC画面オーバー防止） */
+    object-fit: contain;
+    border-radius: 8px;
+    background: #000;
+}
+
+/* ===================================================
+   スマートフォン表示時の調整（画面幅768px以下）
+=================================================== */
+@media (max-width: 768px) {
+    .header-area {
         flex-direction: column;
-        align-items: center;
+        text-align: center;
+    }
+    .header-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    .modal-video-container video {
+        max-height: 50vh; /* スマホ時の縦幅調整 */
+    }
+}
+
+h1 {
+    font-size: 1.4rem;
+    margin: 0;
+    color: #0f172a;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border: 1px solid #cbd5e1;
+    background-color: #f1f5f9;
+    color: #475569;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* モード切り替えタブ */
+.mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* スマホで入り切らない場合に折り返す */
+}
+
+.tab-btn {
+    flex: 1;
+    min-width: 140px; /* スマホ用に最小幅を縮小 */
+    padding: 10px 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    text-align: center;
+    word-break: break-word; /* 長いテキストの入り切りに対応 */
+    box-sizing: border-box;
+}
+
+.tab-btn.active {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #eff6ff;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 解説エリアスタイル */
+.explanation {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.6;
+    background: #f1f5f9;
+    padding: 16px;
+    border-left: 4px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 20px;
+}
+
+/* コントロールパネル */
+.controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    background: var(--bg);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+}
+
+label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.value-display {
+    font-weight: bold;
+}
+#t1-val { color: var(--primary); }
+#t2-val { color: var(--idle); }
+#t3-val { color: var(--secondary); }
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+input[type="range"] {
+    flex: 1;
+    cursor: pointer;
+    height: 8px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    outline: none;
+    accent-color: var(--primary);
+}
+
+/* 自転車用変速ボタン */
+.bike-shifter {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.shift-btn {
+    flex: 1;
+    min-width: 60px;
+    padding: 8px 4px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.shift-btn.active {
+    background: var(--secondary);
+    color: white;
+    border-color: var(--secondary);
+}
+
+/* ラジオ選択ボタン */
+.radio-options {
+    display: flex;
+    gap: 15px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+/* ダッシュボード（解説・ビジュアル分割） */
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.info-panel {
+    background: #f0fdf4;
+    border-left: 4px solid var(--secondary);
+    padding: 16px;
+    border-radius: 0 8px 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-title {
+    font-weight: bold;
+    color: #166534;
+    font-size: 1.1rem;
+}
+
+.formula-box {
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #dcfce7;
+    font-size: 0.9rem;
+}
+
+.formula {
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 1.1rem;
+    text-align: center;
+    margin-top: 4px;
+    font-weight: bold;
+}
+
+/* シミュレーションエリア */
+.canvas-container {
+    position: relative;
+    background: #1e293b;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+}
+
+/* ステータス・情報表示 */
+.status-display {
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 6px;
+    min-height: 24px;
+    transition: all 0.2s ease;
+}
+
+.station-list {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 10px;
+    border-radius: 6px;
+    line-height: 1.5;
+}
+
+.btn-reset {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    display: none;
+}
+
+.btn-reset:hover {
+    background-color: #dc2626;
+}
+
+/* モーダルのスタイル */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.modal-content {
+    background: var(--panel); max-width: 650px; width: 90%; max-height: 85vh;
+    overflow-y: auto; padding: 30px; border-radius: 12px;
+    position: relative; transform: translateY(-20px); transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content { transform: translateY(0); }
+
+.close-modal-btn {
+    position: absolute; top: 15px; right: 15px; background: #f1f5f9;
+    border: none; width: 32px; height: 32px; border-radius: 50%;
+    cursor: pointer; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+}
+
+.modal-body h2 { font-size: 1.4rem; color: var(--primary); margin-top: 0; border-bottom: 2px solid #eff6ff; padding-bottom: 8px; }
+.modal-body h3 { font-size: 1.1rem; margin-top: 20px; color: #0f172a; }
+.modal-body blockquote { background: #f8fafc; border-left: 4px solid #cbd5e1; margin: 10px 0; padding: 10px 15px; border-radius: 0 6px 6px 0; }
+
+/* 動画コンテナ用スタイル（追加） */
+.modal-video-container {
+    width: 100%;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.modal-video-container video {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    background: #000;
+}
+
+/* ===================================================
+   スマートフォン・タブレット向けレスポンシブ調整
+=================================================== */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
     }
 
     .container {
-        max-width: 1020px;
-        width: 100%;
-        background: var(--panel);
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        box-sizing: border-box;
+        padding: 14px;
     }
 
-    /* ヘッダー */
     .header-area {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 2px solid var(--bg);
-        padding-bottom: 12px;
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+        align-items: stretch;
+    }
+
+    .header-buttons {
+        justify-content: center; /* スマホ時にボタン群を中央揃え */
     }
 
     h1 {
-        font-size: 1.4rem;
-        margin: 0;
-        color: #0f172a;
+        font-size: 1.1rem;
+        line-height: 1.4;
     }
 
-    .btn {
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 0.9rem;
-        border: 1px solid #cbd5e1;
-        background-color: #f1f5f9;
-        color: #475569;
-        transition: all 0.2s;
+    .dashboard {
+        grid-template-columns: 1fr;
     }
 
-    .btn:hover {
-        background-color: #e2e8f0;
-    }
-
-    /* モード切り替えタブ */
+    /* タブをスマホ画面で縦/横フィットに調整 */
     .mode-tabs {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 20px;
-        flex-wrap: wrap; /* スマホで入り切らない場合に折り返す */
+        gap: 6px;
     }
 
     .tab-btn {
-        flex: 1;
-        min-width: 140px; /* スマホ用に最小幅を縮小 */
-        padding: 10px 8px;
-        font-size: 0.9rem;
-        font-weight: bold;
-        border: 2px solid #e2e8f0;
-        background: #ffffff;
-        border-radius: 8px;
-        cursor: pointer;
-        color: var(--text-muted);
-        transition: all 0.2s;
-        text-align: center;
-        word-break: break-word; /* 長いテキストの入り切りに対応 */
-        box-sizing: border-box;
-    }
-
-    .tab-btn.active {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: #eff6ff;
-    }
-
-    .tab-content {
-        display: none;
-    }
-
-    .tab-content.active {
-        display: block;
-    }
-
-    /* 解説エリアスタイル */
-    .explanation {
-        font-size: 0.95rem;
-        color: var(--text);
-        line-height: 1.6;
-        background: #f1f5f9;
-        padding: 16px;
-        border-left: 4px solid var(--primary);
-        border-radius: 0 8px 8px 0;
-        margin-bottom: 20px;
-    }
-
-    /* コントロールパネル */
-    .controls {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        background: var(--bg);
-        padding: 16px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        margin-bottom: 20px;
-    }
-
-    .control-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        justify-content: center;
-    }
-
-    label {
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    .value-display {
-        font-weight: bold;
-    }
-    #t1-val { color: var(--primary); }
-    #t2-val { color: var(--idle); }
-    #t3-val { color: var(--secondary); }
-
-    .slider-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    input[type="range"] {
-        flex: 1;
-        cursor: pointer;
-        height: 8px;
-        border-radius: 4px;
-        background: #e2e8f0;
-        outline: none;
-        accent-color: var(--primary);
-    }
-
-    /* 自転車用変速ボタン */
-    .bike-shifter {
-        display: flex;
-        gap: 6px;
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    .shift-btn {
-        flex: 1;
-        min-width: 60px;
+        min-width: calc(33.33% - 6px); /* 3つ並べた時に画面幅に収まる */
         padding: 8px 4px;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        white-space: normal; /* 折り返しを許可 */
+        line-height: 1.3;
     }
 
-    .shift-btn.active {
-        background: var(--secondary);
-        color: white;
-        border-color: var(--secondary);
-    }
-
-    /* ラジオ選択ボタン */
-    .radio-options {
-        display: flex;
-        gap: 15px;
-    }
-
-    .radio-label {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-        font-weight: normal;
-    }
-
-    /* ダッシュボード（解説・ビジュアル分割） */
-    .dashboard {
-        display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-
-    .info-panel {
-        background: #f0fdf4;
-        border-left: 4px solid var(--secondary);
-        padding: 16px;
-        border-radius: 0 8px 8px 0;
-        display: flex;
-        flex-direction: column;
+    .controls {
+        grid-template-columns: 1fr;
+        padding: 12px;
         gap: 12px;
     }
 
-    .info-title {
-        font-weight: bold;
-        color: #166534;
-        font-size: 1.1rem;
+    .control-group.bike-ctrl {
+        grid-column: span 1 !important;
     }
-
-    .formula-box {
-        background: #ffffff;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid #dcfce7;
-        font-size: 0.9rem;
-    }
-
-    .formula {
-        background: #f1f5f9;
-        padding: 6px;
-        border-radius: 4px;
-        font-family: monospace;
-        font-size: 1.1rem;
-        text-align: center;
-        margin-top: 4px;
-        font-weight: bold;
-    }
-
-    /* シミュレーションエリア */
-    .canvas-container {
-        position: relative;
-        background: #1e293b;
-        border-radius: 8px;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    canvas {
-        display: block;
-        width: 100%;
-    }
-
-    /* ステータス・情報表示 */
-    .status-display {
-        font-size: 1rem;
-        font-weight: bold;
-        text-align: center;
-        margin-top: 10px;
-        padding: 12px;
-        border-radius: 6px;
-        min-height: 24px;
-        transition: all 0.2s ease;
-    }
-
-    .station-list {
-        margin-top: 10px;
-        font-size: 0.85rem;
-        color: #64748b;
-        background: #f1f5f9;
-        padding: 10px;
-        border-radius: 6px;
-        line-height: 1.5;
-    }
-
-    .btn-reset {
-        background-color: #ef4444;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-        margin-top: 10px;
-        display: none;
-    }
-
-    .btn-reset:hover {
-        background-color: #dc2626;
-    }
-
-    /* モーダルのスタイル */
-    .modal-overlay {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(4px);
-        display: flex; justify-content: center; align-items: center;
-        z-index: 1000; opacity: 0; pointer-events: none;
-        transition: opacity 0.3s ease;
-    }
-
-    .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
     .modal-content {
-        background: var(--panel); max-width: 650px; width: 90%; max-height: 85vh;
-        overflow-y: auto; padding: 30px; border-radius: 12px;
-        position: relative; transform: translateY(-20px); transition: transform 0.3s ease;
+        padding: 20px 15px;
+        width: 95%;
     }
-
-    .modal-overlay.active .modal-content { transform: translateY(0); }
-
-    .close-modal-btn {
-        position: absolute; top: 15px; right: 15px; background: #f1f5f9;
-        border: none; width: 32px; height: 32px; border-radius: 50%;
-        cursor: pointer; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
-    }
-
-    .modal-body h2 { font-size: 1.4rem; color: var(--primary); margin-top: 0; border-bottom: 2px solid #eff6ff; padding-bottom: 8px; }
-    .modal-body h3 { font-size: 1.1rem; margin-top: 20px; color: #0f172a; }
-    .modal-body blockquote { background: #f8fafc; border-left: 4px solid #cbd5e1; margin: 10px 0; padding: 10px 15px; border-radius: 0 6px 6px 0; }
-
-    /* ===================================================
-       スマートフォン・タブレット向けレスポンシブ調整
-    =================================================== */
-    @media (max-width: 768px) {
-        body {
-            padding: 10px;
-        }
-
-        .container {
-            padding: 14px;
-        }
-
-        .header-area {
-            flex-direction: column;
-            gap: 12px;
-            text-align: center;
-            align-items: stretch;
-        }
-
-        h1 {
-            font-size: 1.1rem;
-            line-height: 1.4;
-        }
-
-        .dashboard {
-            grid-template-columns: 1fr;
-        }
-
-        /* タブをスマホ画面で縦/横フィットに調整 */
-        .mode-tabs {
-            gap: 6px;
-        }
-
-        .tab-btn {
-            min-width: calc(33.33% - 6px); /* 3つ並べた時に画面幅に収まる */
-            padding: 8px 4px;
-            font-size: 0.75rem;
-            white-space: normal; /* 折り返しを許可 */
-            line-height: 1.3;
-        }
-
-        .controls {
-            grid-template-columns: 1fr;
-            padding: 12px;
-            gap: 12px;
-        }
-
-        .control-group.bike-ctrl {
-            grid-column: span 1 !important;
-        }
-
-        .modal-content {
-            padding: 20px 15px;
-            width: 95%;
-        }
-    }
+}
 </style>
 </head>
 <body>
 
 <div class="container">
     <!-- ヘッダー -->
-    <div class="header-area">
-        <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　歯車と変速・ダイナモ発電・ラジオ学習シミュレーター</h1>
+<div class="header-area">
+    <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> 歯車の役割と発電・ラジオ学習シミュレーター</h1>
+    <div class="header-buttons">
         <button class="btn" id="openModal">💡 「ピッチ円」「モジュール」とは？</button>
+        <button class="btn" id="openBikeModal">🚲 自転車の機構</button>
     </div>
+</div>
+
+<!-- 自転車の機構 モーダル本体 -->
+<div class="modal-overlay" id="bikeModalOverlay">
+    <div class="modal-content">
+        <button class="close-modal-btn" id="closeBikeModal">&times;</button>
+        <div class="modal-body">
+            <h2>🚲 自転車の機構</h2>
+            <div class="modal-video-container">
+                <video id="bikeVideo" controls>
+                    <source src="bike.mp4" type="video/mp4">
+                    お使いのブラウザは動画再生に対応していません。
+                </video>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- モード切り替えタブ（3枚構成） -->
     <div class="mode-tabs">
@@ -592,7 +678,7 @@
         </div>
     </div>
 
-<!-- モーダルウィンドウ -->
+<!-- 1. 「ピッチ円」「モジュール」解説モーダル -->
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal-content">
         <button class="close-modal-btn" id="closeModal">&times;</button>
@@ -665,6 +751,21 @@
     </div>
 </div>
 
+<!-- 2. 「自転車の機構」動画再生用モーダル（並べて配置） -->
+<div class="modal-overlay" id="bikeModalOverlay">
+    <div class="modal-content">
+        <button class="close-modal-btn" id="closeBikeModal">&times;</button>
+        <div class="modal-body">
+            <h2>🚲 自転車の機構</h2>
+            <div class="modal-video-container">
+                <video id="bikeVideo" controls>
+                    <source src="bike.mp4" type="video/mp4">
+                    お使いのブラウザは動画再生に対応していません。
+                </video>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     // --- タブ＆全体ライフサイクル管理 ---
     let activeTab = 'gear'; // 'gear', 'dynamo', 'radio'
@@ -704,12 +805,40 @@
         }
     }
 
-    const modalOverlay = document.getElementById('modalOverlay');
-    document.getElementById('openModal').addEventListener('click', () => modalOverlay.classList.add('active'));
-    document.getElementById('closeModal').addEventListener('click', () => modalOverlay.classList.remove('active'));
-    document.getElementById('closeModal2').addEventListener('click', () => modalOverlay.classList.remove('active'));
-    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
+    // === 1. 「ピッチ円・モジュール」モーダル制御 ===
+const modalOverlay = document.getElementById('modalOverlay');
 
+document.getElementById('openModal').addEventListener('click', () => modalOverlay.classList.add('active'));
+document.getElementById('closeModal').addEventListener('click', () => modalOverlay.classList.remove('active'));
+document.getElementById('closeModal2').addEventListener('click', () => modalOverlay.classList.remove('active'));
+modalOverlay.addEventListener('click', (e) => { 
+    if (e.target === modalOverlay) modalOverlay.classList.remove('active'); 
+});
+
+// === 2. 「自転車の機構」モーダル制御（動画付き） ===
+const bikeModalOverlay = document.getElementById('bikeModalOverlay');
+const bikeVideo = document.getElementById('bikeVideo');
+
+// モーダルを閉じる共通関数（動画を一時停止する）
+const closeBikeModal = () => {
+    bikeModalOverlay.classList.remove('active');
+    if (bikeVideo) {
+        bikeVideo.pause(); // 閉じたときに音声・動画を停止
+    }
+};
+
+// 開くボタン
+document.getElementById('openBikeModal').addEventListener('click', () => {
+    bikeModalOverlay.classList.add('active');
+});
+
+// 閉じるボタン（×）
+document.getElementById('closeBikeModal').addEventListener('click', closeBikeModal);
+
+// 背景クリックで閉じる
+bikeModalOverlay.addEventListener('click', (e) => { 
+    if (e.target === bikeModalOverlay) closeBikeModal(); 
+});
 
 // ==========================================
 // ① 歯車＆自転車変速シミュレーター JS
@@ -1336,13 +1465,13 @@ let currentAudioUrl = "";
 
 // 各局のデータ（audioUrlに音声ファイルのパスを指定）
 const FM_STATIONS = [
-    { freq: 76.5, name: "FM COCOLO", audioUrl: "cocolo.m4a" },
-    { freq: 80.2, name: "FM802", audioUrl: "fm802.m4a" },
-    { freq: 85.1, name: "FM大阪", audioUrl: "fmosaka.mp3" },
-    { freq: 88.1, name: "NHK大阪FM", audioUrl: "nhkfm.m4a" },
-    { freq: 90.6, name: "MBSラジオ (ワイド)", audioUrl: "mbsfm.m4a" },
-    { freq: 91.1, name: "OBCラジオ大阪 (ワイド)", audioUrl: "obc_fm.mp3" },
-    { freq: 91.9, name: "ABCラジオ (ワイド)", audioUrl: "abc_fm.mp3" }
+    { freq: 76.5, name: "FM COCOLO", audioUrl: "audio/cocolo.m4a" },
+    { freq: 80.2, name: "FM802", audioUrl: "audio/fm802.m4a" },
+    { freq: 85.1, name: "FM大阪", audioUrl: "audio/fmosaka.mp3" },
+    { freq: 88.1, name: "NHK大阪FM", audioUrl: "audio/nhkfm.m4a" },
+    { freq: 90.6, name: "MBSラジオ (ワイド)", audioUrl: "audio/mbsfm.m4a" },
+    { freq: 91.1, name: "OBCラジオ大阪 (ワイド)", audioUrl: "audio/obc_fm.mp3" },
+    { freq: 91.9, name: "ABCラジオ (ワイド)", audioUrl: "audio/abc_fm.mp3" }
 ];
 
 const AM_STATIONS = [
