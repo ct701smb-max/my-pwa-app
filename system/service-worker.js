@@ -70,6 +70,7 @@ const urlsToCache = [
   '../game/osero.html',
   '../game/survival.html',
   '../game/ubongo.html',
+  '../game/shogi.html',
   '../docs/A-01-等角図.pdf',
   '../docs/A-02-工具の名称と使い方.pdf',
   '../docs/B-01生物育成.pdf',
