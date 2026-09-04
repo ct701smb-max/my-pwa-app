@@ -1186,35 +1186,37 @@ button:active {
 }
 
 /* デンジャー・削除エリア全般 */
-.delete-section { margin-top: 8px; }
+.delete-grid-container {
+  display: flex;
+  gap: 8px; /* ボタン同士の間隔 */
+  margin-top: 8px;
+}
 
+/* 横並びにする削除系ボタンの共通設定 */
+.delete-grid-container button,
 .delete-btn, 
 .danger-btn {
+  flex: 1; /* 均等な幅に広げる */
+  padding: 10px 6px;
   background: var(--danger-bg);
-  border-color: var(--danger-border);
+  border: 1px solid var(--danger-border);
   color: var(--danger-red);
   font-weight: bold;
-}
-
-.delete-btn {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 5px;
-}
-
-.danger-btn {
-  padding: 8px 0;
-  border-radius: 4px;
-  flex: 1;
   font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* ホバー時の挙動 */
+.delete-grid-container button:hover,
 .delete-btn:hover, 
 .danger-btn:hover {
   background-color: var(--danger-red); 
   color: #fff;
 }
-
+    
 /*提出ボタン*/
 .submit-link-btn {
   display: block;
@@ -1317,6 +1319,51 @@ button:active {
   margin: 0;
   font-size: 0.78rem;
   color: #757575;
+}
+
+/* 作品集ボタン（薄いピンク） */
+.gallery-link-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #fce4ec;
+  color: #c2185b;
+  border: 1px solid #f8bbd0;
+  text-align: center;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 6px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.gallery-link-btn:hover {
+  background-color: #f8bbd0;
+}
+
+/* 反映待ちの注意文ボックス */
+.gallery-notice-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background-color: #fff8f9; /* ごく薄いピンク背景 */
+  border-radius: 4px;
+}
+
+.notice-mini-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.notice-mini-text {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #880e4f; /* 読みやすい濃いめの控えめな赤・ピンク系 */
+  line-height: 1.3;
 }
 /* ====================================================================
    11. 共通フッター & ユーティリティ
@@ -1464,9 +1511,11 @@ button:active {
   </div>
 
 
-      <div class="delete-section">
-        <button id="delete-btn" class="delete-btn" data-ja="選択中の板を削除" data-en="Delete Selected Board" data-ja-title="選択中の板を削除します (Delete / Backspace)" data-en-title="Delete the selected board (Delete / Backspace)">選択中の板を削除</button>
-      </div>
+     <!--デリートセクション-->
+<div class="delete-grid-container">
+  <button id="delete-btn" class="delete-btn" data-ja="選択中の板を削除" data-en="Delete Selected Board" data-ja-title="選択中の板を削除します (Delete / Backspace)" data-en-title="Delete the selected board (Delete / Backspace)">選択中の板を削除</button>
+  <button id="clear-all-btn" class="clear-all-btn" data-ja="🗑 すべての板を削除" data-en="🗑 Clear All Boards" data-ja-title="すべての板を削除します" data-en-title="Delete all boards and reset canvas">🗑 すべての板を削除</button>
+</div>
 
 <div class="transform-container">
    
@@ -1562,10 +1611,6 @@ button:active {
         <button id="snap-mode-btn" class="snap-btn" data-ja="🧲 カドをピッタリくっつける (S)" data-en="🧲 Snap Corners (S)" data-ja-title="板のカド同士をぴったり吸着させます (S)" data-en-title="Snap corners of boards together (S)">🧲 カドをピッタリくっつける (S)</button>
       </div>
 
-<!--デリートセクション-->        
-      <div class="clear-all-container">
-        <button id="clear-all-btn" data-ja="🗑 すべての板を削除" data-en="🗑 Clear All Boards" data-ja-title="すべての板を削除します" data-en-title="Delete all boards and reset canvas">🗑 すべての板を削除</button>
-      </div>
     </div>
 
      <!-- ==========================================
@@ -1892,6 +1937,12 @@ button:active {
 </div>
 
 <a href="レポート提出用URL" target="_blank" rel="noopener noreferrer" class="submit-link-btn" id="submit-report-btn" data-ja="📤 レポートを提出する" data-en="📤 Submit Report">📤 レポートを提出する</a>
+<!-- 作品集 -->
+<div class="gallery-notice-box">
+  <span class="notice-mini-icon">⏳</span>
+  <p class="notice-mini-text">提出したデータが作品集に反映されるまで、少し時間がかかる場合があります。</p>
+</div>
+<a href="./gallery/list-s.html" target="_blank" rel="noopener noreferrer" class="gallery-link-btn" id="gallery-btn" data-ja="🎨 みんなの作品集を見る" data-en="🎨 View Student Gallery">🎨 みんなの作品集を見る</a>          
 </div>
         
     </div>

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R◯年度　桜宮中　〇〇期生　木工作品</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        /* クラス切り替えタブ */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            background-color: #e5e7eb;
+            color: #4b5563;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        /* カードグリッド */
+        .pdf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .pdf-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pdf-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* サムネイル（画像）コンテナ */
+        .thumbnail-container {
+            width: 100%;
+            height: 160px;
+            background-color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .thumbnail-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.2s;
+        }
+
+        .thumbnail-container:hover img {
+            opacity: 0.85;
+        }
+
+        .card-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .student-info {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .file-name {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+
+        .open-btn {
+            width: 100%;
+            padding: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .open-btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* モーダル表示 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            width: 90%;
+            height: 90%;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 12px 20px;
+            background-color: #1f2937;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #111827;
+            overflow: hidden;
+        }
+
+        .modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .modal-body img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>R◯年度　桜宮中　〇〇期生　木工作品</h1>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchClass(1)">1年1組</button>
+            <button class="tab-btn" onclick="switchClass(2)">1年2組</button>
+            <button class="tab-btn" onclick="switchClass(3)">1年3組</button>
+            <button class="tab-btn" onclick="switchClass(4)">1年4組</button>
+        </div>
+
+        <div id="pdf-grid" class="pdf-grid"></div>
+    </div>
+
+    <!-- 共通モーダル -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalTitle">表示タイトル</span>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // 生徒名リストの設定
+        const studentNames = {
+            11: {
+                "01": "提出なし",
+                "02": "提出なし",
+                "03": "提出なし",
+                "04": "提出なし",
+                "05": "提出なし",
+                "06": "提出なし",
+                "07": "提出なし",
+                "08": "提出なし",
+                "09": "提出なし",
+                "10": "提出なし",
+                "11": "提出なし",
+                "12": "提出なし",
+                "13": "提出なし",
+                "14": "提出なし",
+                "15": "提出なし",
+                "16": "提出なし",
+                "17": "提出なし",
+                "18": "提出なし",
+                "19": "提出なし",
+                "20": "提出なし",
+                "21": "提出なし",
+                "22": "提出なし",
+                "23": "提出なし",
+                "24": "提出なし",
+                "25": "提出なし",
+                "26": "提出なし",
+                "27": "提出なし",
+                "28": "提出なし",
+                "29": "提出なし",
+                "30": "提出なし",
+                "31": "提出なし",
+                "32": "提出なし",
+                "33": "提出なし",
+                "34": "提出なし",
+                "35": "提出なし",
+            },
+            12: {
+                "01": "提出なし",
+                "02": "提出なし",
+                "03": "提出なし",
+                "04": "提出なし",
+                "05": "提出なし",
+                "06": "提出なし",
+                "07": "提出なし",
+                "08": "提出なし",
+                "09": "提出なし",
+                "10": "提出なし",
+                "11": "提出なし",
+                "12": "提出なし",
+                "13": "提出なし",
+                "14": "提出なし",
+                "15": "提出なし",
+                "16": "提出なし",
+                "17": "提出なし",
+                "18": "提出なし",
+                "19": "提出なし",
+                "20": "提出なし",
+                "21": "提出なし",
+                "22": "提出なし",
+                "23": "提出なし",
+                "24": "提出なし",
+                "25": "提出なし",
+                "26": "提出なし",
+                "27": "提出なし",
+                "28": "提出なし",
+                "29": "提出なし",
+                "30": "提出なし",
+                "31": "提出なし",
+                "32": "提出なし",
+                "33": "提出なし",
+                "34": "提出なし",
+                "35": "提出なし",
+            },
+            13: {
+                "01": "提出なし",
+                "02": "提出なし",
+                "03": "提出なし",
+                "04": "提出なし",
+                "05": "提出なし",
+                "06": "提出なし",
+                "07": "提出なし",
+                "08": "提出なし",
+                "09": "提出なし",
+                "10": "提出なし",
+                "11": "提出なし",
+                "12": "提出なし",
+                "13": "提出なし",
+                "14": "提出なし",
+                "15": "提出なし",
+                "16": "提出なし",
+                "17": "提出なし",
+                "18": "提出なし",
+                "19": "提出なし",
+                "20": "提出なし",
+                "21": "提出なし",
+                "22": "提出なし",
+                "23": "提出なし",
+                "24": "提出なし",
+                "25": "提出なし",
+                "26": "提出なし",
+                "27": "提出なし",
+                "28": "提出なし",
+                "29": "提出なし",
+                "30": "提出なし",
+                "31": "提出なし",
+                "32": "提出なし",
+                "33": "提出なし",
+                "34": "提出なし",
+                "35": "提出なし",
+            },
+            14: {
+                "01": "提出なし",
+                "02": "提出なし",
+                "03": "提出なし",
+                "04": "提出なし",
+                "05": "提出なし",
+                "06": "提出なし",
+                "07": "提出なし",
+                "08": "提出なし",
+                "09": "提出なし",
+                "10": "提出なし",
+                "11": "提出なし",
+                "12": "提出なし",
+                "13": "提出なし",
+                "14": "提出なし",
+                "15": "提出なし",
+                "16": "提出なし",
+                "17": "提出なし",
+                "18": "提出なし",
+                "19": "提出なし",
+                "20": "提出なし",
+                "21": "提出なし",
+                "22": "提出なし",
+                "23": "提出なし",
+                "24": "提出なし",
+                "25": "提出なし",
+                "26": "提出なし",
+                "27": "提出なし",
+                "28": "提出なし",
+                "29": "提出なし",
+                "30": "提出なし",
+                "31": "提出なし",
+                "32": "提出なし",
+                "33": "提出なし",
+                "34": "提出なし",
+                "35": "提出なし",
+            }
+        };
+
+        const pdfFolder = "cad";
+        const photoFolder = "photo";
+        const imageExtension = ".JPG"; // 画像の拡張子（.png の場合は変更）
+
+        // 「画像なし」プレースホルダーSVGデータ
+        const noImageSvg = "data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 200 150\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23e5e7eb\\'/><text x=\\'50%\\' y=\\'50%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' fill=\\'%239ca3af\\' font-size=\\'13\\' font-family=\\'sans-serif\\'>画像なし</text></svg>";
+
+        let currentClass = 1;
+
+        // リスト描画処理
+        function renderList(targetClass) {
+            const grid = document.getElementById('pdf-grid');
+            grid.innerHTML = '';
+
+            const classCode = `1${targetClass}`;
+            const classStudentMap = studentNames[classCode] || {};
+
+            for (let i = 1; i <= 35; i++) {
+                const studentCode = String(i).padStart(2, '0');
+                const studentName = classStudentMap[studentCode] || `生徒${studentCode}`;
+                
+                const pdfFileName = `cad-final-${classCode}${studentCode} - ${studentName}.pdf`;
+                const pdfPath = `${encodeURIComponent(pdfFolder)}/${encodeURIComponent(pdfFileName)}`;
+                
+                const photoFileName = `${classCode}${studentCode}${imageExtension}`;
+                const photoPath = `${encodeURIComponent(photoFolder)}/${photoFileName}`;
+
+                const card = document.createElement('div');
+                card.className = 'pdf-card';
+
+                card.innerHTML = `
+                    <div class="thumbnail-container" onclick="openImageModal('${photoPath}', '${targetClass}組 ${i}番 ${studentName} の写真')">
+                        <img src="${photoPath}" alt="${studentName}の写真" onerror="this.src='${noImageSvg}'">
+                    </div>
+                    <div class="card-body">
+                        <div>
+                            <div class="student-info">${targetClass}組 ${i}番</div>
+                            <div class="file-name" style="font-weight: bold; color: #374151;">${studentName}</div>
+                            <div class="file-name">${pdfFileName}</div>
+                        </div>
+                        <button class="open-btn" onclick="openPdfModal('${pdfPath}', '${pdfFileName}')">設計図を開く</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        // タブ切り替え
+        function switchClass(classNum) {
+            currentClass = classNum;
+            document.querySelectorAll('.tab-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === classNum);
+            });
+            renderList(classNum);
+        }
+
+        // 設計図（PDF）をモーダルで開く
+        function openPdfModal(pdfPath, titleText) {
+            const modal = document.getElementById('viewModal');
+            const modalBody = document.getElementById('modalBody');
+            const title = document.getElementById('modalTitle');
+
+            modalBody.innerHTML = `<iframe src="${pdfPath}"></iframe>`;
+            title.textContent = titleText;
+            modal.classList.add('open');
+        }
+
+        // 写真（画像）をモーダルで開く
+        function openImageModal(photoPath, titleText) {
+            const modal = document.getElementById('viewModal');
+            const modalBody = document.getElementById('modalBody');
+            const title = document.getElementById('modalTitle');
+
+            modalBody.innerHTML = `<img src="${photoPath}" alt="拡大画像" onerror="this.src='${noImageSvg}'">`;
+            title.textContent = titleText;
+            modal.classList.add('open');
+        }
+
+        // モーダルを閉じる
+        function closeModal() {
+            const modal = document.getElementById('viewModal');
+            const modalBody = document.getElementById('modalBody');
+            modal.classList.remove('open');
+            modalBody.innerHTML = '';
+        }
+
+        // モーダルの外側（黒背景部分）をクリックしたときに閉じる
+        document.getElementById('viewModal').addEventListener('click', (e) => {
+            if (e.target.id === 'viewModal') {
+                closeModal();
+            }
+        });
+
+        // Escキーを押したときに閉じる
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 初期表示（1組）
+        window.onload = () => {
+            renderList(1);
+        };
+    </script>
+</body>
+</html>
