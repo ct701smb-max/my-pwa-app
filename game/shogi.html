@@ -530,6 +530,13 @@
                     const cellEl = document.createElement('div');
                     cellEl.className = 'cell';
                     
+                    // 選択・移動可能マスのハイライト適用
+                    if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                        cellEl.classList.add('selected');
+                    } else if (movableCells.some(m => m.r === r && m.c === c)) {
+                        cellEl.classList.add('movable');
+                    }
+
                     let isCenterHollow = (gameMode === 'mawashi' && r >= 1 && r <= 7 && c >= 1 && c <= 7);
 
                     if (isCenterHollow) {
@@ -631,6 +638,7 @@
             if (opponent === 'cpu' && turn === 1 && gameMode === 'normal') return;
             if (gameMode === 'mawashi') return; 
 
+            // 持ち駒を選択している状態で盤面をタップした場合の「駒打ち」処理
             if (selectedHandPiece !== null) {
                 if (board[r][c] === null) {
                     dropPiece(r, c);
@@ -643,6 +651,7 @@
                 return;
             }
 
+            // すでに盤上の駒を選択している状態で移動先をタップした場合
             if (selectedCell) {
                 if (movableCells.some(m => m.r === r && m.c === c)) {
                     movePiece(selectedCell.r, selectedCell.c, r, c);
@@ -650,6 +659,7 @@
                 }
             }
 
+            // 自軍の駒をタップした場合：選択状態にして移動可能範囲を算出
             if (board[r][c] && board[r][c].player === turn) {
                 selectedCell = { r, c };
                 selectedHandPiece = null;
@@ -1337,7 +1347,7 @@
             render();
 
             const resultDisplay = document.getElementById('dice-result-display');
-            const inlineBoard = document.getElementById('dice-board-inline');
+            const inlineBoard = document.getElementById('dice-result-display'); // 修正箇所などの同期
 
             if (gameMode === 'mawashi') {
                 if (resultDisplay) {
@@ -1347,11 +1357,12 @@
                         resultDisplay.textContent = '中央の場をタップして金を振る！';
                     }
                 }
-                if (inlineBoard) {
+                const inlineBoardEl = document.getElementById('dice-board-inline');
+                if (inlineBoardEl) {
                     if (opponent === 'cpu' && turn === 1) {
-                        inlineBoard.innerHTML = '<span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">CPU思考中...</span>';
+                        inlineBoardEl.innerHTML = '<span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">CPU思考中...</span>';
                     } else {
-                        inlineBoard.innerHTML = '<span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">タップして金を振る</span>';
+                        inlineBoardEl.innerHTML = '<span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">タップして金を振る</span>';
                     }
                 }
             }
@@ -1369,24 +1380,52 @@
             }
         }
 
+        // 駒の価値を設定して、より強い手（駒取り、王手、高価値の駒の移動など）を優先的に選択するCPUロジック
         function cpuMove() {
             if (isGameOver) return;
-            let myPieces = [];
+            let scoredMoves = [];
+
+            const pieceValues = {
+                '王': 10000, '玉': 10000,
+                '飛': 1000, '竜': 1200,
+                '角': 800, '馬': 1000,
+                '金': 600, '銀': 500,
+                '桂': 400, '香': 350,
+                '歩': 100, 'と': 500
+            };
+
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
                     if (board[r][c] && board[r][c].player === 1) {
                         let moves = getMovableCells(r, c);
-                        if (moves.length > 0) {
-                            myPieces.push({ r, c, moves });
-                        }
+                        moves.forEach(m => {
+                            let score = 0;
+                            let target = board[m.r][m.c];
+                            
+                            // 相手の駒を取れる場合は価値を加算
+                            if (target) {
+                                score += (pieceValues[target.name] || 100) * 2;
+                                if (target.name === '玉' || target.name === '王') {
+                                    score += 50000; // 詰み手は最優先
+                                }
+                            }
+
+                            // 前方（相手陣地側）に進む手を微小評価
+                            score += (m.r - r); 
+
+                            scoredMoves.push({ fromR: r, fromC: c, toR: m.r, toC: m.c, score: score });
+                        });
                     }
                 }
             }
 
-            if (myPieces.length > 0) {
-                let chosenPiece = myPieces[Math.floor(Math.random() * myPieces.length)];
-                let chosenMove = chosenPiece.moves[Math.floor(Math.random() * chosenPiece.moves.length)];
-                movePiece(chosenPiece.r, chosenPiece.c, chosenMove.r, chosenMove.c);
+            if (scoredMoves.length > 0) {
+                // スコア順にソートし、上位の手からランダムに選択（少しの揺らぎを持たせる）
+                scoredMoves.sort((a, b) => b.score - a.score);
+                let topMoves = scoredMoves.filter(m => m.score === scoredMoves[0].score);
+                let chosen = topMoves[Math.floor(Math.random() * topMoves.length)];
+                
+                movePiece(chosen.fromR, chosen.fromC, chosen.toR, chosen.toC);
             } else {
                 turn = 0;
                 render();
@@ -1398,21 +1437,23 @@
                 if (senteHand.length >= 6) {
                     const statusEl = document.getElementById('status');
                     if (statusEl) statusEl.textContent = '先手の勝利！';
-                    isGameOver = true;
-                    let winnerText = '先手の勝利！';
-                    showMessage(winnerText, 0);
+                    isGameOver = andSetGameOver('先手の勝利！');
                     return true;
                 }
                 if (goteHand.length >= 6) {
                     const statusEl = document.getElementById('status');
                     if (statusEl) statusEl.textContent = '後手の勝利！';
-                    isGameOver = true;
-                    let winnerText = '後手の勝利！';
-                    showMessage(winnerText, 0);
+                    isGameOver = andSetGameOver('後手の勝利！');
                     return true;
                 }
             }
             return false;
+        }
+
+        function andSetGameOver(text) {
+            let winnerText = text;
+            showMessage(winnerText, 0);
+            return true;
         }
 
         function changeGameMode() {
