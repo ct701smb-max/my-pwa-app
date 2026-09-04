@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本格将棋バラエティアプリ</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .menu-container {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .menu-container label {
+            font-weight: bold;
+            color: #555;
+        }
+        select, button {
+            padding: 6px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e0e0e0;
+        }
+        #status {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .game-layout {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: relative;
+        }
+        .board-container {
+            background-color: #d18a44;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 45px);
+            grid-template-rows: repeat(9, 45px);
+            gap: 1px;
+            background-color: #8b4513;
+        }
+        .cell {
+            background-color: #f5deb3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .shogi-piece {
+            width: 40px;
+            height: 42px;
+            background: linear-gradient(135deg, #ffe4c4 0%, #deb887 100%);
+            border: 1px solid #8b4513;
+            border-radius: 2px 2px 6px 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            position: relative;
+            clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+            transition: transform 0.15s ease;
+        }
+        .cell.sente .shogi-piece {
+            color: #111;
+        }
+        .cell.gote .shogi-piece {
+            color: #c0392b;
+            transform: rotate(180deg);
+            background: linear-gradient(135deg, #f5d0a9 0%, #d99b6c 100%);
+        }
+
+        .cell.selected {
+            background-color: #bcd2ee !important;
+        }
+        .cell.movable {
+            background-color: #98fb98 !important;
+        }
+        .hands-container {
+            background: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 150px;
+        }
+        .hands-container h3 {
+            margin-top: 0;
+            font-size: 15px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .hand-pieces {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            min-height: 40px;
+        }
+        .hand-piece {
+            width: 36px;
+            height: 38px;
+            background: linear-gradient(135deg, #ffe4c4 0%, #deb887 100%);
+            border: 1px solid #8b4513;
+            border-radius: 2px 2px 5px 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+        }
+        .hand-piece.gote-hand-piece {
+            color: #c0392b;
+            transform: rotate(180deg);
+        }
+        .hand-piece.selected {
+            background: #bcd2ee;
+            border-color: #333;
+        }
+
+        #message-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+        }
+        #message-overlay.show {
+            opacity: 1;
+        }
+        #message-text {
+            font-size: 44px;
+            font-weight: bold;
+            color: #e74c3c;
+            text-shadow: 2px 2px 8px #fff, -2px -2px 8px #fff;
+            transform: scale(0.5);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            max-width: 85%;
+            line-height: 1.3;
+            white-space: pre-wrap;
+        }
+        #message-overlay.show #message-text {
+            transform: scale(1);
+        }
+
+        @keyframes pyoko {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-14px) scale(1.1); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .pyoko-anim {
+            animation: pyoko 0.22s ease-in-out;
+        }
+
+        @keyframes bigJump {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-35px) scale(1.25); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .big-jump-anim {
+            animation: bigJump 0.45s cubic-bezier(0.28, 0.84, 0.42, 1);
+        }
+
+        @keyframes floatAndFade {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.6) rotate(-5deg);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(0px) scale(1.1) rotate(5deg);
+            }
+            70% {
+                opacity: 1;
+                transform: translateY(-25px) scale(1) rotate(-3deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-55px) scale(0.9) rotate(5deg);
+            }
+        }
+        #onara-popup {
+            position: absolute;
+            font-size: 36px;
+            font-weight: bold;
+            color: #8B4513;
+            background: rgba(255, 245, 238, 0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px dashed #a0522d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            pointer-events: none;
+            z-index: 20;
+            display: none;
+            white-space: nowrap;
+        }
+        #onara-popup.animate {
+            display: block;
+            animation: floatAndFade 1.8s ease-in-out forwards;
+        }
+
+        .mawashi-center-field {
+            position: absolute;
+            top: 57px;
+            left: 57px;
+            width: 315px;
+            height: 315px;
+            background-color: #b87a3c;
+            border: 2px solid #8b4513;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .dice-board-inline {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gold-piece {
+            width: 36px; height: 42px;
+            background: linear-gradient(135deg, #ffe4c4 0%, #deb887 100%);
+            border: 2px solid #8b4513;
+            border-radius: 2px 2px 6px 6px;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.8);
+            user-select: none;
+            clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+        }
+        .gold-piece.omote-sente {
+            color: #111;
+        }
+        .gold-piece.omote-gote {
+            color: #c0392b;
+        }
+        .gold-piece.ura {
+            color: transparent;
+            background: linear-gradient(135deg, #e6ccb2 0%, #c8a27d 100%);
+            transform: rotate(180deg);
+        }
+        #dice-result-display {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>将棋バラエティアプリ</h1>
+
+    <div class="menu-container">
+        <div>
+            <label for="mode-select">ゲームモード: </label>
+            <select id="mode-select" onchange="changeGameMode()">
+                <option value="normal">通常の将棋</option>
+                <option value="hashi">はさみ将棋</option>
+                <option value="mawashi">回り将棋</option>
+            </select>
+        </div>
+        <div>
+            <label for="opponent-select">対戦相手: </label>
+            <select id="opponent-select" onchange="changeOpponent()">
+                <option value="2p">二人対戦</option>
+                <option value="cpu">CPU対戦</option>
+            </select>
+        </div>
+        <div>
+            <button onclick="resetGame()">ゲームリセット</button>
+        </div>
+    </div>
+
+    <div id="status">先手の番です</div>
+
+    <div class="game-layout">
+        <div class="hands-container" id="gote-hand-container">
+            <h3>後手の持ち駒</h3>
+            <div id="gote-hand" class="hand-pieces"></div>
+        </div>
+
+        <div class="board-container">
+            <div id="board" class="board"></div>
+            <!-- 回り将棋の中央くり抜き一括エリア -->
+            <div id="mawashi-center-field" class="mawashi-center-field" style="display: none;" onclick="handleInlineDiceClick()">
+                <div class="dice-board-inline" id="dice-board-inline">
+                    <span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">タップして金を振る</span>
+                </div>
+            </div>
+            <div id="onara-popup">おならぷぅ！</div>
+            <div id="message-overlay">
+                <div id="message-text">王手！</div>
+            </div>
+            <div id="dice-result-display"></div>
+        </div>
+
+        <div class="hands-container" id="sente-hand-container">
+            <h3>先手の持ち駒</h3>
+            <div id="sente-hand" class="hand-pieces"></div>
+        </div>
+    </div>
+
+    <script>
+        let gameMode = 'normal'; 
+        let opponent = '2p';     
+        let turn = 0;            
+        let board = [];          
+        let senteHand = [];
+        let goteHand = [];
+        
+        let selectedCell = null; 
+        let selectedHandPiece = null;
+        let movableCells = [];   
+        let isGameOver = false;
+        let msgTimer = null;
+
+        const mawashiTrack = [
+            [8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,6],[8,7],[8,8],
+            [7,8],[6,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8],
+            [0,7],[0,6],[0,5],[0,4],[0,3],[0,2],[0,1],[0,0],
+            [1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0]
+        ];
+        
+        const cornerIndices = [0, 8, 16, 24];
+        const mawashiRanks = ['歩', '香', '桂', '銀', '角', '飛', '王'];
+        
+        let mawashiData = [
+            { pos: 0, startPos: 0, rankIdx: 0, hasMoved: false },
+            { pos: 16, startPos: 16, rankIdx: 0, hasMoved: false }
+        ];
+        let lastDiceCount = 0;
+        let isRollingInProgress = false; 
+
+        function initGame() {
+            turn = 0;
+            selectedCell = null;
+            selectedHandPiece = null;
+            movableCells = [];
+            senteHand = [];
+            goteHand = [];
+            isGameOver = false;
+            isRollingInProgress = false;
+            hideMessage();
+
+            const resultDisplay = document.getElementById('dice-result-display');
+            const centerField = document.getElementById('mawashi-center-field');
+            const inlineBoard = document.getElementById('dice-board-inline');
+
+            if (gameMode === 'mawashi') {
+                if (centerField) centerField.style.display = 'flex';
+                if (resultDisplay) resultDisplay.textContent = '中央の場をタップして金を振る！';
+                if (inlineBoard) inlineBoard.innerHTML = '<span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">タップして金を振る</span>';
+            } else {
+                if (centerField) centerField.style.display = 'none';
+                if (resultDisplay) resultDisplay.textContent = '';
+            }
+
+            const boardEl = document.getElementById('board');
+            if (boardEl) boardEl.innerHTML = '';
+
+            if (gameMode === 'normal') {
+                initNormalBoard();
+            } else if (gameMode === 'hashi') {
+                initHashiBoard();
+            } else if (gameMode === 'mawashi') {
+                initMawashiBoard();
+            }
+
+            render();
+        }
+
+        function initNormalBoard() {
+            board = Array(9).fill(null).map(() => Array(9).fill(null));
+            const initialRows = [
+                ['香', '桂', '銀', '金', '王', '金', '銀', '桂', '香'],
+                [null, '飛', null, null, null, null, null, '角', null],
+                ['歩', '歩', '歩', '歩', '歩', '歩', '歩', '歩', '歩'],
+                [null, null, null, null, null, null, null, null, null],
+                [null, null, null, null, null, null, null, null, null],
+                [null, null, null, null, null, null, null, null, null],
+                ['歩', '歩', '歩', '歩', '歩', '歩', '歩', '歩', '歩'],
+                [null, '角', null, null, null, null, null, '飛', null],
+                ['香', '桂', '銀', '金', '玉', '金', '銀', '桂', '香']
+            ];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (initialRows[r][c]) {
+                        board[r][c] = {
+                            name: initialRows[r][c],
+                            player: r < 3 ? 1 : (r > 5 ? 0 : null),
+                            promoted: false
+                        };
+                    }
+                }
+            }
+        }
+
+        function initHashiBoard() {
+            board = Array(9).fill(null).map(() => Array(9).fill(null));
+            for (let c = 0; c < 9; c++) {
+                board[0][c] = { name: '歩', player: 1, promoted: true };
+                board[8][c] = { name: '歩', player: 0, promoted: false };
+            }
+        }
+
+        function initMawashiBoard() {
+            board = Array(9).fill(null).map(() => Array(9).fill(null));
+            mawashiData = [
+                { pos: 0, startPos: 0, rankIdx: 0, hasMoved: false },
+                { pos: 16, startPos: 16, rankIdx: 0, hasMoved: false }
+            ];
+            updateMawashiPieces();
+        }
+
+        function getMawashiRotation(currentIndex) {
+            let nextIndex = (currentIndex + 1) % mawashiTrack.length;
+            let cur = mawashiTrack[currentIndex];
+            let nxt = mawashiTrack[nextIndex];
+            let dr = nxt[0] - cur[0];
+            let dc = nxt[1] - cur[1];
+
+            if (dr === -1 && dc === 0) return 0;      
+            if (dr === 0 && dc === 1) return 90;     
+            if (dr === 1 && dc === 0) return 180;    
+            if (dr === 0 && dc === -1) return 270;   
+            return 0;
+        }
+
+        function updateMawashiPieces() {
+            for(let r=0; r<9; r++) for(let c=0; c<9; c++) board[r][c] = null;
+            
+            let p0 = mawashiTrack[mawashiData[0].pos];
+            let p1 = mawashiTrack[mawashiData[1].pos];
+
+            let samePos = (mawashiData[0].pos === mawashiData[1].pos);
+
+            board[p0[0]][p0[1]] = { 
+                name: mawashiRanks[mawashiData[0].rankIdx], 
+                player: 0, 
+                promoted: false,
+                rotation: getMawashiRotation(mawashiData[0].pos),
+                id: 'p0'
+            };
+            
+            board[p1[0]][p1[1]] = { 
+                name: mawashiRanks[mawashiData[1].rankIdx], 
+                player: 1, 
+                promoted: false,
+                rotation: getMawashiRotation(mawashiData[1].pos),
+                isStacked: samePos,
+                id: 'p1'
+            };
+        }
+
+        function getDisplayPieceName(piece) {
+            let name = piece.name;
+            if (piece.promoted) {
+                if (name === '歩') name = 'と';
+                else if (name === '香') name = '杏';
+                else if (name === '桂') name = '圭';
+                else if (name === '銀') name = '全';
+                else if (name === '飛') name = '竜';
+                else if (name === '角') name = '馬';
+            }
+            return name;
+        }
+
+        function render(animType = null, animPlayerIdx = null) {
+            const boardEl = document.getElementById('board');
+            if (!boardEl) return;
+            boardEl.innerHTML = '';
+
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'cell';
+                    
+                    let isCenterHollow = (gameMode === 'mawashi' && r >= 1 && r <= 7 && c >= 1 && c <= 7);
+
+                    if (isCenterHollow) {
+                        cellEl.style.backgroundColor = '#b87a3c';
+                        cellEl.style.cursor = 'default';
+                    } else {
+                        let piecesOnCell = [];
+                        if (mawashiData[0].pos !== undefined && mawashiTrack[mawashiData[0].pos][0] === r && mawashiTrack[mawashiData[0].pos][1] === c) {
+                            piecesOnCell.push({ name: mawashiRanks[mawashiData[0].rankIdx], player: 0, rotation: getMawashiRotation(mawashiData[0].pos), playerIdx: 0 });
+                        }
+                        if (mawashiData[1].pos !== undefined && mawashiTrack[mawashiData[1].pos][0] === r && mawashiTrack[mawashiData[1].pos][1] === c) {
+                            piecesOnCell.push({ name: mawashiRanks[mawashiData[1].rankIdx], player: 1, rotation: getMawashiRotation(mawashiData[1].pos), playerIdx: 1 });
+                        }
+
+                        if (gameMode === 'mawashi' && piecesOnCell.length > 0) {
+                            piecesOnCell.forEach(p => {
+                                const pieceDiv = document.createElement('div');
+                                pieceDiv.className = 'shogi-piece';
+                                if (p.player === 1) pieceDiv.style.color = '#c0392b';
+                                pieceDiv.textContent = p.name;
+                                if (p.rotation !== undefined) {
+                                    pieceDiv.style.transform = `rotate(${p.rotation}deg)`;
+                                }
+                                if (animType && (animPlayerIdx === null || animPlayerIdx === p.playerIdx)) {
+                                    if (animType === 'pyoko') pieceDiv.classList.add('pyoko-anim');
+                                    if (animType === 'bigJump') pieceDiv.classList.add('big-jump-anim');
+                                }
+                                cellEl.appendChild(pieceDiv);
+                            });
+                            cellEl.classList.add(piecesOnCell[0].player === 0 ? 'sente' : 'gote');
+                        } else {
+                            const piece = board[r][c];
+                            if (piece) {
+                                cellEl.classList.add(piece.player === 0 ? 'sente' : 'gote');
+                                
+                                const pieceDiv = document.createElement('div');
+                                pieceDiv.className = 'shogi-piece';
+                                pieceDiv.textContent = getDisplayPieceName(piece);
+                                
+                                if (gameMode === 'mawashi' && piece.rotation !== undefined) {
+                                    pieceDiv.style.transform = `rotate(${piece.rotation}deg)`;
+                                }
+
+                                cellEl.appendChild(pieceDiv);
+                            }
+                        }
+
+                        cellEl.onclick = () => onCellClick(r, c);
+                    }
+
+                    boardEl.appendChild(cellEl);
+                }
+            }
+
+            const senteHandEl = document.getElementById('sente-hand');
+            const goteHandEl = document.getElementById('gote-hand');
+            if (senteHandEl) senteHandEl.innerHTML = '';
+            if (goteHandEl) goteHandEl.innerHTML = '';
+
+            if (gameMode === 'normal' || gameMode === 'hashi') {
+                const senteContainer = document.getElementById('sente-hand-container');
+                const goteContainer = document.getElementById('gote-hand-container');
+                if (senteContainer) senteContainer.style.display = 'block';
+                if (goteContainer) goteContainer.style.display = 'block';
+                
+                senteHand.forEach((p, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'hand-piece' + (selectedHandPiece === idx && turn === 0 ? ' selected' : '');
+                    el.textContent = (gameMode === 'hashi') ? p : getDisplayPieceName({name: p, promoted: false});
+                    el.onclick = () => onHandClick(0, idx);
+                    if (senteHandEl) senteHandEl.appendChild(el);
+                });
+
+                goteHand.forEach((p, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'hand-piece gote-hand-piece' + (selectedHandPiece === idx && turn === 1 ? ' selected' : '');
+                    let displayName = (gameMode === 'hashi') ? 'と' : getDisplayPieceName({name: p, promoted: true});
+                    el.textContent = displayName;
+                    el.onclick = () => onHandClick(1, idx);
+                    if (goteHandEl) goteHandEl.appendChild(el);
+                });
+            } else {
+                const senteContainer = document.getElementById('sente-hand-container');
+                const goteContainer = document.getElementById('gote-hand-container');
+                if (senteContainer) senteContainer.style.display = 'none';
+                if (goteContainer) goteContainer.style.display = 'none';
+            }
+
+            if (isGameOver) return;
+
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+                statusEl.textContent = (turn === 0 ? '先手' : '後手') + 'の番です';
+            }
+        }
+
+        function onCellClick(r, c) {
+            if (isGameOver) return;
+            if (opponent === 'cpu' && turn === 1 && gameMode === 'normal') return;
+            if (gameMode === 'mawashi') return; 
+
+            if (selectedHandPiece !== null) {
+                if (board[r][c] === null) {
+                    dropPiece(r, c);
+                    endTurn();
+                    return;
+                }
+                selectedHandPiece = null;
+                movableCells = [];
+                render();
+                return;
+            }
+
+            if (selectedCell) {
+                if (movableCells.some(m => m.r === r && m.c === c)) {
+                    movePiece(selectedCell.r, selectedCell.c, r, c);
+                    return;
+                }
+            }
+
+            if (board[r][c] && board[r][c].player === turn) {
+                selectedCell = { r, c };
+                selectedHandPiece = null;
+                movableCells = getMovableCells(r, c);
+                render();
+            } else {
+                selectedCell = null;
+                movableCells = [];
+                render();
+            }
+        }
+
+        function onHandClick(player, idx) {
+            if (isGameOver) return;
+            if (turn !== player) return;
+            if (opponent === 'cpu' && turn === 1) return;
+
+            selectedCell = null;
+            selectedHandPiece = idx;
+            movableCells = [];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] === null) {
+                        movableCells.push({ r, c });
+                    }
+                }
+            }
+            render();
+        }
+
+        function handleInlineDiceClick() {
+            if (isRollingInProgress) return;
+            if (turn === 1 && opponent === 'cpu') return;
+
+            triggerMawashiRoll(() => {
+                executeMawashiMoveStepByStep(lastDiceCount);
+            });
+        }
+
+        function triggerMawashiRoll(callback) {
+            if (isRollingInProgress) return;
+            isRollingInProgress = true; 
+            
+            const inlineBoard = document.getElementById('dice-board-inline');
+            const resultDisplay = document.getElementById('dice-result-display');
+            if (inlineBoard) inlineBoard.innerHTML = '';
+
+            let omoteCount = 0;
+            let positions = [];
+            const pieceW = 36;
+            const pieceH = 42;
+            const containerW = inlineBoard ? inlineBoard.clientWidth : 323;
+            const containerH = inlineBoard ? inlineBoard.clientHeight : 323;
+            
+            for (let i = 0; i < 4; i++) {
+                let x, y, overlap;
+                let attempts = 0;
+                do {
+                    overlap = false;
+                    x = Math.floor(Math.random() * (containerW - pieceW - 20)) + 10;
+                    y = Math.floor(Math.random() * (containerH - pieceH - 20)) + 10;
+                    
+                    for (let p of positions) {
+                        if (Math.abs(p.x - x) < pieceW + 6 && Math.abs(p.y - y) < pieceH + 6) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    attempts++;
+                } while (overlap && attempts < 50);
+
+                positions.push({x, y});
+
+                let isOmote = Math.random() < 0.5;
+                if (isOmote) omoteCount++;
+                
+                let el = document.createElement('div');
+                let omoteClass = (turn === 0) ? 'omote-sente' : 'omote-gote';
+                el.className = 'gold-piece ' + (isOmote ? omoteClass : 'ura');
+                el.textContent = isOmote ? '金' : '';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                el.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+                if (inlineBoard) inlineBoard.appendChild(el);
+            }
+
+            let finalSteps = omoteCount;
+            let isBonus = false;
+
+            if (omoteCount === 4 || omoteCount === 0) {
+                isBonus = true;
+                finalSteps = 8;
+            }
+
+            lastDiceCount = finalSteps;
+
+            if (resultDisplay) {
+                if (isBonus) {
+                    resultDisplay.textContent = `ボーナス！ 8マス進む！`;
+                    showMessage("ボーナス！\n8マス進む！");
+                } else {
+                    resultDisplay.textContent = `出目： ${finalSteps} マス進む！`;
+                }
+            }
+
+            setTimeout(() => {
+                if (inlineBoard) inlineBoard.innerHTML = '';
+                if (callback) callback();
+            }, 1400);
+        }
+
+        function showOnaraPopup() {
+            const popup = document.getElementById('onara-popup');
+            if (popup) {
+                popup.classList.remove('animate');
+                void popup.offsetWidth; 
+                popup.classList.add('animate');
+            }
+        }
+
+        function processRankUpCourse(currentTurnPlayer, data) {
+            data.rankIdx++;
+            data.hasMoved = false; 
+            if (data.rankIdx >= mawashiRanks.length) {
+                data.rankIdx = mawashiRanks.length - 1;
+                updateMawashiPieces();
+                render();
+                isGameOver = true;
+                isRollingInProgress = false;
+                let winnerText = (currentTurnPlayer === 0 ? '先手の勝利！' : '後手の勝利！');
+                showMessage(winnerText, 0);
+                const statusEl = document.getElementById('status');
+                if (statusEl) statusEl.textContent = winnerText;
+                return true;
+            } else {
+                let playerName = (currentTurnPlayer === 0 ? '先手' : '後手');
+                showMessage(`${playerName}：\n${mawashiRanks[data.rankIdx]}に出世した！`, 1800);
+                return false;
+            }
+        }
+
+        function executeMawashiMoveStepByStep(dice) {
+            let currentTurnPlayer = turn;
+            let data = mawashiData[currentTurnPlayer];
+            let opponentTurn = 1 - currentTurnPlayer;
+            let opponentData = mawashiData[opponentTurn];
+
+            let stepCount = 0;
+            function doStep() {
+                if (stepCount < dice) {
+                    let nextPos = (data.pos + 1) % mawashiTrack.length;
+                    let passedStart = (data.hasMoved && nextPos === data.startPos);
+                    data.pos = nextPos;
+                    data.hasMoved = true;
+
+                    if (passedStart) {
+                        updateMawashiPieces();
+                        render('pyoko', currentTurnPlayer);
+                        if (processRankUpCourse(currentTurnPlayer, data)) return;
+                        stepCount++;
+                        setTimeout(doStep, 260);
+                        return;
+                    }
+
+                    updateMawashiPieces();
+                    render('pyoko', currentTurnPlayer);
+                    stepCount++;
+                    setTimeout(doStep, 260);
+                } else {
+                    let dataIsCorner = cornerIndices.includes(data.pos);
+                    let oppIsCorner = cornerIndices.includes(opponentData.pos);
+
+                    if (data.pos === opponentData.pos) {
+                        updateMawashiPieces();
+                        render();
+                        showMessage("さんぽ", 1800);
+                        setTimeout(() => {
+                            executeMawashiMoveStackedStepByStep(3);
+                        }, 1800);
+                        return;
+                    }
+
+                    let diff = (data.pos - opponentData.pos + mawashiTrack.length) % mawashiTrack.length;
+                    if (!dataIsCorner && !oppIsCorner && (diff === 1 || diff === mawashiTrack.length - 1)) {
+                        updateMawashiPieces();
+                        render();
+                        showOnaraPopup();
+
+                        setTimeout(() => {
+                            executeOnaraPuuAction(data, opponentData, diff);
+                        }, 1500);
+                        return;
+                    }
+
+                    updateMawashiPieces();
+                    render();
+
+                    let isCorner = cornerIndices.includes(data.pos);
+                    let isStartPoint = (data.pos === data.startPos);
+
+                    if (isCorner && !isStartPoint) {
+                        showMessage("ジャンプ！\n次のカドへ！", 1800);
+                        setTimeout(() => {
+                            executeMawashiJumpToNextCornerStepByStep();
+                        }, 1800);
+                        return;
+                    }
+
+                    isRollingInProgress = false; 
+                    endTurn();
+                }
+            }
+            doStep();
+        }
+
+        function executeOnaraPuuAction(data, opponentData, diff) {
+            let forwardPiece, backwardPiece;
+            if (diff === 1) {
+                forwardPiece = data;
+                backwardPiece = opponentData;
+            } else {
+                forwardPiece = opponentData;
+                backwardPiece = data;
+            }
+
+            forwardPiece.pos = (forwardPiece.pos + 1) % mawashiTrack.length;
+            if (forwardPiece.hasMoved && forwardPiece.pos === forwardPiece.startPos) {
+                if (processRankUpCourse(turn, forwardPiece)) return;
+            }
+            forwardPiece.hasMoved = true;
+
+            backwardPiece.pos = (backwardPiece.pos - 1 + mawashiTrack.length) % mawashiTrack.length;
+            backwardPiece.hasMoved = true;
+
+            updateMawashiPieces();
+            render('pyoko', null);
+
+            let forwardIsCorner = cornerIndices.includes(forwardPiece.pos);
+            let backwardIsCorner = cornerIndices.includes(backwardPiece.pos);
+
+            if (forwardIsCorner) {
+                if (forwardPiece.pos === forwardPiece.startPos) {
+                    isRollingInProgress = false;
+                    endTurn();
+                } else {
+                    setTimeout(() => {
+                        showMessage("おならでジャンプ！\n次のカドへ！", 1800);
+                        setTimeout(() => {
+                            jumpForwardToNextCornerStepByStep(forwardPiece);
+                        }, 1800);
+                    }, 500);
+                }
+            } else if (backwardIsCorner) {
+                if (backwardPiece.pos === backwardPiece.startPos) {
+                    isRollingInProgress = false;
+                    endTurn();
+                } else {
+                    setTimeout(() => {
+                        showMessage("おならで逆走！\n前のカドへ！", 1800);
+                        setTimeout(() => {
+                            jumpBackwardToPrevCornerStepByStep(backwardPiece);
+                        }, 1800);
+                    }, 500);
+                }
+            } else {
+                isRollingInProgress = false;
+                endTurn();
+            }
+        }
+
+        function jumpForwardToNextCornerStepByStep(pieceObj) {
+            let nextCornerIdx = cornerIndices.find(cIdx => cIdx > pieceObj.pos);
+            if (nextCornerIdx === undefined) {
+                nextCornerIdx = cornerIndices[0];
+            }
+
+            let passedStart = false;
+            let checkPos = pieceObj.pos;
+            while (checkPos !== nextCornerIdx) {
+                checkPos = (checkPos + 1) % mawashiTrack.length;
+                if (checkPos === pieceObj.startPos && pieceObj.hasMoved) {
+                    passedStart = true;
+                    break;
+                }
+            }
+
+            pieceObj.pos = nextCornerIdx;
+            pieceObj.hasMoved = true;
+
+            if (passedStart) {
+                updateMawashiPieces();
+                let playerIndex = (pieceObj === mawashiData[0]) ? 0 : 1;
+                if (processRankUpCourse(playerIndex, pieceObj)) return;
+            }
+
+            updateMawashiPieces();
+            let playerIdx = (pieceObj === mawashiData[0]) ? 0 : 1;
+            render('bigJump', playerIdx);
+            setTimeout(() => {
+                isRollingInProgress = false;
+                endTurn();
+            }, 450);
+        }
+
+        function jumpBackwardToPrevCornerStepByStep(pieceObj) {
+            let sortedCorners = [...cornerIndices].sort((a, b) => b - a);
+            let prevCornerIdx = sortedCorners.find(cIdx => cIdx < pieceObj.pos);
+            if (prevCornerIdx === undefined) {
+                prevCornerIdx = sortedCorners[0]; 
+            }
+
+            pieceObj.pos = prevCornerIdx;
+            pieceObj.hasMoved = true;
+
+            updateMawashiPieces();
+            let playerIdx = (pieceObj === mawashiData[0]) ? 0 : 1;
+            render('bigJump', playerIdx);
+            setTimeout(() => {
+                isRollingInProgress = false;
+                endTurn();
+            }, 450);
+        }
+
+        function executeMawashiMoveStackedStepByStep(dice) {
+            let currentTurnPlayer = turn;
+            let data = mawashiData[currentTurnPlayer];
+            let opponentTurn = 1 - currentTurnPlayer;
+            let opponentData = mawashiData[opponentTurn];
+
+            let stepCount = 0;
+            function doStackStep() {
+                if (stepCount < dice) {
+                    let nextPos = (data.pos + 1) % mawashiTrack.length;
+                    let passedStart = (data.hasMoved && nextPos === data.startPos);
+                    
+                    data.pos = nextPos;
+                    data.hasMoved = true;
+                    opponentData.pos = nextPos;
+                    opponentData.hasMoved = true;
+
+                    if (passedStart) {
+                        updateMawashiPieces();
+                        render('pyoko', currentTurnPlayer);
+                        if (processRankUpCourse(currentTurnPlayer, data)) return;
+                        stepCount++;
+                        setTimeout(doStackStep, 260);
+                        return;
+                    }
+
+                    updateMawashiPieces();
+                    render('pyoko', currentTurnPlayer);
+                    stepCount++;
+                    setTimeout(doStackStep, 260);
+                } else {
+                    updateMawashiPieces();
+                    render();
+                    isRollingInProgress = false;
+                    endTurn();
+                }
+            }
+            doStackStep();
+        }
+
+        function executeMawashiJumpToNextCornerStepByStep() {
+            let currentTurnPlayer = turn;
+            let data = mawashiData[currentTurnPlayer];
+            let opponentTurn = 1 - currentTurnPlayer;
+            let opponentData = mawashiData[opponentTurn];
+            
+            let nextCornerIdx = cornerIndices.find(cIdx => cIdx > data.pos);
+            if (nextCornerIdx === undefined) {
+                nextCornerIdx = cornerIndices[0]; 
+            }
+
+            let passedStart = false;
+            let checkPos = data.pos;
+            while (checkPos !== nextCornerIdx) {
+                checkPos = (checkPos + 1) % mawashiTrack.length;
+                if (checkPos === data.startPos && data.hasMoved) {
+                    passedStart = true;
+                    break;
+                }
+            }
+
+            data.pos = nextCornerIdx;
+            data.hasMoved = true; 
+
+            if (passedStart) {
+                updateMawashiPieces();
+                if (processRankUpCourse(currentTurnPlayer, data)) return;
+            }
+
+            updateMawashiPieces();
+            render('bigJump', currentTurnPlayer);
+
+            setTimeout(() => {
+                if (data.pos === opponentData.pos) {
+                    showMessage("さんぽ", 1800);
+                    setTimeout(() => {
+                        executeMawashiMoveStackedStepByStep(3);
+                    }, 1800);
+                    return;
+                }
+
+                isRollingInProgress = false;
+                endTurn();
+            }, 450);
+        }
+
+        function getMovableCells(r, c) {
+            const piece = board[r][c];
+            if (!piece) return [];
+            let moves = [];
+            let forward = (piece.player === 0) ? -1 : 1; 
+
+            if (gameMode === 'hashi') {
+                const directions = [[1,0], [-1,0], [0,1], [0,-1]];
+                directions.forEach(([dr, dc]) => {
+                    let nr = r + dr, nc = c + dc;
+                    while(nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                        if (board[nr][nc] !== null) break;
+                        moves.push({ r: nr, c: nc });
+                        nr += dr; nc += dc;
+                    }
+                });
+                return moves;
+            }
+
+            const addIfValid = (targetR, targetC) => {
+                if (targetR >= 0 && targetR < 9 && targetC >= 0 && targetC < 9) {
+                    let target = board[targetR][targetC];
+                    if (!target || target.player !== piece.player) {
+                        moves.push({ r: targetR, c: targetC });
+                    }
+                }
+            };
+
+            const addLine = (dr, dc) => {
+                let nr = r + dr, nc = c + dc;
+                while (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                    let target = board[nr][nc];
+                    if (!target) {
+                        moves.push({ r: nr, c: nc });
+                    } else {
+                        if (target.player !== piece.player) {
+                            moves.push({ r: nr, c: nc });
+                        }
+                        break;
+                    }
+                    nr += dr; nc += dc;
+                }
+            };
+
+            let effectiveName = piece.name;
+            if (piece.promoted) {
+                effectiveName = '金'; 
+            }
+
+            switch (effectiveName) {
+                case '歩':
+                    addIfValid(r + forward, c);
+                    break;
+                case '香':
+                    addLine(forward, 0);
+                    break;
+                case '桂':
+                    addIfValid(r + forward * 2, c - 1);
+                    addIfValid(r + forward * 2, c + 1);
+                    break;
+                case '銀':
+                    addIfValid(r + forward, c - 1);
+                    addIfValid(r + forward, c);
+                    addIfValid(r + forward, c + 1);
+                    addIfValid(r - forward, c - 1);
+                    addIfValid(r - forward, c + 1);
+                    break;
+                case '金':
+                    addIfValid(r + forward, c - 1);
+                    addIfValid(r + forward, c);
+                    addIfValid(r + forward, c + 1);
+                    addIfValid(r, c - 1);
+                    addIfValid(r, c + 1);
+                    addIfValid(r - forward, c);
+                    break;
+                case '王':
+                case '玉':
+                    const kingDirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                    kingDirs.forEach(([dr, dc]) => addIfValid(r + dr, c + dc));
+                    break;
+                case '飛':
+                    if (piece.promoted) {
+                        addLine(1, 0); addLine(-1, 0); addLine(0, 1); addLine(0, -1);
+                        addIfValid(r+1, c+1); addIfValid(r+1, c-1); addIfValid(r-1, c+1); addIfValid(r-1, c-1);
+                    } else {
+                        addLine(1, 0); addLine(-1, 0); addLine(0, 1); addLine(0, -1);
+                    }
+                    break;
+                case '角':
+                    if (piece.promoted) {
+                        addLine(1, 1); addLine(1, -1); addLine(-1, 1); addLine(-1, -1);
+                        addIfValid(r+1, c); addIfValid(r-1, c); addIfValid(r, c+1); addIfValid(r, c-1);
+                    } else {
+                        addLine(1, 1); addLine(1, -1); addLine(-1, 1); addLine(-1, -1);
+                    }
+                    break;
+            }
+            return moves;
+        }
+
+        function movePiece(fromR, fromC, toR, toC) {
+            let target = board[toR][toC];
+            
+            if (target && (target.name === '王' || target.name === '玉') && gameMode === 'normal') {
+                board[toR][toC] = board[fromR][fromC];
+                board[fromR][fromC] = null;
+                render();
+                isGameOver = true;
+                let winnerText = (turn === 0 ? '先手の勝利！' : '後手の勝利！');
+                showMessage(winnerText, 0);
+                const statusEl = document.getElementById('status');
+                if (statusEl) statusEl.textContent = winnerText;
+                return;
+            }
+
+            if (target && (gameMode === 'normal' || gameMode === 'hashi')) {
+                let capturedName = target.name;
+                if (turn === 0) senteHand.push(capturedName);
+                else goteHand.push(capturedName);
+            }
+            
+            let piece = board[fromR][fromC];
+            board[fromR][fromC] = null;
+            board[toR][toC] = piece;
+
+            if (gameMode === 'normal' && !piece.promoted) {
+                let inEnemyCamp = (piece.player === 0 && toR <= 2) || (piece.player === 1 && toR >= 6);
+                let wasInEnemyCamp = (piece.player === 0 && fromR <= 2) || (piece.player === 1 && fromR >= 6);
+                
+                if (inEnemyCamp || wasInEnemyCamp) {
+                    if (piece.name !== '金' && piece.name !== '王' && piece.name !== '玉') {
+                        if (confirm('駒を成りますか？')) {
+                            piece.promoted = true;
+                        }
+                    }
+                }
+            }
+
+            if (gameMode === 'hashi') {
+                checkHashiCapture(toR, toC, turn);
+                if (checkGameOver()) return;
+            }
+
+            if (gameMode === 'normal') {
+                if (isOute(1 - turn)) {
+                    showMessage("王手！", 2000);
+                } else {
+                    hideMessage();
+                }
+            }
+
+            endTurn();
+        }
+
+        function dropPiece(r, c) {
+            let hand = (turn === 0) ? senteHand : goteHand;
+            let pieceName = hand.splice(selectedHandPiece, 1)[0];
+            board[r][c] = { name: pieceName, player: turn, promoted: (gameMode === 'hashi' && turn === 1) };
+            selectedHandPiece = null;
+
+            if (gameMode === 'hashi') {
+                checkHashiCapture(r, c, turn);
+                if (checkGameOver()) return;
+            }
+
+            if (gameMode === 'normal') {
+                if (isOute(1 - turn)) {
+                    showMessage("王手！", 2000);
+                } else {
+                    hideMessage();
+                }
+            }
+        }
+
+        function isOute(player) {
+            let kingR = -1, kingC = -1;
+            let kingName = (player === 0) ? '玉' : '王';
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] && board[r][c].player === player && board[r][c].name === kingName) {
+                        kingR = r; kingC = c;
+                        break;
+                    }
+                }
+                if (kingR !== -1) break;
+            }
+            if (kingR === -1) return false;
+
+            let attacker = 1 - player;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] && board[r][c].player === attacker) {
+                        let moves = getMovableCells(r, c);
+                        if (moves.some(m => m.r === kingR && m.c === kingC)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function showMessage(text, duration = 2000) {
+            const overlay = document.getElementById('message-overlay');
+            const textEl = document.getElementById('message-text');
+            if (overlay && textEl) {
+                textEl.textContent = text;
+                overlay.classList.add('show');
+            }
+            
+            if (msgTimer) clearTimeout(msgTimer);
+            if (duration > 0) {
+                msgTimer = setTimeout(() => {
+                    if (overlay) overlay.classList.remove('show');
+                }, duration);
+            }
+        }
+
+        function hideMessage() {
+            if (msgTimer) clearTimeout(msgTimer);
+            const overlay = document.getElementById('message-overlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        function checkHashiCapture(r, c, player) {
+            let opponentPlayer = 1 - player;
+            let upPieces = [];
+            for (let row = r - 1; row >= 0; row--) {
+                if (board[row][c] === null) break;
+                upPieces.push({ r: row, c: c, player: board[row][c].player, name: board[row][c].name });
+            }
+            if (upPieces.length >= 2 && upPieces[0].player === opponentPlayer && upPieces[upPieces.length - 1].player === player) {
+                let captured = upPieces[0].name;
+                board[upPieces[0].r][upPieces[0].c] = null;
+                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
+            }
+
+            let downPieces = [];
+            for (let row = r + 1; row < 9; row++) {
+                if (board[row][c] === null) break;
+                downPieces.push({ r: row, c: c, player: board[row][c].player, name: board[row][c].name });
+            }
+            if (downPieces.length >= 2 && downPieces[0].player === opponentPlayer && downPieces[downPieces.length - 1].player === player) {
+                let captured = downPieces[0].name;
+                board[downPieces[0].r][downPieces[0].c] = null;
+                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
+            }
+
+            let leftPieces = [];
+            for (let col = c - 1; col >= 0; col--) {
+                if (board[r][col] === null) break;
+                leftPieces.push({ r: r, c: col, player: board[r][col].player, name: board[r][col].name });
+            }
+            if (leftPieces.length >= 2 && leftPieces[0].player === opponentPlayer && leftPieces[leftPieces.length - 1].player === player) {
+                let captured = leftPieces[0].name;
+                board[leftPieces[0].r][leftPieces[0].c] = null;
+                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
+            }
+
+            let rightPieces = [];
+            for (let col = c + 1; col < 9; col++) {
+                if (board[r][col] === null) break;
+                rightPieces.push({ r: r, c: col, player: board[r][col].player, name: board[r][col].name });
+            }
+            if (rightPieces.length >= 2 && rightPieces[0].player === opponentPlayer && rightPieces[rightPieces.length - 1].player === player) {
+                let captured = rightPieces[0].name;
+                board[rightPieces[0].r][rightPieces[0].c] = null;
+                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
+            }
+        }
+
+        function endTurn() {
+            selectedCell = null;
+            movableCells = [];
+            turn = 1 - turn;
+            render();
+
+            const resultDisplay = document.getElementById('dice-result-display');
+            const inlineBoard = document.getElementById('dice-board-inline');
+
+            if (gameMode === 'mawashi') {
+                if (resultDisplay) {
+                    if (opponent === 'cpu' && turn === 1) {
+                        resultDisplay.textContent = 'CPUが金を振っています...';
+                    } else {
+                        resultDisplay.textContent = '中央の場をタップして金を振る！';
+                    }
+                }
+                if (inlineBoard) {
+                    if (opponent === 'cpu' && turn === 1) {
+                        inlineBoard.innerHTML = '<span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">CPU思考中...</span>';
+                    } else {
+                        inlineBoard.innerHTML = '<span style="color:#fff; font-size:14px; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:4px;">タップして金を振る</span>';
+                    }
+                }
+            }
+
+            if (opponent === 'cpu' && turn === 1 && !isGameOver) {
+                if (gameMode === 'mawashi') {
+                    setTimeout(() => {
+                        triggerMawashiRoll(() => {
+                            executeMawashiMoveStepByStep(lastDiceCount);
+                        });
+                    }, 800);
+                } else {
+                    setTimeout(cpuMove, 600);
+                }
+            }
+        }
+
+        function cpuMove() {
+            if (isGameOver) return;
+            let myPieces = [];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] && board[r][c].player === 1) {
+                        let moves = getMovableCells(r, c);
+                        if (moves.length > 0) {
+                            myPieces.push({ r, c, moves });
+                        }
+                    }
+                }
+            }
+
+            if (myPieces.length > 0) {
+                let chosenPiece = myPieces[Math.floor(Math.random() * myPieces.length)];
+                let chosenMove = chosenPiece.moves[Math.floor(Math.random() * chosenPiece.moves.length)];
+                movePiece(chosenPiece.r, chosenPiece.c, chosenMove.r, chosenMove.c);
+            } else {
+                turn = 0;
+                render();
+            }
+        }
+
+        function checkGameOver() {
+            if (gameMode === 'hashi') {
+                if (senteHand.length >= 6) {
+                    const statusEl = document.getElementById('status');
+                    if (statusEl) statusEl.textContent = '先手の勝利！';
+                    isGameOver = true;
+                    let winnerText = '先手の勝利！';
+                    showMessage(winnerText, 0);
+                    return true;
+                }
+                if (goteHand.length >= 6) {
+                    const statusEl = document.getElementById('status');
+                    if (statusEl) statusEl.textContent = '後手の勝利！';
+                    isGameOver = true;
+                    let winnerText = '後手の勝利！';
+                    showMessage(winnerText, 0);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function changeGameMode() {
+            const modeSelect = document.getElementById('mode-select');
+            if (modeSelect) gameMode = modeSelect.value;
+            initGame();
+        }
+
+        function changeOpponent() {
+            const opponentSelect = document.getElementById('opponent-select');
+            if (opponentSelect) opponent = opponentSelect.value;
+            initGame();
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
