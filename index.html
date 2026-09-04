@@ -9,9 +9,7 @@
     <link rel="apple-touch-icon" href="./system/p1.png">
     <meta name="theme-color" content="#333333">
     <title>Webアプリランチャー</title>
-    <!-- Tailwind CSS CDNの読み込み (モダンなデザインとレスポンシブ対応に最適) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome 6.5.1 CDNの読み込み (アイコン表示のため) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
@@ -107,7 +105,6 @@
 </head>
 <body class="min-h-screen antialiased flex flex-col items-center p-4 sm:p-8">
 
-    <!-- ヘッダーエリア -->
     <header class="w-full max-w-4xl mb-12 text-center">
         <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 tracking-tight mb-2">
             Webアプリ <span class="text-indigo-600">ランチャー</span>
@@ -117,14 +114,9 @@
         </p>
     </header>
 
-    <!-- アプリコンテナ (グリッドレイアウトでレスポンシブに配置) -->
     <main class="w-full max-w-5xl px-2">
-        <!-- 3列(sm)から6列(lg)に可変するレスポンシブグリッド -->
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6 sm:gap-8">
 
-            <!-- 各Webアプリのリンクアイテムの定義: app-item, groupクラスが重要 -->
-
-            <!-- 1. Googleカレンダー -->
             <a href="https://calendar.google.com/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-calendar-alt text-4xl sm:text-5xl text-red-500"></i>
@@ -132,7 +124,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">カレンダー</p>
             </a>
 
-            <!-- 2. Gmail -->
             <a href="https://mail.google.com/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-envelope text-4xl sm:text-5xl text-blue-500"></i>
@@ -140,7 +131,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Gmail</p>
             </a>
 
-            <!-- 3. Googleドライブ -->
             <a href="https://drive.google.com/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-database text-4xl sm:text-5xl text-green-500"></i>
@@ -148,7 +138,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Googleドライブ</p>
             </a>
 
-            <!-- 4. Googleマップ -->
             <a href="https://maps.google.com/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-map-marker-alt text-4xl sm:text-5xl text-yellow-500"></i>
@@ -157,7 +146,6 @@
             </a>
 
             
-            <!-- 5. ウェザーニュース -->
             <a href="https://weathernews.jp/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-cloud-sun text-4xl sm:text-5xl text-blue-500"></i>
@@ -165,7 +153,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">ウェザーニュース</p>
             </a>
                 
-            <!-- 6. GitHub -->
             <a href="https://github.com/" target="_blank" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fab fa-github text-4xl sm:text-5xl text-gray-900"></i>
@@ -173,7 +160,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">GitHub</p>
             </a>
                 
-            <!-- 7. 設定 (汎用アイコン) -->
             <a href="./web/wiki.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-cogs text-4xl sm:text-5xl text-gray-600"></i>
@@ -181,19 +167,17 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Webコード</p>
             </a>
 
-<!-- 8. データ圧縮 -->
             <a href="./compress/compress.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
-    <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3 group-hover:scale-105 transition-transform">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 sm:h-12 sm:w-12 text-indigo-500">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-            <line x1="12" y1="11" x2="12" y2="17"></line>
-            <polyline points="9 14 12 17 15 14"></polyline>
-        </svg>
-    </div>
-    <p class="text-sm font-medium text-center truncate w-full px-1">データ圧縮</p>
-</a>
+                <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3 group-hover:scale-105 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 sm:h-12 sm:w-12 text-indigo-500">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        <line x1="12" y1="11" x2="12" y2="17"></line>
+                        <polyline points="9 14 12 17 15 14"></polyline>
+                    </svg>
+                </div>
+                <p class="text-sm font-medium text-center truncate w-full px-1">データ圧縮</p>
+            </a>
             
-            <!-- 9. 透過画像 (Opacityアニメーションの例) -->
             <a href="./png/png.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-clone text-4xl sm:text-5xl text-red-500"></i>
@@ -201,7 +185,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">透過画像</p>
             </a>
 
-            <!-- 10. トリミング -->
             <a href="./PDF/cropper.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-crop text-4xl sm:text-5xl text-blue-500"></i>
@@ -209,7 +192,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">トリミング</p>
             </a>
 
-            <!-- 11. 画像toPDF -->
             <a href="./PDF/pdf.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-file-pdf text-4xl sm:text-5xl text-red-500"></i>
@@ -217,7 +199,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">画像toPDF</p>
             </a>
 
-            <!-- 12. カラーピッカー -->
             <a href="./color/color.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-eye-dropper text-4xl sm:text-5xl text-indigo-500"></i>
@@ -225,7 +206,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">カラーピッカー</p>
             </a>
                 
-            <!-- 13. CADアイコン -->
             <a href="./CAD/cad.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <svg
@@ -256,7 +236,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">CAD</p>
             </a>
 
-            <!-- 14. 歯車シミュレーター -->
             <a href="./gear/radio-gear.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-cogs text-4xl sm:text-5xl text-gray-600"></i>
@@ -264,7 +243,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">歯車・変速</p>
             </a>
 
-            <!-- 15. 電卓 -->
             <a href="./number/number.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-calculator text-4xl sm:text-5xl text-sky-500"></i>
@@ -272,7 +250,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">電卓</p>
             </a>
 
-            <!-- 16. フォント-->
             <a href="./font/font.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-font text-4xl sm:text-5xl text-purple-600"></i>
@@ -280,7 +257,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">フォント</p>
             </a>
             
-            <!-- 17. Webエディタ -->
             <a href="./editor/editor.html" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-10 h-10 sm:w-12 sm:h-12">
@@ -316,7 +292,6 @@
                 <p class="text-sm font-medium text-center truncate w-full px-1">Webエディタ</p>
             </a>
 
-    <!-- 18. ゲーム (モーダル起動用アイコン) -->
             <button onclick="toggleGameModal(true)" class="app-item flex flex-col items-center text-gray-700 hover:text-indigo-600 transition duration-300 group text-left">
                 <div class="app-item-icon bg-white w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-3xl shadow-xl border border-gray-100 mb-2 sm:mb-3">
                     <i class="fas fa-gamepad text-4xl sm:text-5xl text-purple-600"></i>
@@ -327,14 +302,12 @@
         </div>
         <br>
 
-        <!-- 授業用資料集（PDFファイル等）セクション -->
         <section class="border-t border-gray-200 pt-10">
             <div class="flex items-center mb-6">
                 <i class="fas fa-folder-open text-indigo-600 text-3xl mr-3"></i>
                 <h2 class="text-2xl font-bold text-gray-800">授業用資料集</h2>
             </div>
 
-            <!-- 分野切り替えタブボタン -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
                 <button onclick="showCategory('a')" id="btn-a" class="tab-btn px-4 py-3 rounded-xl font-bold text-sm sm:text-base border flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-amber-500 text-white border-amber-500 shadow-md">
                     <i class="fas fa-hammer"></i>
@@ -354,10 +327,8 @@
                 </button>
             </div>
 
-            <!-- 資料コンテンツエリア -->
             <div class="tab-content-container">
                 
-                <!-- A. 材料と加工 -->
                 <div id="content-a" class="tab-content bg-amber-50/50 p-5 rounded-2xl border border-amber-100">
                     <div class="flex items-center mb-4">
                         <span class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm mr-3">A</span>
@@ -365,7 +336,6 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-                        <!-- A-資料1 -->
                         <a href="./docs/A-01-等角図.pdf" target="_blank" class="pdf-card cat-a">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -374,7 +344,6 @@
                             </div>
                         </a>
 
-                        <!-- A-資料2 -->
                         <a href="./docs/A-02-工具の名称と使い方.pdf" target="_blank" class="pdf-card cat-a">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -386,7 +355,6 @@
                     </div>
                 </div>
 
-                <!-- B. 生物育成 -->
                 <div id="content-b" class="tab-content hidden bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
                     <div class="flex items-center mb-4">
                         <span class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-sm mr-3">B</span>
@@ -394,7 +362,6 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-                        <!-- B-資料1 -->
                         <a href="./docs/B-01生物育成.pdf" target="_blank" class="pdf-card cat-b">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -405,7 +372,6 @@
                     </div>
                 </div>
 
-                <!-- C. エネルギー変換 -->
                 <div id="content-c" class="tab-content hidden bg-sky-50/50 p-5 rounded-2xl border border-sky-100">
                     <div class="flex items-center mb-4">
                         <span class="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center font-bold text-sm mr-3">C</span>
@@ -413,7 +379,6 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-                        <!-- C-資料1 -->
                         <a href="./docs/C-01-発電と核エネルギー.pdf" target="_blank" class="pdf-card cat-c">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -422,7 +387,6 @@
                             </div>
                         </a>
 
-                        <!-- C-資料2 -->
                         <a href="./docs/C-02-エネルギー変換.pdf" target="_blank" class="pdf-card cat-c">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -431,7 +395,6 @@
                             </div>
                         </a>
 
-                        <!-- C-資料3 -->
                         <a href="./docs/C-03-電子回路.pdf" target="_blank" class="pdf-card cat-c">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -443,7 +406,6 @@
                     </div>
                 </div>
 
-                <!-- D. 情報 -->
                 <div id="content-d" class="tab-content hidden bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
                     <div class="flex items-center mb-4">
                         <span class="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center font-bold text-sm mr-3">D</span>
@@ -451,7 +413,6 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-                        <!-- D-資料1 -->
                         <a href="./docs/D-01-情報の技術.pdf" target="_blank" class="pdf-card cat-d">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -460,7 +421,6 @@
                             </div>
                         </a>
 
-                        <!-- D-資料2 -->
                         <a href="./docs/D-02-情報モラルと知的財産権.pdf" target="_blank" class="pdf-card cat-d">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -469,7 +429,6 @@
                             </div>
                         </a>
 
-                        <!-- D-資料3 -->
                         <a href="./docs/D-03-SNS学びのポイント.pdf" target="_blank" class="pdf-card cat-d">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -478,7 +437,6 @@
                             </div>
                         </a>
 
-                        <!-- D-資料4 -->
                         <a href="./docs/D-04-プログラミング.pdf" target="_blank" class="pdf-card cat-d">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -487,7 +445,6 @@
                             </div>
                         </a>
 
-                        <!-- D-資料5 -->
                         <a href="./docs/D-05-AI.pdf" target="_blank" class="pdf-card cat-d">
                             <div class="pdf-icon-box"><i class="fas fa-file-pdf pdf-icon"></i></div>
                             <div class="overflow-hidden">
@@ -504,15 +461,12 @@
 
     </main>
 
-    <!-- ゲーム選択モーダル -->
     <div id="game-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm modal-backdrop">
         <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-gray-100 transform transition-all relative">
-            <!-- 閉じるボタン -->
             <button onclick="toggleGameModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition">
                 <i class="fas fa-times text-xl"></i>
             </button>
 
-            <!-- モーダルヘッダー -->
             <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
                 <div class="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600">
                     <i class="fas fa-gamepad text-xl"></i>
@@ -523,9 +477,7 @@
                 </div>
             </div>
 
-            <!-- ゲームリスト（4つの枠） -->
             <div class="space-y-3">
-                <!-- ゲーム1: オセロ -->
                 <a href="./game/osero.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
                     <div class="w-12 h-12 rounded-xl bg-slate-700 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
                         <i class="fas fa-circle-half-stroke"></i>
@@ -537,7 +489,19 @@
                     <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
                 </a>
 
-                <!-- ゲーム2: ウボンゴ -->
+                <a href="./game/shogi.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
+                    <div class="w-12 h-12 rounded-xl bg-amber-700 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
+                        <svg class="w-7 h-7 fill-current" viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg">
+                            <polygon points="50,2 92,28 82,112 18,112 8,28" />
+                        </svg>
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-gray-800 group-hover:text-purple-600 transition">将棋</h4>
+                        <p class="text-xs text-gray-400">ボードゲーム</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
+                </a>
+
                 <a href="./game/ubongo.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
                     <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
                         <i class="fas fa-shapes"></i>
@@ -549,7 +513,6 @@
                     <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
                 </a>
 
-                <!-- ゲーム3: サバイバルゲーム -->
                 <a href="./game/survival.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
                     <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
                         <i class="fas fa-compass"></i>
@@ -561,7 +524,6 @@
                     <i class="fas fa-chevron-right text-gray-300 group-hover:text-purple-500 transition"></i>
                 </a>
 
-                <!-- ゲーム4: インベーダー -->
                 <a href="./game/shot.html" target="_blank" class="flex items-center p-3 rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition duration-200 group">
                     <div class="w-12 h-12 rounded-xl bg-violet-600 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md group-hover:scale-105 transition-transform">
                         <i class="fas fa-robot"></i>
@@ -576,7 +538,6 @@
         </div>
     </div>
 
-    <!-- スクリプトエリア -->
     <script>
         // カテゴリ切り替えスクリプト
         function showCategory(cat) {
