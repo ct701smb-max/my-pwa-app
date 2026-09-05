@@ -101,7 +101,6 @@
         }
         .cell.gote .shogi-piece {
             color: #c0392b;
-            transform: rotate(180deg);
             background: linear-gradient(135deg, #f5d0a9 0%, #d99b6c 100%);
         }
 
@@ -186,18 +185,18 @@
         }
 
         @keyframes pyoko {
-            0% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-14px) scale(1.1); }
-            100% { transform: translateY(0) scale(1); }
+            0% { transform: translateY(0) scale(1) var(--base-rot, rotate(0deg)); }
+            50% { transform: translateY(-14px) scale(1.1) var(--base-rot, rotate(0deg)); }
+            100% { transform: translateY(0) scale(1) var(--base-rot, rotate(0deg)); }
         }
         .pyoko-anim {
             animation: pyoko 0.22s ease-in-out;
         }
 
         @keyframes bigJump {
-            0% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-35px) scale(1.25); }
-            100% { transform: translateY(0) scale(1); }
+            0% { transform: translateY(0) scale(1) var(--base-rot, rotate(0deg)); }
+            50% { transform: translateY(-35px) scale(1.25) var(--base-rot, rotate(0deg)); }
+            100% { transform: translateY(0) scale(1) var(--base-rot, rotate(0deg)); }
         }
         .big-jump-anim {
             animation: bigJump 0.45s cubic-bezier(0.28, 0.84, 0.42, 1);
@@ -314,7 +313,7 @@
                 <option value="mawashi">回り将棋</option>
             </select>
         </div>
-                <div>
+        <div>
             <label for="opponent-select">対戦相手: </label>
             <select id="opponent-select" onchange="changeOpponent()">
                 <option value="cpu" selected>CPU対戦</option>
@@ -475,10 +474,10 @@
             let dr = nxt[0] - cur[0];
             let dc = nxt[1] - cur[1];
 
-            if (dr === -1 && dc === 0) return 0;      
-            if (dr === 0 && dc === 1) return 90;     
-            if (dr === 1 && dc === 0) return 180;    
-            if (dr === 0 && dc === -1) return 270;   
+            if (dr === -1 && dc === 0) return 0;      // 上進
+            if (dr === 0 && dc === 1) return 90;     // 右進
+            if (dr === 1 && dc === 0) return 180;    // 下進
+            if (dr === 0 && dc === -1) return 270;   // 左進
             return 0;
         }
 
@@ -531,7 +530,6 @@
                     const cellEl = document.createElement('div');
                     cellEl.className = 'cell';
                     
-                    // 選択・移動可能マスのハイライト適用
                     if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
                         cellEl.classList.add('selected');
                     } else if (movableCells.some(m => m.r === r && m.c === c)) {
@@ -544,6 +542,36 @@
                         cellEl.style.backgroundColor = '#b87a3c';
                         cellEl.style.cursor = 'default';
                     } else {
+                        // 回り将棋モードのスタート地点チェック（コマが乗っていない場合のみ☆を表示する）
+                        if (gameMode === 'mawashi') {
+                            let isSenteStart = (mawashiTrack[0][0] === r && mawashiTrack[0][1] === c);
+                            let isGoteStart = (mawashiTrack[16][0] === r && mawashiTrack[16][1] === c);
+                            
+                            let piecesOnThisCell = [];
+                            if (mawashiData[0].pos !== undefined && mawashiTrack[mawashiData[0].pos][0] === r && mawashiTrack[mawashiData[0].pos][1] === c) {
+                                piecesOnThisCell.push(0);
+                            }
+                            if (mawashiData[1].pos !== undefined && mawashiTrack[mawashiData[1].pos][0] === r && mawashiTrack[mawashiData[1].pos][1] === c) {
+                                piecesOnThisCell.push(1);
+                            }
+
+                            // コマが乗っていないときだけ☆を表示
+                            if ((isSenteStart || isGoteStart) && piecesOnThisCell.length === 0) {
+                                const starSpan = document.createElement('span');
+                                starSpan.textContent = '☆';
+                                starSpan.style.position = 'absolute';
+                                starSpan.style.fontSize = '32px';
+                                starSpan.style.zIndex = '1';
+                                starSpan.style.top = '50%';
+                                starSpan.style.left = '50%';
+                                starSpan.style.transform = 'translate(-50%, -50%)';
+                                starSpan.style.pointerEvents = 'none';
+                                starSpan.style.opacity = '0.35';
+                                starSpan.style.color = isSenteStart ? '#111' : '#c0392b';
+                                cellEl.appendChild(starSpan);
+                            }
+                        }
+
                         let piecesOnCell = [];
                         if (mawashiData[0].pos !== undefined && mawashiTrack[mawashiData[0].pos][0] === r && mawashiTrack[mawashiData[0].pos][1] === c) {
                             piecesOnCell.push({ name: mawashiRanks[mawashiData[0].rankIdx], player: 0, rotation: getMawashiRotation(mawashiData[0].pos), playerIdx: 0 });
@@ -558,9 +586,12 @@
                                 pieceDiv.className = 'shogi-piece';
                                 if (p.player === 1) pieceDiv.style.color = '#c0392b';
                                 pieceDiv.textContent = p.name;
-                                if (p.rotation !== undefined) {
-                                    pieceDiv.style.transform = `rotate(${p.rotation}deg)`;
-                                }
+                                
+                                let rotDeg = p.rotation !== undefined ? p.rotation : 0;
+                                pieceDiv.style.setProperty('--base-rot', `rotate(${rotDeg}deg)`);
+                                pieceDiv.style.transform = `rotate(${rotDeg}deg)`;
+                                pieceDiv.style.zIndex = '2'; // ☆よりも上に表示
+
                                 if (animType && (animPlayerIdx === null || animPlayerIdx === p.playerIdx)) {
                                     if (animType === 'pyoko') pieceDiv.classList.add('pyoko-anim');
                                     if (animType === 'bigJump') pieceDiv.classList.add('big-jump-anim');
@@ -578,6 +609,7 @@
                                 pieceDiv.textContent = getDisplayPieceName(piece);
                                 
                                 if (gameMode === 'mawashi' && piece.rotation !== undefined) {
+                                    pieceDiv.style.setProperty('--base-rot', `rotate(${piece.rotation}deg)`);
                                     pieceDiv.style.transform = `rotate(${piece.rotation}deg)`;
                                 }
 
@@ -639,7 +671,6 @@
             if (opponent === 'cpu' && turn === 1 && gameMode === 'normal') return;
             if (gameMode === 'mawashi') return; 
 
-            // 持ち駒を選択している状態で盤面をタップした場合の「駒打ち」処理
             if (selectedHandPiece !== null) {
                 if (board[r][c] === null) {
                     dropPiece(r, c);
@@ -652,7 +683,6 @@
                 return;
             }
 
-            // すでに盤上の駒を選択している状態で移動先をタップした場合
             if (selectedCell) {
                 if (movableCells.some(m => m.r === r && m.c === c)) {
                     movePiece(selectedCell.r, selectedCell.c, r, c);
@@ -660,7 +690,6 @@
                 }
             }
 
-            // 自軍の駒をタップした場合：選択状態にして移動可能範囲を算出
             if (board[r][c] && board[r][c].player === turn) {
                 selectedCell = { r, c };
                 selectedHandPiece = null;
@@ -1348,7 +1377,7 @@
             render();
 
             const resultDisplay = document.getElementById('dice-result-display');
-            const inlineBoard = document.getElementById('dice-result-display'); // 修正箇所などの同期
+            const inlineBoard = document.getElementById('dice-result-display');
 
             if (gameMode === 'mawashi') {
                 if (resultDisplay) {
@@ -1381,7 +1410,6 @@
             }
         }
 
-        // 駒の価値を設定して、より強い手（駒取り、王手、高価値の駒の移動など）を優先的に選択するCPUロジック
         function cpuMove() {
             if (isGameOver) return;
             let scoredMoves = [];
@@ -1403,15 +1431,13 @@
                             let score = 0;
                             let target = board[m.r][m.c];
                             
-                            // 相手の駒を取れる場合は価値を加算
                             if (target) {
                                 score += (pieceValues[target.name] || 100) * 2;
                                 if (target.name === '玉' || target.name === '王') {
-                                    score += 50000; // 詰み手は最優先
+                                    score += 50000;
                                 }
                             }
 
-                            // 前方（相手陣地側）に進む手を微小評価
                             score += (m.r - r); 
 
                             scoredMoves.push({ fromR: r, fromC: c, toR: m.r, toC: m.c, score: score });
@@ -1421,7 +1447,6 @@
             }
 
             if (scoredMoves.length > 0) {
-                // スコア順にソートし、上位の手からランダムに選択（少しの揺らぎを持たせる）
                 scoredMoves.sort((a, b) => b.score - a.score);
                 let topMoves = scoredMoves.filter(m => m.score === scoredMoves[0].score);
                 let chosen = topMoves[Math.floor(Math.random() * topMoves.length)];
@@ -1451,10 +1476,13 @@
             return false;
         }
 
-        function andSetGameOver(text) {
+        function andSetGradeGameOver(text) {
             let winnerText = text;
             showMessage(winnerText, 0);
             return true;
+        }
+        function andSetGameOver(text) {
+            return andSetGradeGameOver(text);
         }
 
         function changeGameMode() {
