@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>本格将棋バラエティアプリ</title>
+    <title>バラエティ将棋</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -303,7 +303,7 @@
 </head>
 <body>
 
-    <h1>将棋バラエティアプリ</h1>
+    <h1>バラエティ将棋</h1>
 
     <div class="menu-container">
         <div>
@@ -314,13 +314,14 @@
                 <option value="mawashi">回り将棋</option>
             </select>
         </div>
-        <div>
+                <div>
             <label for="opponent-select">対戦相手: </label>
             <select id="opponent-select" onchange="changeOpponent()">
+                <option value="cpu" selected>CPU対戦</option>
                 <option value="2p">二人対戦</option>
-                <option value="cpu">CPU対戦</option>
             </select>
         </div>
+
         <div>
             <button onclick="resetGame()">ゲームリセット</button>
         </div>
@@ -357,7 +358,7 @@
 
     <script>
         let gameMode = 'normal'; 
-        let opponent = '2p';     
+        let opponent = 'cpu';     
         let turn = 0;            
         let board = [];          
         let senteHand = [];
