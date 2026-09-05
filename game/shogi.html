@@ -102,6 +102,7 @@
         .cell.gote .shogi-piece {
             color: #c0392b;
             background: linear-gradient(135deg, #f5d0a9 0%, #d99b6c 100%);
+            transform: rotate(180deg);
         }
 
         .cell.selected {
@@ -542,7 +543,6 @@
                         cellEl.style.backgroundColor = '#b87a3c';
                         cellEl.style.cursor = 'default';
                     } else {
-                        // 回り将棋モードのスタート地点チェック（コマが乗っていない場合のみ☆を表示する）
                         if (gameMode === 'mawashi') {
                             let isSenteStart = (mawashiTrack[0][0] === r && mawashiTrack[0][1] === c);
                             let isGoteStart = (mawashiTrack[16][0] === r && mawashiTrack[16][1] === c);
@@ -555,7 +555,6 @@
                                 piecesOnThisCell.push(1);
                             }
 
-                            // コマが乗っていないときだけ☆を表示
                             if ((isSenteStart || isGoteStart) && piecesOnThisCell.length === 0) {
                                 const starSpan = document.createElement('span');
                                 starSpan.textContent = '☆';
@@ -590,7 +589,7 @@
                                 let rotDeg = p.rotation !== undefined ? p.rotation : 0;
                                 pieceDiv.style.setProperty('--base-rot', `rotate(${rotDeg}deg)`);
                                 pieceDiv.style.transform = `rotate(${rotDeg}deg)`;
-                                pieceDiv.style.zIndex = '2'; // ☆よりも上に表示
+                                pieceDiv.style.zIndex = '2';
 
                                 if (animType && (animPlayerIdx === null || animPlayerIdx === p.playerIdx)) {
                                     if (animType === 'pyoko') pieceDiv.classList.add('pyoko-anim');
@@ -674,7 +673,6 @@
             if (selectedHandPiece !== null) {
                 if (board[r][c] === null) {
                     dropPiece(r, c);
-                    endTurn();
                     return;
                 }
                 selectedHandPiece = null;
@@ -1145,7 +1143,18 @@
 
             let effectiveName = piece.name;
             if (piece.promoted) {
-                effectiveName = '金'; 
+                if (effectiveName === '飛') {
+                    addLine(1, 0); addLine(-1, 0); addLine(0, 1); addLine(0, -1);
+                    addIfValid(r + 1, c); addIfValid(r - 1, c); addIfValid(r, c + 1); addIfValid(r, c - 1);
+                    addIfValid(r + 1, c + 1); addIfValid(r + 1, c - 1); addIfValid(r - 1, c + 1); addIfValid(r - 1, c - 1);
+                    return moves;
+                } else if (effectiveName === '角') {
+                    addLine(1, 1); addLine(1, -1); addLine(-1, 1); addLine(-1, -1);
+                    addIfValid(r + 1, c); addIfValid(r - 1, c); addIfValid(r, c + 1); addIfValid(r, c - 1);
+                    return moves;
+                } else {
+                    effectiveName = '金'; 
+                }
             }
 
             switch (effectiveName) {
@@ -1180,30 +1189,58 @@
                     kingDirs.forEach(([dr, dc]) => addIfValid(r + dr, c + dc));
                     break;
                 case '飛':
-                    if (piece.promoted) {
-                        addLine(1, 0); addLine(-1, 0); addLine(0, 1); addLine(0, -1);
-                        addIfValid(r+1, c+1); addIfValid(r+1, c-1); addIfValid(r-1, c+1); addIfValid(r-1, c-1);
-                    } else {
-                        addLine(1, 0); addLine(-1, 0); addLine(0, 1); addLine(0, -1);
-                    }
+                    addLine(1, 0); addLine(-1, 0); addLine(0, 1); addLine(0, -1);
                     break;
                 case '角':
-                    if (piece.promoted) {
-                        addLine(1, 1); addLine(1, -1); addLine(-1, 1); addLine(-1, -1);
-                        addIfValid(r+1, c); addIfValid(r-1, c); addIfValid(r, c+1); addIfValid(r, c-1);
-                    } else {
-                        addLine(1, 1); addLine(1, -1); addLine(-1, 1); addLine(-1, -1);
-                    }
+                    addLine(1, 1); addLine(1, -1); addLine(-1, 1); addLine(-1, -1);
                     break;
             }
             return moves;
         }
 
+        function hasNifuInColumn(c, player) {
+            if (gameMode !== 'normal') return false;
+            for (let row = 0; row < 9; row++) {
+                let p = board[row][c];
+                if (p && p.player === player && p.name === '歩' && !p.promoted) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function movePiece(fromR, fromC, toR, toC) {
+            let piece = board[fromR][fromC];
             let target = board[toR][toC];
+
+            // 通常将棋モードでの「歩」移動による二歩チェック（盤上の歩を動かして二歩になる場合）
+            if (gameMode === 'normal' && piece.name === '歩' && !piece.promoted) {
+                for (let row = 0; row < 9; row++) {
+                    let p = board[row][toC];
+                    if (row !== fromR && p && p.player === turn && p.name === '歩' && !p.promoted) {
+                        board[fromR][fromC] = null;
+                        board[toR][toC] = piece;
+                        render();
+
+                        isGameOver = true;
+                        let winnerText = (turn === 0 ? '後手の勝利！' : '先手の勝利！');
+                        setTimeout(() => {
+                            // 「二歩！反則負け！」を表示し、1.8秒後にフェードアウトさせて勝者を表示
+                            showMessage("二歩！反則負け！", 1800);
+                            setTimeout(() => {
+                                showMessage(winnerText, 0);
+                            }, 1800);
+
+                            const statusEl = document.getElementById('status');
+                            if (statusEl) statusEl.textContent = `二歩の反則負け！ ${winnerText}`;
+                        }, 50);
+                        return;
+                    }
+                }
+            }
             
             if (target && (target.name === '王' || target.name === '玉') && gameMode === 'normal') {
-                board[toR][toC] = board[fromR][fromC];
+                board[toR][toC] = piece;
                 board[fromR][fromC] = null;
                 render();
                 isGameOver = true;
@@ -1220,7 +1257,6 @@
                 else goteHand.push(capturedName);
             }
             
-            let piece = board[fromR][fromC];
             board[fromR][fromC] = null;
             board[toR][toC] = piece;
 
@@ -1255,7 +1291,33 @@
 
         function dropPiece(r, c) {
             let hand = (turn === 0) ? senteHand : goteHand;
-            let pieceName = hand.splice(selectedHandPiece, 1)[0];
+            let pieceName = hand[selectedHandPiece];
+
+            // 通常将棋モードでの持ち駒「歩」の二歩チェック
+            if (gameMode === 'normal' && pieceName === '歩') {
+                if (hasNifuInColumn(c, turn)) {
+                    hand.splice(selectedHandPiece, 1)[0];
+                    board[r][c] = { name: pieceName, player: turn, promoted: false };
+                    selectedHandPiece = null;
+                    render();
+
+                    isGameOver = true;
+                    let winnerText = (turn === 0 ? '後手の勝利！' : '先手の勝利！');
+                    setTimeout(() => {
+                        // 「二歩！反則負け！」を表示し、1.8秒後にフェードアウトさせて勝者を表示
+                        showMessage("二歩！反則負け！", 1800);
+                        setTimeout(() => {
+                            showMessage(winnerText, 0);
+                        }, 1800);
+
+                        const statusEl = document.getElementById('status');
+                        if (statusEl) statusEl.textContent = `二歩の反則負け！ ${winnerText}`;
+                    }, 50);
+                    return;
+                }
+            }
+
+            hand.splice(selectedHandPiece, 1)[0];
             board[r][c] = { name: pieceName, player: turn, promoted: (gameMode === 'hashi' && turn === 1) };
             selectedHandPiece = null;
 
@@ -1271,6 +1333,8 @@
                     hideMessage();
                 }
             }
+
+            endTurn();
         }
 
         function isOute(player) {
@@ -1371,6 +1435,7 @@
         }
 
         function endTurn() {
+            if (isGameOver) return;
             selectedCell = null;
             movableCells = [];
             turn = 1 - turn;
