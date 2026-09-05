@@ -1387,52 +1387,47 @@
             if (overlay) overlay.classList.remove('show');
         }
 
-        function checkHashiCapture(r, c, player) {
+                function checkHashiCapture(r, c, player) {
             let opponentPlayer = 1 - player;
-            let upPieces = [];
-            for (let row = r - 1; row >= 0; row--) {
-                if (board[row][c] === null) break;
-                upPieces.push({ r: row, c: c, player: board[row][c].player, name: board[row][c].name });
-            }
-            if (upPieces.length >= 2 && upPieces[0].player === opponentPlayer && upPieces[upPieces.length - 1].player === player) {
-                let captured = upPieces[0].name;
-                board[upPieces[0].r][upPieces[0].c] = null;
-                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
-            }
 
-            let downPieces = [];
-            for (let row = r + 1; row < 9; row++) {
-                if (board[row][c] === null) break;
-                downPieces.push({ r: row, c: c, player: board[row][c].player, name: board[row][c].name });
-            }
-            if (downPieces.length >= 2 && downPieces[0].player === opponentPlayer && downPieces[downPieces.length - 1].player === player) {
-                let captured = downPieces[0].name;
-                board[downPieces[0].r][downPieces[0].c] = null;
-                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
-            }
+            // 4方向（上、下、左、右）の挟み判定を共通化して処理するヘルパー関数
+            const checkDirection = (rowStep, colStep) => {
+                let linePieces = [];
+                let row = r + rowStep;
+                let col = c + colStep;
 
-            let leftPieces = [];
-            for (let col = c - 1; col >= 0; col--) {
-                if (board[r][col] === null) break;
-                leftPieces.push({ r: r, c: col, player: board[r][col].player, name: board[r][col].name });
-            }
-            if (leftPieces.length >= 2 && leftPieces[0].player === opponentPlayer && leftPieces[leftPieces.length - 1].player === player) {
-                let captured = leftPieces[0].name;
-                board[leftPieces[0].r][leftPieces[0].c] = null;
-                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
-            }
+                // 盤外に出るか、空白にぶつかるまで一直線上の駒を集める
+                while (row >= 0 && row < 9 && col >= 0 && col < 9) {
+                    if (board[row][col] === null) break;
+                    linePieces.push({ r: row, c: col, player: board[row][col].player, name: board[row][c]?.name ?? board[row][col].name });
+                    row += rowStep;
+                    col += colStep;
+                }
 
-            let rightPieces = [];
-            for (let col = c + 1; col < 9; col++) {
-                if (board[r][col] === null) break;
-                rightPieces.push({ r: r, c: col, player: board[r][col].player, name: board[r][col].name });
-            }
-            if (rightPieces.length >= 2 && rightPieces[0].player === opponentPlayer && rightPieces[rightPieces.length - 1].player === player) {
-                let captured = rightPieces[0].name;
-                board[rightPieces[0].r][rightPieces[0].c] = null;
-                if (player === 0) senteHand.push(captured); else goteHand.push(captured);
-            }
+                // 間に挟まれている相手の駒が「ちょうど1個」かつ、その外側が自分の駒である場合のみ取る
+                // linePieces[0] が相手の駒、linePieces[1] が自分の駒であれば、間に挟まっているのは1個だけ
+                if (linePieces.length >= 2 && linePieces[0].player === opponentPlayer && linePieces[1].player === player) {
+                    let pInfo = linePieces[0];
+                    let captured = pInfo.name;
+                    board[pInfo.r][pInfo.c] = null;
+                    if (player === 0) {
+                        senteHand.push(captured);
+                    } else {
+                        goteHand.push(captured);
+                    }
+                }
+            };
+
+            // 上 (-1, 0)
+            checkDirection(-1, 0);
+            // 下 (1, 0)
+            checkDirection(1, 0);
+            // 左 (0, -1)
+            checkDirection(0, -1);
+            // 右 (0, 1)
+            checkDirection(0, 1);
         }
+
 
         function endTurn() {
             if (isGameOver) return;
