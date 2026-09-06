@@ -721,7 +721,7 @@
     </div>
 
     <div id="gameover-container">
-        <button class="reload-btn" onclick="location.reload()">🔄 もう一度挑戦する</button>
+        <button class="reload-btn" onclick="restartGame()">🔄 もう一度挑戦する</button>
     </div>
 
     <script>
@@ -779,7 +779,6 @@
             bull: { icon: '🐃', hp: 12, speed: 90, size: '2.5rem', damage: 9, meat: 3 },
             mammoth: { icon: '🦣', hp: 28, speed: 65, size: '3.6rem', damage: 16, meat: 6 },
             dino: { icon: '🦖', hp: 55, speed: 50, size: '4.8rem', damage: 25, meat: 12 },
-            // ボスの耐久を従来の3倍に強化
             bossMammoth: { icon: '🫈', hp: 900, speed: 42, size: '9.6rem', damage: 45, meat: 30, isBoss: true },
             bossDragon: { icon: '🐉', hp: 1500, speed: 48, size: '9.6rem', damage: 60, meat: 50, isBoss: true }
         };
@@ -889,14 +888,12 @@
             coinZone.style.left = `${offsetW}px`;
             coinZone.style.top = `${offsetH}px`;
 
-            // 3段階目以降に上中央付近に自動精肉所を表示
             const autoMeatZone = document.getElementById('auto-meat-zone');
             if (gameState.level >= 3) {
                 autoMeatZone.style.display = 'flex';
                 autoMeatZone.style.left = `0px`;
                 autoMeatZone.style.top = `${-offsetH}px`;
 
-                // 他のボタンが被らないように位置を少し調整
                 upZone.style.left = `${-offsetW * 0.9}px`;
                 axeZone.style.left = `${offsetW * 0.9}px`;
             } else {
@@ -1120,7 +1117,6 @@
                 spawnSpecificEnemy(newId, typeKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
             }
 
-            // 出現頻度アップ：すべてMAXの時、ボスが全滅したら5秒後に再出現させる
             if (isEverythingMaxed()) {
                 let activeBosses = enemies.filter(e => e.isBoss);
                 if (activeBosses.length === 0 && !window.bossRespawnTimerActive) {
@@ -1130,7 +1126,7 @@
                         spawnBoss('bossMammoth');
                         spawnBoss('bossDragon');
                         window.bossRespawnTimerActive = false;
-                    }, 5000); // 撃破後5秒で再出現
+                    }, 5000);
                 }
             }
         }
@@ -1359,10 +1355,10 @@
                 }
             }
 
-            // 自動精肉所の処理（設置済みなら毎秒肉を自動で換金）
+            // 自動精肉所の処理（手動換金と同じくらいのスピード感に調整：0.05秒ごとに肉1個を10Gに変換）
             if (gameState.autoMeatLevel > 0 && gameState.meat > 0) {
                 autoMeatTimer += deltaTime;
-                if (autoMeatTimer >= 0.2) { // 0.2秒ごとに肉1個を10Gに換金
+                if (autoMeatTimer >= 0.05) {
                     gameState.meat--;
                     gameState.coin += 10;
                     autoMeatTimer = 0;
@@ -1689,7 +1685,6 @@
                 if (gameState.meat > 0) { gameState.meat--; gameState.coin += 10; }
             }
 
-            // 自動精肉所の判定
             if (gameState.level >= 3) {
                 let autoCenterX = 0;
                 let autoCenterY = -offsetH;
@@ -1806,6 +1801,37 @@
             player.style.transform = 'translate(-50%, -50%) rotate(90deg)';
 
             setMessage("💀 倒されてしまいました…");
+        }
+
+        // 状態を維持してスタート地点へリセットするコンティニュー関数
+        function restartGame() {
+            gameState.isDead = false;
+            gameState.heat = gameState.maxHeat;
+            
+            // 肉や木などの持ち物を0にする
+            gameState.wood = 0;
+            gameState.meat = 0;
+            gameState.coin = 0;
+
+            // プレイヤーの位置を中央（スタート地点）に戻す
+            gameState.playerX = 0;
+            gameState.playerY = 0;
+
+            document.getElementById('joystick-wrapper').style.opacity = '1';
+            document.getElementById('joystick-wrapper').style.pointerEvents = 'auto';
+            document.getElementById('gameover-container').style.display = 'none';
+
+            const player = document.getElementById('player');
+            player.style.filter = '';
+            player.style.transform = 'scaleX(-1)';
+
+            updateWorldTransform();
+            initTrees();
+            initEnemies();
+            updateUI();
+
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
         }
 
         function updateWorldTransform() {
