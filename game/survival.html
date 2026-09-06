@@ -136,6 +136,13 @@
             z-index: 1;
         }
 
+        #auto-meat-zone {
+            background: rgba(230, 126, 34, 0.2);
+            border: 2px solid rgba(230, 126, 34, 0.7);
+            z-index: 1;
+            display: none;
+        }
+
         .external-zone {
             position: absolute;
             width: 65px;
@@ -411,6 +418,16 @@
             transform-origin: bottom center;
         }
 
+        .boss-glow {
+            animation: boss-shining 0.8s infinite alternate !important;
+            filter: drop-shadow(0 0 12px #ff00ff) drop-shadow(0 0 25px #00ffff) brightness(1.4) !important;
+        }
+
+        @keyframes boss-shining {
+            0% { filter: drop-shadow(0 0 8px #ff4757) drop-shadow(0 0 20px #2ed573) brightness(1.3); transform: scale(var(--scale-dir, 1), 0.95); }
+            100% { filter: drop-shadow(0 0 16px #1e90ff) drop-shadow(0 0 30px #ffa502) brightness(1.6); transform: scale(var(--scale-dir, 1), 1.05); }
+        }
+
         @keyframes animal-run {
             0% { transform: translateY(0px) rotate(-4deg) scale(var(--scale-dir, 1), 0.95); }
             100% { transform: translateY(-4px) rotate(4deg) scale(var(--scale-dir, 1), 1.05); }
@@ -652,6 +669,11 @@
                     🛡️
                     <div id="meat-board" class="zone-board" style="background: #e74c3c;">250🍖</div>
                 </div>
+
+                <div id="auto-meat-zone" class="sub-zone">
+                    ⚙️
+                    <div id="auto-meat-board" class="zone-board" style="background: #e67e22;">3000G</div>
+                </div>
             </div>
 
             <div id="external-zones-container"></div>
@@ -680,10 +702,11 @@
             <span>🪵 木: <span id="wood-text" style="color: #e67e22;">0</span></span>
             <span>🍖 肉: <span id="meat-text" style="color: #c0392b;">0</span></span>
             <span>💰 所持金: <span id="coin-text" style="color: #f1c40f;">0 G</span></span>
-            <span>🛡️ オーラ: <span id="aura-level-text" style="color: #e74c3c;">未展開</span></span>
+            <span>💎 ダイヤ: <span id="diamond-text" style="color: #00d2d3;">0 💎</span></span>
         </div>
-        <div class="status-row" style="font-size: 0.75px; color: #718093; margin-top: 3px;">
+        <div class="status-row" style="font-size: 0.75rem; color: #718093; margin-top: 3px;">
             <span>🏠 <span id="level-text" style="color: #27ae60;">Lv.1 ボロいテント</span></span>
+            <span>🛡️ オーラ: <span id="aura-level-text" style="color: #e74c3c;">未展開</span></span>
         </div>
     </div>
 
@@ -708,9 +731,11 @@
             wood: 0,
             meat: 0,
             coin: 0,
+            diamond: 0,
             level: 1,
             axeLevel: 1, 
             auraLevel: 0, 
+            autoMeatLevel: 0, // 0: 未設置, 1: 設置済み
             auraUpgradeCosts: [250, 600, 1200],
             facilityNames: ["Lv.1 ボロいテント (木組みの柵)", "Lv.2 暖かい小屋 (頑丈な石壁)", "Lv.3 要塞シェルター (鉄壁の要塞)", "🌟 避難所完成！ (神聖な黄金壁)"],
             facilityIcons: ["⛺", "🛖", "🏰", "🌟"],
@@ -753,7 +778,10 @@
             boar: { icon: '🐗', hp: 4, speed: 120, size: '1.6rem', damage: 5, meat: 1 },
             bull: { icon: '🐃', hp: 12, speed: 90, size: '2.5rem', damage: 9, meat: 3 },
             mammoth: { icon: '🦣', hp: 28, speed: 65, size: '3.6rem', damage: 16, meat: 6 },
-            dino: { icon: '🦖', hp: 55, speed: 50, size: '4.8rem', damage: 25, meat: 12 }
+            dino: { icon: '🦖', hp: 55, speed: 50, size: '4.8rem', damage: 25, meat: 12 },
+            // ボスの耐久を従来の3倍に強化
+            bossMammoth: { icon: '🫈', hp: 900, speed: 42, size: '9.6rem', damage: 45, meat: 30, isBoss: true },
+            bossDragon: { icon: '🐉', hp: 1500, speed: 48, size: '9.6rem', damage: 60, meat: 50, isBoss: true }
         };
 
         function initFacility() {
@@ -861,6 +889,20 @@
             coinZone.style.left = `${offsetW}px`;
             coinZone.style.top = `${offsetH}px`;
 
+            // 3段階目以降に上中央付近に自動精肉所を表示
+            const autoMeatZone = document.getElementById('auto-meat-zone');
+            if (gameState.level >= 3) {
+                autoMeatZone.style.display = 'flex';
+                autoMeatZone.style.left = `0px`;
+                autoMeatZone.style.top = `${-offsetH}px`;
+
+                // 他のボタンが被らないように位置を少し調整
+                upZone.style.left = `${-offsetW * 0.9}px`;
+                axeZone.style.left = `${offsetW * 0.9}px`;
+            } else {
+                autoMeatZone.style.display = 'none';
+            }
+
             const board = document.getElementById('upgrade-board');
             if (gameState.level < 4) {
                 board.style.display = 'block';
@@ -967,7 +1009,7 @@
             const container = document.getElementById('trees-container');
             container.innerHTML = '';
 
-            const count = 100; // 処理落ち軽減のため木の数も適度に調整
+            const count = 100;
             const worldRange = 2200;
 
             for (let i = 0; i < count; i++) {
@@ -1017,6 +1059,15 @@
             });
         }
 
+        function isEverythingMaxed() {
+            if (gameState.level < 4) return false;
+            if (gameState.axeLevel < 10) return false;
+            if (gameState.auraLevel < 3) return false;
+            
+            let allTurretsMax = externalZones.filter(z => z.type === 'turret').every(z => z.level >= 3);
+            return allTurretsMax;
+        }
+
         function getRandomAvailableEnemyType() {
             let pool = ['boar'];
             if (gameState.level >= 2) pool.push('bull');
@@ -1028,7 +1079,7 @@
         }
 
         function getMaxEnemyCount() {
-            const counts = [15, 25, 35, 50]; // 処理落ちしないよう敵の最大数を調整
+            const counts = [15, 25, 35, 50];
             return counts[gameState.level - 1];
         }
 
@@ -1044,16 +1095,43 @@
                 let dist = 450 + Math.random() * 800;
                 spawnSpecificEnemy(i, typeKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
             }
+
+            if (isEverythingMaxed()) {
+                spawnBoss('bossMammoth');
+                spawnBoss('bossDragon');
+            }
+        }
+
+        function spawnBoss(bossKey) {
+            let newId = enemies.length > 0 ? Math.max(...enemies.map(e => e.id)) + 1 : 0;
+            let angle = Math.random() * Math.PI * 2;
+            let dist = 700 + Math.random() * 300;
+            spawnSpecificEnemy(newId, bossKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
+            setMessage(`⚠️ 究極の脅威「${ENEMY_TYPES[bossKey].icon}」が姿を現した！`);
         }
 
         function adjustEnemyCount() {
             let targetCount = getMaxEnemyCount();
-            while (enemies.length < targetCount) {
+            while (enemies.filter(e => !e.isBoss).length < targetCount) {
                 let newId = enemies.length > 0 ? Math.max(...enemies.map(e => e.id)) + 1 : 0;
                 let typeKey = getRandomAvailableEnemyType();
                 let angle = Math.random() * Math.PI * 2;
                 let dist = 550 + Math.random() * 800;
                 spawnSpecificEnemy(newId, typeKey, Math.cos(angle) * dist, Math.sin(angle) * dist);
+            }
+
+            // 出現頻度アップ：すべてMAXの時、ボスが全滅したら5秒後に再出現させる
+            if (isEverythingMaxed()) {
+                let activeBosses = enemies.filter(e => e.isBoss);
+                if (activeBosses.length === 0 && !window.bossRespawnTimerActive) {
+                    window.bossRespawnTimerActive = true;
+                    setTimeout(() => {
+                        if (gameState.isDead) return;
+                        spawnBoss('bossMammoth');
+                        spawnBoss('bossDragon');
+                        window.bossRespawnTimerActive = false;
+                    }, 5000); // 撃破後5秒で再出現
+                }
             }
         }
 
@@ -1071,6 +1149,7 @@
                 size: base.size,
                 damage: base.damage,
                 meat: base.meat,
+                isBoss: !!base.isBoss,
                 hitCooldown: 0,
                 damageCooldown: 0,
                 lastDirX: 1
@@ -1085,6 +1164,10 @@
 
             const hpBar = document.createElement('div');
             hpBar.className = 'enemy-hp-bar';
+            if (base.isBoss) {
+                hpBar.style.width = '70px';
+                hpBar.style.height = '8px';
+            }
             const hpFill = document.createElement('div');
             hpFill.className = 'enemy-hp-fill';
             hpFill.id = `enemy-hp-fill-${id}`;
@@ -1093,6 +1176,9 @@
 
             const avatar = document.createElement('div');
             avatar.className = 'enemy-avatar';
+            if (base.isBoss) {
+                avatar.classList.add('boss-glow');
+            }
             avatar.id = `enemy-avatar-${id}`;
             avatar.style.fontSize = base.size;
             avatar.style.setProperty('--scale-dir', '-1');
@@ -1247,6 +1333,7 @@
 
         let lastTime = performance.now();
         let turretTimers = {};
+        let autoMeatTimer = 0;
 
         function gameLoop(timestamp) {
             if (gameState.isDead) return;
@@ -1272,11 +1359,19 @@
                 }
             }
 
-            // 6段階目以降の斧の当たり判定を、外側リングの位置や大きさに合わせて正確に計算するように修正
+            // 自動精肉所の処理（設置済みなら毎秒肉を自動で換金）
+            if (gameState.autoMeatLevel > 0 && gameState.meat > 0) {
+                autoMeatTimer += deltaTime;
+                if (autoMeatTimer >= 0.2) { // 0.2秒ごとに肉1個を10Gに換金
+                    gameState.meat--;
+                    gameState.coin += 10;
+                    autoMeatTimer = 0;
+                }
+            }
+
             let innerHitRadius = 45;
             let outerHitRadiusMin = 50;
             let outerHitRadiusMax = 100;
-
             const enemyHitCooldownTime = 0.4;
 
             trees.forEach(tree => {
@@ -1454,8 +1549,9 @@
                 }
 
                 let distToPlayer = Math.hypot(dx, dy);
+                let hitRadiusLimit = en.isBoss ? 75 : 45;
                 
-                if (distToPlayer < 45) {
+                if (distToPlayer < hitRadiusLimit) {
                     let inFacilityPlayer = (Math.abs(gameState.playerX) <= w / 2 && Math.abs(gameState.playerY) <= h / 2);
                     if (!inFacilityPlayer && (!en.damageCooldown || en.damageCooldown <= 0)) {
                         let reduction = gameState.auraLevel * 3;
@@ -1479,8 +1575,8 @@
                     en.hp -= damageToEnemy;
                     en.hitCooldown = enemyHitCooldownTime;
 
-                    spawnBloodSplatter(en.x, en.y, 8);
-                    spawnSpark(en.x, en.y, 6);
+                    spawnBloodSplatter(en.x, en.y, en.isBoss ? 15 : 8);
+                    spawnSpark(en.x, en.y, en.isBoss ? 10 : 6);
 
                     let meatEarned = damageToEnemy;
                     gameState.meat += meatEarned;
@@ -1518,6 +1614,10 @@
                             } else {
                                 setMessage(`💣 防衛タレットがMAX Lv.3(大砲)に強化された！`);
                             }
+                            if (isEverythingMaxed() && enemies.filter(e => e.isBoss).length === 0) {
+                                spawnBoss('bossMammoth');
+                                spawnBoss('bossDragon');
+                            }
                         }
                         renderExternalZones();
                     }
@@ -1528,10 +1628,10 @@
             const offsetW = w / 3.2;
             const offsetH = h / 3.2;
 
-            let upCenterX = -offsetW;
+            let upCenterX = -offsetW * 0.9;
             let upCenterY = -offsetH;
-            if (Math.abs(gameState.playerX - upCenterX) <= subSize / 2 && Math.abs(gameState.playerY - upCenterY) <= subSize / 2) {
-                if (gameState.wood > 0 && gameState.level < 4) {
+            if (gameState.level < 4 && Math.abs(gameState.playerX - upCenterX) <= subSize / 2 && Math.abs(gameState.playerY - upCenterY) <= subSize / 2) {
+                if (gameState.wood > 0) {
                     gameState.wood--;
                     gameState.requiredWoods[gameState.level - 1]--;
                     if (gameState.requiredWoods[gameState.level - 1] <= 0) {
@@ -1542,7 +1642,7 @@
                 }
             }
 
-            let axeCenterX = offsetW;
+            let axeCenterX = offsetW * 0.9;
             let axeCenterY = -offsetH;
             if (Math.abs(gameState.playerX - axeCenterX) <= subSize / 2 && Math.abs(gameState.playerY - axeCenterY) <= subSize / 2) {
                 if (gameState.axeLevel < 10) {
@@ -1553,6 +1653,10 @@
                         updateAxeVisual();
                         if (gameState.axeLevel === 10) {
                             setMessage(`🌟 斧がMAX Lv.10に到達！内側5本・外側5本が神々しく輝く伝説の斧になった！`);
+                            if (isEverythingMaxed() && enemies.filter(e => e.isBoss).length === 0) {
+                                spawnBoss('bossMammoth');
+                                spawnBoss('bossDragon');
+                            }
                         } else {
                             setMessage(`🪓 斧パワーアップ！ Lv.${gameState.axeLevel}`);
                         }
@@ -1570,6 +1674,10 @@
                         gameState.auraLevel++;
                         updateAuraVisual();
                         setMessage(`🛡️ 防御オーラが Lv.${gameState.auraLevel} にパワーアップした！`);
+                        if (isEverythingMaxed() && enemies.filter(e => e.isBoss).length === 0) {
+                            spawnBoss('bossMammoth');
+                            spawnBoss('bossDragon');
+                        }
                     }
                 }
             }
@@ -1579,6 +1687,21 @@
             if (Math.abs(gameState.playerX - coinCenterX) <= subSize / 2 && Math.abs(gameState.playerY - coinCenterY) <= subSize / 2) {
                 if (gameState.wood > 0) { gameState.wood--; gameState.coin += 5; }
                 if (gameState.meat > 0) { gameState.meat--; gameState.coin += 10; }
+            }
+
+            // 自動精肉所の判定
+            if (gameState.level >= 3) {
+                let autoCenterX = 0;
+                let autoCenterY = -offsetH;
+                if (Math.abs(gameState.playerX - autoCenterX) <= subSize / 2 && Math.abs(gameState.playerY - autoCenterY) <= subSize / 2) {
+                    if (gameState.autoMeatLevel === 0 && gameState.coin >= 3000) {
+                        gameState.coin -= 3000;
+                        gameState.autoMeatLevel = 1;
+                        document.getElementById('auto-meat-board').style.background = '#2ecc71';
+                        document.getElementById('auto-meat-board').innerText = '自動換金中';
+                        setMessage(`⚙️ 自動精肉所が稼働開始！肉が自動でゴールドに変換されます！`);
+                    }
+                }
             }
 
             let inFacility = (Math.abs(gameState.playerX) <= w / 2 && Math.abs(gameState.playerY) <= h / 2);
@@ -1621,6 +1744,11 @@
             if (gameState.level === 4) wallName = "「神聖な黄金壁」";
 
             setMessage(`🎉 拠点が進化し、${wallName} が築き上げられた！外からの寒さも和らぐ！`);
+
+            if (isEverythingMaxed() && enemies.filter(e => e.isBoss).length === 0) {
+                spawnBoss('bossMammoth');
+                spawnBoss('bossDragon');
+            }
         }
 
         function respawnTreeLater(tree) {
@@ -1642,13 +1770,17 @@
 
             enemies = enemies.filter(e => e.id !== en.id);
 
+            if (en.isBoss) {
+                gameState.diamond += 1;
+                spawnFloatingItems(en.x, en.y, '💎', 3);
+                setMessage(`💎 ボス「${ENEMY_TYPES[en.type].icon}」を討伐した！ダイヤを手に入れた！`);
+            }
+
             setTimeout(() => {
                 if (gameState.isDead) return;
-                if (enemies.length < getMaxEnemyCount()) {
+                if (!en.isBoss && enemies.filter(e => !e.isBoss).length < getMaxEnemyCount()) {
                     let newId = enemies.length > 0 ? Math.max(...enemies.map(e => e.id)) + 1 : 0;
                     let chosenKey = getRandomAvailableEnemyType();
-                    let base = ENEMY_TYPES[chosenKey];
-
                     let angle = Math.random() * Math.PI * 2;
                     let distance = 600 + Math.random() * 800;
 
@@ -1717,6 +1849,7 @@
             document.getElementById('wood-text').innerText = gameState.wood;
             document.getElementById('meat-text').innerText = gameState.meat;
             document.getElementById('coin-text').innerText = `${gameState.coin} G`;
+            document.getElementById('diamond-text').innerText = `${gameState.diamond} 💎`;
             document.getElementById('level-text').innerText = gameState.facilityNames[gameState.level - 1];
             
             let auraText = "未展開";
