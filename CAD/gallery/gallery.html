@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 課題提出データ & 木工作品閲覧システム</title>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #202124;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #3c4043;
+        }
+
+        .app-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-btn {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            background-color: #ffffff;
+            color: #5f6368;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(60,64,67,0.15);
+        }
+
+        .app-btn.active[data-app="woodwork"] {
+            background-color: #8b4513;
+            color: white;
+        }
+
+        .app-btn.active[data-app="document"] {
+            background-color: #1a73e8;
+            color: white;
+        }
+
+        .app-btn.active[data-app="spreadsheet"] {
+            background-color: #0f9d58;
+            color: white;
+        }
+
+        .app-btn.active[data-app="slide"] {
+            background-color: #f29900;
+            color: white;
+        }
+
+        .class-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+
+        .class-btn {
+            padding: 8px 18px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            background-color: #e8eaed;
+            color: #3c4043;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .class-btn.active {
+            background-color: #202124;
+            color: white;
+        }
+
+        .pdf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .pdf-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(60,64,67,0.12), 0 1px 2px rgba(60,64,67,0.24);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pdf-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(60,64,67,0.2);
+        }
+
+        .thumbnail-container {
+            width: 100%;
+            height: 150px;
+            background-color: #f1f3f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .thumbnail-container.clickable {
+            cursor: pointer;
+        }
+
+        .thumbnail-container.clickable:hover .thumbnail-img {
+            opacity: 0.85;
+            transition: opacity 0.2s;
+        }
+
+        .thumbnail-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .placeholder-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .card-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .student-info {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .file-name {
+            font-size: 0.8rem;
+            color: #5f6368;
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+
+        .open-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .open-btn:hover {
+            opacity: 0.9;
+        }
+
+        .open-btn:disabled {
+            background-color: #dadce0 !important;
+            color: #70757a;
+            cursor: not-allowed;
+        }
+
+        /* モーダル表示 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            width: 90%;
+            height: 90%;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 12px 20px;
+            background-color: #1f2937;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #111827;
+            overflow: hidden;
+        }
+
+        .modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .modal-body img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Google 課題提出データ & 木工作品閲覧リスト</h1>
+
+        <div class="app-tabs">
+            <button class="app-btn active" data-app="woodwork" onclick="switchApp('woodwork')">🪵 木工作品</button>
+            <button class="app-btn" data-app="document" onclick="switchApp('document')">📄 時間割 (.gdoc)</button>
+            <button class="app-btn" data-app="spreadsheet" onclick="switchApp('spreadsheet')">📊 表計算練習課題 (.gsheet)</button>
+            <button class="app-btn" data-app="slide" onclick="switchApp('slide')">📙 スマホカタログ (.gslides)</button>
+        </div>
+
+        <div class="class-tabs">
+            <button class="class-btn active" onclick="switchClass(1)">1組</button>
+            <button class="class-btn" onclick="switchClass(2)">2組</button>
+            <button class="class-btn" onclick="switchClass(3)">3組</button>
+            <button class="class-btn" onclick="switchClass(4)">4組</button>
+        </div>
+
+        <div id="pdf-grid" class="pdf-grid"></div>
+    </div>
+
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalTitle">表示タイトル</span>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const pdfFolder = "cad";
+        const photoFolder = "photo";
+        const imageExtension = ".JPG";
+
+        const studentData = {
+            11: {
+                "01": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "02": { name: "サンプル", urls: { document: "", spreadsheet: "", slide: "" } },
+                "03": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "04": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "05": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "06": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "07": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "08": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "09": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "10": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "11": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "12": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "13": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "14": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "15": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "16": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "17": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "18": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "19": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "20": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "21": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "22": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "23": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "24": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "25": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "26": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "27": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "28": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "29": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "30": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "31": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "32": { name: "", urls: { document: "", spreadsheet: "", slide: "" } }
+            },
+            12: {
+                "01": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "02": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "03": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "04": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "05": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "06": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "07": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "08": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "09": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "10": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "11": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "12": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "13": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "14": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "15": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "16": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "17": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "18": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "19": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "20": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "21": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "22": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "23": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "24": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "25": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "26": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "27": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "28": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "29": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "30": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "31": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "32": { name: "", urls: { document: "", spreadsheet: "", slide: "" } }
+            },
+            13: {
+                "01": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "02": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "03": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "04": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "05": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "06": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "07": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "08": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "09": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "10": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "11": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "12": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "13": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "14": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "15": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "16": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "17": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "18": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "19": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "20": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "21": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "22": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "23": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "24": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "25": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "26": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "27": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "28": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "29": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "30": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "31": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } },
+                "32": { name: "提出なし", urls: { document: "", spreadsheet: "", slide: "" } }
+            },
+            14: {
+                "01": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "02": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "03": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "04": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "05": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "06": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "07": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "08": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "09": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "10": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "11": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "12": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "13": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "14": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "15": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "16": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "17": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "18": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "19": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "20": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "21": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "22": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "23": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "24": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "25": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "26": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "27": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "28": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "29": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "30": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "31": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
+                "32": { name: "", urls: { document: "", spreadsheet: "", slide: "" } }
+            }
+        };
+
+        const appConfigs = {
+            woodwork: {
+                folderName: "木工作品",
+                prefix: "設計図 - ",
+                ext: ".pdf",
+                btnText: "設計図を開く",
+                color: "#8b4513",
+                iconText: "WOOD"
+            },
+            document: {
+                folderName: "時間割 (File responses)",
+                prefix: "時間割 - ",
+                ext: ".gdoc",
+                btnText: "ドキュメントを開く",
+                color: "#1a73e8",
+                iconText: "DOCS"
+            },
+            spreadsheet: {
+                folderName: "表計算練習課題 (File responses)",
+                prefix: "表計算練習課題 - ",
+                ext: ".gsheet",
+                btnText: "スプレッドシートを開く",
+                color: "#0f9d58",
+                iconText: "SHEETS"
+            },
+            slide: {
+                folderName: "スマホカタログ (File responses)",
+                prefix: "スマホカタログ - ",
+                ext: ".gslides",
+                btnText: "スライドを開く",
+                color: "#f29900",
+                iconText: "SLIDES"
+            }
+        };
+
+        let currentApp = 'woodwork';
+        let currentClass = 1;
+
+        function extractFileId(url) {
+            if (!url) return null;
+            const match = url.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+
+        function extractGid(url) {
+            if (!url) return null;
+            const match = url.match(/[#&?]gid=([0-9]+)/);
+            return match ? match[1] : null;
+        }
+
+        // 共通のエラーハンドラー（画像読み込み失敗時に「画像なし」または未提出ボックスに変換）
+        function handleThumbError(img, bgColor, text) {
+            const container = img.parentElement;
+            container.classList.remove('clickable');
+            container.removeAttribute('onclick');
+            container.innerHTML = `<div class="placeholder-box" style="background-color: ${bgColor}; color: #ffffff;">${text}</div>`;
+        }
+
+        function renderList() {
+            const grid = document.getElementById('pdf-grid');
+            grid.innerHTML = '';
+
+            const config = appConfigs[currentApp];
+            const classCode = `1${currentClass}`;
+            const classStudentMap = studentData[classCode] || {};
+
+            for (let i = 1; i <= 35; i++) {
+                const studentCode = String(i).padStart(2, '0');
+                const student = classStudentMap[studentCode] || { name: `生徒${studentCode}`, urls: {} };
+                const studentName = student.name;
+                
+                const card = document.createElement('div');
+                card.className = 'pdf-card';
+
+                if (currentApp === 'woodwork') {
+                    // 木工作品の処理
+                    const pdfFileName = `cad-final-${classCode}${studentCode} - ${studentName}.pdf`;
+                    const pdfPath = `${encodeURIComponent(pdfFolder)}/${encodeURIComponent(pdfFileName)}`;
+                    const photoFileName = `${classCode}${studentCode}${imageExtension}`;
+                    const photoPath = `${encodeURIComponent(photoFolder)}/${photoFileName}`;
+                    const modalTitle = `${currentClass}組 ${i}番 ${studentName} の写真`;
+
+                    card.innerHTML = `
+                        <div class="thumbnail-container clickable" onclick="openImageModal('${photoPath}', '${modalTitle}')">
+                            <img src="${photoPath}" class="thumbnail-img" alt="${studentName}の写真" onerror="handleThumbError(this, '#9ca3af', '画像なし')">
+                        </div>
+                        <div class="card-body">
+                            <div>
+                                <div class="student-info">${currentClass}組 ${i}番</div>
+                                <div class="file-name" style="font-weight: bold; color: #374151;">${studentName}</div>
+                                <div class="file-name">${pdfFileName}</div>
+                            </div>
+                            <button class="open-btn" style="background-color: ${config.color}" onclick="openPdfModal('${pdfPath}', '${pdfFileName}')">${config.btnText}</button>
+                        </div>
+                    `;
+                } else {
+                    // Google ドライブ（時間割・スプレッドシート・スライド）の処理
+                    const targetUrl = (student.urls && student.urls[currentApp]) ? student.urls[currentApp] : "";
+                    const gFileName = `${config.prefix}${studentName}${config.ext}`;
+                    const fileId = extractFileId(targetUrl);
+                    const isEnabled = targetUrl !== "";
+
+                    let thumbnailHtml = '';
+                    if (fileId) {
+                        let thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+                        const gid = extractGid(targetUrl);
+                        if (currentApp === 'spreadsheet' && gid) {
+                            thumbUrl = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=png&gid=${gid}`;
+                        }
+
+                        const clickAttr = isEnabled ? `onclick="openUrl('${targetUrl}')"` : '';
+                        const clickableClass = isEnabled ? 'clickable' : '';
+
+                        thumbnailHtml = `
+                            <div class="thumbnail-container ${clickableClass}" ${clickAttr}>
+                                <img src="${thumbUrl}" class="thumbnail-img" alt="プレビュー" onerror="handleThumbError(this, '${config.color}', '${config.iconText}')">
+                            </div>
+                        `;
+                    } else {
+                        thumbnailHtml = `
+                            <div class="thumbnail-container">
+                                <div class="placeholder-box" style="background-color: #bdc1c6; color: #ffffff;">未提出</div>
+                            </div>
+                        `;
+                    }
+
+                    const buttonHtml = isEnabled 
+                        ? `<button class="open-btn" style="background-color: ${config.color}" onclick="openUrl('${targetUrl}')">${config.btnText}</button>`
+                        : `<button class="open-btn" disabled>未提出</button>`;
+
+                    card.innerHTML = `
+                        ${thumbnailHtml}
+                        <div class="card-body">
+                            <div>
+                                <div class="student-info">${currentClass}組 ${i}番</div>
+                                <div class="file-name" style="font-weight: bold; color: #374151;">${studentName}</div>
+                                <div class="file-name">${gFileName}</div>
+                            </div>
+                            ${buttonHtml}
+                        </div>
+                    `;
+                }
+
+                grid.appendChild(card);
+            }
+        }
+
+        function openUrl(url) {
+            if (url) {
+                window.open(url, '_blank');
+            }
+        }
+
+        function switchApp(appName) {
+            currentApp = appName;
+            document.querySelectorAll('.app-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.app === appName);
+            });
+            renderList();
+        }
+
+        function switchClass(classNum) {
+            currentClass = classNum;
+            document.querySelectorAll('.class-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === classNum);
+            });
+            renderList();
+        }
+
+        // モーダル処理
+        function openPdfModal(pdfPath, titleText) {
+            const modal = document.getElementById('viewModal');
+            const modalBody = document.getElementById('modalBody');
+            const title = document.getElementById('modalTitle');
+
+            modalBody.innerHTML = `<iframe src="${pdfPath}"></iframe>`;
+            title.textContent = titleText;
+            modal.classList.add('open');
+        }
+
+        function openImageModal(photoPath, titleText) {
+            const modal = document.getElementById('viewModal');
+            const modalBody = document.getElementById('modalBody');
+            const title = document.getElementById('modalTitle');
+
+            modalBody.innerHTML = `<img src="${photoPath}" alt="拡大画像" onerror="this.parentElement.innerHTML='<div class=\\'placeholder-box\\' style=\\'background-color: #111827; color: #9ca3af; height:100%;\\'>画像が見つかりません</div>'">`;
+            title.textContent = titleText;
+            modal.classList.add('open');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('viewModal');
+            const modalBody = document.getElementById('modalBody');
+            modal.classList.remove('open');
+            modalBody.innerHTML = '';
+        }
+
+        document.getElementById('viewModal').addEventListener('click', (e) => {
+            if (e.target.id === 'viewModal') {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        window.onload = () => {
+            renderList();
+        };
+    </script>
+</body>
+</html>
