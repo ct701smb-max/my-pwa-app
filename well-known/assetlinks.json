@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.ct701smb_max.twa",
+        "sha256_cert_fingerprints": ["1F:BF:CB:A6:90:27:AA:26:47:EB:5E:11:01:23:32:FC:37:DD:6C:1E:95:AA:5F:32:6D:40:5B:D9:97:87:58:D8"]
+      }
+    }]
