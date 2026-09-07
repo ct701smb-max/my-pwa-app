@@ -596,33 +596,50 @@
             display: none;
             width: 90%;
             max-width: 320px;
+            background: var(--panel-bg);
+            padding: 25px 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.4);
         }
 
-        .reload-btn {
-            background: var(--danger-color);
+        #gameover-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #c0392b;
+            margin-bottom: 15px;
+        }
+
+        .gameover-btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .choice-btn {
+            flex: 1;
             border: none;
             color: white;
-            padding: 16px 20px;
-            border-radius: 30px;
-            font-size: 1.05rem;
+            padding: 14px 10px;
+            border-radius: 25px;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             transition: transform 0.1s, background 0.2s;
-            animation: pulse 1.5s infinite;
-            white-space: nowrap;
-            width: 100%;
-            box-sizing: border-box;
         }
 
-        .reload-btn:active {
+        .choice-btn:active {
             transform: scale(0.95);
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
+        #btn-yes {
+            background: var(--success-color);
+        }
+
+        #btn-no {
+            background: var(--danger-color);
         }
     </style>
 </head>
@@ -720,8 +737,14 @@
         </div>
     </div>
 
+    <!-- コンティニュー選択UI -->
     <div id="gameover-container">
-        <button class="reload-btn" onclick="restartGame()">🔄 もう一度挑戦する</button>
+        <div id="gameover-title">💀 倒されてしまいました…</div>
+        <div style="font-size: 0.9rem; margin-bottom: 20px; color: #555;">コンティニューしますか？</div>
+        <div class="gameover-btn-group">
+            <button class="choice-btn" id="btn-yes" onclick="continueGame(true)">はい</button>
+            <button class="choice-btn" id="btn-no" onclick="continueGame(false)">いいえ</button>
+        </div>
     </div>
 
     <script>
@@ -735,7 +758,7 @@
             level: 1,
             axeLevel: 1, 
             auraLevel: 0, 
-            autoMeatLevel: 0, // 0: 未設置, 1: 設置済み
+            autoMeatLevel: 0,
             auraUpgradeCosts: [250, 600, 1200],
             facilityNames: ["Lv.1 ボロいテント (木組みの柵)", "Lv.2 暖かい小屋 (頑丈な石壁)", "Lv.3 要塞シェルター (鉄壁の要塞)", "🌟 避難所完成！ (神聖な黄金壁)"],
             facilityIcons: ["⛺", "🛖", "🏰", "🌟"],
@@ -1355,7 +1378,6 @@
                 }
             }
 
-            // 自動精肉所の処理（手動換金と同じくらいのスピード感に調整：0.05秒ごとに肉1個を10Gに変換）
             if (gameState.autoMeatLevel > 0 && gameState.meat > 0) {
                 autoMeatTimer += deltaTime;
                 if (autoMeatTimer >= 0.05) {
@@ -1565,7 +1587,15 @@
                     }
                 }
 
-                let canHitEnemy = (distToPlayer < innerHitRadius) || (gameState.axeLevel >= 6 && distToPlayer >= outerHitRadiusMin && distToPlayer <= outerHitRadiusMax);
+                // 【修正1】ボス🐉🫈への斧の当たり判定を正確にする（ボス専用の判定サイズや大きめなヒットボックスを適用）
+                let hitThreshold = innerHitRadius;
+                if (en.isBoss) {
+                    // ボスの見た目の大きさに応じて当たり判定を大幅に拡張（ボスの中心から半径75px以内、または外側オーラ範囲）
+                    hitThreshold = 75;
+                }
+
+                let canHitEnemy = (distToPlayer < hitThreshold) || (gameState.axeLevel >= 6 && distToPlayer >= outerHitRadiusMin && distToPlayer <= outerHitRadiusMax);
+                
                 if (canHitEnemy && en.hitCooldown <= 0) {
                     let damageToEnemy = gameState.axeLevel; 
                     en.hp -= damageToEnemy;
@@ -1763,17 +1793,26 @@
             const wrapperEl = document.getElementById(`enemy-${en.id}`);
             if (wrapperEl) wrapperEl.remove();
 
+            let wasBoss = en.isBoss;
+            let bossTypeKey = en.type;
+
             enemies = enemies.filter(e => e.id !== en.id);
 
-            if (en.isBoss) {
+            if (wasBoss) {
                 gameState.diamond += 1;
                 spawnFloatingItems(en.x, en.y, '💎', 3);
-                setMessage(`💎 ボス「${ENEMY_TYPES[en.type].icon}」を討伐した！ダイヤを手に入れた！`);
+                setMessage(`💎 ボス「${ENEMY_TYPES[bossTypeKey].icon}」を討伐した！ダイヤを手に入れた！`);
+
+                // 【修正2】ボス🫈🐉を倒したあとは、10秒ほどで再出現させる
+                setTimeout(() => {
+                    if (gameState.isDead) return;
+                    spawnBoss(bossTypeKey);
+                }, 10000); // 10秒（10000ミリ秒）後に再出現
             }
 
             setTimeout(() => {
                 if (gameState.isDead) return;
-                if (!en.isBoss && enemies.filter(e => !e.isBoss).length < getMaxEnemyCount()) {
+                if (!wasBoss && enemies.filter(e => !e.isBoss).length < getMaxEnemyCount()) {
                     let newId = enemies.length > 0 ? Math.max(...enemies.map(e => e.id)) + 1 : 0;
                     let chosenKey = getRandomAvailableEnemyType();
                     let angle = Math.random() * Math.PI * 2;
@@ -1799,21 +1838,24 @@
             const player = document.getElementById('player');
             player.style.filter = 'grayscale(100%) drop-shadow(0 4px 4px rgba(0,0,0,0.2))';
             player.style.transform = 'translate(-50%, -50%) rotate(90deg)';
-
-            setMessage("💀 倒されてしまいました…");
         }
 
-        // 状態を維持してスタート地点へリセットするコンティニュー関数
-        function restartGame() {
+        // 【修正3】コンティニューは「はい」か「いいえ」を選ぶ形にする
+        function continueGame(isYes) {
+            if (!isYes) {
+                // 「いいえ」を選んだ場合はページをリロードしてタイトル（初期状態）に戻す
+                location.reload();
+                return;
+            }
+
+            // 「はい」を選んだ場合のコンティニュー処理
             gameState.isDead = false;
             gameState.heat = gameState.maxHeat;
             
-            // 肉や木などの持ち物を0にする
             gameState.wood = 0;
             gameState.meat = 0;
             gameState.coin = 0;
 
-            // プレイヤーの位置を中央（スタート地点）に戻す
             gameState.playerX = 0;
             gameState.playerY = 0;
 
