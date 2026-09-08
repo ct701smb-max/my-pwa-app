@@ -84,6 +84,7 @@ const urlsToCache = [
   '../docs/D-03-SNS学びのポイント.pdf',
   '../docs/D-04-プログラミング.pdf',
   '../docs/D-05-AI.pdf',
+  '../well-known/assetlinks.json',
   'manifest.json',
   'register.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
