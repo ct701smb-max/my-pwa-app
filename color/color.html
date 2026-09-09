@@ -1025,7 +1025,7 @@ body {
     const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : ((e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : null);
     const isTouch = !!touch;
     
-    const touchOffsetY = isTouch ? -40 : 0;
+    const touchOffsetY = isTouch ? -80 : 0;
     const clientX = isTouch ? touch.clientX : e.clientX;
     const clientY = (isTouch ? touch.clientY : e.clientY) + touchOffsetY;
     
@@ -1118,7 +1118,7 @@ body {
   let pickedColorHex = '#FFFFFF';
   let isEyedropperActive = false;
   
-  const TOUCH_OFFSET_Y = 60; 
+  const TOUCH_OFFSET_Y = 80; 
 
   async function pickColor() {
     showToast("スポイト準備中...");
