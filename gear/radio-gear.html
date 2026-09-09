@@ -28,7 +28,41 @@ body {
     flex-direction: column;
     align-items: center;
 }
-
+/* ===== ホームボタン ===== */
+.btn-real-dent {
+  /*周りの凹み*/
+  display: inline-block;
+  position: relative;
+  text-decoration: none;
+  color: rgba(3, 69, 244, 0.54);
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  text-align: center;
+  background: #f7f7f7;
+  box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
+}
+.btn-real-dent i {
+  /*ボタン自体*/
+  position: absolute;
+  content: '';
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  left: 3px;
+  top: 0px;
+  border-radius: 50%;
+  font-size: 15px;
+  background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+  border-bottom: solid 2px #b5b5b5;
+}
+  
+.btn-real-dent .fa:active {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+  border-bottom: solid 2px #d8d8d8;
+}
 .container {
     max-width: 1020px;
     width: 100%;
@@ -467,7 +501,7 @@ canvas {
 <div class="container">
     <!-- ヘッダー -->
 <div class="header-area">
-    <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> 歯車の役割と発電・ラジオ学習シミュレーター</h1>
+    <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　歯車の役割と発電・ラジオ学習シミュレーター</h1>
     <div class="header-buttons">
         <button class="btn" id="openModal">💡 「ピッチ円」「モジュール」とは？</button>
         <button class="btn" id="openBikeModal">🚲 自転車の機構</button>

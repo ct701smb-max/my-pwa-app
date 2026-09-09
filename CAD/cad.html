@@ -76,6 +76,41 @@ canvas {
   z-index: 0; 
 }
 
+/* ===== ホームボタン ===== */
+.btn-real-dent {
+  /*周りの凹み*/
+  display: inline-block;
+  position: relative;
+  text-decoration: none;
+  color: rgba(3, 69, 244, 0.54);
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  text-align: center;
+  background: #f7f7f7;
+  box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
+}
+.btn-real-dent i {
+  /*ボタン自体*/
+  position: absolute;
+  content: '';
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  left: 3px;
+  top: 0px;
+  border-radius: 50%;
+  font-size: 15px;
+  background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+  border-bottom: solid 2px #b5b5b5;
+}
+  
+.btn-real-dent .fa:active {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+  border-bottom: solid 2px #d8d8d8;
+}
 
 /*=====================================================================
    01. ヘッダー・トップボタンエリア
@@ -1444,7 +1479,7 @@ button:active {
     <div class="top-buttons-inner">
       <button id="menu-toggle-btn" data-ja="⚙ メニュー" data-en="⚙ Menu" data-ja-title="メニューの開閉" data-en-title="Toggle Menu">⚙ メニュー</button>
       <button id="lang-toggle-btn" data-ja-title="英語表示" data-en-title="Japanese" class="help-btn">🔤 English</button>
-      <a href="guide.pdf" rel="noopener noreferrer" class="help-btn" id="help-btn" data-ja="📖 使い方" data-en="📖 Guide" data-ja-title="使い方ガイド" data-en-title="User Guide">
+      <a href="guide.pdf" target="_blank" rel="noopener noreferrer" class="help-btn" id="help-btn" data-ja="📖 使い方" data-en="📖 Guide" data-ja-title="使い方ガイド" data-en-title="User Guide">
         📖 使い方
       </a>
     </div>
@@ -1818,7 +1853,7 @@ button:active {
 </div> <div id="canvas-overlay" class="canvas-overlay" style="display: none;">
     <div class="zoom-title-area">
         <div style="width: 40px;"></div> 
-        <h3 class="zoom-mode2" data-ja="自由設計 - 拡大編集モード　(※ESCまたはFキーで閉じる)" data-en="Free design - Zoom editing mode (※To close:ESC key)">自由設計 - 拡大編集モード　(※ESCキーで閉じる)</h3>
+        <h3 class="zoom-mode2" data-ja="自由設計 - 拡大編集モード　(※ESCキーで閉じる)" data-en="Free design - Zoom editing mode (※To close:ESC key)">自由設計 - 拡大編集モード　(※ESCキーで閉じる)</h3>
         <button id="btn-close-2d" class="btn-close-2d" data-ja-title="閉じる" data-en-title="Close">✕</button>
     </div>
      

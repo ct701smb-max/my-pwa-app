@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
-    <title>Google 課題提出データ & 木工作品閲覧システム</title>
+    <title>Google 課題提出データ閲覧システム</title>
     <style>
         :root {
             --primary-color: #1a73e8;
@@ -20,41 +19,7 @@
             margin: 0;
             padding: 20px;
         }
-/* ===== ホームボタン ===== */
-.btn-real-dent {
-  /*周りの凹み*/
-  display: inline-block;
-  position: relative;
-  text-decoration: none;
-  color: rgba(3, 69, 244, 0.54);
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  text-align: center;
-  background: #f7f7f7;
-  box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
-}
-.btn-real-dent i {
-  /*ボタン自体*/
-  position: absolute;
-  content: '';
-  width: 25px;
-  height: 25px;
-  line-height: 25px;
-  left: 3px;
-  top: 0px;
-  border-radius: 50%;
-  font-size: 15px;
-  background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
-  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
-  border-bottom: solid 2px #b5b5b5;
-}
-  
-.btn-real-dent .fa:active {
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
-  border-bottom: solid 2px #d8d8d8;
-}
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -66,6 +31,7 @@
             color: #3c4043;
         }
 
+        /* アプリ切り替えタブ */
         .app-tabs {
             display: flex;
             justify-content: center;
@@ -87,11 +53,6 @@
             box-shadow: 0 1px 3px rgba(60,64,67,0.15);
         }
 
-        .app-btn.active[data-app="woodwork"] {
-            background-color: #8b4513;
-            color: white;
-        }
-
         .app-btn.active[data-app="document"] {
             background-color: #1a73e8;
             color: white;
@@ -107,6 +68,7 @@
             color: white;
         }
 
+        /* クラス切り替えタブ */
         .class-tabs {
             display: flex;
             justify-content: center;
@@ -131,6 +93,7 @@
             color: white;
         }
 
+        /* カードグリッド */
         .pdf-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -152,9 +115,10 @@
             box-shadow: 0 4px 12px rgba(60,64,67,0.2);
         }
 
+        /* サムネイルエリア */
         .thumbnail-container {
             width: 100%;
-            height: 150px;
+            height: 140px;
             background-color: #f1f3f4;
             display: flex;
             align-items: center;
@@ -163,6 +127,7 @@
             border-bottom: 1px solid #e0e0e0;
         }
 
+        /* 修正点: サムネイルクリック時のカーソル表示とホバー効果 */
         .thumbnail-container.clickable {
             cursor: pointer;
         }
@@ -232,85 +197,15 @@
             color: #70757a;
             cursor: not-allowed;
         }
-
-        /* モーダル表示 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.open {
-            display: flex;
-        }
-
-        .modal-content {
-            background-color: white;
-            width: 90%;
-            height: 90%;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .modal-header {
-            padding: 12px 20px;
-            background-color: #1f2937;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            flex-grow: 1;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #111827;
-            overflow: hidden;
-        }
-
-        .modal-body iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .modal-body img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1><a href="../../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　Google 課題提出データ & 木工作品閲覧リスト</h1>
+        <h1>Google 課題提出データ閲覧リスト</h1>
 
         <div class="app-tabs">
-            <button class="app-btn active" data-app="woodwork" onclick="switchApp('woodwork')">🪵 木工作品</button>
-            <button class="app-btn" data-app="document" onclick="switchApp('document')">📄 時間割 (.gdoc)</button>
+            <button class="app-btn active" data-app="document" onclick="switchApp('document')">📄 時間割 (.gdoc)</button>
             <button class="app-btn" data-app="spreadsheet" onclick="switchApp('spreadsheet')">📊 表計算練習課題 (.gsheet)</button>
             <button class="app-btn" data-app="slide" onclick="switchApp('slide')">📙 スマホカタログ (.gslides)</button>
         </div>
@@ -325,25 +220,12 @@
         <div id="pdf-grid" class="pdf-grid"></div>
     </div>
 
-    <div id="viewModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span id="modalTitle">表示タイトル</span>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div id="modalBody" class="modal-body"></div>
-        </div>
-    </div>
-
     <script>
-        const pdfFolder = "cad";
-        const photoFolder = "photo";
-        const imageExtension = ".JPG";
-
+        // 生徒名およびGoogle DriveのURL設定
         const studentData = {
             11: {
                 "01": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
-                "02": { name: "サンプル", urls: { document: "", spreadsheet: "", slide: "" } },
+                "02": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
                 "03": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
                 "04": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
                 "05": { name: "生徒名", urls: { document: "", spreadsheet: "", slide: "" } },
@@ -479,15 +361,8 @@
             }
         };
 
+        // アプリケーション・フォルダ表示設定
         const appConfigs = {
-            woodwork: {
-                folderName: "木工作品",
-                prefix: "設計図 - ",
-                ext: ".pdf",
-                btnText: "設計図を開く",
-                color: "#8b4513",
-                iconText: "WOOD"
-            },
             document: {
                 folderName: "時間割 (File responses)",
                 prefix: "時間割 - ",
@@ -514,29 +389,30 @@
             }
         };
 
-        let currentApp = 'woodwork';
+        let currentApp = 'document';
         let currentClass = 1;
 
+        // Google URLからファイルIDを抽出
         function extractFileId(url) {
             if (!url) return null;
             const match = url.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/);
             return match ? match[1] : null;
         }
 
+        // 修正点: Google URLからgid（シートID）を抽出
         function extractGid(url) {
             if (!url) return null;
             const match = url.match(/[#&?]gid=([0-9]+)/);
             return match ? match[1] : null;
         }
 
-        // 共通のエラーハンドラー（画像読み込み失敗時に「画像なし」または未提出ボックスに変換）
-        function handleThumbError(img, bgColor, text) {
+        // サムネイル読み込み失敗時のフォールバック処理
+        function handleThumbError(img, color, iconText) {
             const container = img.parentElement;
-            container.classList.remove('clickable');
-            container.removeAttribute('onclick');
-            container.innerHTML = `<div class="placeholder-box" style="background-color: ${bgColor}; color: #ffffff;">${text}</div>`;
+            container.innerHTML = `<div class="placeholder-box" style="background-color: ${color};">${iconText}</div>`;
         }
 
+        // リスト描画処理
         function renderList() {
             const grid = document.getElementById('pdf-grid');
             grid.innerHTML = '';
@@ -545,93 +421,74 @@
             const classCode = `1${currentClass}`;
             const classStudentMap = studentData[classCode] || {};
 
-            for (let i = 1; i <= 35; i++) {
+            for (let i = 1; i <= 32; i++) {
                 const studentCode = String(i).padStart(2, '0');
                 const student = classStudentMap[studentCode] || { name: `生徒${studentCode}`, urls: {} };
-                const studentName = student.name;
                 
+                const studentName = student.name;
+                const targetUrl = (student.urls && student.urls[currentApp]) ? student.urls[currentApp] : "";
+                const gFileName = `${config.prefix}${studentName}${config.ext}`;
+                const fileId = extractFileId(targetUrl);
+                const isEnabled = targetUrl !== "";
+
                 const card = document.createElement('div');
                 card.className = 'pdf-card';
 
-                if (currentApp === 'woodwork') {
-                    // 木工作品の処理
-                    const pdfFileName = `cad-final-${classCode}${studentCode} - ${studentName}.pdf`;
-                    const pdfPath = `${encodeURIComponent(pdfFolder)}/${encodeURIComponent(pdfFileName)}`;
-                    const photoFileName = `${classCode}${studentCode}${imageExtension}`;
-                    const photoPath = `${encodeURIComponent(photoFolder)}/${photoFileName}`;
-                    const modalTitle = `${currentClass}組 ${i}番 ${studentName} の写真`;
+                // サムネイル生成
+                let thumbnailHtml = '';
+                if (fileId) {
+                    let thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+                    
+                    // 修正点: スプレッドシートで「おまけ」シートなどのgidが含まれている場合に対応
+                    const gid = extractGid(targetUrl);
+                    if (currentApp === 'spreadsheet' && gid) {
+                        thumbUrl += `&gid=${gid}`;
+                    }
 
-                    card.innerHTML = `
-                        <div class="thumbnail-container clickable" onclick="openImageModal('${photoPath}', '${modalTitle}')">
-                            <img src="${photoPath}" class="thumbnail-img" alt="${studentName}の写真" onerror="handleThumbError(this, '#9ca3af', '画像なし')">
-                        </div>
-                        <div class="card-body">
-                            <div>
-                                <div class="student-info">${currentClass}組 ${i}番</div>
-                                <div class="file-name" style="font-weight: bold; color: #374151;">${studentName}</div>
-                                <div class="file-name">${pdfFileName}</div>
-                            </div>
-                            <button class="open-btn" style="background-color: ${config.color}" onclick="openPdfModal('${pdfPath}', '${pdfFileName}')">${config.btnText}</button>
+                    // 修正点: サムネイルクリックで開く処理とカーソルスタイルの付与
+                    const clickAttr = isEnabled ? `onclick="openUrl('${targetUrl}')"` : '';
+                    const clickableClass = isEnabled ? 'clickable' : '';
+
+                    thumbnailHtml = `
+                        <div class="thumbnail-container ${clickableClass}" ${clickAttr}>
+                            <img src="${thumbUrl}" class="thumbnail-img" alt="プレビュー" onerror="handleThumbError(this, '${config.color}', '${config.iconText}')">
                         </div>
                     `;
                 } else {
-                    // Google ドライブ（時間割・スプレッドシート・スライド）の処理
-                    const targetUrl = (student.urls && student.urls[currentApp]) ? student.urls[currentApp] : "";
-                    const gFileName = `${config.prefix}${studentName}${config.ext}`;
-                    const fileId = extractFileId(targetUrl);
-                    const isEnabled = targetUrl !== "";
-
-                    let thumbnailHtml = '';
-                    if (fileId) {
-                        let thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
-                        const gid = extractGid(targetUrl);
-                        if (currentApp === 'spreadsheet' && gid) {
-                            thumbUrl = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=png&gid=${gid}`;
-                        }
-
-                        const clickAttr = isEnabled ? `onclick="openUrl('${targetUrl}')"` : '';
-                        const clickableClass = isEnabled ? 'clickable' : '';
-
-                        thumbnailHtml = `
-                            <div class="thumbnail-container ${clickableClass}" ${clickAttr}>
-                                <img src="${thumbUrl}" class="thumbnail-img" alt="プレビュー" onerror="handleThumbError(this, '${config.color}', '${config.iconText}')">
-                            </div>
-                        `;
-                    } else {
-                        thumbnailHtml = `
-                            <div class="thumbnail-container">
-                                <div class="placeholder-box" style="background-color: #bdc1c6; color: #ffffff;">未提出</div>
-                            </div>
-                        `;
-                    }
-
-                    const buttonHtml = isEnabled 
-                        ? `<button class="open-btn" style="background-color: ${config.color}" onclick="openUrl('${targetUrl}')">${config.btnText}</button>`
-                        : `<button class="open-btn" disabled>未提出</button>`;
-
-                    card.innerHTML = `
-                        ${thumbnailHtml}
-                        <div class="card-body">
-                            <div>
-                                <div class="student-info">${currentClass}組 ${i}番</div>
-                                <div class="file-name" style="font-weight: bold; color: #374151;">${studentName}</div>
-                                <div class="file-name">${gFileName}</div>
-                            </div>
-                            ${buttonHtml}
+                    thumbnailHtml = `
+                        <div class="thumbnail-container">
+                            <div class="placeholder-box" style="background-color: #bdc1c6; color: #ffffff;">未提出</div>
                         </div>
                     `;
                 }
 
+                const buttonHtml = isEnabled 
+                    ? `<button class="open-btn" style="background-color: ${config.color}" onclick="openUrl('${targetUrl}')">${config.btnText}</button>`
+                    : `<button class="open-btn" disabled>未提出</button>`;
+
+                card.innerHTML = `
+                    ${thumbnailHtml}
+                    <div class="card-body">
+                        <div>
+                            <div class="student-info">${currentClass}組 ${i}番</div>
+                            <div class="file-name" style="font-weight: bold; color: #374151;">${studentName}</div>
+                            <div class="file-name">${gFileName}</div>
+                        </div>
+                        ${buttonHtml}
+                    </div>
+                `;
                 grid.appendChild(card);
             }
         }
 
+        // URLを開く処理
         function openUrl(url) {
             if (url) {
                 window.open(url, '_blank');
             }
         }
 
+        // アプリ切替
         function switchApp(appName) {
             currentApp = appName;
             document.querySelectorAll('.app-btn').forEach(btn => {
@@ -640,6 +497,7 @@
             renderList();
         }
 
+        // クラス切替
         function switchClass(classNum) {
             currentClass = classNum;
             document.querySelectorAll('.class-btn').forEach((btn, index) => {
@@ -648,46 +506,7 @@
             renderList();
         }
 
-        // モーダル処理
-        function openPdfModal(pdfPath, titleText) {
-            const modal = document.getElementById('viewModal');
-            const modalBody = document.getElementById('modalBody');
-            const title = document.getElementById('modalTitle');
-
-            modalBody.innerHTML = `<iframe src="${pdfPath}"></iframe>`;
-            title.textContent = titleText;
-            modal.classList.add('open');
-        }
-
-        function openImageModal(photoPath, titleText) {
-            const modal = document.getElementById('viewModal');
-            const modalBody = document.getElementById('modalBody');
-            const title = document.getElementById('modalTitle');
-
-            modalBody.innerHTML = `<img src="${photoPath}" alt="拡大画像" onerror="this.parentElement.innerHTML='<div class=\\'placeholder-box\\' style=\\'background-color: #111827; color: #9ca3af; height:100%;\\'>画像が見つかりません</div>'">`;
-            title.textContent = titleText;
-            modal.classList.add('open');
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('viewModal');
-            const modalBody = document.getElementById('modalBody');
-            modal.classList.remove('open');
-            modalBody.innerHTML = '';
-        }
-
-        document.getElementById('viewModal').addEventListener('click', (e) => {
-            if (e.target.id === 'viewModal') {
-                closeModal();
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
-
+        // 初期表示
         window.onload = () => {
             renderList();
         };
