@@ -1261,40 +1261,49 @@ body {
   }
 
   function handleEyedropperMove(e) {
-    if (!capturedCanvas || !overlay || overlay.style.display !== 'block' || !isEyedropperActive) return;
-    if (e.type === 'touchmove' && e.cancelable) e.preventDefault();
+  if (!capturedCanvas || !overlay || overlay.style.display !== 'block' || !isEyedropperActive) return;
+  if (e.type === 'touchmove' && e.cancelable) e.preventDefault();
 
-    const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : ((e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : null);
-    const isTouch = !!touch;
+  const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : ((e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : null);
+  const isTouch = !!touch;
 
-    const clientX = isTouch ? touch.clientX : e.clientX;
-    const clientY = isTouch ? touch.clientY : e.clientY;
+  const clientX = isTouch ? touch.clientX : e.clientX;
+  const clientY = isTouch ? touch.clientY : e.clientY;
 
-    const offsetY = isTouch ? TOUCH_OFFSET_Y : 0;
-    const targetX = clientX;
-    const targetY = clientY - offsetY;
+  const offsetY = isTouch ? TOUCH_OFFSET_Y : 0;
+  const targetX = clientX;
+  const targetY = clientY - offsetY;
 
-    const dpr = window.devicePixelRatio || 1;
-    const canvasX = Math.floor(targetX * dpr);
-    const canvasY = Math.floor(targetY * dpr);
+  // 現在のスクロール量を取得
+  const scrollX = window.scrollX || window.pageXOffset || 0;
+  const scrollY = window.scrollY || window.pageYOffset || 0;
 
-    if (canvasX >= 0 && canvasX < capturedCanvas.width && canvasY >= 0 && canvasY < capturedCanvas.height) {
-      const ctx = capturedCanvas.getContext('2d');
-      const pixel = ctx.getImageData(canvasX, canvasY, 1, 1).data;
-      pickedColorHex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+  // キャンバスのピクセル取得用座標（スクロール量を加算した絶対座標）
+  const canvasTargetX = targetX + scrollX;
+  const canvasTargetY = targetY + scrollY;
 
-      if (lens) {
-        lens.style.display = 'block';
-        lens.style.left = targetX + 'px';
-        lens.style.top = targetY + 'px';
-        lens.style.backgroundColor = pickedColorHex;
-      }
+  const dpr = window.devicePixelRatio || 1;
+  const canvasX = Math.floor(canvasTargetX * dpr);
+  const canvasY = Math.floor(canvasTargetY * dpr);
 
-      if (colorInput) colorInput.value = pickedColorHex;
-      document.body.style.backgroundColor = pickedColorHex;
-      updateTitleStyle(pickedColorHex);
+  if (canvasX >= 0 && canvasX < capturedCanvas.width && canvasY >= 0 && canvasY < capturedCanvas.height) {
+    const ctx = capturedCanvas.getContext('2d');
+    const pixel = ctx.getImageData(canvasX, canvasY, 1, 1).data;
+    pickedColorHex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+
+    if (lens) {
+      lens.style.display = 'block';
+      // 画面上のルーペ位置（fixed配置）はスクロール量を加算しないビューポート座標を使用
+      lens.style.left = targetX + 'px';
+      lens.style.top = targetY + 'px';
+      lens.style.backgroundColor = pickedColorHex;
     }
+
+    if (colorInput) colorInput.value = pickedColorHex;
+    document.body.style.backgroundColor = pickedColorHex;
+    updateTitleStyle(pickedColorHex);
   }
+}
 
   function handleEyedropperEnd() {
     if (overlay && overlay.style.display === 'block' && isEyedropperActive) {
