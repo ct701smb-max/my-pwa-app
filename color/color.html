@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- 画面キャプチャ用ライブラリ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <title>カラーピッカー</title>
@@ -115,7 +116,7 @@ body {
 /* 右側解説パネル */
 .color-image-panel > .image-box {
   height: 100%;
-  padding: 18px 20px;
+  padding: 12px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   background-color: rgba(255, 255, 255, 0.9);
@@ -134,7 +135,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 /* 上部: 16進数解説図 */
@@ -142,7 +143,7 @@ body {
   background: #f8f9fa;
   border: 1px solid #e1e8ed;
   border-radius: 8px;
-  padding: 12px 10px;
+  padding: 8px 10px;
   box-sizing: border-box;
   text-align: center;
 }
@@ -150,7 +151,7 @@ body {
 .hex-card-sub {
   font-size: 11px;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-weight: bold;
 }
 
@@ -260,7 +261,7 @@ body {
 
 .rgb-svg-container {
   width: 100%;
-  max-width: 180px;
+  max-width: 220px;
   margin: 0 auto;
 }
 
@@ -429,6 +430,65 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* スポイトボタン２ */
+#eyedropper-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  color: #333;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+#eyedropper-btn:hover {
+  background: #1976D2;
+  color: #fff;
+}
+
+/* ボタン群を横並びにする親コンテナ */
+.eyedropper-group {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* ボタン同士の間隔 */
+  width: 100%;
+}
+
+/* 左側のボタン：余白をすべて埋めて横長にする */
+.eyedropper-group .btn-eyedropper {
+  flex: 1;
+  width: auto; /* 幅指定を自動調整化 */
+}
+
+/* 右端のアイコンボタン：幅を固定 */
+#eyedropper-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #17a2b8;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+#eyedropper-btn:hover {
+  background-color: #138496;
+}
+
+#eyedropper-btn:active {
+  transform: translateY(1px);
+}
+    
 /* ===== カラーパレットのスタイル ===== */
 .palette-wrapper {
   width: 100%;
@@ -599,125 +659,121 @@ body {
         <label for="lightnessRange">明度:</label>
         <input type="range" id="lightnessRange" min="0" max="100" value="50" oninput="drawWheel(); updateWheelSelection();">
       </div>
-      <!-- スポイトボタン -->
-      <button type="button" class="btn-eyedropper" onclick="pickColor()">
-        <i class="fas fa-eye-dropper"></i> スポイトで色を取得
-      </button>
-      <input type="color" id="nativeColorPicker" style="display: none;" onchange="onNativeColorChange(this.value)">
-    </div>
-  </div>
+      <div class="eyedropper-group">
+  <!-- スポイトボタン（横長） -->
+  <button type="button" class="btn-eyedropper" onclick="pickColor()">
+    <i class="fas fa-eye-dropper"></i> スポイトで色を取得
+  </button>
 
+  <!-- スポイトボタン2（右端配置） -->
+  <button id="eyedropper-btn" onclick="activateEyeDropper()" title="画面から色を取得">
+    <i class="fa-solid fa-eye-dropper"></i>
+  </button>
+
+  <input type="color" id="nativeColorPicker" style="display: none;" onchange="onNativeColorChange(this.value)">
+</div>
+  </div>
+</div>
   <!-- 右パネル：解説エリア (CSS/SVG再現) -->
-  <div class="color-image-panel">
-    <div class="image-box">
-      <h3 style="margin-top:0; margin-bottom: 8px; font-size: 15px; text-align: center;">16進数カラーコードの仕組み</h3>
-      
-      <div class="css-diagram-wrapper">
-        <!-- 16進数カラーコード構造 -->
-        <div class="css-hex-card">
-          <div class="hex-card-sub">RGB各チャンネル（16進数 2桁）</div>
-          <div class="hex-code-display">
-            <span class="hex-hash">#</span>
+<div class="color-image-panel">
+  <div class="image-box">
+    <h3 style="margin-top: 0; margin-bottom: 4px; font-size: 15px; text-align: center;">16進数カラーコードの仕組み</h3>
 
-            <!-- 赤 (R) -->
-            <div class="hex-channel hex-r">
-              <span class="hex-val" id="hexValR">FF</span>
-              <span class="hex-label">赤 (R)</span>
-            </div>
+    <div class="css-diagram-wrapper">
+  <!-- 16進数カラーコード構造 -->
+  <div class="css-hex-card">
+    <div class="hex-card-sub">RGB各カラー（16進数 2桁 / 10進数）</div>
+    <div class="hex-code-display">
+      <span class="hex-hash">#</span>
 
-            <!-- 緑 (G) -->
-            <div class="hex-channel hex-g">
-              <span class="hex-val" id="hexValG">FF</span>
-              <span class="hex-label">緑 (G)</span>
-            </div>
+      <!-- 赤 (R) -->
+      <div class="hex-channel hex-r">
+        <span class="hex-val" id="hexValR">FF</span>
+        <span class="hex-dec" id="decValR">255</span>
+        <span class="hex-label">赤 (R)</span>
+      </div>
 
-            <!-- 青 (B) -->
-            <div class="hex-channel hex-b">
-              <span class="hex-val" id="hexValB">FF</span>
-              <span class="hex-label">青 (B)</span>
-            </div>
+      <!-- 緑 (G) -->
+      <div class="hex-channel hex-g">
+        <span class="hex-val" id="hexValG">FF</span>
+        <span class="hex-dec" id="decValG">255</span>
+        <span class="hex-label">緑 (G)</span>
+      </div>
 
-          </div>
-          <!-- ＋ / ー ボタン設置エリア -->
-          <div class="hex-range-info">
-            <button type="button" class="range-btn" 
-                    onmousedown="startAllHexStep(-1)" onmouseup="stopHexStep()" onmouseleave="stopHexStep()"
-                    ontouchstart="startAllHexStep(-1)" ontouchend="stopHexStep()">ー</button>
-            <span>00 (最小: 0)</span>
-            <span style="font-weight:bold;">➔</span>
-            <span>FF (最大: 255)</span>
-            <button type="button" class="range-btn" 
-                    onmousedown="startAllHexStep(1)" onmouseup="stopHexStep()" onmouseleave="stopHexStep()"
-                    ontouchstart="startAllHexStep(1)" ontouchend="stopHexStep()">＋</button>
-          </div>
-        </div>
+      <!-- 青 (B) -->
+      <div class="hex-channel hex-b">
+        <span class="hex-val" id="hexValB">FF</span>
+        <span class="hex-dec" id="decValB">255</span>
+        <span class="hex-label">青 (B)</span>
+      </div>
+    </div>
 
-        <!-- RGB加色混合 (光の三原色) -->
-<div class="css-rgb-card">
-  <div class="rgb-card-sub">光の三原色（加色混合）</div>
-  <div class="rgb-svg-container">
-    <svg viewBox="0 0 200 200" width="100%" height="100%" style="display: block;">
-      <defs>
-        <!-- 各円のクリップ領域定義 -->
-        <clipPath id="clip-R">
-          <circle cx="135" cy="120" r="52" />
-        </clipPath>
-        <clipPath id="clip-B">
-          <circle cx="65" cy="120" r="52" />
-        </clipPath>
-        <!-- 青と赤の重なりクリップ領域 -->
-        <clipPath id="clip-BR">
-          <circle cx="65" cy="120" r="52" clip-path="url(#clip-R)" />
-        </clipPath>
-      </defs>
-
-      <!-- 1. 基本の3つの円 (緑・青・赤) -->
-      <circle cx="100" cy="60" r="52" fill="#00FF00" />
-      <circle cx="65" cy="120" r="52" fill="#0000FF" />
-      <circle cx="135" cy="120" r="52" fill="#FF0000" />
-
-      <!-- 2. 2円の重なり部分 (黄色・水色・マゼンタ) -->
-      <!-- 緑 ∩ 赤 = 黄色 (Yellow) -->
-      <circle cx="100" cy="60" r="52" fill="#FFFF00" clip-path="url(#clip-R)" />
-      <!-- 緑 ∩ 青 = 水色 (Cyan) -->
-      <circle cx="100" cy="60" r="52" fill="#00FFFF" clip-path="url(#clip-B)" />
-      <!-- 青 ∩ 赤 = マゼンタ (Magenta) -->
-      <circle cx="65" cy="120" r="52" fill="#FF00FF" clip-path="url(#clip-R)" />
-
-      <!-- 3. 3円すべての重なり部分 = 白 (White) -->
-      <circle cx="100" cy="60" r="52" fill="#FFFFFF" clip-path="url(#clip-BR)" />
-
-      <!-- 4. 各領域のテキストラベル -->
-      <!-- 上: 緑 (Green) -->
-      <text x="100" y="38" fill="#0000FF" font-size="15" font-weight="bold" text-anchor="middle">Green</text>
-      <text x="100" y="58" fill="#0000FF" font-size="15" font-weight="bold" text-anchor="middle">緑</text>
-
-      <!-- 左下: 青 (Blue) -->
-      <text x="45" y="125" fill="#FFFF00" font-size="14" font-weight="bold" text-anchor="middle">Blue</text>
-      <text x="45" y="145" fill="#FFFF00" font-size="14" font-weight="bold" text-anchor="middle">青</text>
-
-      <!-- 右下: 赤 (Red) -->
-      <text x="155" y="125" fill="#FF8800" font-size="14" font-weight="bold" text-anchor="middle">Red</text>
-      <text x="155" y="145" fill="#FF8800" font-size="14" font-weight="bold" text-anchor="middle">赤</text>
-
-      <!-- 左上重なり: 水色 -->
-      <text x="70" y="88" fill="#0000FF" font-size="13" font-weight="bold" text-anchor="middle">水色</text>
-
-      <!-- 右上重なり: 黄色 -->
-      <text x="130" y="88" fill="#0000FF" font-size="13" font-weight="bold" text-anchor="middle">黄色</text>
-
-      <!-- 下重なり: マゼンタ -->
-      <text x="100" y="142" fill="#00FFFF" font-size="13" font-weight="bold" text-anchor="middle">マゼンタ</text>
-
-      <!-- 中央重なり: 白 -->
-      <text x="100" y="108" fill="#000000" font-size="16" font-weight="bold" text-anchor="middle">白</text>
-    </svg>
-  </div>
-</div>
-
+    <!-- ＋ / ー ボタン設置エリア -->
+    <div class="hex-range-info">
+      <button type="button" class="range-btn" 
+              onmousedown="startAllHexStep(-1)" onmouseup="stopHexStep()" onmouseleave="stopHexStep()"
+              ontouchstart="startAllHexStep(-1)" ontouchend="stopHexStep()">ー</button>
+      <span>00 (最小: 0)</span>
+      <span style="font-weight:bold;">➔</span>
+      <span>FF (最大: 255)</span>
+      <button type="button" class="range-btn" 
+              onmousedown="startAllHexStep(1)" onmouseup="stopHexStep()" onmouseleave="stopHexStep()"
+              ontouchstart="startAllHexStep(1)" ontouchend="stopHexStep()">＋</button>
     </div>
   </div>
 </div>
+
+      <!-- RGB加色混合 (光の三原色) -->
+      <div class="css-rgb-card">
+        <div class="rgb-card-sub">光の三原色（加色混合）</div>
+        <div class="rgb-svg-container">
+          <svg viewBox="0 0 200 200" width="100%" height="100%" style="display: block;">
+            <defs>
+              <clipPath id="clip-R">
+                <circle cx="135" cy="120" r="52" />
+              </clipPath>
+              <clipPath id="clip-B">
+                <circle cx="65" cy="120" r="52" />
+              </clipPath>
+              <clipPath id="clip-BR">
+                <circle cx="65" cy="120" r="52" clip-path="url(#clip-R)" />
+              </clipPath>
+            </defs>
+
+            <!-- 1. 基本の3つの円 (緑・青・赤) -->
+            <circle cx="100" cy="60" r="52" fill="#00FF00" />
+            <circle cx="65" cy="120" r="52" fill="#0000FF" />
+            <circle cx="135" cy="120" r="52" fill="#FF0000" />
+
+            <!-- 2. 重なり部分 -->
+            <circle cx="100" cy="60" r="52" fill="#FFFF00" clip-path="url(#clip-R)" />
+            <circle cx="100" cy="60" r="52" fill="#00FFFF" clip-path="url(#clip-B)" />
+            <circle cx="65" cy="120" r="52" fill="#FF00FF" clip-path="url(#clip-R)" />
+
+            <!-- 3. 中央重なり (白) -->
+            <circle cx="100" cy="60" r="52" fill="#FFFFFF" clip-path="url(#clip-BR)" />
+
+            <!-- 4. テキストラベル -->
+            <text x="100" y="38" fill="#0000FF" font-size="15" font-weight="bold" text-anchor="middle">Green</text>
+            <text x="100" y="58" fill="#0000FF" font-size="15" font-weight="bold" text-anchor="middle">緑</text>
+
+            <text x="45" y="125" fill="#FFFF00" font-size="14" font-weight="bold" text-anchor="middle">Blue</text>
+            <text x="45" y="145" fill="#FFFF00" font-size="14" font-weight="bold" text-anchor="middle">青</text>
+
+            <text x="155" y="125" fill="#FFFF00" font-size="14" font-weight="bold" text-anchor="middle">Red</text>
+            <text x="155" y="145" fill="#FFFF00" font-size="14" font-weight="bold" text-anchor="middle">赤</text>
+
+            <text x="74" y="88" fill="#0000FF" font-size="13" font-weight="bold" text-anchor="middle">シアン</text>
+            <text x="126" y="88" fill="#0000FF" font-size="13" font-weight="bold" text-anchor="middle">イエロー</text>
+            <text x="100" y="142" fill="#00FFFF" font-size="13" font-weight="bold" text-anchor="middle">マゼンタ</text>
+            <text x="100" y="108" fill="#000000" font-size="16" font-weight="bold" text-anchor="middle">白</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <div class="palette-wrapper">
   <h3 style="text-align:center; margin-top:0;">カラーコード一覧（クリックで背景＆コピー）</h3>
@@ -755,42 +811,85 @@ body {
   const toast = document.getElementById('toast');
   let toastTimeout;
 
-  /* ===== 16進数カラーダイアグラムの数値制御 ===== */
+  /* ===== 16進数カラーダイアグラムの数値制御（カラー入力と独立） ===== */
   let hexValues = { r: 255, g: 255, b: 255 };
   let hexStepInterval = null;
   let hexStepTimeout = null;
 
   function updateHexDisplay() {
-    document.getElementById('hexValR').textContent = hexValues.r.toString(16).toUpperCase().padStart(2, '0');
-    document.getElementById('hexValG').textContent = hexValues.g.toString(16).toUpperCase().padStart(2, '0');
-    document.getElementById('hexValB').textContent = hexValues.b.toString(16).toUpperCase().padStart(2, '0');
+    const elR = document.getElementById('hexValR');
+    const elG = document.getElementById('hexValG');
+    const elB = document.getElementById('hexValB');
+    const decR = document.getElementById('decValR');
+    const decG = document.getElementById('decValG');
+    const decB = document.getElementById('decValB');
+
+    const boxR = document.querySelector('.hex-r');
+    const boxG = document.querySelector('.hex-g');
+    const boxB = document.querySelector('.hex-b');
+
+    const hexR = hexValues.r.toString(16).toUpperCase().padStart(2, '0');
+    const hexG = hexValues.g.toString(16).toUpperCase().padStart(2, '0');
+    const hexB = hexValues.b.toString(16).toUpperCase().padStart(2, '0');
+
+    if (elR) elR.textContent = hexR;
+    if (elG) elG.textContent = hexG;
+    if (elB) elB.textContent = hexB;
+
+    if (decR) decR.textContent = hexValues.r;
+    if (decG) decG.textContent = hexValues.g;
+    if (decB) decB.textContent = hexValues.b;
+
+    if (boxR) {
+      boxR.style.backgroundColor = 'transparent';
+      boxR.style.color = `rgb(${hexValues.r}, 0, 0)`;
+    }
+    if (boxG) {
+      boxG.style.backgroundColor = 'transparent';
+      boxG.style.color = `rgb(0, ${hexValues.g}, 0)`;
+    }
+    if (boxB) {
+      boxB.style.backgroundColor = 'transparent';
+      boxB.style.color = `rgb(0, 0, ${hexValues.b})`;
+    }
+
+    const hexPreview = document.getElementById('hexDiagramPreview');
+    if (hexPreview) {
+      hexPreview.style.backgroundColor = `rgb(${hexValues.r}, ${hexValues.g}, ${hexValues.b})`;
+    }
   }
 
-  // ボタンを押してR, G, Bすべてを連動して変化させる関数
+  function changeHexChannel(channel, amount) {
+    if (hexValues.hasOwnProperty(channel)) {
+      hexValues[channel] = Math.max(0, Math.min(255, hexValues[channel] + amount));
+      updateHexDisplay();
+    }
+  }
+
   function changeAllHexVal(amount) {
     hexValues.r = Math.max(0, Math.min(255, hexValues.r + amount));
     hexValues.g = Math.max(0, Math.min(255, hexValues.g + amount));
     hexValues.b = Math.max(0, Math.min(255, hexValues.b + amount));
     updateHexDisplay();
-
-    // 入力欄・背景色・カラーホイールも連動させる
-    const currentHex = rgbToHex(hexValues.r, hexValues.g, hexValues.b);
-    colorInput.value = currentHex;
-    document.body.style.backgroundColor = currentHex;
-    updateTitleStyle(currentHex);
   }
 
-  // ボタンを押した時の連続変化（長押し対応）
-  function startAllHexStep(amount) {
+  function startHexStep(channel, amount) {
     stopHexStep();
-    changeAllHexVal(amount); // 単発実行
-    
-    // 長押し処理 (250ms後に高速化)
-    hexStepTimeout = setTimeout(() => {
-      hexStepInterval = setInterval(() => {
-        changeAllHexVal(amount);
-      }, 50);
-    }, 250);
+    if (channel === 'all') {
+      changeAllHexVal(amount);
+      hexStepTimeout = setTimeout(() => {
+        hexStepInterval = setInterval(() => { changeAllHexVal(amount); }, 50);
+      }, 250);
+    } else {
+      changeHexChannel(channel, amount);
+      hexStepTimeout = setTimeout(() => {
+        hexStepInterval = setInterval(() => { changeHexChannel(channel, amount); }, 50);
+      }, 250);
+    }
+  }
+
+  function startAllHexStep(amount) {
+    startHexStep('all', amount);
   }
 
   function stopHexStep() {
@@ -800,7 +899,6 @@ body {
     hexStepInterval = null;
   }
 
-  // 色文字列からRGB配列を取得する関数
   function getRGBFromColor(colorStr) {
     const tempElem = document.createElement('div');
     tempElem.style.color = colorStr;
@@ -814,7 +912,6 @@ body {
     return [255, 255, 255];
   }
 
-  // タイトルの見た目を最適化する関数
   function updateTitleStyle(colorStr) {
     const mainTitle = document.getElementById('mainTitle');
     if (!mainTitle) return;
@@ -830,7 +927,6 @@ body {
     }
   }
 
-  // HEXをHSLに変換する関数
   function hexToHSL(hex) {
     let r = parseInt(hex.slice(1, 3), 16) / 255;
     let g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -853,7 +949,6 @@ body {
     return { h: h * 360, s: s * 100, l: l * 100 };
   }
 
-  // HSLをRGB(0-255)に変換する関数
   function hslToRgb(h, s, l) {
     let r, g, b;
     if (s === 0) {
@@ -880,7 +975,6 @@ body {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
   }
 
-  // カラーオブジェクトを配列に変換し並び替え
   let sortedColors = [];
   for (let name in colors) {
     let hex = colors[name].toUpperCase();
@@ -905,43 +999,49 @@ body {
     return b.l - a.l;
   });
 
-  // トースト表示
   function showToast(text) {
+    if (!toast) return;
     toast.innerHTML = `<span style="color: #4CAF50;">✔</span> ${text}`;
     toast.classList.add('show');
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 2000);
   }
 
-  // パレット生成
-  sortedColors.forEach(colorObj => {
-    const { name, hex } = colorObj;
+  if (paletteContainer) {
+    sortedColors.forEach(colorObj => {
+      const { name, hex } = colorObj;
 
-    const swatch = document.createElement('div');
-    swatch.className = 'color-swatch';
-    swatch.style.backgroundColor = hex;
-    swatch.innerHTML = `<span class="swatch-name">${name}</span><span>${hex}</span>`;
+      const swatch = document.createElement('div');
+      swatch.className = 'color-swatch';
+      swatch.style.backgroundColor = hex;
+      swatch.innerHTML = `<span class="swatch-name">${name}</span><span>${hex}</span>`;
 
-    swatch.addEventListener('click', () => {
-      colorInput.value = hex;
-      document.body.style.backgroundColor = hex;
-      updateTitleStyle(hex);
-      syncWheelWithColor(hex);
+      swatch.addEventListener('click', () => {
+        if (colorInput) colorInput.value = hex;
+        document.body.style.backgroundColor = hex;
+        updateTitleStyle(hex);
+        syncWheelWithColor(hex);
 
-      navigator.clipboard.writeText(hex).then(() => {
-        copyMessage.textContent = `コピー成功！: ${hex}`;
-        copyMessage.style.color = "#004d00";
-        showToast(`コピーしました: ${hex}`);
-      }).catch(err => {
-        copyMessage.textContent = "コピーに失敗しました";
-        copyMessage.style.color = "red";
+        navigator.clipboard.writeText(hex).then(() => {
+          if (copyMessage) {
+            copyMessage.textContent = `コピー成功！: ${hex}`;
+            copyMessage.style.color = "#004d00";
+          }
+          showToast(`コピーしました: ${hex}`);
+        }).catch(err => {
+          if (copyMessage) {
+            copyMessage.textContent = "コピーに失敗しました";
+            copyMessage.style.color = "red";
+          }
+        });
       });
-    });
 
-    paletteContainer.appendChild(swatch);
-  });
+      paletteContainer.appendChild(swatch);
+    });
+  }
 
   function updateColor() {
+    if (!colorInput) return;
     const input = colorInput.value.trim();
     if(!input) return;
     document.body.style.backgroundColor = input; 
@@ -951,11 +1051,14 @@ body {
   }
 
   function copyToClipboard() {
+    if (!colorInput) return;
     const text = colorInput.value.trim();
     if (text) {
       navigator.clipboard.writeText(text).then(() => {
-        copyMessage.textContent = `コピーしました: ${text}`;
-        copyMessage.style.color = "green";
+        if (copyMessage) {
+          copyMessage.textContent = `コピーしました: ${text}`;
+          copyMessage.style.color = "green";
+        }
         showToast(`コピーしました: ${text}`); 
       });
     }
@@ -973,29 +1076,33 @@ body {
   }
 
   function clearCopyMessage() {
-    copyMessage.textContent = "";
+    if (copyMessage) copyMessage.textContent = "";
   }
 
-  colorInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); updateColor(); }
-  });
+  if (colorInput) {
+    colorInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); updateColor(); }
+    });
+  }
 
   /* ===== 円形カラーホイール（Canvas）の制御 ===== */
   const wheelCanvas = document.getElementById('colorWheel');
-  const wheelCtx = wheelCanvas.getContext('2d');
-  let wheelRadius = wheelCanvas.width / 2;
-  let selectedH = 0, selectedS = 0, selectedL = 50;
+  const wheelCtx = wheelCanvas ? wheelCanvas.getContext('2d') : null;
+  let wheelRadius = wheelCanvas ? wheelCanvas.width / 2 : 100;
+  let selectedH = 0, selectedS = 0, selectedL = 50; // 初期明度を 50 に変更
   let currentWheelHex = '#FFFFFF';
   let isDraggingWheel = false;
   let cursorX = wheelRadius, cursorY = wheelRadius;
 
   function drawWheel() {
+    if (!wheelCanvas || !wheelCtx) return;
     wheelRadius = wheelCanvas.width / 2;
     const width = wheelCanvas.width;
     const height = wheelCanvas.height;
     const image = wheelCtx.createImageData(width, height);
     const data = image.data;
-    const l = parseInt(document.getElementById('lightnessRange').value, 10) / 100;
+    const lightnessEl = document.getElementById('lightnessRange');
+    const l = lightnessEl ? parseInt(lightnessEl.value, 10) / 100 : 0.5; // フォールバックを 0.5 に変更
 
     for (let y = -wheelRadius; y < wheelRadius; y++) {
       for (let x = -wheelRadius; x < wheelRadius; x++) {
@@ -1021,6 +1128,7 @@ body {
   }
 
   function handleWheelPointer(e) {
+    if (!wheelCanvas) return;
     const rect = wheelCanvas.getBoundingClientRect();
     const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : ((e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : null);
     const isTouch = !!touch;
@@ -1055,40 +1163,30 @@ body {
   }
 
   function updateWheelSelection(syncApp = true) {
-    selectedL = parseInt(document.getElementById('lightnessRange').value, 10);
+    const lightnessEl = document.getElementById('lightnessRange');
+    selectedL = lightnessEl ? parseInt(lightnessEl.value, 10) : 50; // フォールバックを 50 に変更
     const rgb = hslToRgb(selectedH / 360, selectedS / 100, selectedL / 100);
     currentWheelHex = rgbToHex(rgb[0], rgb[1], rgb[2]);
 
     const cursor = document.getElementById('wheelCursor');
-    cursor.style.display = 'block';
-    cursor.style.left = (cursorX / wheelCanvas.width * 100) + '%';
-    cursor.style.top = (cursorY / wheelCanvas.height * 100) + '%';
+    if (cursor && wheelCanvas) {
+      cursor.style.display = 'block';
+      cursor.style.left = (cursorX / wheelCanvas.width * 100) + '%';
+      cursor.style.top = (cursorY / wheelCanvas.height * 100) + '%';
+    }
 
     if (syncApp) {
-      colorInput.value = currentWheelHex;
+      if (colorInput) colorInput.value = currentWheelHex;
       document.body.style.backgroundColor = currentWheelHex;
       updateTitleStyle(currentWheelHex);
-      
-      // ダイアグラム数値も同期
-      hexValues.r = rgb[0];
-      hexValues.g = rgb[1];
-      hexValues.b = rgb[2];
-      updateHexDisplay();
-
       clearCopyMessage();
     }
   }
 
   function syncWheelWithColor(colorStr) {
     const rgb = getRGBFromColor(colorStr);
-    
-    // ダイアグラム数値も同期
-    hexValues.r = rgb[0];
-    hexValues.g = rgb[1];
-    hexValues.b = rgb[2];
-    updateHexDisplay();
-
     const hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
+
     if (isValidHex(hex)) {
       const hsl = hexToHSL(hex);
       selectedH = hsl.h;
@@ -1110,15 +1208,28 @@ body {
     }
   }
 
-  /* ===== 画面タップ・ドラッグ対応スポイト機能 ===== */
+  /* ===== 共通：取得した色をツール全体に反映する関数 ===== */
+  function applyPickedColor(hex) {
+    if (!hex) return;
+    hex = hex.toUpperCase();
+    
+    if (colorInput) colorInput.value = hex;
+    document.body.style.backgroundColor = hex;
+    updateTitleStyle(hex);
+    syncWheelWithColor(hex);
+    clearCopyMessage();
+    showToast(`色を取得しました: ${hex}`);
+  }
+
+  /* ===== スポイト1：独自キャンバスキャプチャ（ルーペ表示） ===== */
   const overlay = document.getElementById('eyedropperOverlay');
   const lens = document.getElementById('eyedropperLens');
   const guide = document.getElementById('eyedropperGuide');
+
   let capturedCanvas = null;
   let pickedColorHex = '#FFFFFF';
   let isEyedropperActive = false;
-  
-  const TOUCH_OFFSET_Y = 80; 
+  const TOUCH_OFFSET_Y = 80;
 
   async function pickColor() {
     showToast("スポイト準備中...");
@@ -1131,32 +1242,28 @@ body {
         scale: window.devicePixelRatio || 1
       });
 
-      overlay.style.display = 'block';
-      guide.style.display = 'block';
-      guide.textContent = '画面をタップ・ドラッグして色を表示、離すと取得';
-    } catch (err) {
-      if ('EyeDropper' in window) {
-        try {
-          const eyeDropper = new EyeDropper();
-          const result = await eyeDropper.open();
-          applyPickedColor(result.sRGBHex.toUpperCase());
-        } catch (e) {}
-      } else {
-        const nativePicker = document.getElementById('nativeColorPicker');
-        if (nativePicker) nativePicker.click();
+      if (overlay && guide) {
+        overlay.style.display = 'block';
+        guide.style.display = 'block';
+        guide.textContent = '画面をタップ・ドラッグして色を表示、離すと取得';
       }
+    } catch (err) {
+      activateEyeDropper();
     }
   }
 
   function handleEyedropperStart(e) {
-    if (overlay.style.display !== 'block') return;
+    if (!overlay || overlay.style.display !== 'block') return;
+    if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
+
     isEyedropperActive = true;
     handleEyedropperMove(e);
   }
 
   function handleEyedropperMove(e) {
-    if (!capturedCanvas || overlay.style.display !== 'block' || !isEyedropperActive) return;
-    
+    if (!capturedCanvas || !overlay || overlay.style.display !== 'block' || !isEyedropperActive) return;
+    if (e.type === 'touchmove' && e.cancelable) e.preventDefault();
+
     const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : ((e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : null);
     const isTouch = !!touch;
 
@@ -1176,19 +1283,21 @@ body {
       const pixel = ctx.getImageData(canvasX, canvasY, 1, 1).data;
       pickedColorHex = rgbToHex(pixel[0], pixel[1], pixel[2]);
 
-      lens.style.display = 'block';
-      lens.style.left = targetX + 'px';
-      lens.style.top = targetY + 'px';
-      lens.style.backgroundColor = pickedColorHex;
+      if (lens) {
+        lens.style.display = 'block';
+        lens.style.left = targetX + 'px';
+        lens.style.top = targetY + 'px';
+        lens.style.backgroundColor = pickedColorHex;
+      }
 
-      colorInput.value = pickedColorHex;
+      if (colorInput) colorInput.value = pickedColorHex;
       document.body.style.backgroundColor = pickedColorHex;
       updateTitleStyle(pickedColorHex);
     }
   }
 
   function handleEyedropperEnd() {
-    if (overlay.style.display === 'block' && isEyedropperActive) {
+    if (overlay && overlay.style.display === 'block' && isEyedropperActive) {
       isEyedropperActive = false;
       applyPickedColor(pickedColorHex);
       closeEyedropper();
@@ -1196,52 +1305,62 @@ body {
   }
 
   function closeEyedropper() {
-    overlay.style.display = 'none';
-    lens.style.display = 'none';
-    guide.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
+    if (lens) lens.style.display = 'none';
+    if (guide) guide.style.display = 'none';
     capturedCanvas = null;
     isEyedropperActive = false;
   }
 
-  function applyPickedColor(hex) {
-    colorInput.value = hex;
-    document.body.style.backgroundColor = hex;
-    updateTitleStyle(hex);
-    syncWheelWithColor(hex);
-    clearCopyMessage();
-    showToast(`色を取得しました: ${hex}`);
+  /* ===== スポイト2：ブラウザ標準 EyeDropper API ===== */
+  async function activateEyeDropper() {
+    if ('EyeDropper' in window) {
+      try {
+        const eyeDropper = new EyeDropper();
+        const result = await eyeDropper.open();
+        if (result && result.sRGBHex) {
+          applyPickedColor(result.sRGBHex.toUpperCase());
+        }
+      } catch (e) {}
+    } else {
+      const nativePicker = document.getElementById('nativeColorPicker');
+      if (nativePicker) {
+        nativePicker.click();
+      } else {
+        alert('お使いのブラウザはスポイト機能に対応していません。');
+      }
+    }
   }
 
   function onNativeColorChange(hexVal) {
     applyPickedColor(hexVal.toUpperCase());
   }
 
-  overlay.addEventListener('mousedown', handleEyedropperStart);
+  /* ===== イベントリスナーの登録 ===== */
+  if (overlay) {
+    overlay.addEventListener('mousedown', handleEyedropperStart);
+    overlay.addEventListener('touchstart', handleEyedropperStart, { passive: false });
+  }
+
   window.addEventListener('mousemove', (e) => { if (isEyedropperActive) handleEyedropperMove(e); });
+  window.addEventListener('touchmove', (e) => { if (isEyedropperActive) handleEyedropperMove(e); }, { passive: false });
   window.addEventListener('mouseup', handleEyedropperEnd);
+  window.addEventListener('touchend', handleEyedropperEnd);
+  window.addEventListener('touchcancel', handleEyedropperEnd);
 
-  overlay.addEventListener('touchstart', (e) => { 
-    handleEyedropperStart(e); 
-    if (e.cancelable) e.preventDefault(); 
-  }, { passive: false });
-  overlay.addEventListener('touchmove', (e) => { 
-    if (isEyedropperActive) {
-      handleEyedropperMove(e); 
-      if (e.cancelable) e.preventDefault();
-    }
-  }, { passive: false });
-  overlay.addEventListener('touchend', handleEyedropperEnd);
-  overlay.addEventListener('touchcancel', handleEyedropperEnd);
+  if (wheelCanvas) {
+    wheelCanvas.addEventListener('mousedown', (e) => { isDraggingWheel = true; handleWheelPointer(e); });
+    wheelCanvas.addEventListener('touchstart', (e) => { isDraggingWheel = true; handleWheelPointer(e); e.preventDefault(); }, { passive: false });
+  }
 
-  wheelCanvas.addEventListener('mousedown', (e) => { isDraggingWheel = true; handleWheelPointer(e); });
   window.addEventListener('mousemove', (e) => { if (isDraggingWheel) handleWheelPointer(e); });
+  window.addEventListener('touchmove', (e) => { if (isDraggingWheel) handleWheelPointer(e); }, { passive: false });
   window.addEventListener('mouseup', () => { isDraggingWheel = false; });
-
-  wheelCanvas.addEventListener('touchstart', (e) => { isDraggingWheel = true; handleWheelPointer(e); e.preventDefault(); }, {passive: false});
-  window.addEventListener('touchmove', (e) => { if (isDraggingWheel) handleWheelPointer(e); }, {passive: false});
   window.addEventListener('touchend', (e) => { if (isDraggingWheel) { handleWheelPointer(e); isDraggingWheel = false; } });
 
-  syncWheelWithColor('#FFFFFF');
+  // 初期実行
+  syncWheelWithColor('#808080');
+  updateHexDisplay();
 </script>
 </body>
 </html>
