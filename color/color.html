@@ -388,17 +388,81 @@ body {
 }
 
 .lightness-slider-container {
-  margin: 8px 0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 13px;
+  align-items: center;
+  width: 100%;
+  max-width: 420px; /* 一列で綺麗に収まるよう幅を調整 */
+  margin: 0 auto;
+  align-self: center;
 }
 
-.lightness-slider-container input[type="range"] {
-  width: 65%;
-  margin: 0;
+.slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.lightness-label {
+  font-weight: bold;
+  font-size: 14px;
+  white-space: nowrap; /* 折返し防止 */
+}
+
+.lightness-val {
+  font-weight: bold;
+  font-size: 14px;
+  white-space: nowrap;
+  min-width: 38px; /* 0%〜100%で文字幅が変わってもブレないように指定 */
+  text-align: right;
+}
+
+.slider-icon {
+  font-size: 16px;
+  user-select: none;
+}
+
+/* スライダー本体（真ん中の残りの幅いっぱいに伸縮） */
+#lightnessRange {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(to right, #000000, #808080 50%, #ffffff);
+  border: 1px solid #ccc;
+  outline: none;
+  cursor: pointer;
+}
+
+/* つまみ（Webkit系: Chrome, Safari, Edgeなど） */
+#lightnessRange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #333;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+#lightnessRange::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* つまみ（Firefox） */
+#lightnessRange::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #333;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
 }
 
 /* スポイトボタンのスタイル */
@@ -656,9 +720,14 @@ body {
         <div id="wheelCursor" class="wheel-cursor"></div>
       </div>
       <div class="lightness-slider-container">
-        <label for="lightnessRange">明度:</label>
-        <input type="range" id="lightnessRange" min="0" max="100" value="50" oninput="drawWheel(); updateWheelSelection();">
-      </div>
+  <div class="slider-wrapper">
+    <label for="lightnessRange" class="lightness-label">明度:</label>
+    <span class="slider-icon">🌙</span>
+    <input type="range" id="lightnessRange" min="0" max="100" value="50" oninput="drawWheel(); updateWheelSelection();">
+    <span class="slider-icon">☀️</span>
+    <span id="lightnessVal" class="lightness-val">50%</span>
+  </div>
+</div>
       <div class="eyedropper-group">
   <!-- スポイトボタン（横長） -->
   <button type="button" class="btn-eyedropper" onclick="pickColor()">
@@ -1162,6 +1231,21 @@ body {
     updateWheelSelection(true);
   }
 
+function updateLightnessSliderUI() {
+  const range = document.getElementById('lightnessRange');
+  const valSpan = document.getElementById('lightnessVal');
+  if (!range) return;
+
+  // 1. %数値の表示更新
+  if (valSpan) valSpan.textContent = `${range.value}%`;
+
+  // 2. 現在の色(selectedH, selectedS)に合わせたグラデーション背景の動的セット
+  // 「黒 (明度0%) → 鮮やかな選択色 (明度50%) → 白 (明度100%)」
+  const h = typeof selectedH !== 'undefined' ? selectedH : 0;
+  const s = typeof selectedS !== 'undefined' ? selectedS : 100;
+  range.style.background = `linear-gradient(to right, hsl(${h}, ${s}%, 0%), hsl(${h}, ${s}%, 50%), hsl(${h}, ${s}%, 100%))`;
+}
+    
   function updateWheelSelection(syncApp = true) {
     const lightnessEl = document.getElementById('lightnessRange');
     selectedL = lightnessEl ? parseInt(lightnessEl.value, 10) : 50; // フォールバックを 50 に変更
@@ -1181,6 +1265,7 @@ body {
       updateTitleStyle(currentWheelHex);
       clearCopyMessage();
     }
+      updateLightnessSliderUI();
   }
 
   function syncWheelWithColor(colorStr) {
@@ -1206,6 +1291,7 @@ body {
       drawWheel();
       updateWheelSelection(false);
     }
+      updateLightnessSliderUI();
   }
 
   /* ===== 共通：取得した色をツール全体に反映する関数 ===== */
