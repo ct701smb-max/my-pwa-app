@@ -484,6 +484,7 @@
       }
     }
 
+    /* PDFレンダリング調整用レイアウト */
     #pdf-render-container {
       position: absolute;
       left: -9999px;
@@ -504,15 +505,28 @@
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 8px;
+      table-layout: fixed;
     }
     .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td {
       border: 1px solid #cbd5e1;
       padding: 4px 6px;
       font-size: 11px;
+      word-break: break-all;
+      overflow-wrap: break-word;
     }
     .pdf-parts-table th { background: #f1f5f9; text-align: left; }
-    .pdf-img-block {
+
+    /* 図の横並びレイアウト設定 */
+    .pdf-row-container {
+      display: flex;
+      gap: 12px;
       margin-bottom: 8px;
+      width: 100%;
+    }
+    .pdf-img-block {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
     .pdf-img-title {
       font-size: 12px;
@@ -520,25 +534,17 @@
       margin-bottom: 2px;
       color: #1e293b;
     }
-    .pdf-img-element {
-      width: 100%;
-      max-height: 200px;
-      object-fit: contain;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-      background: #ffffff;
-    }
     .pdf-img-element-tall {
       width: 100%;
-      height: 210px;
+      height: 380px;
       object-fit: contain;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
       background: #ffffff;
     }
-    .pdf-img-element-wide {
+    .pdf-img-element-bb {
       width: 100%;
-      max-height: 160px;
+      height: 550px;
       object-fit: contain;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
@@ -1297,12 +1303,12 @@
 
         validPaths.forEach(path => {
           let R_total = 0;
-          let ledCount = 0;
+          let ledCountInPath = 0;
 
           path.forEach(comp => {
             if (comp.type === 'resistor') R_total += (comp.resistance || 100);
             else if (comp.type === 'led') {
-              ledCount++;
+              ledCountInPath++;
               R_total += 20;
             }
             else if (comp.type === 'motor') R_total += 30;
@@ -1314,11 +1320,11 @@
           }
 
           const pathCurrent = totalVoltage / R_total;
-          const isLedVoltageSufficient = (ledCount === 0) || (totalVoltage / ledCount >= VF_PER_LED);
 
+          // 該当パスにおける各LEDの駆動チェック（経路ごとの個数で正しく電圧を評価）
           path.forEach(comp => {
             if (comp.type === 'led') {
-              if (isLedVoltageSufficient) {
+              if (totalVoltage / ledCountInPath >= VF_PER_LED) {
                 activeMap.set(comp.id, true);
                 currentMap.set(comp.id, Math.max(currentMap.get(comp.id) || 0, pathCurrent));
                 anyActive = true;
@@ -2110,13 +2116,13 @@
           if (chkBreadboard) images.breadboard = await this.captureCanvasImageForMode('breadboard');
           if (chkSchematic) images.schematic = await this.captureCanvasImageForMode('schematic');
 
-          const hasTwoTop = chkPhysical && chkSchematic;
-
-          let imageSectionHTML = '';
-
-          if (hasTwoTop) {
-            imageSectionHTML += `
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          const container = document.getElementById('pdf-render-container');
+          
+          // 実体配線図と回路図のレイアウト生成 (両方ある場合は横並び・縦に引き伸ばし)
+          let diagramsHtml = '';
+          if (chkPhysical && chkSchematic) {
+            diagramsHtml = `
+              <div class="pdf-row-container">
                 <div class="pdf-img-block">
                   <div class="pdf-img-title">■ 実体配線図</div>
                   <img src="${images.physical}" class="pdf-img-element-tall" />
@@ -2127,69 +2133,79 @@
                 </div>
               </div>
             `;
-          } else {
-            if (chkPhysical) {
-              imageSectionHTML += `
-                <div class="pdf-img-block" style="margin-bottom: 8px;">
-                  <div class="pdf-img-title">■ 実体配線図</div>
-                  <img src="${images.physical}" class="pdf-img-element" />
-                </div>
-              `;
-            }
-            if (chkSchematic) {
-              imageSectionHTML += `
-                <div class="pdf-img-block" style="margin-bottom: 8px;">
-                  <div class="pdf-img-title">■ 回路図</div>
-                  <img src="${images.schematic}" class="pdf-img-element" />
-                </div>
-              `;
-            }
-          }
-
-          if (chkBreadboard) {
-            imageSectionHTML += `
-              <div class="pdf-img-block" style="margin-bottom: 8px;">
-                <div class="pdf-img-title">■ ブレッドボード図</div>
-                <img src="${images.breadboard}" class="pdf-img-element-wide" />
+          } else if (chkPhysical) {
+            diagramsHtml = `
+              <div class="pdf-img-block" style="margin-bottom: 12px;">
+                <div class="pdf-img-title">■ 実体配線図</div>
+                <img src="${images.physical}" class="pdf-img-element-tall" />
+              </div>
+            `;
+          } else if (chkSchematic) {
+            diagramsHtml = `
+              <div class="pdf-img-block" style="margin-bottom: 12px;">
+                <div class="pdf-img-title">■ 回路図</div>
+                <img src="${images.schematic}" class="pdf-img-element-tall" />
               </div>
             `;
           }
 
-          const container = document.getElementById('pdf-render-container');
+          // 1ページ目および2ページ目（ブレッドボード図）の構造生成
           container.innerHTML = `
-            <div class="pdf-page-title">電子回路実験レポート</div>
-            <table class="pdf-info-table">
-              <tr>
-                <td><strong>学年:</strong> ${grade}</td>
-                <td><strong>クラス:</strong> ${className}</td>
-                <td><strong>出席番号:</strong> ${studentNo}</td>
-                <td><strong>氏名:</strong> ${studentName}</td>
-              </tr>
-            </table>
+            <div id="pdf-page-1" style="min-height: 960px; padding-bottom: 20px;">
+              <div class="pdf-page-title">電子回路実験レポート</div>
+              <table class="pdf-info-table">
+                <tr>
+                  <td><strong>学年:</strong> ${grade}</td>
+                  <td><strong>クラス:</strong> ${className}</td>
+                  <td><strong>出席番号:</strong> ${studentNo}</td>
+                  <td><strong>氏名:</strong> ${studentName}</td>
+                </tr>
+              </table>
 
-            <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 使用パーツ一覧</div>
-            <table class="pdf-parts-table">
-              <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
-              <tbody>${partsRows}</tbody>
-            </table>
+              <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 使用パーツ一覧</div>
+              <table class="pdf-parts-table">
+                <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
+                <tbody>${partsRows}</tbody>
+              </table>
 
-            ${imageSectionHTML}
+              ${diagramsHtml}
 
-            ${memo ? `
-              <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 考察・メモ</div>
-              <div style="font-size: 11px; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; white-space: pre-wrap;">${memo}</div>
+              ${memo ? `
+                <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 考察・メモ</div>
+                <div style="font-size: 11px; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; white-space: pre-wrap; word-break: break-all;">${memo}</div>
+              ` : ''}
+            </div>
+
+            ${chkBreadboard ? `
+              <div id="pdf-page-2" style="min-height: 960px; padding-top: 10px;">
+                <div class="pdf-page-title">電子回路実験レポート (ブレッドボード図)</div>
+                <div class="pdf-img-block" style="margin-top: 15px;">
+                  <div class="pdf-img-title">■ ブレッドボード図</div>
+                  <img src="${images.breadboard}" class="pdf-img-element-bb" />
+                </div>
+              </div>
             ` : ''}
           `;
-
-          const canvas = await html2canvas(container, { scale: 2, useCORS: true });
-          const imgData = canvas.toDataURL('image/png');
 
           const { jsPDF } = window.jspdf;
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          const page1El = document.getElementById('pdf-page-1');
+          const canvas1 = await html2canvas(page1El, { scale: 2, useCORS: true });
+          const imgData1 = canvas1.toDataURL('image/png');
+          const pdfHeight1 = (canvas1.height * pdfWidth) / canvas1.width;
+          pdf.addImage(imgData1, 'PNG', 0, 0, pdfWidth, pdfHeight1);
+
+          const page2El = document.getElementById('pdf-page-2');
+          if (page2El) {
+            pdf.addPage();
+            const canvas2 = await html2canvas(page2El, { scale: 2, useCORS: true });
+            const imgData2 = canvas2.toDataURL('image/png');
+            const pdfHeight2 = (canvas2.height * pdfWidth) / canvas2.width;
+            pdf.addImage(imgData2, 'PNG', 0, 0, pdfWidth, pdfHeight2);
+          }
+
           pdf.save('circuit_report.pdf');
 
           document.getElementById('pdf-modal').classList.add('hidden');
