@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+  <title>電子回路学習シミュレータ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      touch-action: manipulation;
+    }
+
+    body {
+      background-color: #f3f4f6;
+      color: #1f2937;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+/* ===== ホームボタン ===== */
+.btn-real-dent {
+  /*周りの凹み*/
+  display: inline-block;
+  position: relative;
+  text-decoration: none;
+  color: rgba(3, 69, 244, 0.54);
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  text-align: center;
+  background: #f7f7f7;
+  box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
+}
+.btn-real-dent i {
+  /*ボタン自体*/
+  position: absolute;
+  content: '';
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  left: 3px;
+  top: 5px;
+  border-radius: 50%;
+  font-size: 15px;
+  background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+  border-bottom: solid 2px #b5b5b5;
+}
+  
+.btn-real-dent .fa:active {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+  border-bottom: solid 2px #d8d8d8;
+}
+      
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .toolbar {
+      background-color: #ffffff;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #e5e7eb;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+      gap: 8px;
+      z-index: 20;
+    }
+
+    .brand {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2563eb;
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: 4px;
+      background-color: #e5e7eb;
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .tab-btn {
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 6px;
+      font-weight: bold;
+      color: #4b5563;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background-color: #ffffff;
+      color: #2563eb;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background-color: #2563eb; color: white; }
+    .btn-warning { background-color: #f59e0b; color: white; }
+    .btn-danger { background-color: #ef4444; color: white; }
+    .btn-icon { background-color: #e5e7eb; }
+    .btn-power-off { background-color: #10b981; color: white; }
+    .btn-power-on { background-color: #f59e0b; color: white; animation: pulse 1.5s infinite; }
+
+    .main-content {
+      display: flex;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .palette {
+      width: 200px;
+      background-color: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .palette h3 { font-size: 0.95rem; color: #374151; }
+    .palette .help-text { font-size: 0.75rem; color: #6b7280; margin-bottom: 4px; }
+
+    .palette-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .palette-item {
+      padding: 10px 12px;
+      background-color: #f9fafb;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      cursor: grab;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      touch-action: none;
+    }
+    .palette-item:hover {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    .canvas-container {
+      flex: 1;
+      background-color: #ffffff;
+      position: relative;
+      background-image: radial-gradient(#e5e7eb 1.5px, transparent 1.5px);
+      background-size: 20px 20px;
+      touch-action: none;
+    }
+
+    .mode-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(255,255,255,0.9);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border: 1px solid #d1d5db;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .property-toolbar {
+      position: absolute;
+      background: #ffffff;
+      border: 1px solid #3b82f6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 30;
+      transform: translate(-50%, -100%);
+      margin-top: -12px;
+    }
+    .property-toolbar.hidden { display: none; }
+    .prop-btn {
+      padding: 4px 8px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      color: #1d4ed8;
+      cursor: pointer;
+    }
+    .prop-btn:hover { background: #dbeafe; }
+    .prop-value {
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #1f2937;
+      min-width: 65px;
+      text-align: center;
+      padding: 2px 6px;
+      border: 1px dashed #3b82f6;
+      border-radius: 4px;
+      background: #f8fafc;
+    }
+
+    .drag-ghost {
+      position: fixed;
+      pointer-events: none;
+      z-index: 1000;
+      padding: 8px 16px;
+      background: rgba(37, 99, 235, 0.9);
+      color: white;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transform: translate(-50%, -50%);
+    }
+    .drag-ghost.hidden { display: none; }
+
+    svg { width: 100%; height: 100%; }
+
+    .component-group { cursor: pointer; }
+
+    .terminal {
+      cursor: pointer;
+      transition: r 0.15s, fill 0.15s;
+    }
+    .terminal:hover {
+      r: 8px;
+      fill: #3b82f6 !important;
+    }
+
+    .wire {
+      stroke: #2563eb;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      cursor: pointer;
+    }
+    .wire:hover { stroke: #60a5fa; stroke-width: 6; }
+
+    .wire.selected-wire {
+      stroke: #ef4444 !important;
+      stroke-width: 6 !important;
+      filter: drop-shadow(0 0 3px #ef4444);
+    }
+
+    .wire-temp {
+      stroke: #9ca3af;
+      stroke-width: 3;
+      stroke-dasharray: 4;
+    }
+
+    .selection-box {
+      fill: rgba(37, 99, 235, 0.05);
+      stroke: #2563eb;
+      stroke-width: 2;
+      stroke-dasharray: 4 4;
+      pointer-events: none;
+    }
+
+    .rubberband-rect {
+      fill: rgba(59, 130, 246, 0.15);
+      stroke: #2563eb;
+      stroke-width: 1.5;
+      stroke-dasharray: 4 4;
+      pointer-events: none;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .rotating {
+      animation: spin linear infinite;
+      transform-origin: 0px 0px;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    .status-bar {
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-info { background-color: #dbeafe; color: #1e40af; }
+    .status-success { background-color: #d1fae5; color: #065f46; }
+    .status-warning { background-color: #fef3c7; color: #92400e; }
+    .status-error { background-color: #fee2e2; color: #991b1b; }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal.hidden { display: none; }
+
+    .modal-content {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      width: 440px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+    input[type="text"], textarea {
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+    }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+    .pdf-hidden-container {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 800px;
+      background: white;
+      padding: 24px;
+      color: black;
+      font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    }
+
+    .pdf-report-title {
+      font-size: 22px;
+      font-weight: bold;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pdf-info-table, .pdf-parts-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .pdf-parts-table th {
+      background-color: #f1f5f9;
+      text-align: left;
+    }
+
+    .pdf-diagram-col-full {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .pdf-diagram-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #1e293b;
+    }
+
+    .pdf-diagram-img {
+      width: 100%;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="toolbar">
+      <div class="brand"><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　⚡ <ruby>Circuit<rt>サーキット</rt></ruby> <ruby>Sim<rt>シミュ</rt></ruby></div>
+      <div class="mode-tabs">
+        <button class="tab-btn active" data-mode="physical">実体配線図</button>
+        <button class="tab-btn" data-mode="breadboard">ブレッドボード</button>
+        <button class="tab-btn" data-mode="schematic">回路図</button>
+      </div>
+      <div class="action-buttons">
+        <button id="btn-power" class="btn btn-power-off">🔌 電源 OFF</button>
+        <button id="btn-undo" class="btn btn-icon">↩️</button>
+        <button id="btn-redo" class="btn btn-icon">↪️</button>
+        <button id="btn-delete" class="btn btn-danger">🗑️ 削除</button>
+        <button id="btn-clear" class="btn btn-warning">🧹 リセット</button>
+        <button id="btn-export-pdf" class="btn btn-primary">📄 PDF出力</button>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <aside class="palette">
+        <h3>パーツ</h3>
+        <p class="help-text">キャンバスへドラッグ＆ドロップ</p>
+        <div class="palette-items">
+          <div class="palette-item" data-type="battery">🔋 乾電池</div>
+          <div class="palette-item" data-type="resistor">⚡ 抵抗器</div>
+          <div class="palette-item" data-type="switch">🔘 スイッチ</div>
+          <div class="palette-item" data-type="led">💡 LED</div>
+          <div class="palette-item" data-type="motor">⚙️ モーター</div>
+        </div>
+      </aside>
+
+      <main class="canvas-container" id="canvas-container">
+        <div class="mode-badge" id="mode-indicator">表示モード: 実体配線図</div>
+        <div id="property-toolbar" class="property-toolbar hidden"></div>
+        <svg id="circuit-svg"></svg>
+      </main>
+    </div>
+
+    <footer id="status-bar" class="status-bar status-info">
+      <span id="status-icon">ℹ️</span>
+      <span id="status-message">回路を作成して電源をONにしてください。</span>
+    </footer>
+  </div>
+
+  <div id="drag-ghost" class="drag-ghost hidden"></div>
+
+  <!-- PDF設定モーダル -->
+  <div id="pdf-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>📄 実験レポート PDF出力</h3>
+      <form id="pdf-form" style="margin-top:14px;">
+        <div class="form-group">
+          <label>タイトル</label>
+          <input type="text" id="pdf-title" value="電子回路実験レポート">
+        </div>
+        <div class="form-group">
+          <label>クラス・組</label>
+          <input type="text" id="pdf-class-name" placeholder="例: 2年A組">
+        </div>
+        <div class="form-group">
+          <label>氏名</label>
+          <input type="text" id="pdf-student-name" placeholder="例: 山田 太郎">
+        </div>
+        <div class="form-group">
+          <label>考察・メモ</label>
+          <textarea id="pdf-memo" rows="3" placeholder="実験結果や気づいた点を入力..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-modal-cancel" class="btn btn-icon">キャンセル</button>
+          <button type="submit" class="btn btn-primary">印刷 / PDF保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // カラーコードマップ
+    const COLOR_CODE_MAP = [
+      { digit: 0, color: '#000000' },
+      { digit: 1, color: '#8B4513' },
+      { digit: 2, color: '#FF0000' },
+      { digit: 3, color: '#FF8C00' },
+      { digit: 4, color: '#FFFF00' },
+      { digit: 5, color: '#008000' },
+      { digit: 6, color: '#0000FF' },
+      { digit: 7, color: '#8A2BE2' },
+      { digit: 8, color: '#808080' },
+      { digit: 9, color: '#FFFFFF' }
+    ];
+
+    function getResistorColorCodes(resistance) {
+      if (!resistance || resistance <= 0) {
+        return ['#8B4513', '#000000', '#000000', '#D4AF37'];
+      }
+      let val = Math.round(resistance);
+      let strVal = val.toString();
+      
+      let d1 = parseInt(strVal[0]);
+      let d2 = strVal.length > 1 ? parseInt(strVal[1]) : 0;
+      let multiplier = strVal.length - 2;
+      if (multiplier < 0) multiplier = 0;
+
+      let color1 = COLOR_CODE_MAP[d1] ? COLOR_CODE_MAP[d1].color : '#8B4513';
+      let color2 = COLOR_CODE_MAP[d2] ? COLOR_CODE_MAP[d2].color : '#000000';
+      let color3 = COLOR_CODE_MAP[multiplier] ? COLOR_CODE_MAP[multiplier].color : '#000000';
+      let color4 = '#D4AF37';
+
+      return [color1, color2, color3, color4];
+    }
+
+    // 抵抗値フォーマット（1000 -> 1kΩ, 1000000 -> 1MΩ）
+    function formatResistance(res) {
+      if (!res || res <= 0) return '0Ω';
+      if (res >= 1000000) {
+        let val = res / 1000000;
+        return (Number.isInteger(val) ? val : val.toFixed(1)) + 'MΩ';
+      }
+      if (res >= 1000) {
+        let val = res / 1000;
+        return (Number.isInteger(val) ? val : val.toFixed(1)) + 'kΩ';
+      }
+      return `${res}Ω`;
+    }
+
+    class CircuitApp {
+      constructor() {
+        this.mode = 'physical';
+        this.powerOn = false;
+        this.components = [];
+        this.wires = [];
+        
+        this.selectedComponentIds = new Set();
+        this.selectedWireId = null;
+
+        this.history = [];
+        this.historyIndex = -1;
+
+        this.connectingStart = null;
+        this.tempWirePos = null;
+
+        this.draggingPaletteType = null;
+
+        // 範囲選択状態
+        this.selectionBox = null;
+
+        this.initElements();
+        this.initEvents();
+        this.loadState();
+        this.render();
+      }
+
+      initElements() {
+        this.svg = document.getElementById('circuit-svg');
+        this.statusBar = document.getElementById('status-bar');
+        this.statusMessage = document.getElementById('status-message');
+        this.statusIcon = document.getElementById('status-icon');
+        this.btnPower = document.getElementById('btn-power');
+        this.modeIndicator = document.getElementById('mode-indicator');
+        this.canvasContainer = document.getElementById('canvas-container');
+        this.propToolbar = document.getElementById('property-toolbar');
+        this.dragGhost = document.getElementById('drag-ghost');
+      }
+
+      initEvents() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            this.mode = e.target.dataset.mode;
+            const names = { physical: '実体配線図', breadboard: 'ブレッドボード図', schematic: '回路図' };
+            this.modeIndicator.textContent = `表示モード: ${names[this.mode]}`;
+            this.render();
+          });
+        });
+
+        this.btnPower.addEventListener('click', () => {
+          this.powerOn = !this.powerOn;
+          if (this.powerOn) {
+            this.btnPower.textContent = '⚡ 電源 ON';
+            this.btnPower.className = 'btn btn-power-on';
+          } else {
+            this.btnPower.textContent = '🔌 電源 OFF';
+            this.btnPower.className = 'btn btn-power-off';
+          }
+          this.evaluateCircuit();
+          this.render();
+        });
+
+        document.getElementById('btn-delete').addEventListener('click', () => this.deleteSelected());
+        document.getElementById('btn-undo').addEventListener('click', () => this.undo());
+        document.getElementById('btn-redo').addEventListener('click', () => this.redo());
+        document.getElementById('btn-clear').addEventListener('click', () => this.clearAll());
+        document.getElementById('btn-export-pdf').addEventListener('click', () => this.openPdfModal());
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+            e.preventDefault();
+            this.deleteSelected();
+          }
+          if (e.ctrlKey && e.key === 'z') { e.preventDefault(); this.undo(); }
+          if (e.ctrlKey && e.key === 'y') { e.preventDefault(); this.redo(); }
+        });
+
+        // パレットドラッグ
+        document.querySelectorAll('.palette-item').forEach(item => {
+          item.addEventListener('pointerdown', (e) => {
+            this.draggingPaletteType = item.dataset.type;
+            const names = { battery: '🔋 乾電池', resistor: '⚡ 抵抗器', switch: '🔘 スイッチ', led: '💡 LED', motor: '⚙️ モーター' };
+            this.dragGhost.textContent = names[this.draggingPaletteType];
+            this.dragGhost.style.left = `${e.clientX}px`;
+            this.dragGhost.style.top = `${e.clientY}px`;
+            this.dragGhost.classList.remove('hidden');
+            item.setPointerCapture(e.pointerId);
+          });
+
+          item.addEventListener('pointermove', (e) => {
+            if (this.draggingPaletteType) {
+              this.dragGhost.style.left = `${e.clientX}px`;
+              this.dragGhost.style.top = `${e.clientY}px`;
+            }
+          });
+
+          item.addEventListener('pointerup', (e) => {
+            if (!this.draggingPaletteType) return;
+            this.dragGhost.classList.add('hidden');
+            
+            const rect = this.canvasContainer.getBoundingClientRect();
+            if (
+              e.clientX >= rect.left && e.clientX <= rect.right &&
+              e.clientY >= rect.top && e.clientY <= rect.bottom
+            ) {
+              let x = e.clientX - rect.left;
+              let y = e.clientY - rect.top;
+              this.addComponent(this.draggingPaletteType, x, y);
+            }
+            this.draggingPaletteType = null;
+          });
+        });
+
+        this.svg.addEventListener('pointermove', (e) => {
+          if (this.connectingStart) {
+            const rect = this.svg.getBoundingClientRect();
+            this.tempWirePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            this.render();
+          }
+        });
+
+        // キャンバスの背景クリック＆ドラッグによる「範囲選択」
+        this.svg.addEventListener('pointerdown', (e) => {
+          if (e.target.tagName === 'svg') {
+            const rect = this.svg.getBoundingClientRect();
+            const startX = e.clientX - rect.left;
+            const startY = e.clientY - rect.top;
+
+            if (this.connectingStart) {
+              this.connectingStart = null;
+              this.tempWirePos = null;
+            }
+
+            let isSelecting = false;
+            
+            const onPointerMove = (moveEvt) => {
+              const curX = moveEvt.clientX - rect.left;
+              const curY = moveEvt.clientY - rect.top;
+              
+              if (Math.abs(curX - startX) > 5 || Math.abs(curY - startY) > 5) {
+                isSelecting = true;
+                this.selectionBox = {
+                  x: Math.min(startX, curX),
+                  y: Math.max(startX, curX),
+                  y1: Math.min(startY, curY),
+                  y2: Math.max(startY, curY)
+                };
+                this.render();
+              }
+            };
+
+            const onPointerUp = (upEvt) => {
+              window.removeEventListener('pointermove', onPointerMove);
+              window.removeEventListener('pointerup', onPointerUp);
+
+              if (isSelecting && this.selectionBox) {
+                const box = this.selectionBox;
+                this.selectedComponentIds.clear();
+                this.selectedWireId = null;
+
+                // 範囲内の全パーツを選択
+                this.components.forEach(comp => {
+                  const pos = this.getCompPos(comp);
+                  if (pos.x >= box.x && pos.x <= box.y && pos.y >= box.y1 && pos.y <= box.y2) {
+                    this.selectedComponentIds.add(comp.id);
+                  }
+                });
+                this.selectionBox = null;
+              } else {
+                // クリックのみの場合は選択解除
+                this.selectedComponentIds.clear();
+                this.selectedWireId = null;
+                this.selectionBox = null;
+              }
+              this.render();
+            };
+
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+          }
+        });
+
+        document.getElementById('btn-modal-cancel').addEventListener('click', () => {
+          document.getElementById('pdf-modal').classList.add('hidden');
+        });
+        document.getElementById('pdf-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.generatePDF();
+        });
+      }
+
+      snapToGrid(x, y) {
+        if (this.mode === 'breadboard' || this.mode === 'schematic') {
+          const gridSize = 20;
+          return {
+            x: Math.round(x / gridSize) * gridSize,
+            y: Math.round(y / gridSize) * gridSize
+          };
+        }
+        return { x, y };
+      }
+
+      getCompPos(comp) {
+        if (!comp.positions) {
+          comp.positions = {
+            physical: { x: comp.x || 150, y: comp.y || 150 },
+            breadboard: { x: comp.x || 150, y: comp.y || 150 },
+            schematic: { x: comp.x || 150, y: comp.y || 150 }
+          };
+        }
+        if (!comp.positions[this.mode]) {
+          comp.positions[this.mode] = { x: 150, y: 150 };
+        }
+        return comp.positions[this.mode];
+      }
+
+      addComponent(type, rawX, rawY) {
+        const { x, y } = this.snapToGrid(rawX, rawY);
+        const id = 'comp_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+        
+        let voltage = (type === 'battery') ? 1.5 : undefined;
+        let resistance = (type === 'resistor') ? 100 : undefined;
+        let flipped = false;
+        let rotation = 0;
+
+        const positions = {
+          physical: { x, y },
+          breadboard: { x, y },
+          schematic: { x, y }
+        };
+
+        const terminals = this.generateTerminals(id, type, flipped, rotation);
+
+        const newComp = { id, type, positions, state: false, voltage, resistance, flipped, rotation, terminals };
+        this.components.push(newComp);
+        this.selectedComponentIds.clear();
+        this.selectedComponentIds.add(id);
+        this.selectedWireId = null;
+        this.saveState();
+        this.render();
+      }
+
+      generateTerminals(id, type, flipped, rotation = 0) {
+        const dir = flipped ? -1 : 1;
+        let baseTerminals = [];
+
+        if (type === 'battery') {
+          baseTerminals = [
+            { id: id + '_t1', name: '+', baseRelX: 45 * dir, baseRelY: 0, polarity: 'pos' },
+            { id: id + '_t2', name: '-', baseRelX: -45 * dir, baseRelY: 0, polarity: 'neg' }
+          ];
+        } else if (type === 'led') {
+          baseTerminals = [
+            { id: id + '_t1', name: '+ (アノード)', baseRelX: -35 * dir, baseRelY: 0, polarity: 'pos' },
+            { id: id + '_t2', name: '- (カソード)', baseRelX: 35 * dir, baseRelY: 0, polarity: 'neg' }
+          ];
+        } else if (type === 'motor') {
+          baseTerminals = [
+            { id: id + '_t1', name: '+', baseRelX: -35 * dir, baseRelY: 0, polarity: 'pos' },
+            { id: id + '_t2', name: '-', baseRelX: 35 * dir, baseRelY: 0, polarity: 'neg' }
+          ];
+        } else {
+          baseTerminals = [
+            { id: id + '_t1', name: '1', baseRelX: -35, baseRelY: 0, polarity: 'none' },
+            { id: id + '_t2', name: '2', baseRelX: 35, baseRelY: 0, polarity: 'none' }
+          ];
+        }
+
+        const rad = (rotation * Math.PI) / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+
+        return baseTerminals.map(t => {
+          const relX = Math.round(t.baseRelX * cos - t.baseRelY * sin);
+          const relY = Math.round(t.baseRelX * sin + t.baseRelY * cos);
+          return {
+            id: t.id,
+            name: t.name,
+            relX,
+            relY,
+            polarity: t.polarity
+          };
+        });
+      }
+
+      flipSelectedComponent() {
+        if (this.selectedComponentIds.size === 0) return;
+        this.selectedComponentIds.forEach(id => {
+          const comp = this.components.find(c => c.id === id);
+          if (comp) {
+            comp.flipped = !comp.flipped;
+            comp.terminals = this.generateTerminals(comp.id, comp.type, comp.flipped, comp.rotation || 0);
+          }
+        });
+        this.saveState();
+        this.evaluateCircuit();
+        this.render();
+      }
+
+      rotateSelectedComponent() {
+        if (this.selectedComponentIds.size === 0) return;
+        this.selectedComponentIds.forEach(id => {
+          const comp = this.components.find(c => c.id === id);
+          if (comp) {
+            comp.rotation = ((comp.rotation || 0) + 90) % 360;
+            comp.terminals = this.generateTerminals(comp.id, comp.type, comp.flipped, comp.rotation);
+          }
+        });
+        this.saveState();
+        this.evaluateCircuit();
+        this.render();
+      }
+
+      deleteSelected() {
+        if (this.selectedComponentIds.size > 0) {
+          this.selectedComponentIds.forEach(id => {
+            this.components = this.components.filter(c => c.id !== id);
+            this.wires = this.wires.filter(w => w.fromCompId !== id && w.toCompId !== id);
+          });
+          this.selectedComponentIds.clear();
+        } else if (this.selectedWireId) {
+          this.wires = this.wires.filter(w => w.id !== this.selectedWireId);
+          this.selectedWireId = null;
+        } else {
+          return;
+        }
+        this.saveState();
+        this.evaluateCircuit();
+        this.render();
+      }
+
+      saveState() {
+        if (this.historyIndex < this.history.length - 1) {
+          this.history = this.history.slice(0, this.historyIndex + 1);
+        }
+        const state = JSON.stringify({ components: this.components, wires: this.wires });
+        this.history.push(state);
+        this.historyIndex++;
+        localStorage.setItem('circuit_sim_data_v7', state);
+      }
+
+      loadState() {
+        const saved = localStorage.getItem('circuit_sim_data_v7');
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            this.components = data.components || [];
+            this.wires = data.wires || [];
+            
+            this.components.forEach(c => {
+              if (c.rotation === undefined) c.rotation = 0;
+              if (c.type === 'resistor' && !c.resistance) c.resistance = 100;
+              c.terminals = this.generateTerminals(c.id, c.type, c.flipped, c.rotation);
+            });
+
+            this.history = [saved];
+            this.historyIndex = 0;
+          } catch (e) {
+            console.error("データ読み込みエラー", e);
+          }
+        }
+      }
+
+      undo() {
+        if (this.historyIndex > 0) {
+          this.historyIndex--;
+          const data = JSON.parse(this.history[this.historyIndex]);
+          this.components = data.components;
+          this.wires = data.wires;
+          this.selectedComponentIds.clear();
+          this.selectedWireId = null;
+          this.evaluateCircuit();
+          this.render();
+        }
+      }
+
+      redo() {
+        if (this.historyIndex < this.history.length - 1) {
+          this.historyIndex++;
+          const data = JSON.parse(this.history[this.historyIndex]);
+          this.components = data.components;
+          this.wires = data.wires;
+          this.selectedComponentIds.clear();
+          this.selectedWireId = null;
+          this.evaluateCircuit();
+          this.render();
+        }
+      }
+
+      clearAll() {
+        if (confirm('すべての回路要素を消去してリセットしますか？')) {
+          this.components = [];
+          this.wires = [];
+          this.selectedComponentIds.clear();
+          this.selectedWireId = null;
+          this.powerOn = false;
+          this.btnPower.textContent = '🔌 電源 OFF';
+          this.btnPower.className = 'btn btn-power-off';
+          this.saveState();
+          this.evaluateCircuit();
+          this.render();
+        }
+      }
+
+      // 修正: 電圧・抵抗値に応じた動作パラメータ（電流・輝度・速度）の厳密算出
+      evaluateCircuit() {
+        const activeMap = new Map();
+        const currentMap = new Map(); // コンポーネントごとの電流値を格納
+
+        this.components.forEach(c => {
+          activeMap.set(c.id, false);
+          currentMap.set(c.id, 0);
+        });
+
+        if (!this.powerOn) {
+          this.setStatus('info', 'ℹ️', '電源はOFFです。');
+          return { status: 'OFF', activeMap, currentMap };
+        }
+
+        const batteries = this.components.filter(c => c.type === 'battery');
+        if (batteries.length === 0) {
+          this.setStatus('error', '⚠️', '電源（乾電池）が配置されていません。');
+          return { status: 'NO_BATTERY', activeMap, currentMap };
+        }
+
+        const totalVoltage = batteries.reduce((sum, b) => sum + (b.voltage || 1.5), 0);
+
+        const buildGraph = () => {
+          const adj = new Map();
+          this.wires.forEach(w => {
+            if (!adj.has(w.fromTermId)) adj.set(w.fromTermId, []);
+            if (!adj.has(w.toTermId)) adj.set(w.toTermId, []);
+            adj.get(w.fromTermId).push({ nextTermId: w.toTermId, comp: null });
+            adj.get(w.toTermId).push({ nextTermId: w.fromTermId, comp: null });
+          });
+
+          this.components.forEach(comp => {
+            if (comp.type === 'battery') return;
+            if (comp.type === 'switch' && !comp.state) return;
+
+            const terms = comp.terminals;
+            for (let i = 0; i < terms.length; i++) {
+              for (let j = i + 1; j < terms.length; j++) {
+                const t1 = terms[i].id;
+                const t2 = terms[j].id;
+                if (!adj.has(t1)) adj.set(t1, []);
+                if (!adj.has(t2)) adj.set(t2, []);
+                adj.get(t1).push({ nextTermId: t2, comp: comp });
+                adj.get(t2).push({ nextTermId: t1, comp: comp });
+              }
+            }
+          });
+          return adj;
+        };
+
+        const adj = buildGraph();
+        const battery = batteries[0];
+        const posTerm = battery.terminals.find(t => t.polarity === 'pos');
+        const negTerm = battery.terminals.find(t => t.polarity === 'neg');
+
+        const posReachable = this.findAllPathsFrom(posTerm.id, adj);
+        const negReachable = this.findAllPathsFrom(negTerm.id, adj);
+
+        // 回路内の総抵抗値を算定 (オームの法則: I = V / R)
+        let totalResistance = 0;
+        this.components.forEach(c => {
+          if (c.type === 'resistor') {
+            totalResistance += (c.resistance || 100);
+          } else if (c.type === 'led') {
+            totalResistance += 20; // Internal standard resistance
+          } else if (c.type === 'motor') {
+            totalResistance += 30;
+          }
+        });
+
+        if (totalResistance === 0) totalResistance = 0.1; // ショート回避・極小抵抗
+
+        // ショート判定
+        if (posReachable.terms.has(negTerm.id)) {
+          const path = this.findShortestPath(posTerm.id, negTerm.id, adj);
+          if (path) {
+            let pathRes = 0;
+            path.comps.forEach(c => {
+              if (c.type === 'resistor') pathRes += (c.resistance || 100);
+              if (c.type === 'led' || c.type === 'motor') pathRes += 10;
+            });
+            if (pathRes === 0) {
+              this.setStatus('error', '💥', 'ショート（短絡）しています！電池が高熱になる危険があります！');
+              return { status: 'SHORT', activeMap, currentMap };
+            }
+          }
+        }
+
+        const circuitCurrent = totalVoltage / totalResistance; // 電流 A
+
+        let activeCount = 0;
+        this.components.forEach(comp => {
+          if (comp.type === 'battery' || comp.type === 'switch') return;
+
+          const t1 = comp.terminals[0].id;
+          const t2 = comp.terminals[1].id;
+
+          const routeA = posReachable.terms.has(t1) && negReachable.terms.has(t2);
+          const routeB = posReachable.terms.has(t2) && negReachable.terms.has(t1);
+
+          if (routeA || routeB) {
+            if (comp.type === 'led') {
+              const anodeId = comp.terminals.find(t => t.polarity === 'pos').id;
+              if (posReachable.terms.has(anodeId)) {
+                activeMap.set(comp.id, true);
+                currentMap.set(comp.id, circuitCurrent);
+                activeCount++;
+              }
+            } else {
+              activeMap.set(comp.id, true);
+              currentMap.set(comp.id, circuitCurrent);
+              activeCount++;
+            }
+          }
+        });
+
+        if (activeCount > 0) {
+          const ma = (circuitCurrent * 1000).toFixed(1);
+          this.setStatus('success', '✅', `回路動作中 (電圧: ${totalVoltage.toFixed(1)}V, 電流: ${ma}mA)`);
+          return { status: 'OK', activeMap, currentMap };
+        } else {
+          const switches = this.components.filter(c => c.type === 'switch');
+          if (switches.some(s => !s.state)) {
+            this.setStatus('warning', '🔘', 'スイッチがオフになっているか、回路が未完成です。');
+          } else {
+            this.setStatus('error', '⚡', '回路がつながっていません（断線）。配線を確認してください。');
+          }
+          return { status: 'OPEN', activeMap, currentMap };
+        }
+      }
+
+      findAllPathsFrom(startId, adj) {
+        const visitedTerms = new Set([startId]);
+        const visitedComps = new Set();
+        const queue = [startId];
+
+        while (queue.length > 0) {
+          const curr = queue.shift();
+          const neighbors = adj.get(curr) || [];
+          for (const edge of neighbors) {
+            if (!visitedTerms.has(edge.nextTermId)) {
+              visitedTerms.add(edge.nextTermId);
+              if (edge.comp) visitedComps.add(edge.comp);
+              queue.push(edge.nextTermId);
+            }
+          }
+        }
+        return { terms: visitedTerms, comps: visitedComps };
+      }
+
+      findShortestPath(startId, endId, adj) {
+        const queue = [{ termId: startId, comps: [] }];
+        const visited = new Set([startId]);
+
+        while (queue.length > 0) {
+          const curr = queue.shift();
+          if (curr.termId === endId) return curr;
+
+          const neighbors = adj.get(curr) || [];
+          for (const edge of neighbors) {
+            if (!visited.has(edge.nextTermId)) {
+              visited.add(edge.nextTermId);
+              const nextComps = [...curr.comps];
+              if (edge.comp && !nextComps.includes(edge.comp)) nextComps.push(edge.comp);
+              queue.push({ termId: edge.nextTermId, comps: nextComps });
+            }
+          }
+        }
+        return null;
+      }
+
+      setStatus(type, icon, msg) {
+        this.statusBar.className = `status-bar status-${type}`;
+        this.statusIcon.textContent = icon;
+        this.statusMessage.textContent = msg;
+      }
+
+      render() {
+        this.svg.innerHTML = '';
+        const simResult = this.evaluateCircuit();
+        const activeMap = simResult.activeMap || new Map();
+        const currentMap = simResult.currentMap || new Map();
+
+        if (this.mode === 'breadboard') {
+          this.renderBreadboardBackground();
+        }
+
+        // 配線の描画
+        this.wires.forEach(wire => {
+          const p1 = this.getTerminalPos(wire.fromCompId, wire.fromTermId);
+          const p2 = this.getTerminalPos(wire.toCompId, wire.toTermId);
+          if (p1 && p2) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = '';
+
+            if (this.mode === 'schematic') {
+              const offsetX = wire.midOffsetX || 0;
+              const offsetY = wire.midOffsetY || 0;
+
+              const midX = (p1.x + p2.x) / 2 + offsetX;
+              const midY = (p1.y + p2.y) / 2 + offsetY;
+
+              d = `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${midY} L ${p2.x} ${midY} L ${p2.x} ${p2.y}`;
+            } else if (this.mode === 'breadboard') {
+              d = `M ${p1.x} ${p1.y} L ${p1.x} ${p2.y} L ${p2.x} ${p2.y}`;
+            } else {
+              d = `M ${p1.x} ${p1.y} Q ${(p1.x+p2.x)/2} ${(p1.y+p2.y)/2 + 25} ${p2.x} ${p2.y}`;
+            }
+
+            line.setAttribute('d', d);
+            const isSelected = (wire.id === this.selectedWireId);
+            line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
+
+            line.addEventListener('pointerdown', (e) => {
+              e.stopPropagation();
+              this.selectedWireId = wire.id;
+              this.selectedComponentIds.clear();
+
+              if (this.mode === 'schematic') {
+                let isDragging = false;
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const initialOffsetX = wire.midOffsetX || 0;
+                const initialOffsetY = wire.midOffsetY || 0;
+
+                const onPointerMove = (moveEvt) => {
+                  const dx = moveEvt.clientX - startX;
+                  const dy = moveEvt.clientY - startY;
+                  if (Math.abs(dx) > 2 || Math.abs(dy) > 2) isDragging = true;
+                  if (isDragging) {
+                    wire.midOffsetX = initialOffsetX + dx;
+                    wire.midOffsetY = initialOffsetY + dy;
+                    this.render();
+                  }
+                };
+
+                const onPointerUp = () => {
+                  window.removeEventListener('pointermove', onPointerMove);
+                  window.removeEventListener('pointerup', onPointerUp);
+                  if (isDragging) {
+                    this.saveState();
+                  }
+                };
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+              }
+              this.render();
+            });
+
+            this.svg.appendChild(line);
+          }
+        });
+
+        if (this.connectingStart && this.tempWirePos) {
+          const p1 = this.getTerminalPos(this.connectingStart.compId, this.connectingStart.termId);
+          if (p1) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+            line.setAttribute('x2', this.tempWirePos.x); line.setAttribute('y2', this.tempWirePos.y);
+            line.setAttribute('class', 'wire-temp');
+            this.svg.appendChild(line);
+          }
+        }
+
+        // ラバーバンド（範囲選択ボックス）の描画
+        if (this.selectionBox) {
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', this.selectionBox.x);
+          rect.setAttribute('y', this.selectionBox.y1);
+          rect.setAttribute('width', this.selectionBox.y - this.selectionBox.x);
+          rect.setAttribute('height', this.selectionBox.y2 - this.selectionBox.y1);
+          rect.setAttribute('class', 'rubberband-rect');
+          this.svg.appendChild(rect);
+        }
+
+        // 部品の描画
+        this.components.forEach(comp => {
+          const pos = this.getCompPos(comp);
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+          g.setAttribute('class', 'component-group');
+
+          // 選択されたパーツへのハイライト表示
+          if (this.selectedComponentIds.has(comp.id)) {
+            const selRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            selRect.setAttribute('x', -55); selRect.setAttribute('y', -30);
+            selRect.setAttribute('width', 110); selRect.setAttribute('height', 60);
+            selRect.setAttribute('rx', 8);
+            selRect.setAttribute('class', 'selection-box');
+            g.appendChild(selRect);
+          }
+
+          const isCompWorking = activeMap.get(comp.id) || false;
+          const compCurrent = currentMap.get(comp.id) || 0;
+
+          const bodyG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          bodyG.setAttribute('transform', `rotate(${comp.rotation || 0})`);
+          this.renderComponentBody(bodyG, comp, isCompWorking, compCurrent);
+          g.appendChild(bodyG);
+
+          comp.terminals.forEach(term => {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', term.relX);
+            circle.setAttribute('cy', term.relY);
+            circle.setAttribute('r', 6);
+            circle.setAttribute('fill', term.polarity === 'pos' ? '#ef4444' : (term.polarity === 'neg' ? '#2563eb' : '#4b5563'));
+            circle.setAttribute('stroke', '#ffffff');
+            circle.setAttribute('stroke-width', '2');
+            circle.setAttribute('class', 'terminal');
+
+            circle.addEventListener('pointerdown', (e) => {
+              e.stopPropagation();
+              if (!this.connectingStart) {
+                this.connectingStart = { compId: comp.id, termId: term.id };
+              } else {
+                if (this.connectingStart.termId !== term.id) {
+                  this.wires.push({
+                    id: 'wire_' + Date.now(),
+                    fromCompId: this.connectingStart.compId,
+                    fromTermId: this.connectingStart.termId,
+                    toCompId: comp.id,
+                    toTermId: term.id,
+                    midOffsetX: 0,
+                    midOffsetY: 0
+                  });
+                  this.saveState();
+                  this.evaluateCircuit();
+                }
+                this.connectingStart = null;
+                this.tempWirePos = null;
+                this.render();
+              }
+            });
+
+            g.appendChild(circle);
+          });
+
+          // 修正: 複数パーツ選択時の一括移動機能
+          g.addEventListener('pointerdown', (e) => {
+            if (e.target.classList.contains('terminal')) return;
+            e.stopPropagation();
+
+            if (!this.selectedComponentIds.has(comp.id) && !e.shiftKey) {
+              this.selectedComponentIds.clear();
+              this.selectedComponentIds.add(comp.id);
+            } else if (e.shiftKey) {
+              this.selectedComponentIds.add(comp.id);
+            }
+            this.selectedWireId = null;
+
+            if (comp.type === 'switch') {
+              comp.state = !comp.state;
+              this.saveState();
+              this.evaluateCircuit();
+            }
+            this.render();
+
+            let isDragging = true;
+            const startX = e.clientX;
+            const startY = e.clientY;
+
+            // 選択されたすべての部品の初期位置を保存
+            const initialPositions = new Map();
+            this.selectedComponentIds.forEach(id => {
+              const targetComp = this.components.find(c => c.id === id);
+              if (targetComp) {
+                const p = this.getCompPos(targetComp);
+                initialPositions.set(id, { x: p.x, y: p.y });
+              }
+            });
+
+            const onMove = (moveEvt) => {
+              if (!isDragging) return;
+              const dx = moveEvt.clientX - startX;
+              const dy = moveEvt.clientY - startY;
+
+              this.selectedComponentIds.forEach(id => {
+                const targetComp = this.components.find(c => c.id === id);
+                const initP = initialPositions.get(id);
+                if (targetComp && initP) {
+                  const rawX = initP.x + dx;
+                  const rawY = initP.y + dy;
+                  const snapped = this.snapToGrid(rawX, rawY);
+                  targetComp.positions[this.mode] = { x: snapped.x, y: snapped.y };
+                }
+              });
+              this.render();
+            };
+
+            const onUp = () => {
+              if (isDragging) {
+                isDragging = false;
+                window.removeEventListener('pointermove', onMove);
+                window.removeEventListener('pointerup', onUp);
+                this.saveState();
+              }
+            };
+
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+          });
+
+          this.svg.appendChild(g);
+        });
+
+        this.updatePropertyToolbar();
+      }
+
+      // 修正: 電流に応じたLED輝度・モーター速度制御、および単位表記
+      renderComponentBody(g, comp, isWorking, current) {
+        const mode = this.mode;
+
+        if (comp.type === 'battery') {
+          const vText = `${comp.voltage.toFixed(1)}V`;
+          if (mode === 'schematic') {
+            const posTerminalX = comp.flipped ? -10 : 10;
+            const negTerminalX = comp.flipped ? 10 : -10;
+            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                            <line x1="-35" y1="0" x2="-10" y2="0" stroke="black" stroke-width="2"/>
+                            <line x1="${negTerminalX}" y1="-6" x2="${negTerminalX}" y2="6" stroke="black" stroke-width="1.5"/>
+                            <line x1="${posTerminalX}" y1="-12" x2="${posTerminalX}" y2="12" stroke="black" stroke-width="3"/>
+                            <line x1="10" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                            <text x="${comp.flipped ? -25 : 15}" y="-8" font-size="11" font-weight="bold" fill="#ef4444">+</text>
+                            <text x="${comp.flipped ? 15 : -25}" y="-8" font-size="11" font-weight="bold" fill="#2563eb">-</text>
+                            <text x="-14" y="18" font-size="10">${vText}</text>`;
+          } else {
+            const posLabelX = comp.flipped ? -28 : 22;
+            const negLabelX = comp.flipped ? 22 : -28;
+            const capX = comp.flipped ? -41 : 35;
+            g.innerHTML += `<rect x="-40" y="-16" width="75" height="32" rx="4" fill="#1f2937" stroke="#111827" stroke-width="2"/>
+                            <rect x="${comp.flipped ? -35 : 20}" y="-16" width="15" height="32" fill="#f59e0b"/>
+                            <rect x="${capX}" y="-8" width="6" height="16" rx="2" fill="#9ca3af"/>
+                            <text x="${posLabelX}" y="5" fill="white" font-weight="bold" font-size="14">+</text>
+                            <text x="${negLabelX}" y="5" fill="white" font-weight="bold" font-size="14">-</text>
+                            <text x="-15" y="4" fill="#9ca3af" font-size="11">${vText}</text>`;
+          }
+        } else if (comp.type === 'resistor') {
+          // 修正: 抵抗値の単位表記フォーマット (kΩ, MΩ)
+          const rText = formatResistance(comp.resistance);
+          const colors = getResistorColorCodes(comp.resistance);
+
+          if (mode === 'schematic') {
+            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                            <rect x="-20" y="-8" width="40" height="16" fill="white" stroke="black" stroke-width="2"/>
+                            <line x1="-35" y1="0" x2="-20" y2="0" stroke="black" stroke-width="2"/>
+                            <line x1="20" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                            <text x="-18" y="18" font-size="10">${rText}</text>`;
+          } else {
+            g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
+                            <rect x="-22" y="-10" width="44" height="20" rx="6" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                            <rect x="-12" y="-10" width="4" height="20" fill="${colors[0]}"/>
+                            <rect x="-4" y="-10" width="4" height="20" fill="${colors[1]}"/>
+                            <rect x="4" y="-10" width="4" height="20" fill="${colors[2]}"/>
+                            <rect x="12" y="-10" width="4" height="20" fill="${colors[3]}"/>
+                            <text x="-22" y="24" font-size="11" font-weight="bold" fill="#374151">${rText}</text>`;
+          }
+        } else if (comp.type === 'led') {
+          // 修正: 電流に応じたLED点灯率（輝度・グロー効果）のリアルタイム変化
+          let opacity = 0.3;
+          let glowRadius = 0;
+          let activeColor = '#6b7280';
+
+          if (isWorking) {
+            activeColor = '#ef4444';
+            // 電流値（0.001A〜0.05A）に応じて透明度0.4〜1.0、発光半径5px〜20pxを計算
+            const factor = Math.min(Math.max(current / 0.03, 0.2), 1.5);
+            opacity = Math.min(0.4 + factor * 0.6, 1.0);
+            glowRadius = Math.round(5 + factor * 12);
+          }
+
+          const glowStyle = isWorking ? `filter="drop-shadow(0 0 ${glowRadius}px #ef4444)"` : '';
+          const posX = comp.flipped ? 18 : -25;
+          const negX = comp.flipped ? -25 : 18;
+
+          if (mode === 'schematic') {
+            const polyPoints = comp.flipped ? "10,-10 10,10 -10,0" : "-10,-10 -10,10 10,0";
+            const lineX = comp.flipped ? -10 : 10;
+            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                            <polygon points="${polyPoints}" fill="${activeColor}" fill-opacity="${opacity}" stroke="black" stroke-width="2"/>
+                            <line x1="${lineX}" y1="-10" x2="${lineX}" y2="10" stroke="black" stroke-width="2"/>
+                            <line x1="-35" y1="0" x2="-10" y2="0" stroke="black" stroke-width="2"/>
+                            <line x1="10" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                            <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
+                            <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
+          } else {
+            g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
+                            <circle cx="0" cy="0" r="16" fill="${activeColor}" fill-opacity="${opacity}" ${glowStyle} stroke="#b91c1c" stroke-width="2"/>
+                            <path d="M -8 -6 A 12 12 0 0 1 8 -6" fill="none" stroke="white" stroke-width="2" opacity="0.5"/>
+                            <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
+                            <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
+          }
+        } else if (comp.type === 'switch') {
+          if (mode === 'schematic') {
+            const lineY = !comp.state ? -12 : 0;
+            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                            <circle cx="-15" cy="0" r="3" fill="black"/>
+                            <circle cx="15" cy="0" r="3" fill="black"/>
+                            <line x1="-15" y1="0" x2="15" y2="${lineY}" stroke="black" stroke-width="2.5"/>
+                            <line x1="-35" y1="0" x2="-15" y2="0" stroke="black" stroke-width="2"/>
+                            <line x1="15" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>`;
+          } else {
+            const btnColor = comp.state ? '#10b981' : '#ef4444';
+            g.innerHTML += `<rect x="-25" y="-15" width="50" height="30" rx="6" fill="#374151" stroke="#1f2937" stroke-width="2"/>
+                            <circle cx="${comp.state ? 8 : -8}" cy="0" r="9" fill="${btnColor}"/>
+                            <text x="-18" y="26" font-size="11" font-weight="bold" fill="#374151">${comp.state ? 'スイッチON' : 'スイッチOFF'}</text>`;
+          }
+        } else if (comp.type === 'motor') {
+          // 修正: 電流に応じたモーター回転速度の動的変化 (CSS animation-duration)
+          let durationSec = 1.0;
+          if (isWorking) {
+            // 電流が高いほど高速回転（0.5s 〜 0.05s）
+            const factor = Math.min(Math.max(current / 0.03, 0.2), 2.0);
+            durationSec = (0.6 / factor).toFixed(2);
+          }
+
+          const rotStyle = isWorking ? `style="animation-duration: ${durationSec}s;"` : '';
+          const rotClass = isWorking ? 'class="rotating"' : '';
+
+          const posX = comp.flipped ? 20 : -28;
+          const negX = comp.flipped ? -28 : 20;
+
+          if (mode === 'schematic') {
+            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                            <circle cx="0" cy="0" r="14" fill="white" stroke="black" stroke-width="2"/>
+                            <text x="-5" y="5" font-size="13" font-weight="bold">M</text>
+                            <line x1="-35" y1="0" x2="-14" y2="0" stroke="black" stroke-width="2"/>
+                            <line x1="14" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                            <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
+                            <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
+          } else {
+            g.innerHTML += `<circle cx="0" cy="0" r="22" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+                            <g ${rotClass} ${rotStyle}>
+                              <path d="M 0 0 L -10 -20 L 10 -20 Z" fill="#2563eb"/>
+                              <path d="M 0 0 L -10 20 L 10 20 Z" fill="#2563eb"/>
+                            </g>
+                            <circle cx="0" cy="0" r="4" fill="#1f2937"/>
+                            <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
+                            <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
+          }
+        }
+      }
+
+      getTerminalPos(compId, termId) {
+        const comp = this.components.find(c => c.id === compId);
+        if (!comp) return null;
+        const term = comp.terminals.find(t => t.id === termId);
+        if (!term) return null;
+
+        const pos = this.getCompPos(comp);
+        return {
+          x: pos.x + term.relX,
+          y: pos.y + term.relY
+        };
+      }
+
+      renderBreadboardBackground() {
+        const board = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+        board.innerHTML = `<rect x="30" y="30" width="740" height="440" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="4"/>`;
+
+        board.innerHTML += `
+          <line x1="55" y1="50" x2="55" y2="450" stroke="#ef4444" stroke-width="3" opacity="0.6"/>
+          <line x1="85" y1="50" x2="85" y2="450" stroke="#2563eb" stroke-width="3" opacity="0.6"/>
+          <text x="50" y="44" font-size="12" font-weight="bold" fill="#ef4444">+</text>
+          <text x="80" y="44" font-size="12" font-weight="bold" fill="#2563eb">-</text>
+        `;
+
+        board.innerHTML += `
+          <line x1="715" y1="50" x2="715" y2="450" stroke="#ef4444" stroke-width="3" opacity="0.6"/>
+          <line x1="745" y1="50" x2="745" y2="450" stroke="#2563eb" stroke-width="3" opacity="0.6"/>
+          <text x="710" y="44" font-size="12" font-weight="bold" fill="#ef4444">+</text>
+          <text x="740" y="44" font-size="12" font-weight="bold" fill="#2563eb">-</text>
+        `;
+
+        for (let x = 60; x <= 740; x += 20) {
+          for (let y = 60; y <= 440; y += 20) {
+            if (x === 100 || x === 700) continue;
+            board.innerHTML += `<circle cx="${x}" cy="${y}" r="3" fill="#64748b"/>`;
+          }
+        }
+
+        board.innerHTML += `<line x1="110" y1="250" x2="690" y2="250" stroke="#cbd5e1" stroke-width="6" stroke-dasharray="8 4"/>`;
+
+        this.svg.appendChild(board);
+      }
+
+      updatePropertyToolbar() {
+        if (this.selectedComponentIds.size === 0) {
+          this.propToolbar.classList.add('hidden');
+          return;
+        }
+
+        // 単一選択時のみ詳細パラメータツールバーを表示
+        if (this.selectedComponentIds.size > 1) {
+          this.propToolbar.innerHTML = `<span style="font-size:0.85rem; font-weight:bold; color:#2563eb;">${this.selectedComponentIds.size} 個のパーツを選択中</span>`;
+          
+          const btnDel = document.createElement('button');
+          btnDel.className = 'prop-btn';
+          btnDel.style.backgroundColor = '#fee2e2';
+          btnDel.style.color = '#dc2626';
+          btnDel.style.borderColor = '#fca5a5';
+          btnDel.textContent = '🗑️ 一括削除';
+          btnDel.onclick = () => this.deleteSelected();
+          this.propToolbar.appendChild(btnDel);
+
+          // 一括選択の中心位置にツールバーを表示
+          let sumX = 0, sumY = 0;
+          this.selectedComponentIds.forEach(id => {
+            const c = this.components.find(comp => comp.id === id);
+            if (c) {
+              const p = this.getCompPos(c);
+              sumX += p.x; sumY += p.y;
+            }
+          });
+          const avgX = sumX / this.selectedComponentIds.size;
+          const avgY = sumY / this.selectedComponentIds.size;
+
+          this.propToolbar.style.left = `${avgX}px`;
+          this.propToolbar.style.top = `${avgY - 35}px`;
+          this.propToolbar.classList.remove('hidden');
+          return;
+        }
+
+        const compId = Array.from(this.selectedComponentIds)[0];
+        const comp = this.components.find(c => c.id === compId);
+        if (!comp) {
+          this.propToolbar.classList.add('hidden');
+          return;
+        }
+
+        this.propToolbar.innerHTML = '';
+
+        if (comp.type === 'battery') {
+          const btnMinus = document.createElement('button');
+          btnMinus.className = 'prop-btn';
+          btnMinus.textContent = '-1.5V';
+          btnMinus.onclick = () => {
+            if (comp.voltage > 1.5) {
+              comp.voltage -= 1.5;
+              this.saveState();
+              this.evaluateCircuit();
+              this.render();
+            }
+          };
+
+          const valLabel = document.createElement('span');
+          valLabel.className = 'prop-value';
+          valLabel.textContent = `${comp.voltage.toFixed(1)}V`;
+
+          const btnPlus = document.createElement('button');
+          btnPlus.className = 'prop-btn';
+          btnPlus.textContent = '+1.5V';
+          btnPlus.onclick = () => {
+            comp.voltage += 1.5;
+            this.saveState();
+            this.evaluateCircuit();
+            this.render();
+          };
+
+          this.propToolbar.appendChild(btnMinus);
+          this.propToolbar.appendChild(valLabel);
+          this.propToolbar.appendChild(btnPlus);
+        }
+
+        if (comp.type === 'resistor') {
+          const btnMinus = document.createElement('button');
+          btnMinus.className = 'prop-btn';
+          btnMinus.textContent = '-100Ω';
+          btnMinus.onclick = () => {
+            if (comp.resistance > 100) {
+              comp.resistance -= 100;
+            } else {
+              comp.resistance = 10;
+            }
+            this.saveState();
+            this.evaluateCircuit();
+            this.render();
+          };
+
+          const valLabel = document.createElement('span');
+          valLabel.className = 'prop-value';
+          valLabel.style.cursor = 'pointer';
+          valLabel.title = 'クリックして数値入力 (例: 1000, 1k, 1.5M)';
+          valLabel.textContent = formatResistance(comp.resistance);
+
+          valLabel.onclick = () => {
+            const input = prompt('抵抗値を入力してください (例: 100, 1k, 1.5M):', formatResistance(comp.resistance));
+            if (input !== null) {
+              let parsed = parseFloat(input);
+              if (input.toLowerCase().includes('k')) parsed *= 1000;
+              if (input.toLowerCase().includes('m')) parsed *= 1000000;
+              
+              if (!isNaN(parsed) && parsed > 0) {
+                comp.resistance = Math.round(parsed);
+                this.saveState();
+                this.evaluateCircuit();
+                this.render();
+              }
+            }
+          };
+
+          const btnPlus = document.createElement('button');
+          btnPlus.className = 'prop-btn';
+          btnPlus.textContent = '+100Ω';
+          btnPlus.onclick = () => {
+            comp.resistance += 100;
+            this.saveState();
+            this.evaluateCircuit();
+            this.render();
+          };
+
+          const btnPlusK = document.createElement('button');
+          btnPlusK.className = 'prop-btn';
+          btnPlusK.textContent = '+1kΩ';
+          btnPlusK.onclick = () => {
+            comp.resistance += 1000;
+            this.saveState();
+            this.evaluateCircuit();
+            this.render();
+          };
+
+          this.propToolbar.appendChild(btnMinus);
+          this.propToolbar.appendChild(valLabel);
+          this.propToolbar.appendChild(btnPlus);
+          this.propToolbar.appendChild(btnPlusK);
+        }
+
+        const btnRotate = document.createElement('button');
+        btnRotate.className = 'prop-btn';
+        btnRotate.textContent = '🔄 90°回転';
+        btnRotate.onclick = () => this.rotateSelectedComponent();
+        this.propToolbar.appendChild(btnRotate);
+
+        if (['battery', 'led', 'motor'].includes(comp.type)) {
+          const btnFlip = document.createElement('button');
+          btnFlip.className = 'prop-btn';
+          btnFlip.textContent = '↔️ 極性反転';
+          btnFlip.onclick = () => this.flipSelectedComponent();
+          this.propToolbar.appendChild(btnFlip);
+        }
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'prop-btn';
+        btnDel.style.backgroundColor = '#fee2e2';
+        btnDel.style.color = '#dc2626';
+        btnDel.style.borderColor = '#fca5a5';
+        btnDel.textContent = '🗑️ 削除';
+        btnDel.onclick = () => this.deleteSelected();
+        this.propToolbar.appendChild(btnDel);
+
+        const pos = this.getCompPos(comp);
+        this.propToolbar.style.left = `${pos.x}px`;
+        this.propToolbar.style.top = `${pos.y - 35}px`;
+        this.propToolbar.classList.remove('hidden');
+      }
+
+      openPdfModal() {
+        const modal = document.getElementById('pdf-modal');
+        if (modal) modal.classList.remove('hidden');
+      }
+
+      generatePDF() {
+        const studentName = document.getElementById('pdf-student-name').value || '未入力';
+        const className = document.getElementById('pdf-class-name').value || '未入力';
+        const reportTitle = document.getElementById('pdf-title').value || '電子回路実験レポート';
+        const memo = document.getElementById('pdf-memo').value || '';
+
+        const pdfContainer = document.createElement('div');
+        pdfContainer.className = 'pdf-hidden-container';
+
+        const svgData = new XMLSerializer().serializeToString(this.svg);
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const URL = window.URL || window.webkitURL || window;
+        const blobURL = URL.createObjectURL(svgBlob);
+
+        const partsCount = {};
+        this.components.forEach(c => {
+          const names = { battery: '乾電池', resistor: '抵抗器', switch: 'スイッチ', led: 'LED', motor: 'モーター' };
+          const name = names[c.type] || c.type;
+          partsCount[name] = (partsCount[name] || 0) + 1;
+        });
+
+        let partsRows = '';
+        for (const [name, count] of Object.entries(partsCount)) {
+          partsRows += `<tr><td>${name}</td><td>${count} 個</td></tr>`;
+        }
+
+        pdfContainer.innerHTML = `
+          <div class="pdf-report-title">${reportTitle}</div>
+          <table class="pdf-info-table">
+            <tr>
+              <td><strong>クラス/組:</strong> ${className}</td>
+              <td><strong>氏名:</strong> ${studentName}</td>
+              <td><strong>作成日:</strong> ${new Date().toLocaleDateString('ja-JP')}</td>
+            </tr>
+          </table>
+          
+          <div class="pdf-diagram-col-full">
+            <div class="pdf-diagram-title">■ 回路構成図 (${this.modeIndicator.textContent})</div>
+            <img src="${blobURL}" class="pdf-diagram-img" />
+          </div>
+
+          <div class="pdf-diagram-title">■ 使用パーツ一覧</div>
+          <table class="pdf-parts-table">
+            <thead><tr><th>パーツ名</th><th>数量</th></tr></thead>
+            <tbody>${partsRows || '<tr><td colspan="2">使用パーツなし</td></tr>'}</tbody>
+          </table>
+
+          ${memo ? `<div class="pdf-diagram-title">■ 考察・メモ</div><p style="font-size:12px; white-space:pre-wrap; border:1px solid #cbd5e1; padding:8px; border-radius:4px;">${memo}</p>` : ''}
+        `;
+
+        document.body.appendChild(pdfContainer);
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>${reportTitle}</title>
+              <style>
+                body { font-family: sans-serif; padding: 20px; }
+                .pdf-report-title { font-size: 20px; font-weight: bold; border-bottom: 2px solid #2563eb; padding-bottom: 5px; margin-bottom: 10px; }
+                .pdf-info-table, .pdf-parts-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td { border: 1px solid #cbd5e1; padding: 6px; font-size: 12px; }
+                .pdf-parts-table th { background: #f1f5f9; }
+                .pdf-diagram-img { width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #94a3b8; }
+                .pdf-diagram-title { font-size: 13px; font-weight: bold; margin: 10px 0 5px 0; }
+              </style>
+            </head>
+            <body>${pdfContainer.innerHTML}</body>
+          </html>
+        `);
+        printWindow.document.close();
+
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+          printWindow.close();
+          document.body.removeChild(pdfContainer);
+          document.getElementById('pdf-modal').classList.add('hidden');
+        }, 500);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      window.app = new CircuitApp();
+    });
+  </script>
+</body>
+</html>
