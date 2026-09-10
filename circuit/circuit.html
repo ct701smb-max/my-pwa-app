@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+  <!-- jsPDF & html2canvas Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <title>電子回路学習シミュレータ</title>
   <style>
     * {
@@ -22,41 +25,38 @@
       user-select: none;
     }
 
-/* ===== ホームボタン ===== */
-.btn-real-dent {
-  /*周りの凹み*/
-  display: inline-block;
-  position: relative;
-  text-decoration: none;
-  color: rgba(3, 69, 244, 0.54);
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  text-align: center;
-  background: #f7f7f7;
-  box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
-}
-.btn-real-dent i {
-  /*ボタン自体*/
-  position: absolute;
-  content: '';
-  width: 25px;
-  height: 25px;
-  line-height: 25px;
-  left: 3px;
-  top: 5px;
-  border-radius: 50%;
-  font-size: 15px;
-  background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
-  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
-  border-bottom: solid 2px #b5b5b5;
-}
-  
-.btn-real-dent .fa:active {
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
-  border-bottom: solid 2px #d8d8d8;
-}
+    .btn-real-dent {
+      display: inline-block;
+      position: relative;
+      text-decoration: none;
+      color: rgba(3, 69, 244, 0.54);
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      text-align: center;
+      background: #f7f7f7;
+      box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
+    }
+    .btn-real-dent i {
+      position: absolute;
+      content: '';
+      width: 25px;
+      height: 25px;
+      line-height: 25px;
+      left: 3px;
+      top: 5px;
+      border-radius: 50%;
+      font-size: 15px;
+      background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
+      text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+      border-bottom: solid 2px #b5b5b5;
+    }
+      
+    .btn-real-dent .fa:active {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+      border-bottom: solid 2px #d8d8d8;
+    }
       
     .app-container {
       display: flex;
@@ -65,66 +65,177 @@
     }
 
     .toolbar {
-      background-color: #ffffff;
-      padding: 10px 16px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid #e5e7eb;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      flex-wrap: wrap;
-      gap: 8px;
-      z-index: 20;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 16px;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      box-sizing: border-box;
     }
 
     .brand {
-      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-weight: bold;
-      color: #2563eb;
+      white-space: nowrap;
     }
 
     .mode-tabs {
       display: flex;
       gap: 4px;
-      background-color: #e5e7eb;
+      background-color: #f3f4f6;
       padding: 4px;
       border-radius: 8px;
     }
 
     .tab-btn {
-      padding: 8px 14px;
+      padding: 6px 12px;
       border: none;
       background: transparent;
-      cursor: pointer;
       border-radius: 6px;
-      font-weight: bold;
-      color: #4b5563;
-      transition: all 0.2s;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s;
     }
 
     .tab-btn.active {
       background-color: #ffffff;
-      color: #2563eb;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      font-weight: bold;
     }
 
     .action-buttons {
       display: flex;
-      gap: 8px;
       align-items: center;
+      gap: 6px;
     }
 
     .btn {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: opacity 0.2s;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      border: 1px solid #d1d5db;
+      background-color: #f9fafb;
+      cursor: pointer;
+      white-space: nowrap;
     }
+
+    /* --- スライド・スマホ操作強化版パーツバー --- */
+    .palette-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      z-index: 10;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: auto;
+      scrollbar-color: #94a3b8 #f1f5f9;
+      touch-action: pan-x;
+    }
+
+    .palette-bar::-webkit-scrollbar {
+      height: 10px;
+    }
+    .palette-bar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 5px;
+    }
+    .palette-bar::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 5px;
+    }
+
+    .palette-bar h3 {
+      font-size: 0.9rem;
+      color: #374151;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .palette-bar .help-text {
+      font-size: 0.75rem;
+      color: #6b7280;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .palette-items {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .palette-item {
+      padding: 10px 16px;
+      background-color: #ffffff;
+      border: 2px solid #93c5fd;
+      border-radius: 8px;
+      cursor: grab;
+      font-size: 0.95rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      touch-action: none;
+      user-select: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .palette-item:active {
+      background-color: #eff6ff;
+    }
+
+    @media (max-width: 768px) {
+      .toolbar {
+        flex-wrap: wrap;
+        padding: 8px 10px;
+        gap: 8px;
+      }
+
+      .brand { font-size: 14px; }
+      .brand ruby rt { display: none; }
+
+      .action-buttons {
+        margin-left: auto;
+        gap: 4px;
+      }
+
+      .action-buttons .btn-text { display: none; }
+
+      .btn {
+        padding: 6px 8px;
+        min-width: 36px;
+        height: 36px;
+      }
+
+      .mode-tabs {
+        width: 100%;
+        order: 3;
+        justify-content: space-between;
+        overflow-x: auto;
+      }
+
+      .tab-btn {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        font-size: 12px;
+      }
+    }
+
     .btn:hover { opacity: 0.85; }
     .btn-primary { background-color: #2563eb; color: white; }
     .btn-warning { background-color: #f59e0b; color: white; }
@@ -138,43 +249,6 @@
       flex: 1;
       position: relative;
       overflow: hidden;
-    }
-
-    .palette {
-      width: 200px;
-      background-color: #ffffff;
-      border-right: 1px solid #e5e7eb;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 10;
-    }
-
-    .palette h3 { font-size: 0.95rem; color: #374151; }
-    .palette .help-text { font-size: 0.75rem; color: #6b7280; margin-bottom: 4px; }
-
-    .palette-items {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .palette-item {
-      padding: 10px 12px;
-      background-color: #f9fafb;
-      border: 2px dashed #d1d5db;
-      border-radius: 8px;
-      cursor: grab;
-      font-size: 0.88rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      touch-action: none;
-    }
-    .palette-item:hover {
-      border-color: #2563eb;
-      background-color: #eff6ff;
     }
 
     .canvas-container {
@@ -348,107 +422,139 @@
       background: white;
       padding: 24px;
       border-radius: 12px;
-      width: 440px;
+      width: 480px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
       box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     }
 
-    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
-    input[type="text"], textarea {
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: span 2; }
+    
+    label { font-size: 0.85rem; font-weight: bold; color: #374151; }
+    input[type="text"], input[type="number"], textarea {
       padding: 8px;
       border: 1px solid #d1d5db;
       border-radius: 6px;
+      font-size: 0.9rem;
     }
 
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .checkbox-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
 
-    .pdf-hidden-container {
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+    /* PDF描画用非表示コンテナ */
+    #pdf-render-container {
       position: absolute;
       left: -9999px;
       top: -9999px;
-      width: 800px;
+      width: 700px;
       background: white;
-      padding: 24px;
-      color: black;
-      font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      padding: 20px;
+      box-sizing: border-box;
     }
-
-    .pdf-report-title {
-      font-size: 22px;
+    .pdf-page-title {
+      font-size: 20px;
       font-weight: bold;
       border-bottom: 2px solid #2563eb;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
       margin-bottom: 12px;
     }
-
     .pdf-info-table, .pdf-parts-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 16px;
-    }
-
-    .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td {
-      border: 1px solid #cbd5e1;
-      padding: 6px 10px;
-      font-size: 13px;
-    }
-
-    .pdf-parts-table th {
-      background-color: #f1f5f9;
-      text-align: left;
-    }
-
-    .pdf-diagram-col-full {
-      width: 100%;
       margin-bottom: 12px;
     }
-
-    .pdf-diagram-title {
-      font-size: 14px;
+    .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+    .pdf-parts-table th { background: #f1f5f9; text-align: left; }
+    .pdf-img-block {
+      margin-bottom: 12px;
+    }
+    .pdf-img-title {
+      font-size: 13px;
       font-weight: bold;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       color: #1e293b;
     }
-
-    .pdf-diagram-img {
+    .pdf-img-element {
       width: 100%;
-      border: 1px solid #94a3b8;
-      border-radius: 6px;
-      display: block;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <div class="app-container">
     <header class="toolbar">
-      <div class="brand"><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　⚡ <ruby>Circuit<rt>サーキット</rt></ruby> <ruby>Sim<rt>シミュ</rt></ruby></div>
+      <div class="brand">
+        <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
+        <span class="brand-title">⚡ <ruby>Circuit<rt>サーキット</rt></ruby> <ruby>Sim<rt>シミュ</rt></ruby></span>
+      </div>
+
       <div class="mode-tabs">
         <button class="tab-btn active" data-mode="physical">実体配線図</button>
         <button class="tab-btn" data-mode="breadboard">ブレッドボード</button>
         <button class="tab-btn" data-mode="schematic">回路図</button>
       </div>
+
       <div class="action-buttons">
-        <button id="btn-power" class="btn btn-power-off">🔌 電源 OFF</button>
-        <button id="btn-undo" class="btn btn-icon">↩️</button>
-        <button id="btn-redo" class="btn btn-icon">↪️</button>
-        <button id="btn-delete" class="btn btn-danger">🗑️ 削除</button>
-        <button id="btn-clear" class="btn btn-warning">🧹 リセット</button>
-        <button id="btn-export-pdf" class="btn btn-primary">📄 PDF出力</button>
+        <button id="btn-power" class="btn btn-power-off" title="電源">
+          <span class="icon">🔌</span><span class="btn-text">電源 OFF</span>
+        </button>
+        <button id="btn-undo" class="btn btn-icon" title="元に戻す">
+          <span class="icon">↩️</span>
+        </button>
+        <button id="btn-redo" class="btn btn-icon" title="やり直す">
+          <span class="icon">↪️</span>
+        </button>
+        <button id="btn-delete" class="btn btn-danger" title="削除">
+          <span class="icon">🗑️</span><span class="btn-text">削除</span>
+        </button>
+        <button id="btn-clear" class="btn btn-warning" title="リセット">
+          <span class="icon">🧹</span><span class="btn-text">リセット</span>
+        </button>
+        <button id="btn-export-pdf" class="btn btn-primary" title="PDF保存">
+          <span class="icon">📄</span><span class="btn-text">PDF保存</span>
+        </button>
       </div>
     </header>
 
-    <div class="main-content">
-      <aside class="palette">
-        <h3>パーツ</h3>
-        <p class="help-text">キャンバスへドラッグ＆ドロップ</p>
-        <div class="palette-items">
-          <div class="palette-item" data-type="battery">🔋 乾電池</div>
-          <div class="palette-item" data-type="resistor">⚡ 抵抗器</div>
-          <div class="palette-item" data-type="switch">🔘 スイッチ</div>
-          <div class="palette-item" data-type="led">💡 LED</div>
-          <div class="palette-item" data-type="motor">⚙️ モーター</div>
-        </div>
-      </aside>
+    <div class="palette-bar">
+      <h3>パーツ:</h3>
+      <div class="palette-items">
+        <div class="palette-item" draggable="true" data-type="battery">🔋 乾電池</div>
+        <div class="palette-item" draggable="true" data-type="resistor">⚡ 抵抗器</div>
+        <div class="palette-item" draggable="true" data-type="switch">🔘 スイッチ</div>
+        <div class="palette-item" draggable="true" data-type="led">💡 LED</div>
+        <div class="palette-item" draggable="true" data-type="motor">⚙️ モーター</div>
+      </div>
+      <span class="help-text">（ドラッグ＆ドロップで配置）</span>
+    </div>
 
+    <div class="main-content">
       <main class="canvas-container" id="canvas-container">
         <div class="mode-badge" id="mode-indicator">表示モード: 実体配線図</div>
         <div id="property-toolbar" class="property-toolbar hidden"></div>
@@ -468,33 +574,49 @@
   <div id="pdf-modal" class="modal hidden">
     <div class="modal-content">
       <h3>📄 実験レポート PDF出力</h3>
-      <form id="pdf-form" style="margin-top:14px;">
-        <div class="form-group">
-          <label>タイトル</label>
-          <input type="text" id="pdf-title" value="電子回路実験レポート">
-        </div>
-        <div class="form-group">
-          <label>クラス・組</label>
-          <input type="text" id="pdf-class-name" placeholder="例: 2年A組">
-        </div>
-        <div class="form-group">
-          <label>氏名</label>
-          <input type="text" id="pdf-student-name" placeholder="例: 山田 太郎">
-        </div>
-        <div class="form-group">
-          <label>考察・メモ</label>
-          <textarea id="pdf-memo" rows="3" placeholder="実験結果や気づいた点を入力..."></textarea>
+      <form id="pdf-form" style="margin-top:12px;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>学年</label>
+            <input type="text" id="pdf-grade" placeholder="例: 2年">
+          </div>
+          <div class="form-group">
+            <label>クラス</label>
+            <input type="text" id="pdf-class-name" placeholder="例: A組">
+          </div>
+          <div class="form-group">
+            <label>出席番号</label>
+            <input type="number" id="pdf-student-no" placeholder="例: 15">
+          </div>
+          <div class="form-group">
+            <label>氏名</label>
+            <input type="text" id="pdf-student-name" placeholder="例: 山田 太郎">
+          </div>
+          <div class="form-group full">
+            <label>出力する図（チェックを入れたものが出力されます）</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label"><input type="checkbox" id="chk-physical" checked> 実体配線図</label>
+              <label class="checkbox-label"><input type="checkbox" id="chk-breadboard"> ブレッドボード図</label>
+              <label class="checkbox-label"><input type="checkbox" id="chk-schematic"> 回路図</label>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>考察・メモ</label>
+            <textarea id="pdf-memo" rows="3" placeholder="実験結果や気づいた点を入力..."></textarea>
+          </div>
         </div>
         <div class="modal-actions">
           <button type="button" id="btn-modal-cancel" class="btn btn-icon">キャンセル</button>
-          <button type="submit" class="btn btn-primary">印刷 / PDF保存</button>
+          <button type="submit" id="btn-modal-download" class="btn btn-primary">PDFダウンロード保存</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- PDFレンダリング専用 скрытый コンテナ -->
+  <div id="pdf-render-container"></div>
+
   <script>
-    // カラーコードマップ
     const COLOR_CODE_MAP = [
       { digit: 0, color: '#000000' },
       { digit: 1, color: '#8B4513' },
@@ -528,7 +650,6 @@
       return [color1, color2, color3, color4];
     }
 
-    // 抵抗値フォーマット（1000 -> 1kΩ, 1000000 -> 1MΩ）
     function formatResistance(res) {
       if (!res || res <= 0) return '0Ω';
       if (res >= 1000000) {
@@ -558,9 +679,6 @@
         this.connectingStart = null;
         this.tempWirePos = null;
 
-        this.draggingPaletteType = null;
-
-        // 範囲選択状態
         this.selectionBox = null;
 
         this.initElements();
@@ -622,40 +740,67 @@
           if (e.ctrlKey && e.key === 'y') { e.preventDefault(); this.redo(); }
         });
 
-        // パレットドラッグ
         document.querySelectorAll('.palette-item').forEach(item => {
-          item.addEventListener('pointerdown', (e) => {
-            this.draggingPaletteType = item.dataset.type;
-            const names = { battery: '🔋 乾電池', resistor: '⚡ 抵抗器', switch: '🔘 スイッチ', led: '💡 LED', motor: '⚙️ モーター' };
-            this.dragGhost.textContent = names[this.draggingPaletteType];
-            this.dragGhost.style.left = `${e.clientX}px`;
-            this.dragGhost.style.top = `${e.clientY}px`;
-            this.dragGhost.classList.remove('hidden');
-            item.setPointerCapture(e.pointerId);
+          item.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', item.dataset.type);
+            e.dataTransfer.effectAllowed = 'copy';
           });
 
-          item.addEventListener('pointermove', (e) => {
-            if (this.draggingPaletteType) {
-              this.dragGhost.style.left = `${e.clientX}px`;
-              this.dragGhost.style.top = `${e.clientY}px`;
-            }
-          });
-
-          item.addEventListener('pointerup', (e) => {
-            if (!this.draggingPaletteType) return;
-            this.dragGhost.classList.add('hidden');
+          item.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            const type = item.dataset.type;
             
+            this.dragGhost.textContent = item.textContent;
+            this.dragGhost.style.left = `${touch.clientX}px`;
+            this.dragGhost.style.top = `${touch.clientY}px`;
+            this.dragGhost.classList.remove('hidden');
+
+            const onTouchMove = (moveEvt) => {
+              moveEvt.preventDefault();
+              const moveTouch = moveEvt.touches[0];
+              this.dragGhost.style.left = `${moveTouch.clientX}px`;
+              this.dragGhost.style.top = `${moveTouch.clientY}px`;
+            };
+
+            const onTouchEnd = (endEvt) => {
+              window.removeEventListener('touchmove', onTouchMove);
+              window.removeEventListener('touchend', onTouchEnd);
+              this.dragGhost.classList.add('hidden');
+
+              const lastTouch = endEvt.changedTouches[0];
+              const rect = this.canvasContainer.getBoundingClientRect();
+              
+              if (
+                lastTouch.clientX >= rect.left &&
+                lastTouch.clientX <= rect.right &&
+                lastTouch.clientY >= rect.top &&
+                lastTouch.clientY <= rect.bottom
+              ) {
+                const x = lastTouch.clientX - rect.left;
+                const y = lastTouch.clientY - rect.top;
+                this.addComponent(type, x, y);
+              }
+            };
+
+            window.addEventListener('touchmove', onTouchMove, { passive: false });
+            window.addEventListener('touchend', onTouchEnd);
+          }, { passive: true });
+        });
+
+        this.canvasContainer.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        });
+
+        this.canvasContainer.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const type = e.dataTransfer.getData('text/plain');
+          if (type) {
             const rect = this.canvasContainer.getBoundingClientRect();
-            if (
-              e.clientX >= rect.left && e.clientX <= rect.right &&
-              e.clientY >= rect.top && e.clientY <= rect.bottom
-            ) {
-              let x = e.clientX - rect.left;
-              let y = e.clientY - rect.top;
-              this.addComponent(this.draggingPaletteType, x, y);
-            }
-            this.draggingPaletteType = null;
-          });
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            this.addComponent(type, x, y);
+          }
         });
 
         this.svg.addEventListener('pointermove', (e) => {
@@ -666,7 +811,6 @@
           }
         });
 
-        // キャンバスの背景クリック＆ドラッグによる「範囲選択」
         this.svg.addEventListener('pointerdown', (e) => {
           if (e.target.tagName === 'svg') {
             const rect = this.svg.getBoundingClientRect();
@@ -687,8 +831,8 @@
               if (Math.abs(curX - startX) > 5 || Math.abs(curY - startY) > 5) {
                 isSelecting = true;
                 this.selectionBox = {
-                  x: Math.min(startX, curX),
-                  y: Math.max(startX, curX),
+                  x1: Math.min(startX, curX),
+                  x2: Math.max(startX, curX),
                   y1: Math.min(startY, curY),
                   y2: Math.max(startY, curY)
                 };
@@ -696,7 +840,7 @@
               }
             };
 
-            const onPointerUp = (upEvt) => {
+            const onPointerUp = () => {
               window.removeEventListener('pointermove', onPointerMove);
               window.removeEventListener('pointerup', onPointerUp);
 
@@ -705,16 +849,14 @@
                 this.selectedComponentIds.clear();
                 this.selectedWireId = null;
 
-                // 範囲内の全パーツを選択
                 this.components.forEach(comp => {
                   const pos = this.getCompPos(comp);
-                  if (pos.x >= box.x && pos.x <= box.y && pos.y >= box.y1 && pos.y <= box.y2) {
+                  if (pos.x >= box.x1 && pos.x <= box.x2 && pos.y >= box.y1 && pos.y <= box.y2) {
                     this.selectedComponentIds.add(comp.id);
                   }
                 });
                 this.selectionBox = null;
               } else {
-                // クリックのみの場合は選択解除
                 this.selectedComponentIds.clear();
                 this.selectedWireId = null;
                 this.selectionBox = null;
@@ -730,9 +872,9 @@
         document.getElementById('btn-modal-cancel').addEventListener('click', () => {
           document.getElementById('pdf-modal').classList.add('hidden');
         });
-        document.getElementById('pdf-form').addEventListener('submit', (e) => {
+        document.getElementById('pdf-form').addEventListener('submit', async (e) => {
           e.preventDefault();
-          this.generatePDF();
+          await this.generatePDFDirectDownload();
         });
       }
 
@@ -830,6 +972,7 @@
         });
       }
 
+      /* 極性反転処理（配線付け替え機能付き） */
       flipSelectedComponent() {
         if (this.selectedComponentIds.size === 0) return;
         this.selectedComponentIds.forEach(id => {
@@ -837,6 +980,16 @@
           if (comp) {
             comp.flipped = !comp.flipped;
             comp.terminals = this.generateTerminals(comp.id, comp.type, comp.flipped, comp.rotation || 0);
+
+            // 接続中の配線端子も物理的位置に合わせて付け替え
+            this.wires.forEach(wire => {
+              if (wire.fromCompId === comp.id) {
+                wire.fromTermId = (wire.fromTermId === comp.id + '_t1') ? comp.id + '_t2' : comp.id + '_t1';
+              }
+              if (wire.toCompId === comp.id) {
+                wire.toTermId = (wire.toTermId === comp.id + '_t1') ? comp.id + '_t2' : comp.id + '_t1';
+              }
+            });
           }
         });
         this.saveState();
@@ -949,10 +1102,9 @@
         }
       }
 
-      // 修正: 電圧・抵抗値に応じた動作パラメータ（電流・輝度・速度）の厳密算出
       evaluateCircuit() {
         const activeMap = new Map();
-        const currentMap = new Map(); // コンポーネントごとの電流値を格納
+        const currentMap = new Map();
 
         this.components.forEach(c => {
           activeMap.set(c.id, false);
@@ -1008,21 +1160,19 @@
         const posReachable = this.findAllPathsFrom(posTerm.id, adj);
         const negReachable = this.findAllPathsFrom(negTerm.id, adj);
 
-        // 回路内の総抵抗値を算定 (オームの法則: I = V / R)
         let totalResistance = 0;
         this.components.forEach(c => {
           if (c.type === 'resistor') {
             totalResistance += (c.resistance || 100);
           } else if (c.type === 'led') {
-            totalResistance += 20; // Internal standard resistance
+            totalResistance += 20;
           } else if (c.type === 'motor') {
             totalResistance += 30;
           }
         });
 
-        if (totalResistance === 0) totalResistance = 0.1; // ショート回避・極小抵抗
+        if (totalResistance === 0) totalResistance = 0.1;
 
-        // ショート判定
         if (posReachable.terms.has(negTerm.id)) {
           const path = this.findShortestPath(posTerm.id, negTerm.id, adj);
           if (path) {
@@ -1038,7 +1188,7 @@
           }
         }
 
-        const circuitCurrent = totalVoltage / totalResistance; // 電流 A
+        const circuitCurrent = totalVoltage / totalResistance;
 
         let activeCount = 0;
         this.components.forEach(comp => {
@@ -1137,7 +1287,6 @@
           this.renderBreadboardBackground();
         }
 
-        // 配線の描画
         this.wires.forEach(wire => {
           const p1 = this.getTerminalPos(wire.fromCompId, wire.fromTermId);
           const p2 = this.getTerminalPos(wire.toCompId, wire.toTermId);
@@ -1215,25 +1364,22 @@
           }
         }
 
-        // ラバーバンド（範囲選択ボックス）の描画
         if (this.selectionBox) {
           const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-          rect.setAttribute('x', this.selectionBox.x);
+          rect.setAttribute('x', this.selectionBox.x1);
           rect.setAttribute('y', this.selectionBox.y1);
-          rect.setAttribute('width', this.selectionBox.y - this.selectionBox.x);
+          rect.setAttribute('width', this.selectionBox.x2 - this.selectionBox.x1);
           rect.setAttribute('height', this.selectionBox.y2 - this.selectionBox.y1);
           rect.setAttribute('class', 'rubberband-rect');
           this.svg.appendChild(rect);
         }
 
-        // 部品の描画
         this.components.forEach(comp => {
           const pos = this.getCompPos(comp);
           const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
           g.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
           g.setAttribute('class', 'component-group');
 
-          // 選択されたパーツへのハイライト表示
           if (this.selectedComponentIds.has(comp.id)) {
             const selRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             selRect.setAttribute('x', -55); selRect.setAttribute('y', -30);
@@ -1288,7 +1434,6 @@
             g.appendChild(circle);
           });
 
-          // 修正: 複数パーツ選択時の一括移動機能
           g.addEventListener('pointerdown', (e) => {
             if (e.target.classList.contains('terminal')) return;
             e.stopPropagation();
@@ -1312,7 +1457,6 @@
             const startX = e.clientX;
             const startY = e.clientY;
 
-            // 選択されたすべての部品の初期位置を保存
             const initialPositions = new Map();
             this.selectedComponentIds.forEach(id => {
               const targetComp = this.components.find(c => c.id === id);
@@ -1359,7 +1503,6 @@
         this.updatePropertyToolbar();
       }
 
-      // 修正: 電流に応じたLED輝度・モーター速度制御、および単位表記
       renderComponentBody(g, comp, isWorking, current) {
         const mode = this.mode;
 
@@ -1388,7 +1531,6 @@
                             <text x="-15" y="4" fill="#9ca3af" font-size="11">${vText}</text>`;
           }
         } else if (comp.type === 'resistor') {
-          // 修正: 抵抗値の単位表記フォーマット (kΩ, MΩ)
           const rText = formatResistance(comp.resistance);
           const colors = getResistorColorCodes(comp.resistance);
 
@@ -1408,14 +1550,12 @@
                             <text x="-22" y="24" font-size="11" font-weight="bold" fill="#374151">${rText}</text>`;
           }
         } else if (comp.type === 'led') {
-          // 修正: 電流に応じたLED点灯率（輝度・グロー効果）のリアルタイム変化
           let opacity = 0.3;
           let glowRadius = 0;
           let activeColor = '#6b7280';
 
           if (isWorking) {
             activeColor = '#ef4444';
-            // 電流値（0.001A〜0.05A）に応じて透明度0.4〜1.0、発光半径5px〜20pxを計算
             const factor = Math.min(Math.max(current / 0.03, 0.2), 1.5);
             opacity = Math.min(0.4 + factor * 0.6, 1.0);
             glowRadius = Math.round(5 + factor * 12);
@@ -1458,10 +1598,8 @@
                             <text x="-18" y="26" font-size="11" font-weight="bold" fill="#374151">${comp.state ? 'スイッチON' : 'スイッチOFF'}</text>`;
           }
         } else if (comp.type === 'motor') {
-          // 修正: 電流に応じたモーター回転速度の動的変化 (CSS animation-duration)
           let durationSec = 1.0;
           if (isWorking) {
-            // 電流が高いほど高速回転（0.5s 〜 0.05s）
             const factor = Math.min(Math.max(current / 0.03, 0.2), 2.0);
             durationSec = (0.6 / factor).toFixed(2);
           }
@@ -1543,7 +1681,6 @@
           return;
         }
 
-        // 単一選択時のみ詳細パラメータツールバーを表示
         if (this.selectedComponentIds.size > 1) {
           this.propToolbar.innerHTML = `<span style="font-size:0.85rem; font-weight:bold; color:#2563eb;">${this.selectedComponentIds.size} 個のパーツを選択中</span>`;
           
@@ -1556,7 +1693,6 @@
           btnDel.onclick = () => this.deleteSelected();
           this.propToolbar.appendChild(btnDel);
 
-          // 一括選択の中心位置にツールバーを表示
           let sumX = 0, sumY = 0;
           this.selectedComponentIds.forEach(id => {
             const c = this.components.find(comp => comp.id === id);
@@ -1708,89 +1844,142 @@
       }
 
       openPdfModal() {
-        const modal = document.getElementById('pdf-modal');
-        if (modal) modal.classList.remove('hidden');
+        document.getElementById('pdf-modal').classList.remove('hidden');
       }
 
-      generatePDF() {
-        const studentName = document.getElementById('pdf-student-name').value || '未入力';
-        const className = document.getElementById('pdf-class-name').value || '未入力';
-        const reportTitle = document.getElementById('pdf-title').value || '電子回路実験レポート';
-        const memo = document.getElementById('pdf-memo').value || '';
-
-        const pdfContainer = document.createElement('div');
-        pdfContainer.className = 'pdf-hidden-container';
+      /* 指定モードの画像DataURLを取得する補助関数 */
+      async captureCanvasImageForMode(mode) {
+        const originalMode = this.mode;
+        this.mode = mode;
+        this.render();
 
         const svgData = new XMLSerializer().serializeToString(this.svg);
         const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
         const URL = window.URL || window.webkitURL || window;
         const blobURL = URL.createObjectURL(svgBlob);
 
-        const partsCount = {};
-        this.components.forEach(c => {
-          const names = { battery: '乾電池', resistor: '抵抗器', switch: 'スイッチ', led: 'LED', motor: 'モーター' };
-          const name = names[c.type] || c.type;
-          partsCount[name] = (partsCount[name] || 0) + 1;
+        const img = new Image();
+        img.src = blobURL;
+
+        await new Promise((resolve) => {
+          img.onload = resolve;
         });
 
-        let partsRows = '';
-        for (const [name, count] of Object.entries(partsCount)) {
-          partsRows += `<tr><td>${name}</td><td>${count} 個</td></tr>`;
-        }
+        const canvas = document.createElement('canvas');
+        canvas.width = this.svg.clientWidth || 800;
+        canvas.height = this.svg.clientHeight || 500;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
 
-        pdfContainer.innerHTML = `
-          <div class="pdf-report-title">${reportTitle}</div>
-          <table class="pdf-info-table">
-            <tr>
-              <td><strong>クラス/組:</strong> ${className}</td>
-              <td><strong>氏名:</strong> ${studentName}</td>
-              <td><strong>作成日:</strong> ${new Date().toLocaleDateString('ja-JP')}</td>
-            </tr>
-          </table>
-          
-          <div class="pdf-diagram-col-full">
-            <div class="pdf-diagram-title">■ 回路構成図 (${this.modeIndicator.textContent})</div>
-            <img src="${blobURL}" class="pdf-diagram-img" />
-          </div>
+        URL.revokeObjectURL(blobURL);
 
-          <div class="pdf-diagram-title">■ 使用パーツ一覧</div>
-          <table class="pdf-parts-table">
-            <thead><tr><th>パーツ名</th><th>数量</th></tr></thead>
-            <tbody>${partsRows || '<tr><td colspan="2">使用パーツなし</td></tr>'}</tbody>
-          </table>
+        // 元のモードに戻す
+        this.mode = originalMode;
+        this.render();
 
-          ${memo ? `<div class="pdf-diagram-title">■ 考察・メモ</div><p style="font-size:12px; white-space:pre-wrap; border:1px solid #cbd5e1; padding:8px; border-radius:4px;">${memo}</p>` : ''}
-        `;
+        return canvas.toDataURL('image/png');
+      }
 
-        document.body.appendChild(pdfContainer);
+      /* 印刷を挟まない直接PDFファイル保存処理 */
+      async generatePDFDirectDownload() {
+        const submitBtn = document.getElementById('btn-modal-download');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'PDF生成中...';
 
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>${reportTitle}</title>
-              <style>
-                body { font-family: sans-serif; padding: 20px; }
-                .pdf-report-title { font-size: 20px; font-weight: bold; border-bottom: 2px solid #2563eb; padding-bottom: 5px; margin-bottom: 10px; }
-                .pdf-info-table, .pdf-parts-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td { border: 1px solid #cbd5e1; padding: 6px; font-size: 12px; }
-                .pdf-parts-table th { background: #f1f5f9; }
-                .pdf-diagram-img { width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #94a3b8; }
-                .pdf-diagram-title { font-size: 13px; font-weight: bold; margin: 10px 0 5px 0; }
-              </style>
-            </head>
-            <body>${pdfContainer.innerHTML}</body>
-          </html>
-        `);
-        printWindow.document.close();
+        try {
+          const grade = document.getElementById('pdf-grade').value || '-';
+          const className = document.getElementById('pdf-class-name').value || '-';
+          const studentNo = document.getElementById('pdf-student-no').value || '-';
+          const studentName = document.getElementById('pdf-student-name').value || '未入力';
+          const memo = document.getElementById('pdf-memo').value || '';
 
-        setTimeout(() => {
-          printWindow.focus();
-          printWindow.print();
-          printWindow.close();
-          document.body.removeChild(pdfContainer);
+          const chkPhysical = document.getElementById('chk-physical').checked;
+          const chkBreadboard = document.getElementById('chk-breadboard').checked;
+          const chkSchematic = document.getElementById('chk-schematic').checked;
+
+          // 使用パーツ集計
+          const partsCount = {};
+          this.components.forEach(c => {
+            const names = { battery: '乾電池', resistor: '抵抗器', switch: 'スイッチ', led: 'LED', motor: 'モーター' };
+            const name = names[c.type] || c.type;
+            partsCount[name] = (partsCount[name] || 0) + 1;
+          });
+
+          let partsRows = '';
+          for (const [name, count] of Object.entries(partsCount)) {
+            partsRows += `<tr><td>${name}</td><td>${count} 個</td></tr>`;
+          }
+          if (!partsRows) partsRows = '<tr><td colspan="2">使用パーツなし</td></tr>';
+
+          // チェックが入ったモード画像を連続取得
+          const imageBlocks = [];
+          if (chkPhysical) {
+            const imgData = await this.captureCanvasImageForMode('physical');
+            imageBlocks.push({ title: '■ 実体配線図', src: imgData });
+          }
+          if (chkBreadboard) {
+            const imgData = await this.captureCanvasImageForMode('breadboard');
+            imageBlocks.push({ title: '■ ブレッドボード図', src: imgData });
+          }
+          if (chkSchematic) {
+            const imgData = await this.captureCanvasImageForMode('schematic');
+            imageBlocks.push({ title: '■ 回路図', src: imgData });
+          }
+
+          // DOMの組み立て
+          const container = document.getElementById('pdf-render-container');
+          container.innerHTML = `
+            <div class="pdf-page-title">電子回路実験レポート</div>
+            <table class="pdf-info-table">
+              <tr>
+                <td><strong>学年:</strong> ${grade}</td>
+                <td><strong>クラス:</strong> ${className}</td>
+                <td><strong>出席番号:</strong> ${studentNo}</td>
+                <td><strong>氏名:</strong> ${studentName}</td>
+              </tr>
+            </table>
+
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px;">■ 使用パーツ一覧</div>
+            <table class="pdf-parts-table">
+              <thead><tr><th>パーツ名</th><th>数量</th></tr></thead>
+              <tbody>${partsRows}</tbody>
+            </table>
+
+            ${imageBlocks.map(item => `
+              <div class="pdf-img-block">
+                <div class="pdf-img-title">${item.title}</div>
+                <img src="${item.src}" class="pdf-img-element" />
+              </div>
+            `).join('')}
+
+            ${memo ? `
+              <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px;">■ 考察・メモ</div>
+              <div style="font-size: 12px; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; white-space: pre-wrap;">${memo}</div>
+            ` : ''}
+          `;
+
+          // html2canvas & jsPDF による直接保存
+          const canvas = await html2canvas(container, { scale: 2 });
+          const imgData = canvas.toDataURL('image/png');
+
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save('circuit_report.pdf');
+
           document.getElementById('pdf-modal').classList.add('hidden');
-        }, 500);
+        } catch (err) {
+          console.error('PDF生成処理エラー:', err);
+          alert('PDFの出力中にエラーが発生しました。');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'PDFダウンロード保存';
+        }
       }
     }
 
