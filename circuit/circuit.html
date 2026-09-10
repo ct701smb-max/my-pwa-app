@@ -128,7 +128,6 @@
       white-space: nowrap;
     }
 
-    /* --- スライド・スマホ操作強化版パーツバー --- */
     .palette-bar {
       display: flex;
       align-items: center;
@@ -415,15 +414,16 @@
       justify-content: center;
       align-items: center;
       z-index: 100;
+      padding: 12px;
     }
     .modal.hidden { display: none; }
 
     .modal-content {
       background: white;
-      padding: 24px;
+      padding: 20px;
       border-radius: 12px;
       width: 480px;
-      max-width: 90vw;
+      max-width: 100%;
       max-height: 90vh;
       overflow-y: auto;
       box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -435,7 +435,7 @@
       gap: 10px;
     }
 
-    .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .form-group { margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; }
     .form-group.full { grid-column: span 2; }
     
     label { font-size: 0.85rem; font-weight: bold; color: #374151; }
@@ -444,6 +444,7 @@
       border: 1px solid #d1d5db;
       border-radius: 6px;
       font-size: 0.9rem;
+      width: 100%;
     }
 
     .checkbox-group {
@@ -462,6 +463,27 @@
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 
+    /* スマホ向けモーダルレスポンシブ対応 */
+    @media (max-width: 480px) {
+      .modal-content {
+        padding: 16px;
+        border-radius: 10px;
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-group.full {
+        grid-column: span 1;
+      }
+      .modal-actions {
+        flex-direction: column-reverse;
+      }
+      .modal-actions .btn {
+        width: 100%;
+        padding: 10px;
+      }
+    }
+
     /* PDF描画用非表示コンテナ */
     #pdf-render-container {
       position: absolute;
@@ -469,40 +491,43 @@
       top: -9999px;
       width: 700px;
       background: white;
-      padding: 20px;
+      padding: 16px;
       box-sizing: border-box;
     }
     .pdf-page-title {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
       border-bottom: 2px solid #2563eb;
-      padding-bottom: 6px;
-      margin-bottom: 12px;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
     }
     .pdf-info-table, .pdf-parts-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td {
       border: 1px solid #cbd5e1;
-      padding: 6px 8px;
-      font-size: 12px;
+      padding: 4px 6px;
+      font-size: 11px;
     }
     .pdf-parts-table th { background: #f1f5f9; text-align: left; }
     .pdf-img-block {
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .pdf-img-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       color: #1e293b;
     }
     .pdf-img-element {
       width: 100%;
+      max-height: 230px;
+      object-fit: contain;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
+      background: #ffffff;
     }
   </style>
 </head>
@@ -613,7 +638,7 @@
     </div>
   </div>
 
-  <!-- PDFレンダリング専用 скрытый コンテナ -->
+  <!-- PDFレンダリング専用 非表示コンテナ -->
   <div id="pdf-render-container"></div>
 
   <script>
@@ -972,7 +997,6 @@
         });
       }
 
-      /* 極性反転処理（配線付け替え機能付き） */
       flipSelectedComponent() {
         if (this.selectedComponentIds.size === 0) return;
         this.selectedComponentIds.forEach(id => {
@@ -981,7 +1005,6 @@
             comp.flipped = !comp.flipped;
             comp.terminals = this.generateTerminals(comp.id, comp.type, comp.flipped, comp.rotation || 0);
 
-            // 接続中の配線端子も物理的位置に合わせて付け替え
             this.wires.forEach(wire => {
               if (wire.fromCompId === comp.id) {
                 wire.fromTermId = (wire.fromTermId === comp.id + '_t1') ? comp.id + '_t2' : comp.id + '_t1';
@@ -1102,6 +1125,7 @@
         }
       }
 
+      /* 直列・並列回路の適正評価処理（並列時の一括点灯バグを修正） */
       evaluateCircuit() {
         const activeMap = new Map();
         const currentMap = new Map();
@@ -1124,151 +1148,132 @@
 
         const totalVoltage = batteries.reduce((sum, b) => sum + (b.voltage || 1.5), 0);
 
-        const buildGraph = () => {
-          const adj = new Map();
-          this.wires.forEach(w => {
-            if (!adj.has(w.fromTermId)) adj.set(w.fromTermId, []);
-            if (!adj.has(w.toTermId)) adj.set(w.toTermId, []);
-            adj.get(w.fromTermId).push({ nextTermId: w.toTermId, comp: null });
-            adj.get(w.toTermId).push({ nextTermId: w.fromTermId, comp: null });
-          });
+        // 閉回路パスの全探索 (並列分岐対応)
+        const validPaths = [];
+        let isShortCircuit = false;
 
-          this.components.forEach(comp => {
-            if (comp.type === 'battery') return;
-            if (comp.type === 'switch' && !comp.state) return;
+        batteries.forEach(bat => {
+          const posTerm = bat.terminals.find(t => t.polarity === 'pos');
+          const negTerm = bat.terminals.find(t => t.polarity === 'neg');
+          if (!posTerm || !negTerm) return;
 
-            const terms = comp.terminals;
-            for (let i = 0; i < terms.length; i++) {
-              for (let j = i + 1; j < terms.length; j++) {
-                const t1 = terms[i].id;
-                const t2 = terms[j].id;
-                if (!adj.has(t1)) adj.set(t1, []);
-                if (!adj.has(t2)) adj.set(t2, []);
-                adj.get(t1).push({ nextTermId: t2, comp: comp });
-                adj.get(t2).push({ nextTermId: t1, comp: comp });
-              }
+          const tracePath = (currentTermId, currentPath, visitedWires, visitedComps) => {
+            if (currentTermId === negTerm.id && currentPath.length > 0) {
+              validPaths.push([...currentPath]);
+              return;
             }
-          });
-          return adj;
-        };
 
-        const adj = buildGraph();
-        const battery = batteries[0];
-        const posTerm = battery.terminals.find(t => t.polarity === 'pos');
-        const negTerm = battery.terminals.find(t => t.polarity === 'neg');
+            const connWires = this.wires.filter(w => 
+              (w.fromTermId === currentTermId || w.toTermId === currentTermId) && !visitedWires.has(w.id)
+            );
 
-        const posReachable = this.findAllPathsFrom(posTerm.id, adj);
-        const negReachable = this.findAllPathsFrom(negTerm.id, adj);
+            connWires.forEach(wire => {
+              visitedWires.add(wire.id);
+              const nextTermId = (wire.fromTermId === currentTermId) ? wire.toTermId : wire.fromTermId;
+              const nextComp = this.components.find(c => c.terminals.some(t => t.id === nextTermId));
 
-        let totalResistance = 0;
-        this.components.forEach(c => {
-          if (c.type === 'resistor') {
-            totalResistance += (c.resistance || 100);
-          } else if (c.type === 'led') {
-            totalResistance += 20;
-          } else if (c.type === 'motor') {
-            totalResistance += 30;
-          }
-        });
+              if (nextComp) {
+                if (nextComp.type === 'battery') {
+                  if (nextTermId === negTerm.id) {
+                    tracePath(nextTermId, currentPath, visitedWires, visitedComps);
+                  }
+                } else if (!visitedComps.has(nextComp.id)) {
+                  const inTerm = nextComp.terminals.find(t => t.id === nextTermId);
+                  let canPass = true;
+                  let outTerm = null;
 
-        if (totalResistance === 0) totalResistance = 0.1;
+                  if (nextComp.type === 'switch' && !nextComp.state) {
+                    canPass = false;
+                  } else if (nextComp.type === 'led') {
+                    if (inTerm.polarity === 'pos') {
+                      outTerm = nextComp.terminals.find(t => t.polarity === 'neg');
+                    } else {
+                      canPass = false; // 逆バイアス
+                    }
+                  } else {
+                    outTerm = nextComp.terminals.find(t => t.id !== inTerm.id);
+                  }
 
-        if (posReachable.terms.has(negTerm.id)) {
-          const path = this.findShortestPath(posTerm.id, negTerm.id, adj);
-          if (path) {
-            let pathRes = 0;
-            path.comps.forEach(c => {
-              if (c.type === 'resistor') pathRes += (c.resistance || 100);
-              if (c.type === 'led' || c.type === 'motor') pathRes += 10;
+                  if (canPass && outTerm) {
+                    const nextVisited = new Set(visitedComps).add(nextComp.id);
+                    tracePath(outTerm.id, [...currentPath, nextComp], visitedWires, nextVisited);
+                  }
+                }
+              } else {
+                tracePath(nextTermId, currentPath, visitedWires, visitedComps);
+              }
+
+              visitedWires.delete(wire.id);
             });
-            if (pathRes === 0) {
-              this.setStatus('error', '💥', 'ショート（短絡）しています！電池が高熱になる危険があります！');
-              return { status: 'SHORT', activeMap, currentMap };
-            }
-          }
-        }
+          };
 
-        const circuitCurrent = totalVoltage / totalResistance;
-
-        let activeCount = 0;
-        this.components.forEach(comp => {
-          if (comp.type === 'battery' || comp.type === 'switch') return;
-
-          const t1 = comp.terminals[0].id;
-          const t2 = comp.terminals[1].id;
-
-          const routeA = posReachable.terms.has(t1) && negReachable.terms.has(t2);
-          const routeB = posReachable.terms.has(t2) && negReachable.terms.has(t1);
-
-          if (routeA || routeB) {
-            if (comp.type === 'led') {
-              const anodeId = comp.terminals.find(t => t.polarity === 'pos').id;
-              if (posReachable.terms.has(anodeId)) {
-                activeMap.set(comp.id, true);
-                currentMap.set(comp.id, circuitCurrent);
-                activeCount++;
-              }
-            } else {
-              activeMap.set(comp.id, true);
-              currentMap.set(comp.id, circuitCurrent);
-              activeCount++;
-            }
-          }
+          tracePath(posTerm.id, [], new Set(), new Set());
         });
 
-        if (activeCount > 0) {
-          const ma = (circuitCurrent * 1000).toFixed(1);
-          this.setStatus('success', '✅', `回路動作中 (電圧: ${totalVoltage.toFixed(1)}V, 電流: ${ma}mA)`);
-          return { status: 'OK', activeMap, currentMap };
-        } else {
+        if (validPaths.length === 0) {
           const switches = this.components.filter(c => c.type === 'switch');
           if (switches.some(s => !s.state)) {
             this.setStatus('warning', '🔘', 'スイッチがオフになっているか、回路が未完成です。');
           } else {
-            this.setStatus('error', '⚡', '回路がつながっていません（断線）。配線を確認してください。');
+            this.setStatus('error', '⚡', '回路がつながっていないか、LEDの極性が逆です。');
           }
           return { status: 'OPEN', activeMap, currentMap };
         }
-      }
 
-      findAllPathsFrom(startId, adj) {
-        const visitedTerms = new Set([startId]);
-        const visitedComps = new Set();
-        const queue = [startId];
+        // LED1個あたり1.5Vを基準とした点灯評価
+        const VF_PER_LED = 1.5;
+        let anyActive = false;
 
-        while (queue.length > 0) {
-          const curr = queue.shift();
-          const neighbors = adj.get(curr) || [];
-          for (const edge of neighbors) {
-            if (!visitedTerms.has(edge.nextTermId)) {
-              visitedTerms.add(edge.nextTermId);
-              if (edge.comp) visitedComps.add(edge.comp);
-              queue.push(edge.nextTermId);
+        validPaths.forEach(path => {
+          let R_total = 0;
+          let ledCount = 0;
+
+          path.forEach(comp => {
+            if (comp.type === 'resistor') R_total += (comp.resistance || 100);
+            else if (comp.type === 'led') {
+              ledCount++;
+              R_total += 20;
             }
+            else if (comp.type === 'motor') R_total += 30;
+          });
+
+          if (R_total === 0) {
+            isShortCircuit = true;
+            return;
           }
-        }
-        return { terms: visitedTerms, comps: visitedComps };
-      }
 
-      findShortestPath(startId, endId, adj) {
-        const queue = [{ termId: startId, comps: [] }];
-        const visited = new Set([startId]);
+          const pathCurrent = totalVoltage / R_total;
+          
+          // 当該パス（ブランチ）上のLED直列条件: (電源電圧 / 当該パスのLED数) >= 1.5V
+          const isLedVoltageSufficient = (ledCount === 0) || (totalVoltage / ledCount >= VF_PER_LED);
 
-        while (queue.length > 0) {
-          const curr = queue.shift();
-          if (curr.termId === endId) return curr;
-
-          const neighbors = adj.get(curr) || [];
-          for (const edge of neighbors) {
-            if (!visited.has(edge.nextTermId)) {
-              visited.add(edge.nextTermId);
-              const nextComps = [...curr.comps];
-              if (edge.comp && !nextComps.includes(edge.comp)) nextComps.push(edge.comp);
-              queue.push({ termId: edge.nextTermId, comps: nextComps });
+          path.forEach(comp => {
+            if (comp.type === 'led') {
+              if (isLedVoltageSufficient) {
+                activeMap.set(comp.id, true);
+                currentMap.set(comp.id, Math.max(currentMap.get(comp.id) || 0, pathCurrent));
+                anyActive = true;
+              }
+            } else {
+              activeMap.set(comp.id, true);
+              currentMap.set(comp.id, Math.max(currentMap.get(comp.id) || 0, pathCurrent));
+              anyActive = true;
             }
-          }
+          });
+        });
+
+        if (isShortCircuit) {
+          this.setStatus('error', '💥', 'ショート（短絡）しています！電池が高熱になる危険があります！');
+          return { status: 'SHORT', activeMap, currentMap };
         }
-        return null;
+
+        if (anyActive) {
+          this.setStatus('success', '✅', `回路動作中 (供給電圧: ${totalVoltage.toFixed(1)}V)`);
+          return { status: 'OK', activeMap, currentMap };
+        } else {
+          this.setStatus('warning', '💡', `電圧不足です (${totalVoltage.toFixed(1)}V)。LEDを点灯させるには直列数を減らすか電池を追加してください。(1個あたり1.5V必要)`);
+          return { status: 'LOW_VOLTAGE', activeMap, currentMap };
+        }
       }
 
       setStatus(type, icon, msg) {
@@ -1847,14 +1852,22 @@
         document.getElementById('pdf-modal').classList.remove('hidden');
       }
 
-      /* 指定モードの画像DataURLを取得する補助関数 */
-      async captureCanvasImageForMode(mode) {
+      /* 各モードのキャンバス表示をキャプチャ（要素が存在する矩形領域への自動トリミング処理） */
+      async captureCanvasImageForMode(targetMode) {
         const originalMode = this.mode;
-        this.mode = mode;
+        const tempSelComps = new Set(this.selectedComponentIds);
+        const tempSelWire = this.selectedWireId;
+
+        // 選択表示等を一時解除して対象モードを描画
+        this.selectedComponentIds.clear();
+        this.selectedWireId = null;
+        this.mode = targetMode;
         this.render();
 
-        const svgData = new XMLSerializer().serializeToString(this.svg);
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const svgClone = this.svg.cloneNode(true);
+        svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        const svgString = new XMLSerializer().serializeToString(svgClone);
+        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
         const URL = window.URL || window.webkitURL || window;
         const blobURL = URL.createObjectURL(svgBlob);
 
@@ -1865,24 +1878,89 @@
           img.onload = resolve;
         });
 
-        const canvas = document.createElement('canvas');
-        canvas.width = this.svg.clientWidth || 800;
-        canvas.height = this.svg.clientHeight || 500;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
+        const fullWidth = this.svg.clientWidth || 800;
+        const fullHeight = this.svg.clientHeight || 500;
 
+        // 全要素（パーツおよび配線端点）が存在する境界ボックスを計算
+        let minX = fullWidth, minY = fullHeight, maxX = 0, maxY = 0;
+
+        if (this.components.length > 0) {
+          this.components.forEach(c => {
+            const p = this.getCompPos(c);
+            minX = Math.min(minX, p.x - 60);
+            maxX = Math.max(maxX, p.x + 60);
+            minY = Math.min(minY, p.y - 40);
+            maxY = Math.max(maxY, p.y + 40);
+          });
+
+          this.wires.forEach(w => {
+            const p1 = this.getTerminalPos(w.fromCompId, w.fromTermId);
+            const p2 = this.getTerminalPos(w.toCompId, w.toTermId);
+            if (p1) {
+              minX = Math.min(minX, p1.x - 20); maxX = Math.max(maxX, p1.x + 20);
+              minY = Math.min(minY, p1.y - 20); maxY = Math.max(maxY, p1.y + 20);
+            }
+            if (p2) {
+              minX = Math.min(minX, p2.x - 20); maxX = Math.max(maxX, p2.x + 20);
+              minY = Math.min(minY, p2.y - 20); maxY = Math.max(maxY, p2.y + 20);
+            }
+          });
+        } else {
+          minX = 0; minY = 0; maxX = fullWidth; maxY = fullHeight;
+        }
+
+        if (targetMode === 'breadboard') {
+          minX = Math.min(minX, 20);
+          minY = Math.min(minY, 20);
+          maxX = Math.max(maxX, 780);
+          maxY = Math.max(maxY, 480);
+        }
+
+        // 境界値のクランプおよび余白確保
+        minX = Math.max(0, Math.floor(minX));
+        minY = Math.max(0, Math.floor(minY));
+        maxX = Math.min(fullWidth, Math.ceil(maxX));
+        maxY = Math.min(fullHeight, Math.ceil(maxY));
+
+        const cropWidth = Math.max(maxX - minX, 100);
+        const cropHeight = Math.max(maxY - minY, 100);
+
+        const canvas = document.createElement('canvas');
+        const scale = 2; // 高解像度レンダリング
+        canvas.width = cropWidth * scale;
+        canvas.height = cropHeight * scale;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, cropWidth, cropHeight);
+
+        // 背景ドットパターン（ブレッドボード以外）
+        if (targetMode !== 'breadboard') {
+          ctx.fillStyle = '#e5e7eb';
+          for (let x = 10 - (minX % 20); x < cropWidth; x += 20) {
+            for (let y = 10 - (minY % 20); y < cropHeight; y += 20) {
+              ctx.beginPath();
+              ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+
+        // 要素領域のみ切り抜いて貼り付け
+        ctx.drawImage(img, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         URL.revokeObjectURL(blobURL);
 
-        // 元のモードに戻す
+        // 元の状態へ再描画
         this.mode = originalMode;
+        this.selectedComponentIds = tempSelComps;
+        this.selectedWireId = tempSelWire;
         this.render();
 
         return canvas.toDataURL('image/png');
       }
 
-      /* 印刷を挟まない直接PDFファイル保存処理 */
+      /* PDF生成処理 */
       async generatePDFDirectDownload() {
         const submitBtn = document.getElementById('btn-modal-download');
         submitBtn.disabled = true;
@@ -1899,21 +1977,39 @@
           const chkBreadboard = document.getElementById('chk-breadboard').checked;
           const chkSchematic = document.getElementById('chk-schematic').checked;
 
-          // 使用パーツ集計
-          const partsCount = {};
+          if (!chkPhysical && !chkBreadboard && !chkSchematic) {
+            alert('出力する図を少なくとも1つ選択してください。');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'PDFダウンロード保存';
+            return;
+          }
+
+          // パーツ集計
+          const partsDetailsMap = {};
           this.components.forEach(c => {
             const names = { battery: '乾電池', resistor: '抵抗器', switch: 'スイッチ', led: 'LED', motor: 'モーター' };
             const name = names[c.type] || c.type;
-            partsCount[name] = (partsCount[name] || 0) + 1;
+            
+            let spec = '-';
+            if (c.type === 'battery') spec = `${c.voltage.toFixed(1)}V`;
+            else if (c.type === 'resistor') spec = formatResistance(c.resistance);
+            else if (c.type === 'led') spec = '1.5V点灯';
+            else if (c.type === 'motor') spec = '1.5V-3.0V';
+
+            const key = `${name} (${spec})`;
+            if (!partsDetailsMap[key]) {
+              partsDetailsMap[key] = { name, spec, count: 0 };
+            }
+            partsDetailsMap[key].count++;
           });
 
           let partsRows = '';
-          for (const [name, count] of Object.entries(partsCount)) {
-            partsRows += `<tr><td>${name}</td><td>${count} 個</td></tr>`;
+          for (const item of Object.values(partsDetailsMap)) {
+            partsRows += `<tr><td>${item.name}</td><td>${item.spec}</td><td>${item.count} 個</td></tr>`;
           }
-          if (!partsRows) partsRows = '<tr><td colspan="2">使用パーツなし</td></tr>';
+          if (!partsRows) partsRows = '<tr><td colspan="3">使用パーツなし</td></tr>';
 
-          // チェックが入ったモード画像を連続取得
+          // チェック済み表示モードの画像を自動トリミングして取得
           const imageBlocks = [];
           if (chkPhysical) {
             const imgData = await this.captureCanvasImageForMode('physical');
@@ -1928,7 +2024,7 @@
             imageBlocks.push({ title: '■ 回路図', src: imgData });
           }
 
-          // DOMの組み立て
+          // HTMLレポート構築
           const container = document.getElementById('pdf-render-container');
           container.innerHTML = `
             <div class="pdf-page-title">電子回路実験レポート</div>
@@ -1941,9 +2037,9 @@
               </tr>
             </table>
 
-            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px;">■ 使用パーツ一覧</div>
+            <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 使用パーツ一覧</div>
             <table class="pdf-parts-table">
-              <thead><tr><th>パーツ名</th><th>数量</th></tr></thead>
+              <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
               <tbody>${partsRows}</tbody>
             </table>
 
@@ -1955,13 +2051,13 @@
             `).join('')}
 
             ${memo ? `
-              <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px;">■ 考察・メモ</div>
-              <div style="font-size: 12px; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; white-space: pre-wrap;">${memo}</div>
+              <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 考察・メモ</div>
+              <div style="font-size: 11px; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; white-space: pre-wrap;">${memo}</div>
             ` : ''}
           `;
 
-          // html2canvas & jsPDF による直接保存
-          const canvas = await html2canvas(container, { scale: 2 });
+          // Canvasキャプチャ & jsPDF出力
+          const canvas = await html2canvas(container, { scale: 2, useCORS: true });
           const imgData = canvas.toDataURL('image/png');
 
           const { jsPDF } = window.jspdf;
