@@ -499,17 +499,20 @@
       font-weight: bold;
       border-bottom: 2px solid #2563eb;
       padding-bottom: 4px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      text-align: center;
     }
+    
+    /* 余白と全幅枠の修正 */
     .pdf-info-table, .pdf-parts-table {
-      width: 100%;
+      width: 90%;
+      margin: 0 auto 10px auto;
       border-collapse: collapse;
-      margin-bottom: 8px;
       table-layout: fixed;
     }
     .pdf-info-table td, .pdf-parts-table th, .pdf-parts-table td {
       border: 1px solid #cbd5e1;
-      padding: 4px 6px;
+      padding: 6px 8px;
       font-size: 11px;
       word-break: break-all;
       overflow-wrap: break-word;
@@ -520,8 +523,8 @@
     .pdf-row-container {
       display: flex;
       gap: 12px;
-      margin-bottom: 8px;
-      width: 100%;
+      margin: 0 auto 10px auto;
+      width: 90%;
     }
     .pdf-img-block {
       flex: 1;
@@ -531,7 +534,7 @@
     .pdf-img-title {
       font-size: 12px;
       font-weight: bold;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
       color: #1e293b;
     }
     .pdf-img-element-tall {
@@ -570,6 +573,13 @@
         <button id="btn-power" class="btn btn-power-off" title="電源">
           <span class="icon">🔌</span><span class="btn-text">電源 OFF</span>
         </button>
+        <button id="btn-save-data" class="btn btn-icon" title="データ保存">
+          <span class="icon">📥</span><span class="btn-text">保存</span>
+        </button>
+        <button id="btn-load-data" class="btn btn-icon" title="データ読み込み">
+          <span class="icon">📤</span><span class="btn-text">読み込み</span>
+        </button>
+        <input type="file" id="file-input" accept=".json" style="display: none;">
         <button id="btn-undo" class="btn btn-icon" title="元に戻す">
           <span class="icon">↩️</span>
         </button>
@@ -775,6 +785,11 @@
         document.getElementById('btn-clear').addEventListener('click', () => this.clearAll());
         document.getElementById('btn-export-pdf').addEventListener('click', () => this.openPdfModal());
 
+        // データ保存・読み込みボタンのイベント
+        document.getElementById('btn-save-data').addEventListener('click', () => this.exportDataToFile());
+        document.getElementById('btn-load-data').addEventListener('click', () => document.getElementById('file-input').click());
+        document.getElementById('file-input').addEventListener('change', (e) => this.importDataFromFile(e));
+
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Delete' || e.key === 'Backspace') {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
@@ -935,6 +950,53 @@
           e.preventDefault();
           await this.generatePDFDirectDownload();
         });
+      }
+
+      // JSONファイルへの書き出し
+      exportDataToFile() {
+        const state = JSON.stringify({ components: this.components, wires: this.wires }, null, 2);
+        const blob = new Blob([state], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `circuit_data_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // JSONファイルからの読み込み
+      importDataFromFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const data = JSON.parse(evt.target.result);
+            if (data.components && data.wires) {
+              this.components = data.components;
+              this.wires = data.wires;
+              this.components.forEach(c => {
+                if (c.rotation === undefined) c.rotation = 0;
+                if (c.type === 'resistor' && !c.resistance) c.resistance = 100;
+                c.terminals = this.generateTerminals(c.id, c.type, c.flipped, c.rotation);
+              });
+              this.selectedComponentIds.clear();
+              this.selectedWireId = null;
+              this.saveState();
+              this.evaluateCircuit();
+              this.render();
+              alert('回路データを正常に読み込みました。');
+            } else {
+              alert('無効な回路データファイルです。');
+            }
+          } catch (err) {
+            console.error('読み込みエラー:', err);
+            alert('ファイルの読み込みに失敗しました。');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
       }
 
       snapToGrid(x, y) {
@@ -1321,7 +1383,6 @@
 
           const pathCurrent = totalVoltage / R_total;
 
-          // 該当パスにおける各LEDの駆動チェック（経路ごとの個数で正しく電圧を評価）
           path.forEach(comp => {
             if (comp.type === 'led') {
               if (totalVoltage / ledCountInPath >= VF_PER_LED) {
@@ -1948,6 +2009,7 @@
         document.getElementById('pdf-modal').classList.remove('hidden');
       }
 
+      // 外側の導線部分も入るように全体境界を計算してトリミング
       async captureCanvasImageForMode(targetMode) {
         const originalMode = this.mode;
         const tempSelComps = new Set(this.selectedComponentIds);
@@ -1992,7 +2054,8 @@
 
         let minX = fullWidth, minY = fullHeight, maxX = 0, maxY = 0;
 
-        if (this.components.length > 0) {
+        if (this.components.length > 0 || this.wires.length > 0) {
+          // コンポーネントの位置
           this.components.forEach(c => {
             const p = this.getCompPos(c);
             minX = Math.min(minX, p.x - 60);
@@ -2001,18 +2064,26 @@
             maxY = Math.max(maxY, p.y + 40);
           });
 
+          // 外側の配線（全端点）の座標も計算に含める
           this.wires.forEach(w => {
             const p1 = this.getTerminalPos(w.fromCompId, w.fromTermId);
             const p2 = this.getTerminalPos(w.toCompId, w.toTermId);
             if (p1) {
-              minX = Math.min(minX, p1.x - 20); maxX = Math.max(maxX, p1.x + 20);
-              minY = Math.min(minY, p1.y - 20); maxY = Math.max(maxY, p1.y + 20);
+              minX = Math.min(minX, p1.x); maxX = Math.max(maxX, p1.x);
+              minY = Math.min(minY, p1.y); maxY = Math.max(maxY, p1.y);
             }
             if (p2) {
-              minX = Math.min(minX, p2.x - 20); maxX = Math.max(maxX, p2.x + 20);
-              minY = Math.min(minY, p2.y - 20); maxY = Math.max(maxY, p2.y + 20);
+              minX = Math.min(minX, p2.x); maxX = Math.max(maxX, p2.x);
+              minY = Math.min(minY, p2.y); maxY = Math.max(maxY, p2.y);
             }
           });
+
+          // 外側の導線部分も十分収まるようにPaddingを多めに追加
+          const padding = 40;
+          minX -= padding;
+          maxX += padding;
+          minY -= padding;
+          maxY += padding;
         } else {
           minX = 0; minY = 0; maxX = fullWidth; maxY = fullHeight;
         }
@@ -2118,7 +2189,6 @@
 
           const container = document.getElementById('pdf-render-container');
           
-          // 実体配線図と回路図のレイアウト生成 (両方ある場合は横並び・縦に引き伸ばし)
           let diagramsHtml = '';
           if (chkPhysical && chkSchematic) {
             diagramsHtml = `
@@ -2135,21 +2205,24 @@
             `;
           } else if (chkPhysical) {
             diagramsHtml = `
-              <div class="pdf-img-block" style="margin-bottom: 12px;">
-                <div class="pdf-img-title">■ 実体配線図</div>
-                <img src="${images.physical}" class="pdf-img-element-tall" />
+              <div class="pdf-row-container">
+                <div class="pdf-img-block">
+                  <div class="pdf-img-title">■ 実体配線図</div>
+                  <img src="${images.physical}" class="pdf-img-element-tall" />
+                </div>
               </div>
             `;
           } else if (chkSchematic) {
             diagramsHtml = `
-              <div class="pdf-img-block" style="margin-bottom: 12px;">
-                <div class="pdf-img-title">■ 回路図</div>
-                <img src="${images.schematic}" class="pdf-img-element-tall" />
+              <div class="pdf-row-container">
+                <div class="pdf-img-block">
+                  <div class="pdf-img-title">■ 回路図</div>
+                  <img src="${images.schematic}" class="pdf-img-element-tall" />
+                </div>
               </div>
             `;
           }
 
-          // 1ページ目および2ページ目（ブレッドボード図）の構造生成
           container.innerHTML = `
             <div id="pdf-page-1" style="min-height: 960px; padding-bottom: 20px;">
               <div class="pdf-page-title">電子回路実験レポート</div>
@@ -2162,7 +2235,7 @@
                 </tr>
               </table>
 
-              <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 使用パーツ一覧</div>
+              <div style="width: 90%; margin: 0 auto 4px auto; font-size: 12px; font-weight: bold;">■ 使用パーツ一覧</div>
               <table class="pdf-parts-table">
                 <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
                 <tbody>${partsRows}</tbody>
@@ -2171,17 +2244,19 @@
               ${diagramsHtml}
 
               ${memo ? `
-                <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 考察・メモ</div>
-                <div style="font-size: 11px; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; white-space: pre-wrap; word-break: break-all;">${memo}</div>
+                <div style="width: 90%; margin: 0 auto 4px auto; font-size: 12px; font-weight: bold;">■ 考察・メモ</div>
+                <div style="width: 90%; margin: 0 auto; font-size: 11px; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; white-space: pre-wrap; word-break: break-all;">${memo}</div>
               ` : ''}
             </div>
 
             ${chkBreadboard ? `
               <div id="pdf-page-2" style="min-height: 960px; padding-top: 10px;">
                 <div class="pdf-page-title">電子回路実験レポート (ブレッドボード図)</div>
-                <div class="pdf-img-block" style="margin-top: 15px;">
-                  <div class="pdf-img-title">■ ブレッドボード図</div>
-                  <img src="${images.breadboard}" class="pdf-img-element-bb" />
+                <div class="pdf-row-container">
+                  <div class="pdf-img-block" style="margin-top: 15px;">
+                    <div class="pdf-img-title">■ ブレッドボード図</div>
+                    <img src="${images.breadboard}" class="pdf-img-element-bb" />
+                  </div>
                 </div>
               </div>
             ` : ''}
