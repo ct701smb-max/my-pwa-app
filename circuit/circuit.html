@@ -1037,89 +1037,105 @@ textarea {
   }
 
   // キャンバス上のポインターイベント
-  initCanvasEvents() {
-    if (!this.svg) return;
+initCanvasEvents() {
+  if (!this.svg) return;
 
-    this.svg.addEventListener('pointermove', (e) => {
-      if (this.connectingStart) {
-        const rect = this.svg.getBoundingClientRect();
-        this.tempWirePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        this.render();
+  // ★ 1. タッチ操作時のブラウザ画面スクロールを強制的に防止
+  this.svg.style.touchAction = 'none';
+
+  this.svg.addEventListener('pointermove', (e) => {
+    if (this.connectingStart) {
+      const rect = this.svg.getBoundingClientRect();
+      this.tempWirePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      this.render();
+    }
+  });
+
+  this.svg.addEventListener('pointerdown', (e) => {
+    // ★ 配線作成中の場合は端子以外（背景）をクリックしたら配線作成をキャンセル
+    if (this.connectingStart) {
+      this.connectingStart = null;
+      this.tempWirePos = null;
+      this.render();
+      return; // 範囲選択などの処理を行わずに終了
+    }
+
+    // ★ 2. 【最重要】「パーツ」「端子」「配線」以外の背景要素をクリックしたか判定する
+    const isComponent = e.target.closest('.component-group');
+    const isTerminal = e.target.classList.contains('terminal');
+    const isWire = e.target.closest('.wire') || e.target.classList.contains('wire');
+
+    // 背景をクリックした場合のみ範囲選択（または穴タップ）を開始
+    if (!isComponent && !isTerminal && !isWire) {
+      const rect = this.svg.getBoundingClientRect();
+      const startX = e.clientX - rect.left;
+      const startY = e.clientY - rect.top;
+
+      // ブレッドボードモード時の穴タップ判定
+      if (this.mode === 'breadboard') {
+        this.handleHoleClick(startX, startY);
+        return;
       }
-    });
 
-    this.svg.addEventListener('pointerdown', (e) => {
-        // ★ 配線作成中の場合は端子以外（背景）をクリックしたら配線作成をキャンセル
-      if (this.connectingStart) {
-        this.connectingStart = null;
-        this.tempWirePos = null;
-        this.render();
-        return; // 範囲選択などの処理を行わずに終了
-      }
-        const startPos = this.getCanvasPos(e);
-      if (e.target.tagName === 'svg') {
-        const rect = this.svg.getBoundingClientRect();
-        const startX = e.clientX - rect.left;
-        const startY = e.clientY - rect.top;
+      // ★ 3. ポインターキャプチャでマウス/指がキャンバス外へ出ても追従を維持する
+      try { e.target.setPointerCapture(e.pointerId); } catch (err) {}
 
-        // ブレッドボードモード時の穴タップ判定
-        if (this.mode === 'breadboard') {
-          this.handleHoleClick(startX, startY);
-          return;
+      let isSelecting = false;
+
+      const onPointerMove = (moveEvt) => {
+        const curX = moveEvt.clientX - rect.left;
+        const curY = moveEvt.clientY - rect.top;
+
+        // 5px以上動いたら選択モードを有効化
+        if (!isSelecting && (Math.abs(curX - startX) > 5 || Math.abs(curY - startY) > 5)) {
+          isSelecting = true;
         }
 
-        if (this.connectingStart) {
-          this.connectingStart = null;
-          this.tempWirePos = null;
-        }
-
-        let isSelecting = false;
-
-        const onPointerMove = (moveEvt) => {
-          const curX = moveEvt.clientX - rect.left;
-          const curY = moveEvt.clientY - rect.top;
-
-          if (Math.abs(curX - startX) > 5 || Math.abs(curY - startY) > 5) {
-            isSelecting = true;
-            this.selectionBox = {
-              x1: Math.min(startX, curX),
-              x2: Math.max(startX, curX),
-              y1: Math.min(startY, curY),
-              y2: Math.max(startY, curY)
-            };
-            this.render();
-          }
-        };
-
-        const onPointerUp = () => {
-          window.removeEventListener('pointermove', onPointerMove);
-          window.removeEventListener('pointerup', onPointerUp);
-
-          if (isSelecting && this.selectionBox) {
-            const box = this.selectionBox;
-            this.selectedComponentIds.clear();
-            this.selectedWireId = null;
-
-            this.components.forEach(comp => {
-              const pos = this.getCompPos(comp);
-              if (pos.x >= box.x1 && pos.x <= box.x2 && pos.y >= box.y1 && pos.y <= box.y2) {
-                this.selectedComponentIds.add(comp.id);
-              }
-            });
-            this.selectionBox = null;
-          } else {
-            this.selectedComponentIds.clear();
-            this.selectedWireId = null;
-            this.selectionBox = null;
-          }
+        // 選択モード中は枠をリアルタイム更新
+        if (isSelecting) {
+          this.selectionBox = {
+            x1: Math.min(startX, curX),
+            x2: Math.max(startX, curX),
+            y1: Math.min(startY, curY),
+            y2: Math.max(startY, curY)
+          };
           this.render();
-        };
+        }
+      };
 
-        window.addEventListener('pointermove', onPointerMove);
-        window.addEventListener('pointerup', onPointerUp);
-      }
-    });
-  }
+      const onPointerUp = (upEvt) => {
+        // キャプチャの解除とイベントリスナーの削除
+        try { e.target.releasePointerCapture(upEvt.pointerId); } catch (err) {}
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+
+        if (isSelecting && this.selectionBox) {
+          const box = this.selectionBox;
+          this.selectedComponentIds.clear();
+          this.selectedWireId = null;
+
+          this.components.forEach(comp => {
+            const pos = this.getCompPos(comp);
+            if (pos.x >= box.x1 && pos.x <= box.x2 && pos.y >= box.y1 && pos.y <= box.y2) {
+              this.selectedComponentIds.add(comp.id);
+            }
+          });
+          this.selectionBox = null;
+        } else {
+          this.selectedComponentIds.clear();
+          this.selectedWireId = null;
+          this.selectionBox = null;
+        }
+        this.render();
+      };
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+    }
+  });
+}
 
   // PDF出力用モーダル制御
   initPdfModalEvents() {
@@ -1896,17 +1912,27 @@ const resistors = path.map(item => item.comp).filter(c => c.type === 'resistor' 
     }
 
         // 範囲選択枠の描画
-    if (this.selectionBox) {
-      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      rect.setAttribute('x', this.selectionBox.x1);
-      rect.setAttribute('y', this.selectionBox.y1);
-      rect.setAttribute('width', this.selectionBox.x2 - this.selectionBox.x1);
-      rect.setAttribute('height', this.selectionBox.y2 - this.selectionBox.y1);
-      rect.setAttribute('fill', 'rgba(52, 152, 219, 0.2)');
-      rect.setAttribute('stroke', '#3498db');
-      rect.setAttribute('stroke-dasharray', '4');
-      this.svg.appendChild(rect);
-    }
+if (this.selectionBox) {
+  // ★ 1. ドラッグ方向（左右・上下）に関わらず正しく計算する
+  const x = Math.min(this.selectionBox.x1, this.selectionBox.x2);
+  const y = Math.min(this.selectionBox.y1, this.selectionBox.y2);
+  const width = Math.abs(this.selectionBox.x2 - this.selectionBox.x1);
+  const height = Math.abs(this.selectionBox.y2 - this.selectionBox.y1);
+
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x);
+  rect.setAttribute('y', y);
+  rect.setAttribute('width', width);
+  rect.setAttribute('height', height);
+  rect.setAttribute('fill', 'rgba(52, 152, 219, 0.2)');
+  rect.setAttribute('stroke', '#3498db');
+  rect.setAttribute('stroke-dasharray', '4');
+  
+  // ★ 2. 選択枠自体がマウス・タッチイベントを遮断しないように絶対設定する
+  rect.setAttribute('pointer-events', 'none');
+
+  this.svg.appendChild(rect);
+}
 
         this.components.forEach(comp => {
           const pos = this.getCompPos(comp);
@@ -2466,8 +2492,9 @@ const resistors = path.map(item => item.comp).filter(c => c.type === 'resistor' 
 }
 
       updatePropertyToolbar() {
-  // ★ 選択が解除された場合は非表示にする
-  if (this.selectedComponentIds.size === 0) {
+  // ★ 1. 選択解除時だけでなく、「範囲選択ドラッグ中（selectionBoxが存在する時）」も非表示にする
+  // これによりドラッグ中にツールバーが割り込んで操作をブロックするのを防ぎます
+  if (this.selectedComponentIds.size === 0 || this.selectionBox) {
     this.propToolbar.classList.add('hidden');
     this.propToolbar.style.display = 'none'; // インラインスタイルの flex を打ち消す
     return;
@@ -2485,7 +2512,14 @@ const resistors = path.map(item => item.comp).filter(c => c.type === 'resistor' 
     btnDel.style.color = '#dc2626';
     btnDel.style.borderColor = '#fca5a5';
     btnDel.textContent = '🗑️ 一括削除';
-    btnDel.onclick = () => this.deleteSelected();
+
+    // ★ 2. ボタン押し下げ時にキャンバスへイベントが流れて選択が解除されないよう防止
+    btnDel.onpointerdown = (e) => e.stopPropagation();
+    btnDel.onclick = (e) => {
+      e.stopPropagation();
+      this.deleteSelected();
+    };
+    
     this.propToolbar.appendChild(btnDel);
 
     let sumX = 0, sumY = 0;
