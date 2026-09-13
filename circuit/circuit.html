@@ -3212,6 +3212,7 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
 
     if (!comp) {
       this.propToolbar.classList.add('hidden');
+      this.propToolbar.style.display = 'none'; // 非表示処理を確実化
       return;
     }
 
@@ -3224,20 +3225,39 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
     this.propToolbar.style.left = `${screenPos.x}px`;
     this.propToolbar.style.top = `${screenPos.y}px`;
     this.propToolbar.innerHTML = '';
+    
+    // 表示状態の設定
+    this.propToolbar.style.display = 'flex';
+    this.propToolbar.style.flexDirection = 'column';
+    this.propToolbar.style.gap = '4px';
+    this.propToolbar.style.alignItems = 'center';
+
+    // 1段目コンテナ（回転・反転・CdSテキスト）
+    const row1 = document.createElement('div');
+    row1.style.display = 'flex';
+    row1.style.gap = '4px';
+    row1.style.alignItems = 'center';
 
     const rotBtn = document.createElement('button');
     rotBtn.className = 'prop-btn';
     rotBtn.textContent = '🔄 回転';
     rotBtn.onclick = (e) => { e.stopPropagation(); this.rotateSelectedComponent(); };
-    this.propToolbar.appendChild(rotBtn);
+    row1.appendChild(rotBtn);
 
     if (['battery', 'led', 'motor', 'rgb-led'].includes(comp.type)) {
       const flipBtn = document.createElement('button');
       flipBtn.className = 'prop-btn';
       flipBtn.textContent = '⇄ 反転';
       flipBtn.onclick = (e) => { e.stopPropagation(); this.flipSelectedComponent(); };
-      this.propToolbar.appendChild(flipBtn);
+      row1.appendChild(flipBtn);
     }
+    this.propToolbar.appendChild(row1);
+
+    // 2段目コンテナ（各パーツ固有の設定）
+    const row2 = document.createElement('div');
+    row2.style.display = 'flex';
+    row2.style.gap = '4px';
+    row2.style.alignItems = 'center';
 
     if (comp.type === 'battery') {
       const minusBtn = document.createElement('button');
@@ -3267,123 +3287,128 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
         this.render();
       };
 
-      this.propToolbar.appendChild(minusBtn);
-      this.propToolbar.appendChild(vLabel);
-      this.propToolbar.appendChild(plusBtn);
-    } else if (comp.type === 'resistor') {
-      const rInput = document.createElement('input');
-      rInput.type = 'number';
-      rInput.min = '1';
-      rInput.max = '1000000';
-      rInput.value = comp.resistance || 100;
-      rInput.style.width = '70px';
-      rInput.style.padding = '2px 4px';
-      rInput.style.fontSize = '0.85rem';
+      row2.appendChild(minusBtn);
+      row2.appendChild(vLabel);
+      row2.appendChild(plusBtn);
+      this.propToolbar.appendChild(row2);
 
-      const applyResistorVal = () => {
-        let val = parseFloat(rInput.value);
-        if (isNaN(val) || val <= 0) val = 100;
-        comp.resistance = val;
+    } else if (comp.type === 'resistor') {
+      const rSelect = document.createElement('select');
+      rSelect.style.fontSize = '0.85rem';
+      rSelect.style.padding = '2px 4px';
+      rSelect.style.borderRadius = '4px';
+
+      const options = [
+        { label: '10 Ω', value: 10 },
+        { label: '100 Ω', value: 100 },
+        { label: '220 Ω', value: 220 },
+        { label: '330 Ω', value: 330 },
+        { label: '1 kΩ', value: 1000 },
+        { label: '10 kΩ', value: 10000 },
+        { label: '100 kΩ', value: 100000 }
+      ];
+
+      const currentVal = comp.resistance || 100;
+
+      options.forEach(opt => {
+        const optionEl = document.createElement('option');
+        optionEl.value = opt.value;
+        optionEl.textContent = opt.label;
+        if (opt.value === currentVal) {
+          optionEl.selected = true;
+        }
+        rSelect.appendChild(optionEl);
+      });
+
+      rSelect.onchange = (e) => {
+        e.stopPropagation();
+        comp.resistance = parseFloat(rSelect.value);
         this.saveState();
         this.evaluateCircuit();
         this.render();
       };
 
-      rInput.onchange = (e) => { e.stopPropagation(); applyResistorVal(); };
-      rInput.onkeydown = (e) => {
-        e.stopPropagation();
-        if (e.key === 'Enter') applyResistorVal();
-      };
-      rInput.onclick = (e) => e.stopPropagation();
+      const stopProp = (e) => e.stopPropagation();
+      rSelect.addEventListener('pointerdown', stopProp);
+      rSelect.addEventListener('mousedown', stopProp);
 
-      const unitLabel = document.createElement('span');
-      unitLabel.style.fontSize = '0.85rem';
-      unitLabel.style.fontWeight = 'bold';
-      unitLabel.textContent = ' Ω';
+      row2.appendChild(rSelect);
+      this.propToolbar.appendChild(row2);
 
-      this.propToolbar.appendChild(rInput);
-      this.propToolbar.appendChild(unitLabel);
     } else if (comp.type === 'cds') {
-  const slider = document.createElement('input');
-  slider.type = 'range';
-  slider.min = '0';
-  slider.max = '100';
-  slider.value = comp.light !== undefined ? comp.light : 50;
-  slider.className = 'prop-slider';
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = '0';
+      slider.max = '100';
+      slider.value = comp.light !== undefined ? comp.light : 50;
+      slider.className = 'prop-slider';
 
-  const lightLabel = document.createElement('span');
-  lightLabel.style.fontSize = '0.85rem';
-  lightLabel.style.fontWeight = 'bold';
+      const lightLabel = document.createElement('span');
+      lightLabel.style.fontSize = '0.85rem';
+      lightLabel.style.fontWeight = 'bold';
 
-  // 抵抗値を「Ω」や「kΩ」に見やすくフォーマットするヘルパー関数
-  const formatResistance = (r) => {
-    if (r >= 1000) {
-      return `${(r / 1000).toFixed(1)} kΩ`;
-    }
-    return `${Math.round(r)} Ω`;
-  };
+      const formatResistance = (r) => {
+        if (r >= 1000) {
+          return `${(r / 1000).toFixed(1)} kΩ`;
+        }
+        return `${Math.round(r)} Ω`;
+      };
 
-  // ラベル（明るさ % ＋ 抵抗値）を更新する共通処理
-  const updateLabel = () => {
-    const val = parseInt(slider.value, 10);
-    comp.light = val;
-    
-    // 現在の計算式から抵抗値を取得（メソッドが無い場合のフォールバック付き）
-    const r = typeof this.getCdsResistance === 'function' 
-      ? this.getCdsResistance(comp) 
-      : 100000 * Math.pow(100 / 100000, val / 100);
+      const updateLabel = () => {
+        const val = parseInt(slider.value, 10);
+        comp.light = val;
+        
+        const r = typeof this.getCdsResistance === 'function' 
+          ? this.getCdsResistance(comp) 
+          : 100000 * Math.pow(100 / 100000, val / 100);
 
-    lightLabel.textContent = ` ☀️${val}% (${formatResistance(r)}) `;
-  };
+        lightLabel.textContent = ` ☀️${val}% (${formatResistance(r)}) `;
+      };
 
-  // 初期表示の更新
-  updateLabel();
+      updateLabel();
 
-  // キャンバス選択・移動イベントへの影響を防ぐ最小限の停止処理
-  const stopProp = (e) => e.stopPropagation();
-  slider.addEventListener('pointerdown', stopProp);
-  slider.addEventListener('mousedown', stopProp);
-  slider.addEventListener('touchstart', stopProp);
+      row1.appendChild(lightLabel);
 
-  slider.oninput = (e) => {
-    e.stopPropagation();
+      const stopProp = (e) => e.stopPropagation();
+      slider.addEventListener('pointerdown', stopProp);
+      slider.addEventListener('mousedown', stopProp);
+      slider.addEventListener('touchstart', stopProp);
 
-    // ラベルと抵抗値の表示を更新
-    updateLabel();
+      slider.oninput = (e) => {
+        e.stopPropagation();
+        updateLabel();
+        if (typeof this.evaluateCircuit === 'function') {
+          this.evaluateCircuit();
+        }
+        if (typeof this.renderComponents === 'function') {
+          this.renderComponents();
+        } else if (typeof this.draw === 'function') {
+          this.draw();
+        }
+      };
 
-    // 回路の評価を行う（新しい抵抗値で再計算）
-    if (typeof this.evaluateCircuit === 'function') {
-      this.evaluateCircuit();
-    }
+      slider.onchange = (e) => {
+        e.stopPropagation();
+        if (typeof this.saveState === 'function') {
+          this.saveState();
+        }
+        if (typeof this.render === 'function') {
+          this.render();
+        }
+      };
 
-    // キャンバス（SVG）部分のみ再描画する
-    if (typeof this.renderComponents === 'function') {
-      this.renderComponents();
-    } else if (typeof this.draw === 'function') {
-      this.draw();
-    }
-  };
-
-  slider.onchange = (e) => {
-    e.stopPropagation();
-    if (typeof this.saveState === 'function') {
-      this.saveState();
-    }
-    if (typeof this.render === 'function') {
-      this.render();
-    }
-  };
-
-
-      this.propToolbar.appendChild(slider);
-      this.propToolbar.appendChild(lightLabel);
+      row2.appendChild(slider);
+      this.propToolbar.appendChild(row2);
     }
 
     this.propToolbar.classList.remove('hidden');
   } else {
+    // 選択されていない（または複数選択されている）場合に確実に非表示にする
     this.propToolbar.classList.add('hidden');
+    this.propToolbar.style.display = 'none';
   }
 }
+
   }
 
 
