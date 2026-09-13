@@ -575,10 +575,23 @@ textarea {
   to { transform: rotate(360deg); }
 }
 
+/* ★追加: 逆回転用アニメーション */
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
 .rotating {
   animation: spin linear infinite;
   transform-origin: 0px 0px;
 }
+
+/* ★追加: 逆回転用クラス */
+.rotating-reverse {
+  animation: spin-reverse linear infinite;
+  transform-origin: 0px 0px;
+}
+
 
 @keyframes pulse {
   0% { transform: scale(1); }
@@ -848,12 +861,14 @@ this.initElements();
       set panY(val) { this.viewState[this.mode].panY = val; }
 
       getCdsResistance(comp) {
-        const light = comp.light !== undefined ? comp.light : 50;
-        const minR = 100;
-        const maxR = 100000;
-        const r = maxR * Math.pow(minR / maxR, light / 100);
-        return Math.round(r);
-      }
+  const light = comp.light !== undefined ? comp.light : 50;
+  const minR = 100;    // 最も明るいときの抵抗値 (100Ω)
+  const maxR = 100000; // 最も暗いときの抵抗値 (100kΩ)
+  
+  // 明るさ(light: 0〜100)に応じて指数関数的に抵抗値を変化させる
+  const r = maxR * Math.pow(minR / maxR, light / 100);
+  return Math.round(r);
+}
 
       initElements() {
         this.svg = document.getElementById('circuit-svg');
@@ -2415,7 +2430,7 @@ async generatePDFDirectDownload() {
         const totalCurrent = totalResistance > 0 ? (totalVoltage / totalResistance) : totalVoltage;
         const VF_PER_LED = 1.5;
 
-        validPaths.forEach(path => {
+                validPaths.forEach(path => {
           let ledCountInPath = path.filter(item => item.comp.type === 'led' || item.comp.type === 'rgb-led').length;
           
           path.forEach(item => {
@@ -2442,10 +2457,20 @@ async generatePDFDirectDownload() {
               }
             } else {
               activeMap.set(comp.id, true);
-              currentMap.set(comp.id, (currentMap.get(comp.id) || 0) + totalCurrent);
+              
+              // ★修正: モーターの場合、入ってきた端子の極性によって電流の向き（符号）を決める
+              let currentVal = totalCurrent;
+              if (comp.type === 'motor' && inTerm) {
+                // '-'端子から電流が入ってきた場合は逆方向（マイナス）
+                if (inTerm.polarity === 'neg' || inTerm.id.endsWith('_t2')) {
+                  currentVal = -totalCurrent;
+                }
+              }
+              currentMap.set(comp.id, (currentMap.get(comp.id) || 0) + currentVal);
             }
           });
         });
+
 
         const rText = totalResistance >= 1000 
           ? `${(totalResistance / 1000).toFixed(2)} kΩ` 
@@ -2976,38 +3001,51 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
                       <text x="-18" y="26" font-size="11" font-weight="bold" fill="#374151">${comp.state ? 'スイッチON' : 'スイッチOFF'}</text>`;
     }
   } else if (comp.type === 'motor') {
-    let durationSec = 1.0;
-    if (isWorking) {
-      const ratio = Math.min(Math.max(current / 0.03, 0.01), 3.0);
-      const factor = Math.sqrt(ratio);
-      durationSec = Math.max(0.1, (0.5 / factor)).toFixed(2);
-    }
+  let durationSec = 1.0;
+  let direction = 'normal'; // 回転方向の初期値（正回転）
 
-    const rotStyle = isWorking ? `style="animation-duration: ${durationSec}s;"` : '';
-    const rotClass = isWorking ? 'class="rotating"' : '';
+  if (isWorking) {
+    // 電流の絶対値を使って回転速度（アニメーション周期）を計算
+    const absCurrent = Math.abs(current);
+    const ratio = Math.min(Math.max(absCurrent / 0.03, 0.01), 3.0);
+    const factor = Math.sqrt(ratio);
+    durationSec = Math.max(0.1, (0.5 / factor)).toFixed(2);
 
-    const posX = comp.flipped ? 20 : -28;
-    const negX = comp.flipped ? -28 : 20;
-
-    if (mode === 'schematic') {
-      g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                      <circle cx="0" cy="0" r="14" fill="white" stroke="black" stroke-width="2"/>
-                      <text x="-5" y="5" font-size="13" font-weight="bold">M</text>
-                      <line x1="-35" y1="0" x2="-14" y2="0" stroke="black" stroke-width="2"/>
-                      <line x1="14" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
-                      <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
-                      <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
+    // 電流の向き（正負）によって回転方向を決定
+    if (current < 0) {
+      direction = 'reverse'; // 逆回転
     } else {
-      g.innerHTML += `<circle cx="0" cy="0" r="22" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
-                      <g ${rotClass} ${rotStyle}>
-                        <path d="M 0 0 L -10 -20 L 10 -20 Z" fill="#2563eb"/>
-                        <path d="M 0 0 L -10 20 L 10 20 Z" fill="#2563eb"/>
-                      </g>
-                      <circle cx="0" cy="0" r="4" fill="#1f2937"/>
-                      <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
-                      <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
+      direction = 'normal';  // 正回転
     }
   }
+
+  // 修正箇所：rotStyle に animation-direction を追加
+  const rotStyle = isWorking ? `style="animation-duration: ${durationSec}s; animation-direction: ${direction};"` : '';
+  const rotClass = isWorking ? 'class="rotating"' : '';
+
+  const posX = comp.flipped ? 20 : -28;
+  const negX = comp.flipped ? -28 : 20;
+
+  if (mode === 'schematic') {
+    g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                    <circle cx="0" cy="0" r="14" fill="white" stroke="black" stroke-width="2"/>
+                    <text x="-5" y="5" font-size="13" font-weight="bold">M</text>
+                    <line x1="-35" y1="0" x2="-14" y2="0" stroke="black" stroke-width="2"/>
+                    <line x1="14" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                    <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
+                    <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
+  } else {
+    g.innerHTML += `<circle cx="0" cy="0" r="22" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+                    <g ${rotClass} ${rotStyle}>
+                      <path d="M 0 0 L -10 -20 L 10 -20 Z" fill="#2563eb"/>
+                      <path d="M 0 0 L -10 20 L 10 20 Z" fill="#2563eb"/>
+                    </g>
+                    <circle cx="0" cy="0" r="4" fill="#1f2937"/>
+                    <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
+                    <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
+  }
+}
+
 }
 
 
@@ -3261,53 +3299,76 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
       this.propToolbar.appendChild(rInput);
       this.propToolbar.appendChild(unitLabel);
     } else if (comp.type === 'cds') {
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.min = '0';
-      slider.max = '100';
-      slider.value = comp.light !== undefined ? comp.light : 50;
-      slider.className = 'prop-slider';
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.min = '0';
+  slider.max = '100';
+  slider.value = comp.light !== undefined ? comp.light : 50;
+  slider.className = 'prop-slider';
 
-      const lightLabel = document.createElement('span');
-      lightLabel.style.fontSize = '0.85rem';
-      lightLabel.style.fontWeight = 'bold';
-      lightLabel.textContent = ` ☀️${slider.value}% `;
+  const lightLabel = document.createElement('span');
+  lightLabel.style.fontSize = '0.85rem';
+  lightLabel.style.fontWeight = 'bold';
 
-      // キャンバス選択・移動イベントへの影響を防ぐ最小限の停止処理
-      const stopProp = (e) => e.stopPropagation();
-      slider.addEventListener('pointerdown', stopProp);
-      slider.addEventListener('mousedown', stopProp);
-      slider.addEventListener('touchstart', stopProp);
+  // 抵抗値を「Ω」や「kΩ」に見やすくフォーマットするヘルパー関数
+  const formatResistance = (r) => {
+    if (r >= 1000) {
+      return `${(r / 1000).toFixed(1)} kΩ`;
+    }
+    return `${Math.round(r)} Ω`;
+  };
 
-      slider.oninput = (e) => {
-        e.stopPropagation();
-        const val = parseInt(slider.value, 10);
-        comp.light = val;
-        lightLabel.textContent = ` ☀️${val}% `;
+  // ラベル（明るさ % ＋ 抵抗値）を更新する共通処理
+  const updateLabel = () => {
+    const val = parseInt(slider.value, 10);
+    comp.light = val;
+    
+    // 現在の計算式から抵抗値を取得（メソッドが無い場合のフォールバック付き）
+    const r = typeof this.getCdsResistance === 'function' 
+      ? this.getCdsResistance(comp) 
+      : 100000 * Math.pow(100 / 100000, val / 100);
 
-        // 回路の評価を行う
-        if (typeof this.evaluateCircuit === 'function') {
-          this.evaluateCircuit();
-        }
+    lightLabel.textContent = ` ☀️${val}% (${formatResistance(r)}) `;
+  };
 
-        // プロパティバーを破壊せずにキャンバス（SVG）部分のみ再描画する
-        if (typeof this.renderComponents === 'function') {
-          this.renderComponents();
-        } else if (typeof this.draw === 'function') {
-          this.draw();
-        }
-      };
+  // 初期表示の更新
+  updateLabel();
 
-      slider.onchange = (e) => {
-        e.stopPropagation();
-        if (typeof this.saveState === 'function') {
-          this.saveState();
-        }
-        // ドラッグ終了時のみ全体のrenderを呼び出す
-        if (typeof this.render === 'function') {
-          this.render();
-        }
-      };
+  // キャンバス選択・移動イベントへの影響を防ぐ最小限の停止処理
+  const stopProp = (e) => e.stopPropagation();
+  slider.addEventListener('pointerdown', stopProp);
+  slider.addEventListener('mousedown', stopProp);
+  slider.addEventListener('touchstart', stopProp);
+
+  slider.oninput = (e) => {
+    e.stopPropagation();
+
+    // ラベルと抵抗値の表示を更新
+    updateLabel();
+
+    // 回路の評価を行う（新しい抵抗値で再計算）
+    if (typeof this.evaluateCircuit === 'function') {
+      this.evaluateCircuit();
+    }
+
+    // キャンバス（SVG）部分のみ再描画する
+    if (typeof this.renderComponents === 'function') {
+      this.renderComponents();
+    } else if (typeof this.draw === 'function') {
+      this.draw();
+    }
+  };
+
+  slider.onchange = (e) => {
+    e.stopPropagation();
+    if (typeof this.saveState === 'function') {
+      this.saveState();
+    }
+    if (typeof this.render === 'function') {
+      this.render();
+    }
+  };
+
 
       this.propToolbar.appendChild(slider);
       this.propToolbar.appendChild(lightLabel);
