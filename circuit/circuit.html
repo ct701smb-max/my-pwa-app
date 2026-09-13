@@ -273,6 +273,12 @@ body {
   transform: translate(-50%, -100%);
   margin-top: -12px;
 }
+/* プロパティバー内のスライダー操作を許可し、キャンバスのドラッグと干渉させない */
+.property-toolbar input[type="range"] {
+  touch-action: auto !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
 
 .property-toolbar.hidden { display: none; }
 
@@ -2782,226 +2788,228 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
       }
 
       renderComponentBody(g, comp, isWorking, current) {
-        if (g && g.type && (!comp || !g.innerHTML)) {
-          const temp = g;
-          g = comp;
-          comp = temp;
+  if (g && g.type && (!comp || !g.innerHTML)) {
+    const temp = g;
+    g = comp;
+    comp = temp;
+  }
+
+  const mode = this.mode;
+
+  // CdSが電池として描画される問題を解決するため、条件式から 'cds' を除外
+  if (comp.type === 'battery' || comp.type === 'dc_source') {
+    const rawV = comp.voltage !== undefined ? comp.voltage : (comp.v || 1.5);
+    const vText = `${Number(rawV).toFixed(1)}V`;
+    
+    if (mode === 'schematic') {
+      const posTerminalX = comp.flipped ? -10 : 10;
+      const negTerminalX = comp.flipped ? 10 : -10;
+      g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <line x1="-35" y1="0" x2="-10" y2="0" stroke="black" stroke-width="2"/>
+                      <line x1="${negTerminalX}" y1="-6" x2="${negTerminalX}" y2="6" stroke="black" stroke-width="1.5"/>
+                      <line x1="${posTerminalX}" y1="-12" x2="${posTerminalX}" y2="12" stroke="black" stroke-width="3"/>
+                      <line x1="10" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                      <text x="${comp.flipped ? -25 : 15}" y="-8" font-size="11" font-weight="bold" fill="#ef4444">+</text>
+                      <text x="${comp.flipped ? 15 : -25}" y="-8" font-size="11" font-weight="bold" fill="#2563eb">-</text>
+                      <text x="-14" y="18" font-size="10">${vText}</text>`;
+    } else {
+      const posLabelX = comp.flipped ? -28 : 22;
+      const negLabelX = comp.flipped ? 22 : -28;
+      const capX = comp.flipped ? -41 : 35;
+      g.innerHTML += `<rect x="-40" y="-16" width="75" height="32" rx="4" fill="#1f2937" stroke="#111827" stroke-width="2"/>
+                      <rect x="${comp.flipped ? -35 : 20}" y="-16" width="15" height="32" fill="#f59e0b"/>
+                      <rect x="${capX}" y="-8" width="6" height="16" rx="2" fill="#9ca3af"/>
+                      <text x="${posLabelX}" y="5" fill="white" font-weight="bold" font-size="14">+</text>
+                      <text x="${negLabelX}" y="5" fill="white" font-weight="bold" font-size="14">-</text>
+                      <text x="-15" y="4" fill="#9ca3af" font-size="11">${vText}</text>`;
+    }
+  } else if (comp.type === 'resistor') {
+    const rVal = comp.resistance || 100;
+    const rText = typeof formatResistance === 'function' ? formatResistance(rVal) : `${rVal}Ω`;
+    const colors = typeof getResistorColorCodes === 'function' ? getResistorColorCodes(rVal) : ['#ca8a04', '#ca8a04', '#ca8a04', '#ca8a04'];
+
+    if (mode === 'schematic') {
+      g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <rect x="-20" y="-8" width="40" height="16" fill="white" stroke="black" stroke-width="2"/>
+                      <line x1="-35" y1="0" x2="-20" y2="0" stroke="black" stroke-width="2"/>
+                      <line x1="20" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                      <text x="-18" y="18" font-size="10">${rText}</text>`;
+    } else {
+      g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
+                      <rect x="-22" y="-10" width="44" height="20" rx="6" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                      <rect x="-12" y="-10" width="4" height="20" fill="${colors[0]}"/>
+                      <rect x="-4" y="-10" width="4" height="20" fill="${colors[1]}"/>
+                      <rect x="4" y="-10" width="4" height="20" fill="${colors[2]}"/>
+                      <rect x="12" y="-10" width="4" height="20" fill="${colors[3]}"/>
+                      <text x="-22" y="24" font-size="11" font-weight="bold" fill="#374151">${rText}</text>`;
+    }
+  } else if (comp.type === 'led') {
+    let opacity = 0.3;
+    let glowRadius = 0;
+    let activeColor = '#6b7280';
+
+    if (isWorking) {
+      activeColor = comp.color || '#ef4444';
+      const ratio = Math.min(current / 0.02, 1.5);
+      const factor = Math.sqrt(ratio);
+      opacity = Math.min(Math.max(0.15 + factor * 0.85, 0.15), 1.0);
+      glowRadius = Math.round(factor * 18);
+    }
+
+    const glowStyle = isWorking ? `filter="drop-shadow(0 0 ${glowRadius}px ${activeColor})"` : '';
+    const posX = comp.flipped ? 18 : -25;
+    const negX = comp.flipped ? -25 : 18;
+
+    if (mode === 'schematic') {
+      const polyPoints = comp.flipped ? "10,-10 10,10 -10,0" : "-10,-10 -10,10 10,0";
+      const lineX = comp.flipped ? -10 : 10;
+      g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <polygon points="${polyPoints}" fill="${activeColor}" fill-opacity="${opacity}" stroke="black" stroke-width="2"/>
+                      <line x1="${lineX}" y1="-10" x2="${lineX}" y2="10" stroke="black" stroke-width="2"/>
+                      <line x1="-35" y1="0" x2="-10" y2="0" stroke="black" stroke-width="2"/>
+                      <line x1="10" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                      <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
+                      <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
+    } else {
+      g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
+                      <circle cx="0" cy="0" r="16" fill="${activeColor}" fill-opacity="${opacity}" ${glowStyle} stroke="#b91c1c" stroke-width="2"/>
+                      <path d="M -8 -6 A 12 12 0 0 1 8 -6" fill="none" stroke="white" stroke-width="2" opacity="0.5"/>
+                      <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
+                      <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
+    }
+  } else if (comp.type === 'rgb-led') {
+    let opacity = 0.3;
+    let glowRadius = 0;
+    let activeColor = '#6b7280';
+
+    if (isWorking) {
+      if (comp.color) {
+        activeColor = comp.color;
+      } else if (comp.activeColor) {
+        activeColor = comp.activeColor;
+      } else {
+        let r = false, gVal = false, b = false;
+        if (comp.rgbChannels) {
+          r = !!comp.rgbChannels.r;
+          gVal = !!comp.rgbChannels.g;
+          b = !!comp.rgbChannels.b;
         }
 
-        const mode = this.mode;
-
-        if (comp.type === 'battery' || comp.type === 'cds' || comp.type === 'dc_source') {
-          const rawV = comp.voltage !== undefined ? comp.voltage : (comp.v || 1.5);
-          const vText = `${Number(rawV).toFixed(1)}V`;
-          
-          if (mode === 'schematic') {
-            const posTerminalX = comp.flipped ? -10 : 10;
-            const negTerminalX = comp.flipped ? 10 : -10;
-            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                            <line x1="-35" y1="0" x2="-10" y2="0" stroke="black" stroke-width="2"/>
-                            <line x1="${negTerminalX}" y1="-6" x2="${negTerminalX}" y2="6" stroke="black" stroke-width="1.5"/>
-                            <line x1="${posTerminalX}" y1="-12" x2="${posTerminalX}" y2="12" stroke="black" stroke-width="3"/>
-                            <line x1="10" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
-                            <text x="${comp.flipped ? -25 : 15}" y="-8" font-size="11" font-weight="bold" fill="#ef4444">+</text>
-                            <text x="${comp.flipped ? 15 : -25}" y="-8" font-size="11" font-weight="bold" fill="#2563eb">-</text>
-                            <text x="-14" y="18" font-size="10">${vText}</text>`;
-          } else {
-            const posLabelX = comp.flipped ? -28 : 22;
-            const negLabelX = comp.flipped ? 22 : -28;
-            const capX = comp.flipped ? -41 : 35;
-            g.innerHTML += `<rect x="-40" y="-16" width="75" height="32" rx="4" fill="#1f2937" stroke="#111827" stroke-width="2"/>
-                            <rect x="${comp.flipped ? -35 : 20}" y="-16" width="15" height="32" fill="#f59e0b"/>
-                            <rect x="${capX}" y="-8" width="6" height="16" rx="2" fill="#9ca3af"/>
-                            <text x="${posLabelX}" y="5" fill="white" font-weight="bold" font-size="14">+</text>
-                            <text x="${negLabelX}" y="5" fill="white" font-weight="bold" font-size="14">-</text>
-                            <text x="-15" y="4" fill="#9ca3af" font-size="11">${vText}</text>`;
-          }
-        } else if (comp.type === 'resistor') {
-          const rVal = comp.resistance || 100;
-          const rText = typeof formatResistance === 'function' ? formatResistance(rVal) : `${rVal}Ω`;
-          const colors = typeof getResistorColorCodes === 'function' ? getResistorColorCodes(rVal) : ['#ca8a04', '#ca8a04', '#ca8a04', '#ca8a04'];
-
-          if (mode === 'schematic') {
-            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                            <rect x="-20" y="-8" width="40" height="16" fill="white" stroke="black" stroke-width="2"/>
-                            <line x1="-35" y1="0" x2="-20" y2="0" stroke="black" stroke-width="2"/>
-                            <line x1="20" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
-                            <text x="-18" y="18" font-size="10">${rText}</text>`;
-          } else {
-            g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
-                            <rect x="-22" y="-10" width="44" height="20" rx="6" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
-                            <rect x="-12" y="-10" width="4" height="20" fill="${colors[0]}"/>
-                            <rect x="-4" y="-10" width="4" height="20" fill="${colors[1]}"/>
-                            <rect x="4" y="-10" width="4" height="20" fill="${colors[2]}"/>
-                            <rect x="12" y="-10" width="4" height="20" fill="${colors[3]}"/>
-                            <text x="-22" y="24" font-size="11" font-weight="bold" fill="#374151">${rText}</text>`;
-          }
-        } else if (comp.type === 'led') {
-          let opacity = 0.3;
-          let glowRadius = 0;
-          let activeColor = '#6b7280';
-
-          if (isWorking) {
-            activeColor = comp.color || '#ef4444';
-            const ratio = Math.min(current / 0.02, 1.5);
-            const factor = Math.sqrt(ratio);
-            opacity = Math.min(Math.max(0.15 + factor * 0.85, 0.15), 1.0);
-            glowRadius = Math.round(factor * 18);
-          }
-
-          const glowStyle = isWorking ? `filter="drop-shadow(0 0 ${glowRadius}px ${activeColor})"` : '';
-          const posX = comp.flipped ? 18 : -25;
-          const negX = comp.flipped ? -25 : 18;
-
-          if (mode === 'schematic') {
-            const polyPoints = comp.flipped ? "10,-10 10,10 -10,0" : "-10,-10 -10,10 10,0";
-            const lineX = comp.flipped ? -10 : 10;
-            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                            <polygon points="${polyPoints}" fill="${activeColor}" fill-opacity="${opacity}" stroke="black" stroke-width="2"/>
-                            <line x1="${lineX}" y1="-10" x2="${lineX}" y2="10" stroke="black" stroke-width="2"/>
-                            <line x1="-35" y1="0" x2="-10" y2="0" stroke="black" stroke-width="2"/>
-                            <line x1="10" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
-                            <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
-                            <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
-          } else {
-            g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
-                            <circle cx="0" cy="0" r="16" fill="${activeColor}" fill-opacity="${opacity}" ${glowStyle} stroke="#b91c1c" stroke-width="2"/>
-                            <path d="M -8 -6 A 12 12 0 0 1 8 -6" fill="none" stroke="white" stroke-width="2" opacity="0.5"/>
-                            <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
-                            <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
-          }
-        } else if (comp.type === 'rgb-led') {
-          let opacity = 0.3;
-          let glowRadius = 0;
-          let activeColor = '#6b7280';
-
-          if (isWorking) {
-            if (comp.color) {
-              activeColor = comp.color;
-            } else if (comp.activeColor) {
-              activeColor = comp.activeColor;
-            } else {
-              let r = false, gVal = false, b = false;
-              if (comp.rgbChannels) {
-                r = !!comp.rgbChannels.r;
-                gVal = !!comp.rgbChannels.g;
-                b = !!comp.rgbChannels.b;
-              }
-
-              if (r && gVal && b)       activeColor = '#ffffff';
-              else if (r && gVal)       activeColor = '#eab308';
-              else if (gVal && b)       activeColor = '#06b6d4';
-              else if (r && b)          activeColor = '#a855f7';
-              else if (r)               activeColor = '#ef4444';
-              else if (gVal)            activeColor = '#10b981';
-              else if (b)               activeColor = '#3b82f6';
-              else                      activeColor = '#ef4444';
-            }
-
-            const ratio = Math.min(current / 0.02, 1.5);
-            const factor = Math.sqrt(ratio);
-
-            opacity = Math.min(Math.max(0.15 + factor * 0.85, 0.15), 1.0);
-            glowRadius = Math.round(factor * 18);
-          }
-
-          const glowStyle = isWorking ? `filter="drop-shadow(0 0 ${glowRadius}px ${activeColor})"` : '';
-          const labels = comp.flipped 
-            ? [{ x: -40, text: 'B', color: '#3b82f6' }, { x: -8, text: 'G', color: '#10b981' }, { x: 22, text: 'R', color: '#ef4444' }, { x: 50, text: 'ー', color: '#2563eb' }]
-            : [{ x: -60, text: 'ー', color: '#2563eb' }, { x: -20, text: 'R', color: '#ef4444' }, { x: 10, text: 'G', color: '#10b981' }, { x: 40, text: 'B', color: '#3b82f6' }];
-
-          if (mode === 'schematic') {
-            g.innerHTML += `<rect x="-55" y="-22" width="110" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                            <circle cx="0" cy="-4" r="10" fill="${isWorking ? activeColor : '#e5e7eb'}" stroke="black" stroke-width="2"/>
-                            <line x1="-45" y1="0" x2="-45" y2="15" stroke="black" stroke-width="1.5"/>
-                            <line x1="-15" y1="0" x2="-15" y2="15" stroke="black" stroke-width="1.5"/>
-                            <line x1="15" y1="0" x2="15" y2="15" stroke="black" stroke-width="1.5"/>
-                            <line x1="45" y1="0" x2="45" y2="15" stroke="black" stroke-width="1.5"/>
-                            <text x="${labels[0].x - 3}" y="-10" font-size="10" font-weight="bold" fill="${labels[0].color}">${labels[0].text}</text>
-                            <text x="${labels[1].x - 4}" y="-10" font-size="9" font-weight="bold" fill="${labels[1].color}">${labels[1].text}</text>
-                            <text x="${labels[2].x - 4}" y="-10" font-size="9" font-weight="bold" fill="${labels[2].color}">${labels[2].text}</text>
-                            <text x="${labels[3].x - 4}" y="-10" font-size="9" font-weight="bold" fill="${labels[3].color}">${labels[3].text}</text>`;
-          } else {
-            g.innerHTML += `<line x1="-45" y1="40" x2="-45" y2="0" stroke="#9ca3af" stroke-width="2"/>
-                            <line x1="-15" y1="40" x2="-15" y2="0" stroke="#9ca3af" stroke-width="2"/>
-                            <line x1="15" y1="40" x2="15" y2="0" stroke="#9ca3af" stroke-width="2"/>
-                            <line x1="45" y1="40" x2="45" y2="0" stroke="#9ca3af" stroke-width="2"/>
-                            <circle cx="0" cy="-6" r="18" fill="${isWorking ? activeColor : '#d1d5db'}" fill-opacity="${opacity}" ${glowStyle} stroke="#9ca3af" stroke-width="2"/>
-                            <path d="M -10 -12 A 14 14 0 0 1 10 -12" fill="none" stroke="white" stroke-width="2" opacity="0.6"/>
-                            <text x="${labels[0].x - 3}" y="22" font-size="10" font-weight="bold" fill="${labels[0].color}">${labels[0].text}</text>
-                            <text x="${labels[1].x - 4}" y="22" font-size="9" font-weight="bold" fill="${labels[1].color}">${labels[1].text}</text>
-                            <text x="${labels[2].x - 4}" y="22" font-size="9" font-weight="bold" fill="${labels[2].color}">${labels[2].text}</text>
-                            <text x="${labels[3].x - 4}" y="22" font-size="9" font-weight="bold" fill="${labels[3].color}">${labels[3].text}</text>`;
-          }
-        } else if (comp.type === 'cds') {
-          const lightVal = comp.light !== undefined ? comp.light : 50;
-          comp.resistance = this.getCdsResistance(comp);
-          const rVal = comp.resistance;
-          const rText = typeof formatResistance === 'function' ? formatResistance(rVal) : `${rVal}Ω`;
-
-          if (mode === 'schematic') {
-            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                            <rect x="-20" y="-8" width="40" height="16" fill="white" stroke="black" stroke-width="2"/>
-                            <line x1="-35" y1="0" x2="-20" y2="0" stroke="black" stroke-width="2"/>
-                            <line x1="20" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
-                            <path d="M -12 -16 L -4 -9 M -4 -9 L -8 -9 M -4 -9 L -4 -13" stroke="black" stroke-width="1.5" fill="none"/>
-                            <path d="M -4 -16 L 4 -9 M 4 -9 L 0 -9 M 4 -9 L 4 -13" stroke="black" stroke-width="1.5" fill="none"/>
-                            <text x="-20" y="18" font-size="10">${rText}</text>`;
-          } else {
-            g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
-                            <circle cx="0" cy="0" r="16" fill="#fde047" stroke="#ca8a04" stroke-width="2"/>
-                            <path d="M -10 -8 Q -5 -12 0 -8 T 10 -8 M -10 -2 Q -5 -6 0 -2 T 10 -2 M -10 4 Q -5 0 0 4 T 10 4" fill="none" stroke="#b91c1c" stroke-width="1.5"/>
-                            <text x="-22" y="26" font-size="10" font-weight="bold" fill="#374151">☀️${lightVal}%</text>`;
-          }
-        } else if (comp.type === 'switch') {
-          if (mode === 'schematic') {
-            const lineY = !comp.state ? -12 : 0;
-            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                            <circle cx="-15" cy="0" r="3" fill="black"/>
-                            <circle cx="15" cy="0" r="3" fill="black"/>
-                            <line x1="-15" y1="0" x2="15" y2="${lineY}" stroke="black" stroke-width="2.5"/>
-                            <line x1="-35" y1="0" x2="-15" y2="0" stroke="black" stroke-width="2"/>
-                            <line x1="15" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>`;
-          } else {
-            const btnColor = comp.state ? '#10b981' : '#ef4444';
-            g.innerHTML += `<rect x="-25" y="-15" width="50" height="30" rx="6" fill="#374151" stroke="#1f2937" stroke-width="2"/>
-                            <circle cx="${comp.state ? 8 : -8}" cy="0" r="9" fill="${btnColor}"/>
-                            <text x="-18" y="26" font-size="11" font-weight="bold" fill="#374151">${comp.state ? 'スイッチON' : 'スイッチOFF'}</text>`;
-          }
-        } else if (comp.type === 'motor') {
-          let durationSec = 1.0;
-          if (isWorking) {
-            const ratio = Math.min(Math.max(current / 0.03, 0.01), 3.0);
-            const factor = Math.sqrt(ratio);
-            durationSec = Math.max(0.1, (0.5 / factor)).toFixed(2);
-          }
-
-          const rotStyle = isWorking ? `style="animation-duration: ${durationSec}s;"` : '';
-          const rotClass = isWorking ? 'class="rotating"' : '';
-
-          const posX = comp.flipped ? 20 : -28;
-          const negX = comp.flipped ? -28 : 20;
-
-          if (mode === 'schematic') {
-            g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                            <circle cx="0" cy="0" r="14" fill="white" stroke="black" stroke-width="2"/>
-                            <text x="-5" y="5" font-size="13" font-weight="bold">M</text>
-                            <line x1="-35" y1="0" x2="-14" y2="0" stroke="black" stroke-width="2"/>
-                            <line x1="14" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
-                            <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
-                            <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
-          } else {
-            g.innerHTML += `<circle cx="0" cy="0" r="22" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
-                            <g ${rotClass} ${rotStyle}>
-                              <path d="M 0 0 L -10 -20 L 10 -20 Z" fill="#2563eb"/>
-                              <path d="M 0 0 L -10 20 L 10 20 Z" fill="#2563eb"/>
-                            </g>
-                            <circle cx="0" cy="0" r="4" fill="#1f2937"/>
-                            <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
-                            <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
-          }
-        }
+        if (r && gVal && b)       activeColor = '#ffffff';
+        else if (r && gVal)       activeColor = '#eab308';
+        else if (gVal && b)       activeColor = '#06b6d4';
+        else if (r && b)          activeColor = '#a855f7';
+        else if (r)               activeColor = '#ef4444';
+        else if (gVal)            activeColor = '#10b981';
+        else if (b)               activeColor = '#3b82f6';
+        else                      activeColor = '#ef4444';
       }
+
+      const ratio = Math.min(current / 0.02, 1.5);
+      const factor = Math.sqrt(ratio);
+
+      opacity = Math.min(Math.max(0.15 + factor * 0.85, 0.15), 1.0);
+      glowRadius = Math.round(factor * 18);
+    }
+
+    const glowStyle = isWorking ? `filter="drop-shadow(0 0 ${glowRadius}px ${activeColor})"` : '';
+    const labels = comp.flipped 
+      ? [{ x: -40, text: 'B', color: '#3b82f6' }, { x: -8, text: 'G', color: '#10b981' }, { x: 22, text: 'R', color: '#ef4444' }, { x: 50, text: 'ー', color: '#2563eb' }]
+      : [{ x: -60, text: 'ー', color: '#2563eb' }, { x: -20, text: 'R', color: '#ef4444' }, { x: 10, text: 'G', color: '#10b981' }, { x: 40, text: 'B', color: '#3b82f6' }];
+
+    if (mode === 'schematic') {
+      g.innerHTML += `<rect x="-55" y="-22" width="110" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <circle cx="0" cy="-4" r="10" fill="${isWorking ? activeColor : '#e5e7eb'}" stroke="black" stroke-width="2"/>
+                      <line x1="-45" y1="0" x2="-45" y2="15" stroke="black" stroke-width="1.5"/>
+                      <line x1="-15" y1="0" x2="-15" y2="15" stroke="black" stroke-width="1.5"/>
+                      <line x1="15" y1="0" x2="15" y2="15" stroke="black" stroke-width="1.5"/>
+                      <line x1="45" y1="0" x2="45" y2="15" stroke="black" stroke-width="1.5"/>
+                      <text x="${labels[0].x - 3}" y="-10" font-size="10" font-weight="bold" fill="${labels[0].color}">${labels[0].text}</text>
+                      <text x="${labels[1].x - 4}" y="-10" font-size="9" font-weight="bold" fill="${labels[1].color}">${labels[1].text}</text>
+                      <text x="${labels[2].x - 4}" y="-10" font-size="9" font-weight="bold" fill="${labels[2].color}">${labels[2].text}</text>
+                      <text x="${labels[3].x - 4}" y="-10" font-size="9" font-weight="bold" fill="${labels[3].color}">${labels[3].text}</text>`;
+    } else {
+      g.innerHTML += `<line x1="-45" y1="40" x2="-45" y2="0" stroke="#9ca3af" stroke-width="2"/>
+                      <line x1="-15" y1="40" x2="-15" y2="0" stroke="#9ca3af" stroke-width="2"/>
+                      <line x1="15" y1="40" x2="15" y2="0" stroke="#9ca3af" stroke-width="2"/>
+                      <line x1="45" y1="40" x2="45" y2="0" stroke="#9ca3af" stroke-width="2"/>
+                      <circle cx="0" cy="-6" r="18" fill="${isWorking ? activeColor : '#d1d5db'}" fill-opacity="${opacity}" ${glowStyle} stroke="#9ca3af" stroke-width="2"/>
+                      <path d="M -10 -12 A 14 14 0 0 1 10 -12" fill="none" stroke="white" stroke-width="2" opacity="0.6"/>
+                      <text x="${labels[0].x - 3}" y="22" font-size="10" font-weight="bold" fill="${labels[0].color}">${labels[0].text}</text>
+                      <text x="${labels[1].x - 4}" y="22" font-size="9" font-weight="bold" fill="${labels[1].color}">${labels[1].text}</text>
+                      <text x="${labels[2].x - 4}" y="22" font-size="9" font-weight="bold" fill="${labels[2].color}">${labels[2].text}</text>
+                      <text x="${labels[3].x - 4}" y="22" font-size="9" font-weight="bold" fill="${labels[3].color}">${labels[3].text}</text>`;
+    }
+  } else if (comp.type === 'cds') {
+    const lightVal = comp.light !== undefined ? comp.light : 50;
+    comp.resistance = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(comp) : 1000;
+    const rVal = comp.resistance;
+    const rText = typeof formatResistance === 'function' ? formatResistance(rVal) : `${rVal}Ω`;
+
+    if (mode === 'schematic') {
+      g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <rect x="-20" y="-8" width="40" height="16" fill="white" stroke="black" stroke-width="2"/>
+                      <line x1="-35" y1="0" x2="-20" y2="0" stroke="black" stroke-width="2"/>
+                      <line x1="20" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                      <path d="M -12 -16 L -4 -9 M -4 -9 L -8 -9 M -4 -9 L -4 -13" stroke="black" stroke-width="1.5" fill="none"/>
+                      <path d="M -4 -16 L 4 -9 M 4 -9 L 0 -9 M 4 -9 L 4 -13" stroke="black" stroke-width="1.5" fill="none"/>
+                      <text x="-20" y="18" font-size="10">${rText}</text>`;
+    } else {
+      g.innerHTML += `<line x1="-35" y1="0" x2="35" y2="0" stroke="#9ca3af" stroke-width="3"/>
+                      <circle cx="0" cy="0" r="16" fill="#fde047" stroke="#ca8a04" stroke-width="2"/>
+                      <path d="M -10 -8 Q -5 -12 0 -8 T 10 -8 M -10 -2 Q -5 -6 0 -2 T 10 -2 M -10 4 Q -5 0 0 4 T 10 4" fill="none" stroke="#b91c1c" stroke-width="1.5"/>
+                      <text x="-22" y="26" font-size="10" font-weight="bold" fill="#374151">☀️${lightVal}%</text>`;
+    }
+  } else if (comp.type === 'switch') {
+    if (mode === 'schematic') {
+      const lineY = !comp.state ? -12 : 0;
+      g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <circle cx="-15" cy="0" r="3" fill="black"/>
+                      <circle cx="15" cy="0" r="3" fill="black"/>
+                      <line x1="-15" y1="0" x2="15" y2="${lineY}" stroke="black" stroke-width="2.5"/>
+                      <line x1="-35" y1="0" x2="-15" y2="0" stroke="black" stroke-width="2"/>
+                      <line x1="15" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>`;
+    } else {
+      const btnColor = comp.state ? '#10b981' : '#ef4444';
+      g.innerHTML += `<rect x="-25" y="-15" width="50" height="30" rx="6" fill="#374151" stroke="#1f2937" stroke-width="2"/>
+                      <circle cx="${comp.state ? 8 : -8}" cy="0" r="9" fill="${btnColor}"/>
+                      <text x="-18" y="26" font-size="11" font-weight="bold" fill="#374151">${comp.state ? 'スイッチON' : 'スイッチOFF'}</text>`;
+    }
+  } else if (comp.type === 'motor') {
+    let durationSec = 1.0;
+    if (isWorking) {
+      const ratio = Math.min(Math.max(current / 0.03, 0.01), 3.0);
+      const factor = Math.sqrt(ratio);
+      durationSec = Math.max(0.1, (0.5 / factor)).toFixed(2);
+    }
+
+    const rotStyle = isWorking ? `style="animation-duration: ${durationSec}s;"` : '';
+    const rotClass = isWorking ? 'class="rotating"' : '';
+
+    const posX = comp.flipped ? 20 : -28;
+    const negX = comp.flipped ? -28 : 20;
+
+    if (mode === 'schematic') {
+      g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <circle cx="0" cy="0" r="14" fill="white" stroke="black" stroke-width="2"/>
+                      <text x="-5" y="5" font-size="13" font-weight="bold">M</text>
+                      <line x1="-35" y1="0" x2="-14" y2="0" stroke="black" stroke-width="2"/>
+                      <line x1="14" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
+                      <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
+                      <text x="${negX}" y="-10" font-size="11" font-weight="bold" fill="#2563eb">-</text>`;
+    } else {
+      g.innerHTML += `<circle cx="0" cy="0" r="22" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+                      <g ${rotClass} ${rotStyle}>
+                        <path d="M 0 0 L -10 -20 L 10 -20 Z" fill="#2563eb"/>
+                        <path d="M 0 0 L -10 20 L 10 20 Z" fill="#2563eb"/>
+                      </g>
+                      <circle cx="0" cy="0" r="4" fill="#1f2937"/>
+                      <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
+                      <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
+    }
+  }
+}
+
 
       getTerminalPos(compId, termId) {
   const comp = this.components.find(c => c.id === compId);
@@ -3153,141 +3161,165 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
 
 
       updatePropertyToolbar() {
-        if (!this.propToolbar) return;
+  if (!this.propToolbar) return;
 
-        if (this.selectedComponentIds.size === 1) {
-          const compId = Array.from(this.selectedComponentIds)[0];
-          const comp = this.components.find(c => c.id === compId);
+  if (this.selectedComponentIds.size === 1) {
+    const compId = Array.from(this.selectedComponentIds)[0];
+    const comp = this.components.find(c => c.id === compId);
 
-          if (!comp) {
-            this.propToolbar.classList.add('hidden');
-            return;
-          }
-
-          const pos = this.getCompPos(comp);
-          const screenPos = {
-            x: pos.x * this.scale + this.panX,
-            y: (pos.y - 35) * this.scale + this.panY
-          };
-
-          this.propToolbar.style.left = `${screenPos.x}px`;
-          this.propToolbar.style.top = `${screenPos.y}px`;
-          this.propToolbar.innerHTML = '';
-
-          const rotBtn = document.createElement('button');
-          rotBtn.className = 'prop-btn';
-          rotBtn.textContent = '🔄 回転';
-          rotBtn.onclick = (e) => { e.stopPropagation(); this.rotateSelectedComponent(); };
-          this.propToolbar.appendChild(rotBtn);
-
-          if (['battery', 'led', 'motor', 'rgb-led'].includes(comp.type)) {
-            const flipBtn = document.createElement('button');
-            flipBtn.className = 'prop-btn';
-            flipBtn.textContent = '⇄ 反転';
-            flipBtn.onclick = (e) => { e.stopPropagation(); this.flipSelectedComponent(); };
-            this.propToolbar.appendChild(flipBtn);
-          }
-
-          if (comp.type === 'battery') {
-            const minusBtn = document.createElement('button');
-            minusBtn.className = 'prop-btn';
-            minusBtn.textContent = '-1.5V';
-            minusBtn.onclick = (e) => {
-              e.stopPropagation();
-              comp.voltage = Math.max(1.5, Math.round(((comp.voltage || 1.5) - 1.5) * 10) / 10);
-              this.saveState();
-              this.evaluateCircuit();
-              this.render();
-            };
-
-            const vLabel = document.createElement('span');
-            vLabel.style.fontSize = '0.85rem';
-            vLabel.style.fontWeight = 'bold';
-            vLabel.textContent = ` ${Number(comp.voltage || 1.5).toFixed(1)}V `;
-
-            const plusBtn = document.createElement('button');
-            plusBtn.className = 'prop-btn';
-            plusBtn.textContent = '+1.5V';
-            plusBtn.onclick = (e) => {
-              e.stopPropagation();
-              comp.voltage = Math.min(12.0, Math.round(((comp.voltage || 1.5) + 1.5) * 10) / 10);
-              this.saveState();
-              this.evaluateCircuit();
-              this.render();
-            };
-
-            this.propToolbar.appendChild(minusBtn);
-            this.propToolbar.appendChild(vLabel);
-            this.propToolbar.appendChild(plusBtn);
-          } else if (comp.type === 'resistor') {
-            const rInput = document.createElement('input');
-            rInput.type = 'number';
-            rInput.min = '1';
-            rInput.max = '1000000';
-            rInput.value = comp.resistance || 100;
-            rInput.style.width = '70px';
-            rInput.style.padding = '2px 4px';
-            rInput.style.fontSize = '0.85rem';
-
-            const applyResistorVal = () => {
-              let val = parseFloat(rInput.value);
-              if (isNaN(val) || val <= 0) val = 100;
-              comp.resistance = val;
-              this.saveState();
-              this.evaluateCircuit();
-              this.render();
-            };
-
-            rInput.onchange = (e) => { e.stopPropagation(); applyResistorVal(); };
-            rInput.onkeydown = (e) => {
-              e.stopPropagation();
-              if (e.key === 'Enter') applyResistorVal();
-            };
-            rInput.onclick = (e) => e.stopPropagation();
-
-            const unitLabel = document.createElement('span');
-            unitLabel.style.fontSize = '0.85rem';
-            unitLabel.style.fontWeight = 'bold';
-            unitLabel.textContent = ' Ω';
-
-            this.propToolbar.appendChild(rInput);
-            this.propToolbar.appendChild(unitLabel);
-          } else if (comp.type === 'cds') {
-            const slider = document.createElement('input');
-            slider.type = 'range';
-            slider.min = '0';
-            slider.max = '100';
-            slider.value = comp.light !== undefined ? comp.light : 50;
-            slider.className = 'prop-slider';
-
-            const lightLabel = document.createElement('span');
-            lightLabel.style.fontSize = '0.85rem';
-            lightLabel.style.fontWeight = 'bold';
-            lightLabel.textContent = ` ☀️${slider.value}% `;
-
-            slider.oninput = (e) => {
-              e.stopPropagation();
-              comp.light = parseInt(slider.value, 10);
-              lightLabel.textContent = ` ☀️${slider.value}% `;
-              this.evaluateCircuit();
-              this.render();
-            };
-
-            slider.onchange = (e) => {
-              e.stopPropagation();
-              this.saveState();
-            };
-
-            this.propToolbar.appendChild(slider);
-            this.propToolbar.appendChild(lightLabel);
-          }
-
-          this.propToolbar.classList.remove('hidden');
-        } else {
-          this.propToolbar.classList.add('hidden');
-        }
-      }
+    if (!comp) {
+      this.propToolbar.classList.add('hidden');
+      return;
     }
+
+    const pos = this.getCompPos(comp);
+    const screenPos = {
+      x: pos.x * this.scale + this.panX,
+      y: (pos.y - 35) * this.scale + this.panY
+    };
+
+    this.propToolbar.style.left = `${screenPos.x}px`;
+    this.propToolbar.style.top = `${screenPos.y}px`;
+    this.propToolbar.innerHTML = '';
+
+    const rotBtn = document.createElement('button');
+    rotBtn.className = 'prop-btn';
+    rotBtn.textContent = '🔄 回転';
+    rotBtn.onclick = (e) => { e.stopPropagation(); this.rotateSelectedComponent(); };
+    this.propToolbar.appendChild(rotBtn);
+
+    if (['battery', 'led', 'motor', 'rgb-led'].includes(comp.type)) {
+      const flipBtn = document.createElement('button');
+      flipBtn.className = 'prop-btn';
+      flipBtn.textContent = '⇄ 反転';
+      flipBtn.onclick = (e) => { e.stopPropagation(); this.flipSelectedComponent(); };
+      this.propToolbar.appendChild(flipBtn);
+    }
+
+    if (comp.type === 'battery') {
+      const minusBtn = document.createElement('button');
+      minusBtn.className = 'prop-btn';
+      minusBtn.textContent = '-1.5V';
+      minusBtn.onclick = (e) => {
+        e.stopPropagation();
+        comp.voltage = Math.max(1.5, Math.round(((comp.voltage || 1.5) - 1.5) * 10) / 10);
+        this.saveState();
+        this.evaluateCircuit();
+        this.render();
+      };
+
+      const vLabel = document.createElement('span');
+      vLabel.style.fontSize = '0.85rem';
+      vLabel.style.fontWeight = 'bold';
+      vLabel.textContent = ` ${Number(comp.voltage || 1.5).toFixed(1)}V `;
+
+      const plusBtn = document.createElement('button');
+      plusBtn.className = 'prop-btn';
+      plusBtn.textContent = '+1.5V';
+      plusBtn.onclick = (e) => {
+        e.stopPropagation();
+        comp.voltage = Math.min(12.0, Math.round(((comp.voltage || 1.5) + 1.5) * 10) / 10);
+        this.saveState();
+        this.evaluateCircuit();
+        this.render();
+      };
+
+      this.propToolbar.appendChild(minusBtn);
+      this.propToolbar.appendChild(vLabel);
+      this.propToolbar.appendChild(plusBtn);
+    } else if (comp.type === 'resistor') {
+      const rInput = document.createElement('input');
+      rInput.type = 'number';
+      rInput.min = '1';
+      rInput.max = '1000000';
+      rInput.value = comp.resistance || 100;
+      rInput.style.width = '70px';
+      rInput.style.padding = '2px 4px';
+      rInput.style.fontSize = '0.85rem';
+
+      const applyResistorVal = () => {
+        let val = parseFloat(rInput.value);
+        if (isNaN(val) || val <= 0) val = 100;
+        comp.resistance = val;
+        this.saveState();
+        this.evaluateCircuit();
+        this.render();
+      };
+
+      rInput.onchange = (e) => { e.stopPropagation(); applyResistorVal(); };
+      rInput.onkeydown = (e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') applyResistorVal();
+      };
+      rInput.onclick = (e) => e.stopPropagation();
+
+      const unitLabel = document.createElement('span');
+      unitLabel.style.fontSize = '0.85rem';
+      unitLabel.style.fontWeight = 'bold';
+      unitLabel.textContent = ' Ω';
+
+      this.propToolbar.appendChild(rInput);
+      this.propToolbar.appendChild(unitLabel);
+    } else if (comp.type === 'cds') {
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = '0';
+      slider.max = '100';
+      slider.value = comp.light !== undefined ? comp.light : 50;
+      slider.className = 'prop-slider';
+
+      const lightLabel = document.createElement('span');
+      lightLabel.style.fontSize = '0.85rem';
+      lightLabel.style.fontWeight = 'bold';
+      lightLabel.textContent = ` ☀️${slider.value}% `;
+
+      // キャンバス選択・移動イベントへの影響を防ぐ最小限の停止処理
+      const stopProp = (e) => e.stopPropagation();
+      slider.addEventListener('pointerdown', stopProp);
+      slider.addEventListener('mousedown', stopProp);
+      slider.addEventListener('touchstart', stopProp);
+
+      slider.oninput = (e) => {
+        e.stopPropagation();
+        const val = parseInt(slider.value, 10);
+        comp.light = val;
+        lightLabel.textContent = ` ☀️${val}% `;
+
+        // 回路の評価を行う
+        if (typeof this.evaluateCircuit === 'function') {
+          this.evaluateCircuit();
+        }
+
+        // プロパティバーを破壊せずにキャンバス（SVG）部分のみ再描画する
+        if (typeof this.renderComponents === 'function') {
+          this.renderComponents();
+        } else if (typeof this.draw === 'function') {
+          this.draw();
+        }
+      };
+
+      slider.onchange = (e) => {
+        e.stopPropagation();
+        if (typeof this.saveState === 'function') {
+          this.saveState();
+        }
+        // ドラッグ終了時のみ全体のrenderを呼び出す
+        if (typeof this.render === 'function') {
+          this.render();
+        }
+      };
+
+      this.propToolbar.appendChild(slider);
+      this.propToolbar.appendChild(lightLabel);
+    }
+
+    this.propToolbar.classList.remove('hidden');
+  } else {
+    this.propToolbar.classList.add('hidden');
+  }
+}
+  }
+
 
     window.addEventListener('DOMContentLoaded', () => {
       window.app = new CircuitApp();
