@@ -1615,14 +1615,14 @@ async generatePDFDirectDownload() {
     };
 
     const typeOrder = ['battery', 'resistor', 'switch', 'led', 'rgb-led', 'motor','cds'];
-    const names = { 
+        const names = { 
       battery: '乾電池', 
       resistor: '抵抗器', 
       switch: 'スイッチ', 
       led: 'LED', 
       'rgb-led': 'フルカラーLED', 
       motor: 'モーター',
-      cds: '光導電セル（Cds）'  
+      cds: '光導電セル'  
     };
     const partsMap = {};
 
@@ -1643,17 +1643,22 @@ async generatePDFDirectDownload() {
       } else if (c.type === 'rgb-led') {
         spec = 'RGB 4端子';
       } else if (c.type === 'motor') {
-        spec = '1.5V-3.0V';
+        spec = '1.5V-3.0V DC(直流)';
       } else if (c.type === 'cds') {
-        spec = '光導電セル';
+        // 光度と計算抵抗値を表示
+        const lightVal = c.light !== undefined ? c.light : 50;
+        const resVal = this.getCdsResistance(c);
+        spec = `光度:${lightVal}% (${formatResistance(resVal)})`;
       }
 
+      // 個別の仕様ごとにまとめるため key に spec を含める
       const key = `${c.type}_${name}_${spec}`;
       if (!partsMap[key]) {
         partsMap[key] = { type: c.type, name, spec, count: 0 };
       }
       partsMap[key].count += countAdd;
     });
+
 
     const sortedParts = Object.values(partsMap).sort((a, b) => {
       const indexA = typeOrder.indexOf(a.type);
