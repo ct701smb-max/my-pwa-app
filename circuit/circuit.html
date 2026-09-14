@@ -2235,8 +2235,7 @@ async generatePDFDirectDownload() {
     return { status: 'NO_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
   }
 
-  const totalVoltage = batteries.reduce((sum, b) => sum + (Number(b.voltage) || 1.5), 0);
-
+  // --- 1. ノード構築 ---
   const termNodeMap = new Map();
   const allTerms = [];
   this.components.forEach(c => c.terminals.forEach(t => allTerms.push(t)));
@@ -2334,24 +2333,108 @@ async generatePDFDirectDownload() {
     }
   });
 
-  const rawPaths = [];
-  batteries.forEach(bat => {
-    const posTerm = bat.terminals.find(t => t.polarity === 'pos');
-    const negTerm = bat.terminals.find(t => t.polarity === 'neg');
-    if (!posTerm || !negTerm) return;
+  // --- 2. 電池ネットワークの電位解析（直列・並列・逆接続の判定） ---
+  const nodeVoltageMap = new Map();
+  let hasReverseShort = false;
 
-    const startNode = termNodeMap.get(posTerm.id);
-    const targetNode = termNodeMap.get(negTerm.id);
+  const batteryNodes = new Set();
+  batteries.forEach(b => {
+    b.terminals.forEach(t => {
+      const nId = termNodeMap.get(t.id);
+      if (nId) batteryNodes.add(nId);
+    });
+  });
+
+  const visitedBatteries = new Set();
+
+  batteryNodes.forEach(startNodeId => {
+    if (!nodeVoltageMap.has(startNodeId)) {
+      nodeVoltageMap.set(startNodeId, 0);
+
+      const queue = [startNodeId];
+      while (queue.length > 0) {
+        const currNode = queue.shift();
+        const currV = nodeVoltageMap.get(currNode);
+
+        batteries.forEach(b => {
+          if (visitedBatteries.has(b.id)) return;
+
+          const posTerm = b.terminals.find(t => t.polarity === 'pos');
+          const negTerm = b.terminals.find(t => t.polarity === 'neg');
+          if (!posTerm || !negTerm) return;
+
+          const posNode = termNodeMap.get(posTerm.id);
+          const negNode = termNodeMap.get(negTerm.id);
+          const bVoltage = Number(b.voltage) || 1.5;
+
+          if (currNode === negNode) {
+            const targetV = currV + bVoltage;
+            if (nodeVoltageMap.has(posNode)) {
+              const existingPosV = nodeVoltageMap.get(posNode);
+              // posNodeの電位がnegNodeより高い＝向きが正しい並列接続
+              if (existingPosV > currV) {
+                // 電圧が異なる場合は高い方の電圧（3.0Vなど）を採用
+                if (targetV > existingPosV) {
+                  nodeVoltageMap.set(posNode, targetV);
+                }
+              } else {
+                // posNodeの電位がnegNode以下＝逆向き接続
+                hasReverseShort = true;
+              }
+            } else {
+              nodeVoltageMap.set(posNode, targetV);
+              queue.push(posNode);
+            }
+            visitedBatteries.add(b.id);
+          } else if (currNode === posNode) {
+            const targetV = currV - bVoltage;
+            if (nodeVoltageMap.has(negNode)) {
+              const existingNegV = nodeVoltageMap.get(negNode);
+              // negNodeの電位がposNodeより低い＝向きが正しい並列接続
+              if (existingNegV < currV) {
+                if (targetV < existingNegV) {
+                  nodeVoltageMap.set(negNode, targetV);
+                }
+              } else {
+                hasReverseShort = true;
+              }
+            } else {
+              nodeVoltageMap.set(negNode, targetV);
+              queue.push(negNode);
+            }
+            visitedBatteries.add(b.id);
+          }
+        });
+      }
+    }
+  });
+
+  if (hasReverseShort) {
+    this.setStatus('error', '💥', '電池の向き（極性）が逆向きに接続されており、ショートしています！');
+    return { status: 'SHORT', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+  }
+
+  // --- 3. 負荷パーツ経由の経路探索（電池自体は通過しない） ---
+  const rawPaths = [];
+  const startNodes = Array.from(nodeVoltageMap.keys());
+
+  startNodes.forEach(startNode => {
+    const vStart = nodeVoltageMap.get(startNode);
 
     const traceFromNode = (currentNode, currentPath, visitedComps) => {
-      if (currentNode === targetNode && currentPath.length > 0) {
-        rawPaths.push([...currentPath]);
+      const vCurr = nodeVoltageMap.get(currentNode);
+
+      // 高電位から到達した低電位ノードで閉回路完成
+      if (vCurr !== undefined && vCurr < vStart && currentPath.length > 0) {
+        const pathVoltage = vStart - vCurr;
+        rawPaths.push({ path: [...currentPath], voltage: pathVoltage });
         return;
       }
 
       const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === currentNode);
       connectedTerms.forEach(inTerm => {
         const comp = uniqueComponents.find(c => c.terminals.some(t => t.id === inTerm.id));
+        // ★電池は負荷経路として通過させない
         if (!comp || comp.type === 'battery' || visitedComps.has(comp.id)) return;
 
         let canPass = true;
@@ -2390,19 +2473,30 @@ async generatePDFDirectDownload() {
     return { status: 'OPEN', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
   }
 
+  // 経路重複排除
   const validPaths = [];
   const seenPathKeys = new Set();
-  rawPaths.forEach(path => {
-    const key = path.map(item => String(item.comp.id)).sort().join(',');
+  rawPaths.forEach(item => {
+    const key = item.path.map(p => String(p.comp.id)).sort().join(',');
     if (!seenPathKeys.has(key)) {
       seenPathKeys.add(key);
-      validPaths.push(path);
+      validPaths.push(item);
     }
   });
 
+  const totalVoltage = validPaths.length > 0 
+    ? Math.max(0, ...validPaths.map(p => p.voltage)) 
+    : 0;
+
+  if (totalVoltage <= 0) {
+    this.setStatus('warning', '⚠️', '電池の向き（極性）が互いに打ち消し合っているか、正しく接続されていません。');
+    return { status: 'REVERSE_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+  }
+
+  // --- 4. 合成抵抗とショート判定 ---
   const branchMap = new Map();
-  validPaths.forEach(path => {
-    const resistors = path.map(item => item.comp).filter(c => c.type === 'resistor' || c.type === 'cds');
+  validPaths.forEach(item => {
+    const resistors = item.path.map(p => p.comp).filter(c => c.type === 'resistor' || c.type === 'cds');
     if (resistors.length > 0) {
       const key = resistors.map(r => String(r.id)).sort().join('-');
       if (!branchMap.has(key)) {
@@ -2446,10 +2540,9 @@ async generatePDFDirectDownload() {
     totalResistance = R_common + R_parallel;
   }
 
-  // --- 3. ショート判定 ---
   let isShortCircuit = false;
-  validPaths.forEach(path => {
-    const hasResistor = path.some(item => item.comp.type === 'resistor' || item.comp.type === 'cds');
+  validPaths.forEach(item => {
+    const hasResistor = item.path.some(p => p.comp.type === 'resistor' || p.comp.type === 'cds');
     if (!hasResistor) {
       isShortCircuit = true;
     }
@@ -2468,12 +2561,13 @@ async generatePDFDirectDownload() {
 
   const totalCurrent = totalResistance > 0 ? (totalVoltage / totalResistance) : totalVoltage;
 
-  // --- 4. コンポーネントの状態（アクティブ化・電流計算） ---
-  const VF_PER_LED = 2.0; // LEDの駆動に必要な順方向電圧(2.0V)
+  // --- 5. コンポーネント動作状態の更新 ---
+  const VF_PER_LED = 2.0;
   let hasLedInCircuit = false;
 
-  validPaths.forEach(path => {
-    const ledCountInPath = path.filter(item => item.comp.type === 'led' || item.comp.type === 'rgb-led').length;
+  validPaths.forEach(item => {
+    const path = item.path;
+    const ledCountInPath = path.filter(p => p.comp.type === 'led' || p.comp.type === 'rgb-led').length;
 
     if (ledCountInPath > 0) {
       hasLedInCircuit = true;
@@ -2481,9 +2575,9 @@ async generatePDFDirectDownload() {
 
     const requiredVoltage = ledCountInPath * VF_PER_LED;
 
-    path.forEach(item => {
-      const comp = item.comp;
-      const inTerm = item.inTerm;
+    path.forEach(pItem => {
+      const comp = pItem.comp;
+      const inTerm = pItem.inTerm;
 
       if (comp.type === 'led' || comp.type === 'rgb-led') {
         if (totalVoltage >= requiredVoltage) {
@@ -2503,7 +2597,7 @@ async generatePDFDirectDownload() {
             if (isBlue) comp.rgbChannels.b = true;
           }
         }
-      } else {
+      } else if (comp.type !== 'battery') {
         activeMap.set(comp.id, true);
 
         let currentVal = totalCurrent;
@@ -2512,12 +2606,12 @@ async generatePDFDirectDownload() {
             currentVal = -totalCurrent;
           }
         }
-        currentMap.set(comp.id, (currentVal));
+        currentMap.set(comp.id, currentVal);
       }
     });
   });
 
-  // --- 5. ステータス表示と返却 ---
+  // --- 6. ステータス表示 ---
   const rText = totalResistance >= 1000 
     ? `${(totalResistance / 1000).toFixed(2)} kΩ` 
     : `${totalResistance.toFixed(1)} Ω`;
@@ -2526,12 +2620,10 @@ async generatePDFDirectDownload() {
     ? `${totalCurrent.toFixed(2)} A` 
     : `${(totalCurrent * 1000).toFixed(1)} mA`;
 
-  // 回路内の全LEDがアクティブかどうかのチェック
   const anyLedActive = uniqueComponents
     .filter(c => c.type === 'led' || c.type === 'rgb-led')
     .some(c => activeMap.get(c.id));
 
-  // LEDが存在するのに1つも点灯していない場合は【最優先】で電圧不足を返す
   if (hasLedInCircuit && !anyLedActive) {
     this.setStatus('warning', '💡', `電圧不足です (電源: ${totalVoltage.toFixed(1)}V)。LEDの点灯に必要な電圧(LED1個あたり約${VF_PER_LED}V)に達していません。`);
     return { status: 'LOW_VOLTAGE', activeMap, currentMap, totalResistance, totalCurrent };
