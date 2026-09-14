@@ -2212,321 +2212,343 @@ async generatePDFDirectDownload() {
       }
 
       evaluateCircuit() {
-        const uniqueComponents = Array.from(
-          new Map(this.components.map(c => [c.id, c])).values()
-        );
+  const uniqueComponents = Array.from(
+    new Map(this.components.map(c => [c.id, c])).values()
+  );
 
-        const activeMap = new Map();
-        const currentMap = new Map();
+  const activeMap = new Map();
+  const currentMap = new Map();
 
-        uniqueComponents.forEach(c => {
-          activeMap.set(c.id, false);
-          currentMap.set(c.id, 0);
-        });
+  uniqueComponents.forEach(c => {
+    activeMap.set(c.id, false);
+    currentMap.set(c.id, 0);
+  });
 
-        if (!this.powerOn) {
-          this.setStatus('info', 'ℹ️', '電源はOFFです。');
-          return { status: 'OFF', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-        }
+  if (!this.powerOn) {
+    this.setStatus('info', 'ℹ️', '電源はOFFです。');
+    return { status: 'OFF', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+  }
 
-        const batteries = uniqueComponents.filter(c => c.type === 'battery');
-        if (batteries.length === 0) {
-          this.setStatus('error', '⚠️', '電源（乾電池）が配置されていません。');
-          return { status: 'NO_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-        }
+  const batteries = uniqueComponents.filter(c => c.type === 'battery');
+  if (batteries.length === 0) {
+    this.setStatus('error', '⚠️', '電源（乾電池）が配置されていません。');
+    return { status: 'NO_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+  }
 
-        const totalVoltage = batteries.reduce((sum, b) => sum + (Number(b.voltage) || 1.5), 0);
+  const totalVoltage = batteries.reduce((sum, b) => sum + (Number(b.voltage) || 1.5), 0);
 
-        const termNodeMap = new Map();
-        const allTerms = [];
-        this.components.forEach(c => c.terminals.forEach(t => allTerms.push(t)));
+  const termNodeMap = new Map();
+  const allTerms = [];
+  this.components.forEach(c => c.terminals.forEach(t => allTerms.push(t)));
 
-        let nodeIdCounter = 0;
-        allTerms.forEach(t => termNodeMap.set(t.id, null));
+  let nodeIdCounter = 0;
+  allTerms.forEach(t => termNodeMap.set(t.id, null));
 
-        const validWires = this.wires.filter(w => {
-          if (this.mode === 'breadboard') {
-            return w.mode === 'breadboard';
-          } else {
-            return w.mode !== 'breadboard' && w.type !== 'bridge';
-          }
-        });
+  const validWires = this.wires.filter(w => {
+    if (this.mode === 'breadboard') {
+      return w.mode === 'breadboard';
+    } else {
+      return w.mode !== 'breadboard' && w.type !== 'bridge';
+    }
+  });
 
-        const unionNodes = (idA, idB) => {
-          const n1 = termNodeMap.get(idA);
-          const n2 = termNodeMap.get(idB);
-          if (n1 === null && n2 === null) {
-            const newN = 'node_' + (++nodeIdCounter);
-            termNodeMap.set(idA, newN);
-            termNodeMap.set(idB, newN);
-          } else if (n1 !== null && n2 === null) {
-            termNodeMap.set(idB, n1);
-          } else if (n1 === null && n2 !== null) {
-            termNodeMap.set(idA, n2);
-          } else if (n1 !== n2) {
-            allTerms.forEach(t => {
-              if (termNodeMap.get(t.id) === n2) termNodeMap.set(t.id, n1);
-            });
-          }
-        };
+  const unionNodes = (idA, idB) => {
+    const n1 = termNodeMap.get(idA);
+    const n2 = termNodeMap.get(idB);
+    if (n1 === null && n2 === null) {
+      const newN = 'node_' + (++nodeIdCounter);
+      termNodeMap.set(idA, newN);
+      termNodeMap.set(idB, newN);
+    } else if (n1 !== null && n2 === null) {
+      termNodeMap.set(idB, n1);
+    } else if (n1 === null && n2 !== null) {
+      termNodeMap.set(idA, n2);
+    } else if (n1 !== n2) {
+      allTerms.forEach(t => {
+        if (termNodeMap.get(t.id) === n2) termNodeMap.set(t.id, n1);
+      });
+    }
+  };
 
-        validWires.forEach(w => {
-          if (w.fromTermId && w.toTermId) {
-            unionNodes(w.fromTermId, w.toTermId);
-          }
-        });
+  validWires.forEach(w => {
+    if (w.fromTermId && w.toTermId) {
+      unionNodes(w.fromTermId, w.toTermId);
+    }
+  });
 
-        if (this.mode === 'breadboard') {
-          const holeToTerms = new Map();
+  if (this.mode === 'breadboard') {
+    const holeToTerms = new Map();
 
-          allTerms.forEach(t => {
-            const p = this.getTerminalPosByTermId(t.id);
-            if (!p) return;
-            const holeNode = this.getBreadboardHoleNodeId(p.x, p.y);
-            if (!holeToTerms.has(holeNode)) {
-              holeToTerms.set(holeNode, []);
-            }
-            holeToTerms.get(holeNode).push(t.id);
-          });
+    allTerms.forEach(t => {
+      const p = this.getTerminalPosByTermId(t.id);
+      if (!p) return;
+      const holeNode = this.getBreadboardHoleNodeId(p.x, p.y);
+      if (!holeToTerms.has(holeNode)) {
+        holeToTerms.set(holeNode, []);
+      }
+      holeToTerms.get(holeNode).push(t.id);
+    });
 
-          validWires.forEach(w => {
-            if (w.fromTermId && w.toPos) {
-              const hNode = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
-              if (!holeToTerms.has(hNode)) holeToTerms.set(hNode, []);
-              holeToTerms.get(hNode).push(w.fromTermId);
-            } else if (w.type === 'bridge' && w.fromPos && w.toPos) {
-              const hNode1 = this.getBreadboardHoleNodeId(w.fromPos.x, w.fromPos.y);
-              const hNode2 = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
-              
-              const list1 = holeToTerms.get(hNode1) || [];
-              const list2 = holeToTerms.get(hNode2) || [];
-              const merged = [...list1, ...list2];
-              holeToTerms.set(hNode1, merged);
-              holeToTerms.set(hNode2, merged);
-            }
-          });
+    validWires.forEach(w => {
+      if (w.fromTermId && w.toPos) {
+        const hNode = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
+        if (!holeToTerms.has(hNode)) holeToTerms.set(hNode, []);
+        holeToTerms.get(hNode).push(w.fromTermId);
+      } else if (w.type === 'bridge' && w.fromPos && w.toPos) {
+        const hNode1 = this.getBreadboardHoleNodeId(w.fromPos.x, w.fromPos.y);
+        const hNode2 = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
+        
+        const list1 = holeToTerms.get(hNode1) || [];
+        const list2 = holeToTerms.get(hNode2) || [];
+        const merged = [...list1, ...list2];
+        holeToTerms.set(hNode1, merged);
+        holeToTerms.set(hNode2, merged);
+      }
+    });
 
-          holeToTerms.forEach((terms) => {
-            for (let i = 0; i < terms.length; i++) {
-              for (let j = i + 1; j < terms.length; j++) {
-                unionNodes(terms[i], terms[j]);
-              }
-            }
-          });
-        } else {
-          allTerms.forEach(t1 => {
-            const p1 = this.getTerminalPosByTermId(t1.id);
-            if (!p1) return;
-            allTerms.forEach(t2 => {
-              if (t1.id === t2.id) return;
-              const p2 = this.getTerminalPosByTermId(t2.id);
-              if (!p2) return;
-              if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < 10) {
-                unionNodes(t1.id, t2.id);
-              }
-            });
-          });
-        }
-
-        allTerms.forEach(t => {
-          if (termNodeMap.get(t.id) === null) {
-            termNodeMap.set(t.id, 'node_' + (++nodeIdCounter));
-          }
-        });
-
-        const rawPaths = [];
-        batteries.forEach(bat => {
-          const posTerm = bat.terminals.find(t => t.polarity === 'pos');
-          const negTerm = bat.terminals.find(t => t.polarity === 'neg');
-          if (!posTerm || !negTerm) return;
-
-          const startNode = termNodeMap.get(posTerm.id);
-          const targetNode = termNodeMap.get(negTerm.id);
-
-          const traceFromNode = (currentNode, currentPath, visitedComps) => {
-            if (currentNode === targetNode && currentPath.length > 0) {
-              rawPaths.push([...currentPath]);
-              return;
-            }
-
-            const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === currentNode);
-            connectedTerms.forEach(inTerm => {
-              const comp = uniqueComponents.find(c => c.terminals.some(t => t.id === inTerm.id));
-              if (!comp || comp.type === 'battery' || visitedComps.has(comp.id)) return;
-
-              let canPass = true;
-              let outTerm = null;
-
-              if (comp.type === 'switch' && !comp.state) {
-                canPass = false;
-              } else if (comp.type === 'led' || comp.type === 'rgb-led') {
-                if (inTerm.polarity === 'pos') {
-                  outTerm = comp.terminals.find(t => t.polarity === 'neg');
-                } else {
-                  canPass = false;
-                }
-              } else {
-                outTerm = comp.terminals.find(t => t.id !== inTerm.id);
-              }
-
-              if (canPass && outTerm) {
-                const nextNode = termNodeMap.get(outTerm.id);
-                const nextVisited = new Set(visitedComps).add(comp.id);
-                traceFromNode(nextNode, [...currentPath, { comp, inTerm }], nextVisited);
-              }
-            });
-          };
-
-          traceFromNode(startNode, [], new Set());
-        });
-
-        if (rawPaths.length === 0) {
-          const switches = uniqueComponents.filter(c => c.type === 'switch');
-          if (switches.some(s => !s.state)) {
-            this.setStatus('warning', '🔘', 'スイッチがオフになっているか、回路が未完成です。');
-          } else {
-            this.setStatus('error', '⚡', '回路がつながっていないか、LEDの極性が逆です。');
-          }
-          return { status: 'OPEN', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-        }
-
-        const validPaths = [];
-        const seenPathKeys = new Set();
-        rawPaths.forEach(path => {
-          const key = path.map(item => String(item.comp.id)).sort().join(',');
-          if (!seenPathKeys.has(key)) {
-            seenPathKeys.add(key);
-            validPaths.push(path);
-          }
-        });
-
-        const branchMap = new Map();
-        validPaths.forEach(path => {
-          const resistors = path.map(item => item.comp).filter(c => c.type === 'resistor' || c.type === 'cds');
-          if (resistors.length > 0) {
-            const key = resistors.map(r => String(r.id)).sort().join('-');
-            if (!branchMap.has(key)) {
-              branchMap.set(key, resistors);
-            }
-          }
-        });
-
-        const branchList = Array.from(branchMap.values());
-        let totalResistance = 0;
-
-        if (branchList.length > 0) {
-          const commonResistorIds = branchList[0]
-            .map(r => String(r.id))
-            .filter(id => branchList.every(b => b.some(r => String(r.id) === id)));
-
-          let R_common = 0;
-          branchList[0].forEach(r => {
-            if (commonResistorIds.includes(String(r.id))) {
-              const v = r.type === 'cds' ? this.getCdsResistance(r) : parseFloat(r.resistance);
-              R_common += (!isNaN(v) && v > 0) ? v : 100;
-            }
-          });
-
-          let branchConductance = 0;
-          branchList.forEach(resistors => {
-            let R_branch_unique = 0;
-            resistors.forEach(r => {
-              if (!commonResistorIds.includes(String(r.id))) {
-                const v = r.type === 'cds' ? this.getCdsResistance(r) : parseFloat(r.resistance);
-                R_branch_unique += (!isNaN(v) && v > 0) ? v : 100;
-              }
-            });
-
-            if (R_branch_unique > 0) {
-              branchConductance += (1 / R_branch_unique);
-            }
-          });
-
-          const R_parallel = branchConductance > 0 ? (1 / branchConductance) : 0;
-          totalResistance = R_common + R_parallel;
-        }
-
-        let isShortCircuit = false;
-        validPaths.forEach(path => {
-          if (path.every(item => item.comp.type !== 'resistor' && item.comp.type !== 'led' && item.comp.type !== 'motor' && item.comp.type !== 'rgb-led' && item.comp.type !== 'cds')) {
-            isShortCircuit = true;
-          }
-        });
-
-        if (isShortCircuit) {
-          this.setStatus('error', '💥', 'ショート（短絡）しています！電池が高熱になる危険があります！');
-          return { status: 'SHORT', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-        }
-
-        this.components.forEach(c => {
-          if (c.type === 'rgb-led') {
-            c.rgbChannels = { r: false, g: false, b: false };
-          }
-        });
-
-        const totalCurrent = totalResistance > 0 ? (totalVoltage / totalResistance) : totalVoltage;
-        const VF_PER_LED = 1.5;
-
-                validPaths.forEach(path => {
-          let ledCountInPath = path.filter(item => item.comp.type === 'led' || item.comp.type === 'rgb-led').length;
-          
-          path.forEach(item => {
-            const comp = item.comp;
-            const inTerm = item.inTerm;
-
-            if (comp.type === 'led' || comp.type === 'rgb-led') {
-              if (totalVoltage / (ledCountInPath || 1) >= VF_PER_LED) {
-                activeMap.set(comp.id, true);
-                currentMap.set(comp.id, (currentMap.get(comp.id) || 0) + totalCurrent);
-
-                if (comp.type === 'rgb-led' && inTerm) {
-                  const name = (inTerm.name || '').toLowerCase();
-                  const id = (inTerm.id || '').toLowerCase();
-
-                  const isRed = name.includes('赤') || name.includes('r') || id.endsWith('t2');
-                  const isGreen = name.includes('緑') || name.includes('g') || id.endsWith('t3');
-                  const isBlue = name.includes('青') || name.includes('b') || id.endsWith('t4');
-
-                  if (isRed) comp.rgbChannels.r = true;
-                  if (isGreen) comp.rgbChannels.g = true;
-                  if (isBlue) comp.rgbChannels.b = true;
-                }
-              }
-            } else {
-              activeMap.set(comp.id, true);
-              
-              // ★修正: モーターの場合、入ってきた端子の極性によって電流の向き（符号）を決める
-              let currentVal = totalCurrent;
-              if (comp.type === 'motor' && inTerm) {
-                // '-'端子から電流が入ってきた場合は逆方向（マイナス）
-                if (inTerm.polarity === 'neg' || inTerm.id.endsWith('_t2')) {
-                  currentVal = -totalCurrent;
-                }
-              }
-              currentMap.set(comp.id, (currentMap.get(comp.id) || 0) + currentVal);
-            }
-          });
-        });
-
-
-        const rText = totalResistance >= 1000 
-          ? `${(totalResistance / 1000).toFixed(2)} kΩ` 
-          : `${totalResistance.toFixed(1)} Ω`;
-
-        const iText = totalCurrent >= 1 
-          ? `${totalCurrent.toFixed(2)} A` 
-          : `${(totalCurrent * 1000).toFixed(1)} mA`;
-
-        const anyActive = Array.from(activeMap.values()).some(v => v);
-
-        if (anyActive) {
-          this.setStatus('success', '✅', `回路動作中 ｜ 電圧: ${totalVoltage.toFixed(1)}V ｜ 抵抗器の合成抵抗: ${rText} ｜ 全電流: ${iText}`);
-          return { status: 'OK', activeMap, currentMap, totalResistance, totalCurrent };
-        } else {
-          this.setStatus('warning', '💡', `電圧不足です (${totalVoltage.toFixed(1)}V) ｜ 抵抗器の合成抵抗: ${rText}`);
-          return { status: 'LOW_VOLTAGE', activeMap, currentMap, totalResistance, totalCurrent };
+    holeToTerms.forEach((terms) => {
+      for (let i = 0; i < terms.length; i++) {
+        for (let j = i + 1; j < terms.length; j++) {
+          unionNodes(terms[i], terms[j]);
         }
       }
+    });
+  } else {
+    allTerms.forEach(t1 => {
+      const p1 = this.getTerminalPosByTermId(t1.id);
+      if (!p1) return;
+      allTerms.forEach(t2 => {
+        if (t1.id === t2.id) return;
+        const p2 = this.getTerminalPosByTermId(t2.id);
+        if (!p2) return;
+        if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < 10) {
+          unionNodes(t1.id, t2.id);
+        }
+      });
+    });
+  }
+
+  allTerms.forEach(t => {
+    if (termNodeMap.get(t.id) === null) {
+      termNodeMap.set(t.id, 'node_' + (++nodeIdCounter));
+    }
+  });
+
+  const rawPaths = [];
+  batteries.forEach(bat => {
+    const posTerm = bat.terminals.find(t => t.polarity === 'pos');
+    const negTerm = bat.terminals.find(t => t.polarity === 'neg');
+    if (!posTerm || !negTerm) return;
+
+    const startNode = termNodeMap.get(posTerm.id);
+    const targetNode = termNodeMap.get(negTerm.id);
+
+    const traceFromNode = (currentNode, currentPath, visitedComps) => {
+      if (currentNode === targetNode && currentPath.length > 0) {
+        rawPaths.push([...currentPath]);
+        return;
+      }
+
+      const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === currentNode);
+      connectedTerms.forEach(inTerm => {
+        const comp = uniqueComponents.find(c => c.terminals.some(t => t.id === inTerm.id));
+        if (!comp || comp.type === 'battery' || visitedComps.has(comp.id)) return;
+
+        let canPass = true;
+        let outTerm = null;
+
+        if (comp.type === 'switch' && !comp.state) {
+          canPass = false;
+        } else if (comp.type === 'led' || comp.type === 'rgb-led') {
+          if (inTerm.polarity === 'pos') {
+            outTerm = comp.terminals.find(t => t.polarity === 'neg');
+          } else {
+            canPass = false;
+          }
+        } else {
+          outTerm = comp.terminals.find(t => t.id !== inTerm.id);
+        }
+
+        if (canPass && outTerm) {
+          const nextNode = termNodeMap.get(outTerm.id);
+          const nextVisited = new Set(visitedComps).add(comp.id);
+          traceFromNode(nextNode, [...currentPath, { comp, inTerm }], nextVisited);
+        }
+      });
+    };
+
+    traceFromNode(startNode, [], new Set());
+  });
+
+  if (rawPaths.length === 0) {
+    const switches = uniqueComponents.filter(c => c.type === 'switch');
+    if (switches.some(s => !s.state)) {
+      this.setStatus('warning', '🔘', 'スイッチがオフになっているか、回路が未完成です。');
+    } else {
+      this.setStatus('error', '⚡', '回路がつながっていないか、LEDの極性が逆です。');
+    }
+    return { status: 'OPEN', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+  }
+
+  const validPaths = [];
+  const seenPathKeys = new Set();
+  rawPaths.forEach(path => {
+    const key = path.map(item => String(item.comp.id)).sort().join(',');
+    if (!seenPathKeys.has(key)) {
+      seenPathKeys.add(key);
+      validPaths.push(path);
+    }
+  });
+
+  const branchMap = new Map();
+  validPaths.forEach(path => {
+    const resistors = path.map(item => item.comp).filter(c => c.type === 'resistor' || c.type === 'cds');
+    if (resistors.length > 0) {
+      const key = resistors.map(r => String(r.id)).sort().join('-');
+      if (!branchMap.has(key)) {
+        branchMap.set(key, resistors);
+      }
+    }
+  });
+
+  const branchList = Array.from(branchMap.values());
+  let totalResistance = 0;
+
+  if (branchList.length > 0) {
+    const commonResistorIds = branchList[0]
+      .map(r => String(r.id))
+      .filter(id => branchList.every(b => b.some(r => String(r.id) === id)));
+
+    let R_common = 0;
+    branchList[0].forEach(r => {
+      if (commonResistorIds.includes(String(r.id))) {
+        const v = r.type === 'cds' ? this.getCdsResistance(r) : parseFloat(r.resistance);
+        R_common += (!isNaN(v) && v > 0) ? v : 100;
+      }
+    });
+
+    let branchConductance = 0;
+    branchList.forEach(resistors => {
+      let R_branch_unique = 0;
+      resistors.forEach(r => {
+        if (!commonResistorIds.includes(String(r.id))) {
+          const v = r.type === 'cds' ? this.getCdsResistance(r) : parseFloat(r.resistance);
+          R_branch_unique += (!isNaN(v) && v > 0) ? v : 100;
+        }
+      });
+
+      if (R_branch_unique > 0) {
+        branchConductance += (1 / R_branch_unique);
+      }
+    });
+
+    const R_parallel = branchConductance > 0 ? (1 / branchConductance) : 0;
+    totalResistance = R_common + R_parallel;
+  }
+
+  // --- 3. ショート判定 ---
+  let isShortCircuit = false;
+  validPaths.forEach(path => {
+    const hasResistor = path.some(item => item.comp.type === 'resistor' || item.comp.type === 'cds');
+    if (!hasResistor) {
+      isShortCircuit = true;
+    }
+  });
+
+  if (isShortCircuit) {
+    this.setStatus('error', '💥', 'ショート（短絡）しています！抵抗器を挟んでください。');
+    return { status: 'SHORT', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+  }
+
+  this.components.forEach(c => {
+    if (c.type === 'rgb-led') {
+      c.rgbChannels = { r: false, g: false, b: false };
+    }
+  });
+
+  const totalCurrent = totalResistance > 0 ? (totalVoltage / totalResistance) : totalVoltage;
+
+  // --- 4. コンポーネントの状態（アクティブ化・電流計算） ---
+  const VF_PER_LED = 2.0; // LEDの駆動に必要な順方向電圧(2.0V)
+  let hasLedInCircuit = false;
+
+  validPaths.forEach(path => {
+    const ledCountInPath = path.filter(item => item.comp.type === 'led' || item.comp.type === 'rgb-led').length;
+
+    if (ledCountInPath > 0) {
+      hasLedInCircuit = true;
+    }
+
+    const requiredVoltage = ledCountInPath * VF_PER_LED;
+
+    path.forEach(item => {
+      const comp = item.comp;
+      const inTerm = item.inTerm;
+
+      if (comp.type === 'led' || comp.type === 'rgb-led') {
+        if (totalVoltage >= requiredVoltage) {
+          activeMap.set(comp.id, true);
+          currentMap.set(comp.id, (currentMap.get(comp.id) || 0) + totalCurrent);
+
+          if (comp.type === 'rgb-led' && inTerm) {
+            const name = (inTerm.name || '').toLowerCase();
+            const id = (inTerm.id || '').toLowerCase();
+
+            const isRed = name.includes('赤') || name.includes('r') || id.endsWith('t2');
+            const isGreen = name.includes('緑') || name.includes('g') || id.endsWith('t3');
+            const isBlue = name.includes('青') || name.includes('b') || id.endsWith('t4');
+
+            if (isRed) comp.rgbChannels.r = true;
+            if (isGreen) comp.rgbChannels.g = true;
+            if (isBlue) comp.rgbChannels.b = true;
+          }
+        }
+      } else {
+        activeMap.set(comp.id, true);
+
+        let currentVal = totalCurrent;
+        if (comp.type === 'motor' && inTerm) {
+          if (inTerm.polarity === 'neg' || inTerm.id.endsWith('_t2')) {
+            currentVal = -totalCurrent;
+          }
+        }
+        currentMap.set(comp.id, (currentVal));
+      }
+    });
+  });
+
+  // --- 5. ステータス表示と返却 ---
+  const rText = totalResistance >= 1000 
+    ? `${(totalResistance / 1000).toFixed(2)} kΩ` 
+    : `${totalResistance.toFixed(1)} Ω`;
+
+  const iText = totalCurrent >= 1 
+    ? `${totalCurrent.toFixed(2)} A` 
+    : `${(totalCurrent * 1000).toFixed(1)} mA`;
+
+  // 回路内の全LEDがアクティブかどうかのチェック
+  const anyLedActive = uniqueComponents
+    .filter(c => c.type === 'led' || c.type === 'rgb-led')
+    .some(c => activeMap.get(c.id));
+
+  // LEDが存在するのに1つも点灯していない場合は【最優先】で電圧不足を返す
+  if (hasLedInCircuit && !anyLedActive) {
+    this.setStatus('warning', '💡', `電圧不足です (電源: ${totalVoltage.toFixed(1)}V)。LEDの点灯に必要な電圧(LED1個あたり約${VF_PER_LED}V)に達していません。`);
+    return { status: 'LOW_VOLTAGE', activeMap, currentMap, totalResistance, totalCurrent };
+  }
+
+  const anyActive = Array.from(activeMap.values()).some(v => v);
+
+  if (anyActive) {
+    this.setStatus('success', '✅', `回路動作中 ｜ 電圧: ${totalVoltage.toFixed(1)}V ｜ 抵抗器の合成抵抗: ${rText} ｜ 全電流: ${iText}`);
+    return { status: 'OK', activeMap, currentMap, totalResistance, totalCurrent };
+  } else {
+    this.setStatus('warning', '🔘', `回路が正しく作動していません。`);
+    return { status: 'INACTIVE', activeMap, currentMap, totalResistance, totalCurrent };
+  }
+}
+
+
 
       getTerminalPosByTermId(termId) {
         for (const comp of this.components) {
