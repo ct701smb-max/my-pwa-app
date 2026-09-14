@@ -55,7 +55,17 @@ body {
   font-weight: bold;
   white-space: nowrap;
 }
+.brand-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* アイコンと文字の間の隙間 */
+}
 
+.brand-icon {
+  width: 32px;  /* お好みのサイズに変更 */
+  height: 32px; /* widthと同じ値に設定 */
+  flex-shrink: 0;
+}
 .mode-tabs {
   display: flex;
   gap: 4px;
@@ -645,9 +655,19 @@ textarea {
   <div class="app-container">
     <header class="toolbar">
       <div class="brand">
-        <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
-        <span class="brand-title">⚡ <ruby>Circuit<rt>サーキット</rt></ruby> <ruby>Sim<rt>シミュ</rt></ruby></span>
-      </div>
+  <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
+  <span class="brand-title">
+    <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <!-- 回路配線 -->
+      <path d="M 8 32 L 18 32 L 23 18 L 32 46 L 41 18 L 46 32 L 56 32" stroke="#0284c7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8" cy="32" r="3.5" fill="#0284c7" />
+      <circle cx="56" cy="32" r="3.5" fill="#0284c7" />
+      <!-- 中央のパルス/電源イメージ -->
+      <path d="M 35 8 L 23 32 L 32 32 L 29 56 L 41 32 L 32 32 Z" fill="#eab308" />
+    </svg>
+    <ruby>Circuit<rt>サーキット</rt></ruby> <ruby>Sim<rt>シミュ</rt></ruby>
+  </span>
+</div>
 
       <div class="mode-tabs">
         <button class="tab-btn active" data-mode="physical">実体配線図</button>
@@ -1453,8 +1473,8 @@ async captureCanvasImageForMode(targetMode, targetPowerState = true) {
     this.components.forEach(c => {
       const p = this.getCompPos ? this.getCompPos(c) : { x: c.x, y: c.y };
       if (p && typeof p.x === 'number' && !isNaN(p.x) && !isNaN(p.y)) {
-        minX = Math.min(minX, p.x - 70);
-        maxX = Math.max(maxX, p.x + 70);
+        minX = Math.min(minX, p.x - 85);
+        maxX = Math.max(maxX, p.x + 85);
         minY = Math.min(minY, p.y - 70);
         maxY = Math.max(maxY, p.y + 70);
       }
@@ -1480,25 +1500,37 @@ async captureCanvasImageForMode(targetMode, targetPowerState = true) {
     minX = 0; minY = 0; maxX = 800; maxY = 500;
   }
 
-  // 3. 余白・トリミング
-  let padLeft = 60, padRight = 60, padTop = 60, padBottom = 60;
+  // 3. 余白・トリミング位置の算出
+  let padLeft = 80, padRight = 80, padTop = 80, padBottom = 80;
   if (targetMode === 'breadboard') {
     padLeft = 80; padRight = 80; padTop = 100; padBottom = 100;
   } else if (targetMode === 'schematic') {
-    padLeft = 20; padRight = 100;
+    // 回路図をしっかり右に寄せるために左側余白を多めに設定
+    padLeft = 110; padRight = 70; padTop = 80; padBottom = 80;
   }
+
+  const rawWidth = (maxX - minX) + padLeft + padRight;
+  const rawHeight = (maxY - minY) + padTop + padBottom;
 
   let cropX = minX - padLeft;
   let cropY = minY - padTop;
-  let cropWidth = (maxX - minX) + padLeft + padRight;
-  let cropHeight = (maxY - minY) + padTop + padBottom;
+  let cropWidth = rawWidth;
+  let cropHeight = rawHeight;
 
   if (targetMode === 'breadboard') {
     cropWidth = Math.max(cropWidth, 750);
     cropHeight = Math.max(cropHeight, 500);
   } else {
-    cropWidth = Math.max(cropWidth, 300);
-    cropHeight = Math.max(cropHeight, 200);
+    cropWidth = Math.max(cropWidth, 400);
+    cropHeight = Math.max(cropHeight, 250);
+  }
+
+  // ★最小枠サイズ（400x250等）に広げられた場合、増えた余白を左右上下に均等分配して正確に中央揃えにする
+  if (cropWidth > rawWidth) {
+    cropX -= (cropWidth - rawWidth) / 2;
+  }
+  if (cropHeight > rawHeight) {
+    cropY -= (cropHeight - rawHeight) / 2;
   }
 
   // 4. viewBox確定
