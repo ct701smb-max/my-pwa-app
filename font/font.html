@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- FontAwesome (Icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
-  <title>日本語フォント 試し書き</title>
+  <title>試し書きフォント</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * {
@@ -25,41 +24,7 @@
       height: 100dvh;
       overflow: hidden;
     }
-/* ===== ホームボタン ===== */
-.btn-real-dent {
-  /*周りの凹み*/
-  display: inline-block;
-  position: relative;
-  text-decoration: none;
-  color: rgba(3, 69, 244, 0.54);
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  text-align: center;
-  background: #f7f7f7;
-  box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
-}
-.btn-real-dent i {
-  /*ボタン自体*/
-  position: absolute;
-  content: '';
-  width: 25px;
-  height: 25px;
-  line-height: 25px;
-  left: 3px;
-  top: 0px;
-  border-radius: 50%;
-  font-size: 15px;
-  background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
-  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
-  border-bottom: solid 2px #b5b5b5;
-}
-  
-.btn-real-dent .fa:active {
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
-  border-bottom: solid 2px #d8d8d8;
-}
+
     header {
       background-color: #ffffff;
       padding: 12px 20px;
@@ -77,6 +42,40 @@
       text-decoration: none;
     }
 
+    /* ===== ホームボタン ===== */
+    .btn-real-dent {
+      display: inline-block;
+      position: relative;
+      text-decoration: none;
+      color: rgba(3, 69, 244, 0.54);
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      text-align: center;
+      background: #f7f7f7;
+      box-shadow: inset 0 0 0px rgba(0, 0, 0, 0.08);
+    }
+    .btn-real-dent i {
+      position: absolute;
+      content: '';
+      width: 25px;
+      height: 25px;
+      line-height: 25px;
+      left: 3px;
+      top: 0px;
+      border-radius: 50%;
+      font-size: 15px;
+      background-image: linear-gradient(#e8e8e8 0%, #d6d6d6 100%);
+      text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.66);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+      border-bottom: solid 2px #b5b5b5;
+    }
+    
+    .btn-real-dent .fa:active {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 2px rgba(0, 0, 0, 0.19);
+      border-bottom: solid 2px #d8d8d8;
+    }
+
     .app-container {
       display: flex;
       flex: 1;
@@ -87,8 +86,8 @@
     /* preview-card が空のときに placeholder の文字を表示する */
     .preview-card:empty::before {
       content: attr(placeholder);
-      color: #aaa; /* 薄いグレーにする */
-      pointer-events: none; /* クリック操作を妨げない */
+      color: #aaa;
+      pointer-events: none;
       display: block;
     }
 
@@ -98,20 +97,19 @@
       }
     }
 
-    /* --- スモール画面（スマホ）用の操作パネル領域の調整 --- */
     .control-panel {
       width: 100%;
       background-color: #ffffff;
       padding: 16px;
-      padding-bottom: 80px; /* スマホ下部ナビゲーション対策の余白を追加 */
+      padding-bottom: 40px;
       display: flex;
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
-      -webkit-overflow-scrolling: touch; /* iOSでのスクロールをスムーズに */
+      -webkit-overflow-scrolling: touch;
       order: 2;
-      flex: 1; /* プレビューと高さ調整し合えるよう変更 */
-      max-height: 55vh; /* 高さを少し拡張して画面に余裕を持たせる */
+      flex: 1;
+      max-height: 55vh;
       border-top: 1px solid #e0e0e0;
     }
 
@@ -131,7 +129,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      flex-shrink: 0; /* スクリプト内の要素が潰れるのを防ぐ */
+      flex-shrink: 0;
     }
 
     .control-group label {
@@ -272,7 +270,7 @@
       background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
       overflow: auto;
       order: 1;
-      min-height: 180px; /* スマホ時に最低限のプレビュー領域を確保 */
+      min-height: 180px;
     }
 
     @media (min-width: 768px) {
@@ -300,7 +298,9 @@
       letter-spacing: 0px;
       line-height: 1.5;
 
-      /* 位置調整用のFlexbox設定 */
+      /* 縁取りの見た目を崩さない設定 */
+      paint-order: stroke fill;
+
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -405,7 +405,7 @@
     }
 
     #bodyCodeArea {
-      height: 180px;
+      height: 220px;
     }
 
     .mini-copy-btn {
@@ -428,10 +428,7 @@
 <body>
 
   <header>
-    <a href="../index.html" class="btn-real-dent" aria-label="ホーム">
-      <i class="fa fa-home" aria-hidden="true"></i>
-    </a>
-    <span>日本語フォント 試し書き</span>
+    <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> <span>試し書きフォント</span>
   </header>
 
   <div class="app-container">
@@ -445,7 +442,7 @@
         </button>
       </div>
 
-      <!-- フォント選択（2つのカテゴリー） -->
+      <!-- フォント選択 -->
       <div class="control-group">
         <label for="fontSelect">フォント選択</label>
         <select id="fontSelect">
@@ -520,6 +517,46 @@
         </label>
       </div>
 
+      <!-- 文字の縁取り設定（追加） -->
+      <div class="control-group">
+        <label>文字の縁取り</label>
+        <div class="color-inputs">
+          <div>
+            <label for="strokeColorInput">縁の色</label>
+            <input type="color" id="strokeColorInput" value="#ffffff">
+          </div>
+          <div>
+            <label for="strokeWidthInput">縁の太さ <span id="strokeWidthVal" class="range-val">0px</span></label>
+            <input type="range" id="strokeWidthInput" min="0" max="15" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- 文字の影設定（追加） -->
+      <div class="control-group">
+        <label>文字の影</label>
+        <div class="color-inputs">
+          <div>
+            <label for="shadowColorInput">影の色</label>
+            <input type="color" id="shadowColorInput" value="#888888">
+          </div>
+          <div>
+            <label for="shadowBlurInput">ぼかし <span id="shadowBlurVal" class="range-val">0px</span></label>
+            <input type="range" id="shadowBlurInput" min="0" max="30" value="0">
+          </div>
+        </div>
+        <div class="color-inputs" style="margin-top: 4px;">
+          <div>
+            <label for="shadowXInput">横ずれ <span id="shadowXVal" class="range-val">0px</span></label>
+            <input type="range" id="shadowXInput" min="-30" max="30" value="0">
+          </div>
+          <div>
+            <label for="shadowYInput">縦ずれ <span id="shadowYVal" class="range-val">0px</span></label>
+            <input type="range" id="shadowYInput" min="-30" max="30" value="0">
+          </div>
+        </div>
+      </div>
+
       <div class="control-group">
         <label for="sizeInput">文字サイズ <span id="sizeVal" class="range-val">32px</span></label>
         <input type="range" id="sizeInput" min="14" max="100" value="32">
@@ -577,6 +614,21 @@
     const textColorInput = document.getElementById('textColorInput');
     const bgColorInput = document.getElementById('bgColorInput');
     const transparentBgCheck = document.getElementById('transparentBgCheck');
+
+    // 縁取り要素
+    const strokeWidthInput = document.getElementById('strokeWidthInput');
+    const strokeColorInput = document.getElementById('strokeColorInput');
+    const strokeWidthVal = document.getElementById('strokeWidthVal');
+
+    // 影要素
+    const shadowColorInput = document.getElementById('shadowColorInput');
+    const shadowBlurInput = document.getElementById('shadowBlurInput');
+    const shadowXInput = document.getElementById('shadowXInput');
+    const shadowYInput = document.getElementById('shadowYInput');
+    const shadowBlurVal = document.getElementById('shadowBlurVal');
+    const shadowXVal = document.getElementById('shadowXVal');
+    const shadowYVal = document.getElementById('shadowYVal');
+
     const btnHorizontal = document.getElementById('btnHorizontal');
     const btnVertical = document.getElementById('btnVertical');
     const btnDownload = document.getElementById('btnDownload');
@@ -617,7 +669,13 @@
       return new Promise((resolve, reject) => {
         const link = document.createElement('link');
         const formattedName = fontName.replace(/ /g, '+');
-        link.href = `https://fonts.googleapis.com/css2?family=${formattedName}&display=swap`;
+        
+        if (fontName === 'Shippori Mincho B1') {
+          link.href = `https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&display=swap`;
+        } else {
+          link.href = `https://fonts.googleapis.com/css2?family=${formattedName}&display=swap`;
+        }
+        
         link.rel = 'stylesheet';
         
         link.onload = () => {
@@ -632,7 +690,14 @@
     fontSelect.addEventListener('change', async (e) => {
       const selectedFont = e.target.value;
       await loadGoogleFont(selectedFont);
+      
       previewCard.style.fontFamily = `'${selectedFont}', cursive, serif, sans-serif`;
+      
+      if (selectedFont === 'Shippori Mincho B1') {
+        previewCard.style.fontWeight = '800';
+      } else {
+        previewCard.style.fontWeight = 'normal';
+      }
     });
 
     sizeInput.addEventListener('input', (e) => {
@@ -674,6 +739,40 @@
       }
     });
 
+    // 縁取りの更新
+    function updateStroke() {
+      const width = strokeWidthInput.value;
+      const color = strokeColorInput.value;
+      strokeWidthVal.textContent = `${width}px`;
+      previewCard.style.webkitTextStroke = width > 0 ? `${width}px ${color}` : 'none';
+    }
+
+    strokeWidthInput.addEventListener('input', updateStroke);
+    strokeColorInput.addEventListener('input', updateStroke);
+
+    // 影の更新
+    function updateShadow() {
+      const x = shadowXInput.value;
+      const y = shadowYInput.value;
+      const blur = shadowBlurInput.value;
+      const color = shadowColorInput.value;
+
+      shadowXVal.textContent = `${x}px`;
+      shadowYVal.textContent = `${y}px`;
+      shadowBlurVal.textContent = `${blur}px`;
+
+      if (x === '0' && y === '0' && blur === '0') {
+        previewCard.style.textShadow = 'none';
+      } else {
+        previewCard.style.textShadow = `${x}px ${y}px ${blur}px ${color}`;
+      }
+    }
+
+    shadowXInput.addEventListener('input', updateShadow);
+    shadowYInput.addEventListener('input', updateShadow);
+    shadowBlurInput.addEventListener('input', updateShadow);
+    shadowColorInput.addEventListener('input', updateShadow);
+
     btnHorizontal.addEventListener('click', () => {
       previewCard.classList.remove('vertical');
       btnHorizontal.classList.add('active');
@@ -688,9 +787,7 @@
       applyAlignment();
     });
 
-    // ------------------------------------
     // 位置調整（左右・上下）の処理
-    // ------------------------------------
     function applyAlignment() {
       const isVertical = previewCard.classList.contains('vertical');
 
@@ -726,9 +823,7 @@
       });
     });
 
-    // ------------------------------------
     // HTMLコード生成機能 (Head/Body分離)
-    // ------------------------------------
     btnGenerateCode.addEventListener('click', () => {
       const textContent = previewCard.innerText || "ここにテキストが入ります";
       const selectedFont = fontSelect.value;
@@ -741,6 +836,19 @@
       const isVertical = previewCard.classList.contains('vertical');
       const isTransparent = transparentBgCheck.checked;
       const bgColor = isTransparent ? 'transparent' : bgColorInput.value;
+
+      // 縁取り＆影スタイル
+      const strokeWidth = strokeWidthInput.value;
+      const strokeColor = strokeColorInput.value;
+      const strokeCss = strokeWidth > 0 ? `-webkit-text-stroke: ${strokeWidth}px ${strokeColor};\n  paint-order: stroke fill;` : '';
+
+      const shadowX = shadowXInput.value;
+      const shadowY = shadowYInput.value;
+      const shadowBlur = shadowBlurInput.value;
+      const shadowColor = shadowColorInput.value;
+      const shadowCss = (shadowX !== '0' || shadowY !== '0' || shadowBlur !== '0')
+        ? `text-shadow: ${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowColor};`
+        : '';
 
       let justifyContentCss = currentAlignV;
       let alignItemsCss = currentAlignH;
@@ -771,7 +879,7 @@
   background-color: ${bgColor};
   letter-spacing: ${letterSpacing};
   line-height: ${lineHeight};
-  white-space: pre-wrap;
+  ${strokeCss ? strokeCss + '\n  ' : ''}${shadowCss ? shadowCss + '\n  ' : ''}white-space: pre-wrap;
   ${isVertical ? 'writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;' : ''}
 ">
 ${textContent}
@@ -808,9 +916,7 @@ ${textContent}
     btnCopyHead.addEventListener('click', () => copyToClipboard(headCodeArea, btnCopyHead));
     btnCopyBody.addEventListener('click', () => copyToClipboard(bodyCodeArea, btnCopyBody));
 
-    // ------------------------------------
     // 画像保存機能
-    // ------------------------------------
     btnDownload.addEventListener('click', async () => {
       if (!previewCard.innerText.trim()) {
         alert('文字を入力してから保存してください。');
