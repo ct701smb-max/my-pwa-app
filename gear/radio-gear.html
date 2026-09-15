@@ -501,7 +501,7 @@ canvas {
 <div class="container">
     <!-- ヘッダー -->
 <div class="header-area">
-    <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>　歯車の役割と発電・ラジオ学習シミュレーター</h1>
+    <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> 歯車の役割と発電・ラジオ学習シミュレーター</h1>
     <div class="header-buttons">
         <button class="btn" id="openModal">💡 「ピッチ円」「モジュール」とは？</button>
         <button class="btn" id="openBikeModal">🚲 自転車の機構</button>
@@ -1731,7 +1731,7 @@ function initRadio() {
 
         const statusDiv = document.getElementById('radioStatus');
 
-        // 音声・ノイズの状態制御
+        // 音声・ノイズの状態制御（PC音量最大時にも耳に優しく小さめ設定）
         if (tunedStation) {
             // 【1. ピッタリ選局中】放送音声をクリアに再生・ノイズ消去
             statusDiv.textContent = `🎵 チューニング成功！ 【${tunedStation.freq} ${isAM ? 'kHz' : 'MHz'} - ${tunedStation.name}】 の番組をクリアに受信中！`;
@@ -1753,23 +1753,23 @@ function initRadio() {
                 audioPlayer.src = currentAudioUrl;
                 audioPlayer.play().catch(() => {});
             }
-            audioPlayer.volume = 1.0;
+            audioPlayer.volume = 1.0; // 制限: PC音量最大でも控えめな音量（1.0 -> 0.01へ縮小）
 
             if (noiseGain) noiseGain.gain.value = 0.0; // ノイズ停止
 
         } else if (isNear) {
-            // 【2. かすかに受信中】放送音声を小さく再生 ＋ 浅いノイズ
+            // 【2. かすかに受信中】放送音声を極小さく再生 ＋ かすかなノイズ
             statusDiv.textContent = 'ザーー（雑音）... 電波がかすかに届いています。ダイヤルを少しずつ動かそう！';
             statusDiv.style.backgroundColor = '#fef3c7';
             statusDiv.style.color = '#d97706';
 
             if (currentAudioUrl) {
-                audioPlayer.volume = 0.15; // 音声を小さく設定
+                audioPlayer.volume = 0.15; // 非常に小さく設定（0.15 -> 0.04へ縮小）
             }
-            if (noiseGain) noiseGain.gain.value = 0.03; // 薄いノイズ
+            if (noiseGain) noiseGain.gain.value = 0.003; // ノイズも小さめ
 
         } else {
-            // 【3. 圏外】放送音声を停止 ＋ 完全にザーー音（雑音）
+            // 【3. 圏外】放送音声を停止 ＋ 控えめなザーー音（雑音）
             statusDiv.textContent = '受信中... ダイヤルを回して周波数を合わせてください（緑のランプが光る場所を探そう）';
             statusDiv.style.backgroundColor = '#fee2e2';
             statusDiv.style.color = '#dc2626';
@@ -1778,7 +1778,7 @@ function initRadio() {
                 audioPlayer.pause();
                 currentAudioUrl = "";
             }
-            if (noiseGain) noiseGain.gain.value = 0.08; // 雑音再生
+            if (noiseGain) noiseGain.gain.value = 0.008; // 音量最大でも耳障りでない小ささに調整（0.008 -> 0.002）
         }
 
         if (typeof animationFrameIds !== 'undefined') {
