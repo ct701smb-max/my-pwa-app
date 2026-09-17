@@ -428,30 +428,118 @@ svg {
 /* ==========================================================================
    8. モーダルダイアログ (Modal Dialog)
    ========================================================================== */
-.modal {
+
+/* ★「パーツ ℹ️」ボタンのデザイン */
+.parts-modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.parts-modal-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.parts-modal-btn:active {
+  transform: scale(0.97);
+}
+
+/* モーダル背景（.modal と .modal-overlay を統合） */
+.modal,
+.modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 9999;
   padding: 12px;
 }
 
-.modal.hidden { display: none; }
+/* 非表示切り替え用クラス */
+.modal.hidden,
+.modal-overlay.hidden {
+  display: none !important;
+}
 
+/* ダイアログ本体 */
 .modal-content {
-  background: white;
-  padding: 20px;
+  background: #ffffff;
+  padding: 24px;
   border-radius: 12px;
   width: 480px;
-  max-width: 100%;
-  max-height: 90vh;
+  max-width: 90%;
+  max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
+/* モーダルヘッダー */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+/* 閉じるボタン */
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #111827;
+}
+
+/* パーツ説明リスト */
+.parts-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.parts-info-list li {
+  padding: 10px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.parts-info-list li:last-child {
+  border-bottom: none;
+}
+
+/* フォーム系レイアウト (PDF用等) */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -465,7 +553,9 @@ svg {
   gap: 4px;
 }
 
-.form-group.full { grid-column: span 2; }
+.form-group.full {
+  grid-column: span 2;
+}
 
 label {
   font-size: 0.85rem;
@@ -504,7 +594,109 @@ textarea {
   gap: 10px;
   margin-top: 16px;
 }
+/* モーダル全体の横幅拡張 */
+.parts-modal-content {
+  width: 720px;
+  max-width: 95%;
+}
 
+.parts-modal-body {
+  display: flex;
+  gap: 16px;
+  min-height: 380px;
+}
+
+/* 左側：縦並びメニュー */
+.parts-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 190px;
+  flex-shrink: 0;
+  border-right: 1px solid #e5e7eb;
+  padding-right: 12px;
+}
+
+.parts-menu-btn {
+  padding: 8px 12px;
+  text-align: left;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.parts-menu-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.parts-menu-btn.active {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* 右側：詳細エリア */
+.parts-detail-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-left: 4px;
+}
+
+.parts-panel.hidden {
+  display: none !important;
+}
+
+.parts-panel h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: #111827;
+  border-bottom: 2px solid #2563eb;
+  padding-bottom: 4px;
+}
+
+.parts-img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.parts-desc {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* スマホ・タブレット表示用の調整 */
+@media (max-width: 640px) {
+  .parts-modal-body {
+    flex-direction: column;
+  }
+  
+  .parts-menu {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding-right: 0;
+    padding-bottom: 10px;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  
+  .parts-menu-btn {
+    white-space: nowrap;
+  }
+}
 /* ==========================================================================
    9. PDF生成レイアウト (PDF Render Settings)
    ========================================================================== */
@@ -589,7 +781,6 @@ textarea {
   to { transform: rotate(360deg); }
 }
 
-/* ★追加: 逆回転用アニメーション */
 @keyframes spin-reverse {
   from { transform: rotate(360deg); }
   to { transform: rotate(0deg); }
@@ -600,12 +791,10 @@ textarea {
   transform-origin: 0px 0px;
 }
 
-/* ★追加: 逆回転用クラス */
 .rotating-reverse {
   animation: spin-reverse linear infinite;
   transform-origin: 0px 0px;
 }
-
 
 @keyframes pulse {
   0% { transform: scale(1); }
@@ -653,68 +842,6 @@ textarea {
     font-size: 12px;
   }
 }
-
-/* モーダル背景 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-/* 非表示用クラス */
-.modal-overlay.hidden {
-  display: none;
-}
-
-/* ダイアログ本体 */
-.modal-content {
-  background: #ffffff;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
-  width: 90%;
-  text-align: center;
-}
-
-.modal-message {
-  margin-bottom: 20px;
-  font-size: 16px;
-  color: #333333;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-/* ボタンのスタイル（未定義の場合） */
-.btn-secondary {
-  background-color: #6c757d;
-  color: #ffffff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: #ffffff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
   </style>
 </head>
 <body>
@@ -771,18 +898,19 @@ textarea {
     </header>
 
     <div class="palette-bar" id="palette-bar">
-  <h3>パーツ:</h3>
+  <!-- ★ 1. 「パーツ」をボタンに変更 -->
+  <button type="button" class="parts-modal-btn" id="parts-modal-btn">
+    パーツ ℹ️
+  </button>
+
   <div class="palette-items">
     <div class="palette-item" draggable="true" data-type="battery">🔋 乾電池</div>
     
     <!-- 抵抗器: カラーコード帯が付いた抵抗体ボディ -->
     <div class="palette-item" draggable="true" data-type="resistor">
       <svg width="20" height="16" viewBox="0 0 20 16" style="vertical-align: middle; margin-right: 2px;">
-        <!-- リード線 -->
         <line x1="0" y1="8" x2="20" y2="8" stroke="#9ca3af" stroke-width="1.5" />
-        <!-- 抵抗体本体 -->
         <rect x="4" y="4" width="12" height="8" rx="2" fill="#fef08a" stroke="#ca8a04" stroke-width="1" />
-        <!-- カラーコード帯 -->
         <line x1="7" y1="4" x2="7" y2="12" stroke="#ef4444" stroke-width="1" />
         <line x1="9" y1="4" x2="9" y2="12" stroke="#3b82f6" stroke-width="1" />
         <line x1="11" y1="4" x2="11" y2="12" stroke="#10b981" stroke-width="1" />
@@ -797,14 +925,12 @@ textarea {
     <div class="palette-item" draggable="true" data-type="rgb-led">🌈 フルカラーLED</div>
     <div class="palette-item" draggable="true" data-type="cds">☀️ CdSセル</div>
 
-    <!-- トランジスタ: 黒いTO-92パッケージと3本足 -->
+    <!-- トランジスタ -->
     <div class="palette-item" draggable="true" data-type="transistor">
       <svg width="18" height="18" viewBox="0 0 18 18" style="vertical-align: middle; margin-right: 2px;">
-        <!-- 3本足（リード線） -->
         <line x1="5" y1="9" x2="5" y2="17" stroke="#9ca3af" stroke-width="1.2" />
         <line x1="9" y1="9" x2="9" y2="17" stroke="#9ca3af" stroke-width="1.2" />
         <line x1="13" y1="9" x2="13" y2="17" stroke="#9ca3af" stroke-width="1.2" />
-        <!-- パッケージ本体 (TO-92形状の半円状ボディ) -->
         <path d="M 3 9 C 3 2, 15 2, 15 9 Z" fill="#374151" stroke="#111827" stroke-width="1" />
       </svg>
       トランジスタ
@@ -812,6 +938,8 @@ textarea {
   </div>
   <span class="help-text">（下へドラッグで配置 / 横スライドで一覧移動）</span>
 </div>
+
+
 
 
     <div class="main-content">
@@ -850,7 +978,7 @@ textarea {
             </div>
             <div class="form-group">
               <label for="pdf-student-name">氏名</label>
-              <input type="text" id="pdf-student-name" class="pdf-form-input" placeholder="例: 山田 太郎" required>
+              <input type="text" id="pdf-student-name" class="pdf-form-input" placeholder="フルネーム" required>
             </div>
             
             <!-- 【追加】電源スイッチの切り替えオプション -->
@@ -894,7 +1022,1137 @@ textarea {
   </div>
 </div>
 
+<!-- パーツ説明・参考回路モーダル -->
+<div id="parts-modal" class="modal-overlay hidden">
+  <div class="modal-content parts-modal-content">
+    <div class="modal-header">
+      <h2>パーツ解説と参考回路</h2>
+      <button type="button" class="modal-close" id="modal-close-btn">&times;</button>
+    </div>
+    
+    <div class="modal-body parts-modal-body">
+      <!-- 左側：縦並びボタンメニュー -->
+      <nav class="parts-menu">
+        <button type="button" class="parts-menu-btn active" data-target="panel-overview">パーツの説明</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-resistor">抵抗器の役割</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-led">LEDの点灯回路</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-switch">スイッチの利用</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-motor">モーターの回転回路</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-rgb">フルカラーLEDの活用</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-cds">Cdsセルの活用</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-transistor">トランジスタの活用</button>
+      </nav>
 
+      <!-- 右側：詳細・参考回路表示エリア -->
+      <div class="parts-detail-container">
+        
+        <!-- 1. パーツの説明 -->
+<div id="panel-overview" class="parts-panel active">
+  <h3>パーツの説明</h3>
+  <ul class="parts-info-list">
+    <li><strong>🔋 乾電池:</strong> 電気を供給する電源です。</li>
+    <li>
+      <strong>
+        <svg viewBox="0 0 20 16" style="height: 1.1em; width: auto; vertical-align: -0.15em; margin-right: 2px; display: inline-block;">
+          <line x1="0" y1="8" x2="20" y2="8" stroke="#9ca3af" stroke-width="1.5" />
+          <rect x="4" y="4" width="12" height="8" rx="2" fill="#fef08a" stroke="#ca8a04" stroke-width="1" />
+          <line x1="7" y1="4" x2="7" y2="12" stroke="#ef4444" stroke-width="1" />
+          <line x1="9" y1="4" x2="9" y2="12" stroke="#3b82f6" stroke-width="1" />
+          <line x1="11" y1="4" x2="11" y2="12" stroke="#10b981" stroke-width="1" />
+          <line x1="13" y1="4" x2="13" y2="12" stroke="#ca8a04" stroke-width="1" />
+        </svg>抵抗器:
+      </strong> 電流の流れを制限し、他のパーツを保護します。
+    </li>
+    <li><strong>🔘 スイッチ:</strong> 回路を開閉して、電流のON/OFFを切り替えます。</li>
+    <li><strong>💡 LED:</strong> 電流が流れると点滅・発光するダイオードです。</li>
+    <li><strong>⚙️ モーター:</strong> 電気エネルギーを回転運動に変換します。</li>
+    <li><strong>🌈 フルカラーLED:</strong> 赤・緑・青の光を組み合わせて多彩な色を出せます。</li>
+    <li><strong>☀️ CdSセル:</strong> 周囲の明るさに応じて抵抗値が変わる光センサーです。</li>
+    <li>
+      <strong>
+        <svg viewBox="0 0 18 18" style="height: 1.1em; width: auto; vertical-align: -0.15em; margin-right: 2px; display: inline-block;">
+          <line x1="5" y1="9" x2="5" y2="17" stroke="#9ca3af" stroke-width="1.2" />
+          <line x1="9" y1="9" x2="9" y2="17" stroke="#9ca3af" stroke-width="1.2" />
+          <line x1="13" y1="9" x2="13" y2="17" stroke="#9ca3af" stroke-width="1.2" />
+          <path d="M 3 9 C 3 2, 15 2, 15 9 Z" fill="#374151" stroke="#111827" stroke-width="1" />
+        </svg>トランジスタ:
+      </strong> 弱電流で大電流を制御（スイッチング・増幅）します。
+    </li>
+  </ul>
+</div>
+
+        <!-- 2. 抵抗器の役割 -->
+<div id="panel-resistor" class="parts-panel hidden">
+  <h3>抵抗器の役割</h3>
+  
+  <!-- 比較SVG回路図 -->
+  <svg viewBox="0 0 560 210" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      .label-ng { font-size: 13px; font-weight: bold; fill: #dc2626; text-anchor: middle; }
+      .label-ok { font-size: 13px; font-weight: bold; fill: #16a34a; text-anchor: middle; }
+      .sub-text-ng { font-size: 11px; font-weight: bold; fill: #b91c1c; text-anchor: middle; }
+      .sub-text-ok { font-size: 11px; font-weight: bold; fill: #15803d; text-anchor: middle; }
+      .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .wire-pos { stroke: #ef4444; }
+      .wire-neg { stroke: #3b82f6; }
+    </style>
+
+    <!-- 【左側】抵抗器がない回路 (NG) -->
+    <rect x="10" y="10" width="265" height="190" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="142" y="34" class="label-ng">⚠️ 抵抗器がない回路（危険）</text>
+
+    <!-- 乾電池 (左) -->
+    <g transform="translate(35, 75)">
+      <rect x="0" y="0" width="30" height="50" rx="4" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+      <rect x="10" y="-5" width="10" height="5" rx="1" fill="#94a3b8"/>
+      <text x="15" y="18" fill="#f8fafc" font-size="12" font-weight="bold" text-anchor="middle">+</text>
+      <text x="15" y="42" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">-</text>
+      <text x="15" y="30" fill="#fbbf24" font-size="9" font-weight="bold" text-anchor="middle">1.5V</text>
+    </g>
+
+    <!-- LED (破損・煙) -->
+    <g transform="translate(195, 75)">
+      <line x1="8" y1="-15" x2="8" y2="10" stroke="#9ca3af" stroke-width="2"/>
+      <line x1="20" y1="50" x2="20" y2="10" stroke="#9ca3af" stroke-width="2"/>
+      <path d="M 2 20 A 12 12 0 0 1 26 20 L 26 32 L 2 32 Z" fill="#ef4444" opacity="0.8"/>
+      <path d="M 2 32 L 26 32 L 22 36 L 6 36 Z" fill="#dc2626"/>
+      <path d="M 4 12 L 10 22 L 16 14 L 22 25" stroke="#f59e0b" stroke-width="2" fill="none"/>
+      <text x="13" y="-2" font-size="15" text-anchor="middle">💥</text>
+    </g>
+
+    <!-- 配線 (左) -->
+    <path d="M 50 70 L 50 50 L 203 50 L 203 60" class="wire wire-pos"/>
+    <path d="M 215 125 L 215 145 L 50 145 L 50 125" class="wire wire-neg"/>
+
+    <!-- 注釈 (左) -->
+    <rect x="25" y="160" width="235" height="26" rx="5" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="142" y="177" class="sub-text-ng">過電流でLEDが焼き切れ破損！</text>
+
+
+    <!-- 【右側】抵抗器がある回路 (OK) -->
+    <rect x="285" y="10" width="265" height="190" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+    <text x="417" y="34" class="label-ok">✅ 抵抗器がある回路（安全）</text>
+
+    <!-- 乾電池 (右) -->
+    <g transform="translate(310, 85)">
+      <rect x="0" y="0" width="30" height="50" rx="4" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+      <rect x="10" y="-5" width="10" height="5" rx="1" fill="#94a3b8"/>
+      <text x="15" y="18" fill="#f8fafc" font-size="12" font-weight="bold" text-anchor="middle">+</text>
+      <text x="15" y="42" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">-</text>
+      <text x="15" y="30" fill="#fbbf24" font-size="9" font-weight="bold" text-anchor="middle">1.5V</text>
+    </g>
+
+    <!-- 抵抗器 -->
+    <g transform="translate(385, 41)">
+      <line x1="0" y1="9" x2="50" y2="9" stroke="#9ca3af" stroke-width="2"/>
+      <rect x="10" y="2" width="30" height="14" rx="3" fill="#fef08a" stroke="#ca8a04" stroke-width="1"/>
+      <line x1="16" y1="2" x2="16" y2="16" stroke="#ef4444" stroke-width="2"/>
+      <line x1="21" y1="2" x2="21" y2="16" stroke="#3b82f6" stroke-width="2"/>
+      <line x1="26" y1="2" x2="26" y2="16" stroke="#10b981" stroke-width="2"/>
+      <line x1="32" y1="2" x2="32" y2="16" stroke="#ca8a04" stroke-width="2"/>
+    </g>
+
+    <!-- LED (点灯) -->
+    <g transform="translate(470, 85)">
+      <circle cx="14" cy="20" r="20" fill="#fef08a" opacity="0.4"/>
+      <line x1="-2" y1="8" x2="-7" y2="3" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+      <line x1="30" y1="8" x2="35" y2="3" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+      <line x1="14" y1="-4" x2="14" y2="-10" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+      <line x1="8" y1="-10" x2="8" y2="10" stroke="#9ca3af" stroke-width="2"/>
+      <line x1="20" y1="50" x2="20" y2="10" stroke="#9ca3af" stroke-width="2"/>
+      <path d="M 2 20 A 12 12 0 0 1 26 20 L 26 32 L 2 32 Z" fill="#ef4444"/>
+      <path d="M 2 32 L 26 32 L 22 36 L 6 36 Z" fill="#dc2626"/>
+    </g>
+
+    <!-- 配線 (右) -->
+    <path d="M 325 80 L 325 50 L 385 50" class="wire wire-pos"/>
+    <path d="M 435 50 L 478 50 L 478 75" class="wire wire-pos"/>
+    <path d="M 490 135 L 490 155 L 325 155 L 325 135" class="wire wire-neg"/>
+
+    <!-- 注釈 (右) -->
+    <rect x="300" y="160" width="235" height="26" rx="5" fill="#ffffff" stroke="#86efac"/>
+    <text x="417" y="177" class="sub-text-ok">適正電流に制限され安全に点灯！</text>
+  </svg>
+
+  <!-- 解説文 -->
+  <p class="parts-desc">
+    LEDなどの精密な電子パーツに大きな電流が流れすぎるのを防ぐ<strong>「電流制限（保護）」</strong>の役割を果たします。<br>
+    抵抗器を挟まない回路では、過流電によってLEDが瞬時に焼き切れたり発熱・破損する原因となります。
+  </p>
+</div>
+
+        <!-- 3. LEDの点灯回路 -->
+<div id="panel-led" class="parts-panel hidden">
+  <h3>LEDの点灯回路</h3>
+  
+  <!-- LED点灯回路SVG -->
+<svg viewBox="0 0 560 240" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .label-title { font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+    .label-anode { font-size: 10px; font-weight: bold; fill: #dc2626; text-anchor: middle; }
+    .label-cathode { font-size: 10px; font-weight: bold; fill: #2563eb; text-anchor: middle; }
+    .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .wire-pos { stroke: #ef4444; }
+    .wire-neg { stroke: #3b82f6; }
+    .wire-series { stroke: #475569; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  </style>
+
+  <!-- 背景パネル -->
+  <rect x="10" y="10" width="540" height="220" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="280" y="32" class="label-title">💡 乾電池 3.0V による基本LED点灯回路</text>
+
+  <!-- 乾電池 3.0V (1.5V x 2本直列) -->
+  <g transform="translate(45, 92)">
+    <!-- 電池1 (左) -->
+    <rect x="0" y="0" width="28" height="46" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="9" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="14" y="16" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">+</text>
+    <text x="14" y="38" fill="#94a3b8" font-size="10" font-weight="bold" text-anchor="middle">-</text>
+
+    <!-- 電池2 (右) -->
+    <rect x="32" y="0" width="28" height="46" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="41" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="46" y="16" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">+</text>
+    <text x="46" y="38" fill="#94a3b8" font-size="10" font-weight="bold" text-anchor="middle">-</text>
+
+    <!-- 電池テキスト -->
+    <text x="68" y="22" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
+    <text x="68" y="36" font-size="9" fill="#64748b" text-anchor="start">(1.5V × 2本 直列)</text>
+  </g>
+
+  <!-- 保護抵抗器 -->
+  <g transform="translate(230, 52)">
+    <line x1="0" y1="8" x2="60" y2="8" stroke="#9ca3af" stroke-width="2"/>
+    <rect x="12" y="1" width="36" height="14" rx="3" fill="#fef08a" stroke="#ca8a04" stroke-width="1"/>
+    <line x1="18" y1="1" x2="18" y2="15" stroke="#ef4444" stroke-width="2"/>
+    <line x1="24" y1="1" x2="24" y2="15" stroke="#3b82f6" stroke-width="2"/>
+    <line x1="30" y1="1" x2="30" y2="15" stroke="#10b981" stroke-width="2"/>
+    <line x1="38" y1="1" x2="38" y2="15" stroke="#ca8a04" stroke-width="2"/>
+    <text x="30" y="30" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">保護抵抗器</text>
+  </g>
+
+  <!-- 電流の流れ -->
+  <path d="M 185 56 L 195 60 L 185 64 Z" fill="#ef4444"/>
+  <text x="135" y="74" font-size="10" font-weight="bold" fill="#ef4444">電流の流れ (+ → -)</text>
+
+  <!-- LED (点灯状態) -->
+  <g transform="translate(430, 78)">
+    <circle cx="14" cy="20" r="22" fill="#fef08a" opacity="0.45"/>
+    <line x1="-4" y1="6" x2="-10" y2="0" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+    <line x1="32" y1="6" x2="38" y2="0" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+    <line x1="14" y1="-6" x2="14" y2="-12" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+
+    <path d="M 2 20 A 12 12 0 0 1 26 20 L 26 32 L 2 32 Z" fill="#ef4444"/>
+    <path d="M 2 32 L 26 32 L 22 36 L 6 36 Z" fill="#dc2626"/>
+
+    <line x1="6" y1="36" x2="6" y2="80" stroke="#9ca3af" stroke-width="2.5"/>
+    <line x1="22" y1="36" x2="22" y2="68" stroke="#9ca3af" stroke-width="2.5"/>
+
+    <text x="-22" y="55" class="label-anode" text-anchor="end">アノード (+)</text>
+    <text x="-22" y="67" font-size="8.5" fill="#ef4444" text-anchor="end">（長足）</text>
+
+    <text x="48" y="55" class="label-cathode" text-anchor="start">カソード (-)</text>
+    <text x="48" y="67" font-size="8.5" fill="#2563eb" text-anchor="start">（短足）</text>
+
+    <text x="42" y="24" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="start">LED</text>
+  </g>
+
+  <!-- 配線接続 -->
+  <!-- プラス線（左乾電池プラス極 -> 抵抗器 -> LEDアノード） -->
+  <path d="M 59 88 L 59 60 L 230 60" class="wire wire-pos"/>
+  <path d="M 290 60 L 436 60 L 436 114" class="wire wire-pos"/>
+  
+  <!-- 直列接続線（左乾電池マイナス極 -> 右乾電池プラス極） -->
+  <path d="M 59 138 L 59 148 L 75 148 L 75 80 L 91 80 L 91 88" class="wire-series"/>
+
+  <!-- マイナス線（LEDカソード -> 右乾電池マイナス極） -->
+  <path d="M 452 146 L 452 175 L 91 175 L 91 138" class="wire wire-neg"/>
+
+  <!-- 下部注釈バナー -->
+  <rect x="30" y="198" width="500" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="280" y="213" font-size="10.5" fill="#334155" text-anchor="middle">
+    <tspan font-weight="bold" fill="#dc2626">プラス側</tspan>にアノード（長足）、<tspan font-weight="bold" fill="#2563eb">マイナス側</tspan>にカソード（短足）を接続
+  </text>
+</svg>
+
+  <!-- 解説文 -->
+  <p class="parts-desc">
+    <strong>【極性と接続】</strong><br>
+    LEDには電気を流す方向（極性）が決まっています。足の長い方「アノード（+）」を電源のプラス側、足の短い方「カソード（-）」をマイナス側に接続します。逆向きに繋ぐと電流が流れず点灯しません。<br><br>
+    
+    <strong>【LEDに必要な電圧（順方向電圧 VF）】</strong><br>
+    LEDを発光させるには、一定以上の電圧（<strong>順方向電圧 VF</strong>）が必要です。この電圧はLEDの発光色によって異なります。
+    <ul>
+      <li>赤・黄・緑色LED: 約 <strong>1.8V 〜 2.2V</strong></li>
+      <li>青・白色・フルカラーLED: 約 <strong>3.0V 〜 3.2V</strong></li>
+    </ul>
+    乾電池3.0Vで赤色LED（VF ＝ 約2.0V）を点灯する場合、差し引いた「約1.0V」分が過剰な電圧となります。この残りの電圧を保護抵抗器に負担させることで、安全な適正電流（約10〜20mA）に抑えてLEDを保護しています。
+</p>
+</div>
+
+        <!-- 4. スイッチの利用 -->
+<div id="panel-switch" class="parts-panel hidden">
+  <h3>スイッチの利用</h3>
+  
+  <!-- スイッチ回路SVG (クリックで開閉インタラクティブ対応) -->
+<svg viewBox="0 0 560 240" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .label-title { font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+    .label-anode { font-size: 10px; font-weight: bold; fill: #dc2626; text-anchor: end; }
+    .label-cathode { font-size: 10px; font-weight: bold; fill: #2563eb; text-anchor: start; }
+    .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .wire-pos { stroke: #ef4444; }
+    .wire-neg { stroke: #3b82f6; }
+    .wire-series { stroke: #475569; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .clickable { cursor: pointer; }
+    .clickable:hover .switch-bg { fill: #f1f5f9; stroke: #2563eb; }
+    .smooth-transition { transition: all 0.25s ease-in-out; }
+  </style>
+
+  <script>
+    <![CDATA[
+    function toggleSwitch() {
+      const lever = document.getElementById('switch-lever');
+      const switchText = document.getElementById('switch-text');
+      const ledGlow = document.getElementById('led-glow');
+      const ledRays = document.getElementById('led-rays');
+      const currentFlow = document.getElementById('current-flow');
+      const bannerText = document.getElementById('banner-text');
+
+      const isOff = lever.getAttribute('y2') === '4';
+
+      if (isOff) {
+        // ON状態へ切り替え
+        lever.setAttribute('x2', '48');
+        lever.setAttribute('y2', '18');
+        lever.setAttribute('stroke', '#10b981');
+        switchText.textContent = 'ON (通電)';
+        switchText.setAttribute('fill', '#16a34a');
+        ledGlow.style.opacity = '0.45';
+        ledRays.style.opacity = '1';
+        currentFlow.style.opacity = '1';
+        bannerText.innerHTML = 'スイッチを閉じると<tspan font-weight="bold" fill="#16a34a">回路がつながり（ON）</tspan>電流が流れてLEDが点灯します';
+      } else {
+        // OFF状態へ切り替え
+        lever.setAttribute('x2', '42');
+        lever.setAttribute('y2', '4');
+        lever.setAttribute('stroke', '#ef4444');
+        switchText.textContent = 'OFF (遮断)';
+        switchText.setAttribute('fill', '#dc2626');
+        ledGlow.style.opacity = '0';
+        ledRays.style.opacity = '0';
+        currentFlow.style.opacity = '0.2';
+        bannerText.innerHTML = 'スイッチを開くと<tspan font-weight="bold" fill="#dc2626">回路が遮断され（OFF）</tspan>電流が止まります（クリックで操作）';
+      }
+    }
+    ]]>
+  </script>
+
+  <!-- 背景パネル -->
+  <rect x="10" y="8" width="540" height="224" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="280" y="28" class="label-title">🔘 スイッチによる回路の制御（クリックでON/OFF切り替え）</text>
+
+  <!-- 乾電池 3.0V (1.5V x 2本直列) -->
+  <g transform="translate(45, 100)">
+    <!-- 電池1 (左) -->
+    <rect x="0" y="0" width="28" height="46" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="9" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="14" y="16" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">+</text>
+    <text x="14" y="38" fill="#94a3b8" font-size="10" font-weight="bold" text-anchor="middle">-</text>
+
+    <!-- 電池2 (右) -->
+    <rect x="32" y="0" width="28" height="46" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="41" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="46" y="16" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">+</text>
+    <text x="46" y="38" fill="#94a3b8" font-size="10" font-weight="bold" text-anchor="middle">-</text>
+
+    <text x="68" y="22" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
+    <text x="68" y="36" font-size="9" fill="#64748b" text-anchor="start">(1.5V × 2本 直列)</text>
+  </g>
+
+  <!-- 電流の流れ（初期状態はOFFのため薄表示） -->
+  <g id="current-flow" class="smooth-transition" style="opacity: 0.2;">
+    <path d="M 140 64 L 150 68 L 140 72 Z" fill="#ef4444"/>
+    <text x="140" y="84" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">電流の流れ (+ → -)</text>
+  </g>
+
+  <!-- スイッチ (初期状態: OFF) -->
+  <g id="switch-group" class="clickable" transform="translate(210, 50)" onclick="toggleSwitch()">
+    <rect class="switch-bg smooth-transition" x="0" y="0" width="60" height="36" rx="5" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+    <!-- 接点 -->
+    <circle cx="12" cy="18" r="3.5" fill="#0f172a"/>
+    <circle cx="48" cy="18" r="3.5" fill="#0f172a"/>
+    <!-- レバー (開いたOFF状態) -->
+    <line id="switch-lever" class="smooth-transition" x1="12" y1="18" x2="42" y2="4" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    <!-- テキスト -->
+    <text x="30" y="-6" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">スイッチ 👆</text>
+    <text id="switch-text" class="smooth-transition" x="30" y="30" font-size="9" font-weight="bold" fill="#dc2626" text-anchor="middle">OFF (遮断)</text>
+  </g>
+
+  <!-- 保護抵抗器 -->
+  <g transform="translate(300, 60)">
+    <line x1="0" y1="8" x2="60" y2="8" stroke="#9ca3af" stroke-width="2"/>
+    <rect x="12" y="1" width="36" height="14" rx="3" fill="#fef08a" stroke="#ca8a04" stroke-width="1"/>
+    <line x1="18" y1="1" x2="18" y2="15" stroke="#ef4444" stroke-width="2"/>
+    <line x1="24" y1="1" x2="24" y2="15" stroke="#3b82f6" stroke-width="2"/>
+    <line x1="30" y1="1" x2="30" y2="15" stroke="#10b981" stroke-width="2"/>
+    <line x1="38" y1="1" x2="38" y2="15" stroke="#ca8a04" stroke-width="2"/>
+    <text x="30" y="30" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">保護抵抗器</text>
+  </g>
+
+  <!-- LED -->
+  <g transform="translate(430, 86)">
+    <!-- 発光エフェクト (初期状態: 消灯) -->
+    <circle id="led-glow" class="smooth-transition" cx="14" cy="20" r="22" fill="#fef08a" style="opacity: 0;"/>
+    <g id="led-rays" class="smooth-transition" style="opacity: 0;">
+      <line x1="-4" y1="6" x2="-10" y2="0" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+      <line x1="32" y1="6" x2="38" y2="0" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+      <line x1="14" y1="-6" x2="14" y2="-12" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+    </g>
+
+    <!-- LED本体 -->
+    <path d="M 2 20 A 12 12 0 0 1 26 20 L 26 32 L 2 32 Z" fill="#ef4444"/>
+    <path d="M 2 32 L 26 32 L 22 36 L 6 36 Z" fill="#dc2626"/>
+
+    <!-- 端子足（アノード＝長足、カソード＝短足） -->
+    <line x1="6" y1="36" x2="6" y2="80" stroke="#9ca3af" stroke-width="2.5"/>
+    <line x1="22" y1="36" x2="22" y2="68" stroke="#9ca3af" stroke-width="2.5"/>
+
+    <!-- 極性表記（アノード / カソード） -->
+    <text x="-8" y="52" class="label-anode">アノード (+)</text>
+    <text x="-8" y="64" font-size="8.5" fill="#ef4444" text-anchor="end">（長足）</text>
+
+    <text x="36" y="52" class="label-cathode">カソード (-)</text>
+    <text x="36" y="64" font-size="8.5" fill="#2563eb" text-anchor="start">（短足）</text>
+
+    <text x="42" y="20" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="start">LED</text>
+  </g>
+
+  <!-- 配線接続 -->
+  <!-- プラス線（乾電池(+) -> スイッチ -> 抵抗器 -> LEDアノード） -->
+  <path d="M 59 96 L 59 68 L 222 68" class="wire wire-pos"/>
+  <path d="M 258 68 L 300 68" class="wire wire-pos"/>
+  <path d="M 360 68 L 436 68 L 436 122" class="wire wire-pos"/>
+  
+  <!-- 電池直列線 -->
+  <path d="M 59 146 L 59 154 L 75 154 L 75 96 L 91 96 L 91 104" class="wire-series"/>
+
+  <!-- マイナス線（LEDカソード -> 乾電池(-)） -->
+  <path d="M 452 154 L 452 180 L 91 180 L 91 146" class="wire wire-neg"/>
+
+  <!-- 下部注釈バナー -->
+  <rect x="30" y="202" width="500" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text id="banner-text" x="280" y="217" font-size="10.5" fill="#334155" text-anchor="middle">
+    スイッチを開くと<tspan font-weight="bold" fill="#dc2626">回路が遮断され（OFF）</tspan>電流が止まります（クリックで操作）
+  </text>
+</svg>
+
+  <!-- 解説文 -->
+  <p class="parts-desc">
+    <strong>【スイッチの基本的な役割】</strong><br>
+    回路の途中で物理的に線を繋いだり離したり（開閉）することで、電流のON/OFFをコントロールするパーツです。スイッチを開くと回路が遮断（OFF）され、閉じると電流が流れます（ON）。<br><br>
+    
+    <strong>【トグルスイッチと主な構造の種類】</strong><br>
+    操作方法や状態の保持のしかたによって、以下のような種類があります。
+    <ul>
+      <li>
+        <strong>トグルスイッチ:</strong> レバーを倒して操作するスイッチ。手で切り替えた状態（ONまたはOFF）が機械的にそのまま維持されます（オルタネイト動作）。電源スイッチなどによく使われます。
+      </li>
+      <li>
+        <strong>プッシュ（押ボタン）スイッチ:</strong> ボタンを押している間だけ通電するモーメンタリ動作と、1回押すとON・もう1回押すとOFFが切り替わるオルタネイト動作のタイプがあります。
+      </li>
+      <li>
+        <strong>スライドスイッチ:</strong> つまみを横にスライドさせて回路を切り替える省スペースなスイッチです。
+      </li>
+    </ul>
+  </p>
+</div>
+
+        <!-- 5. モーターの回転回路 -->
+<div id="panel-motor" class="parts-panel hidden">
+  <h3>モーターの回転回路</h3>
+
+  <!-- モーター回路SVG (クリックで極性反転・逆回転対応) -->
+<svg viewBox="0 0 560 240" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .label-title { font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+    .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .wire-pos { stroke: #ef4444; }
+    .wire-neg { stroke: #3b82f6; }
+    .wire-series { stroke: #475569; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .clickable { cursor: pointer; }
+    .clickable:hover .motor-body { fill: #e2e8f0; stroke: #2563eb; }
+    .smooth-transition { transition: all 0.3s ease-in-out; }
+
+    /* モーター回転アニメーション（中心軸(0,0)で自転させる） */
+    @keyframes spinCW {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spinCCW {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
+    }
+    .spin-cw {
+      transform-origin: 0px 0px;
+      animation: spinCW 0.8s linear infinite;
+    }
+    .spin-ccw {
+      transform-origin: 0px 0px;
+      animation: spinCCW 0.8s linear infinite;
+    }
+  </style>
+
+  <script>
+    <![CDATA[
+    let isReverse = false;
+
+    function toggleMotorPolarity() {
+      isReverse = !isReverse;
+
+      const propeller = document.getElementById('propeller');
+      const rotLabel = document.getElementById('rot-label');
+      const polTop = document.getElementById('pol-top');
+      const polBottom = document.getElementById('pol-bottom');
+      const bannerText = document.getElementById('banner-text');
+
+      if (isReverse) {
+        // 端子逆接続 (モーター内部電流が逆になり反時計回り)
+        propeller.setAttribute('class', 'spin-ccw');
+        rotLabel.textContent = '↺ 反時計回り (逆回転)';
+        rotLabel.setAttribute('fill', '#2563eb');
+        
+        polTop.textContent = '-';
+        polTop.setAttribute('fill', '#2563eb');
+        polBottom.textContent = '+';
+        polBottom.setAttribute('fill', '#dc2626');
+
+        bannerText.innerHTML = '電池の＋極にー端子をつなぐと<tspan font-weight="bold" fill="#2563eb">モーター内部の電流が逆向き</tspan>になり<tspan font-weight="bold" fill="#2563eb">反時計回りに逆回転</tspan>します';
+      } else {
+        // 正方向接続 (時計回り)
+        propeller.setAttribute('class', 'spin-cw');
+        rotLabel.textContent = '↻ 時計回り (正回転)';
+        rotLabel.setAttribute('fill', '#16a34a');
+
+        polTop.textContent = '+';
+        polTop.setAttribute('fill', '#dc2626');
+        polBottom.textContent = '-';
+        polBottom.setAttribute('fill', '#2563eb');
+
+        bannerText.innerHTML = 'モーターをクリックすると<tspan font-weight="bold" fill="#dc2626">端子の接続が反転</tspan>して回転方向が変わります';
+      }
+    }
+    ]]>
+  </script>
+
+  <!-- 背景パネル -->
+  <rect x="10" y="8" width="540" height="224" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="280" y="28" class="label-title">⚙️ モーターの回転回路（クリックで極性反転・逆回転）</text>
+
+  <!-- 乾電池 3.0V (1.5V x 2本直列) -->
+  <g transform="translate(45, 100)">
+    <!-- 電池1 (左) -->
+    <rect x="0" y="0" width="28" height="46" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="9" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="14" y="16" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">+</text>
+    <text x="14" y="38" fill="#94a3b8" font-size="10" font-weight="bold" text-anchor="middle">-</text>
+
+    <!-- 電池2 (右) -->
+    <rect x="32" y="0" width="28" height="46" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="41" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="46" y="16" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">+</text>
+    <text x="46" y="38" fill="#94a3b8" font-size="10" font-weight="bold" text-anchor="middle">-</text>
+
+    <text x="68" y="22" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
+    <text x="68" y="36" font-size="9" fill="#64748b" text-anchor="start">(1.5V × 2本 直列)</text>
+  </g>
+
+  <!-- 電流の向き表記（右向きのアローに修正） -->
+  <g id="current-flow-group">
+    <path id="current-flow-arrow" d="M 200 64 L 210 68 L 200 72 Z" fill="#ef4444"/>
+    <text id="current-flow-text" x="205" y="54" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">電流の流れ (+ → -)</text>
+  </g>
+
+  <!-- モーター本体ユニット (クリック可能) -->
+  <g id="motor-unit" class="clickable" transform="translate(380, 118)" onclick="toggleMotorPolarity()">
+    <!-- 操作誘導ラベル -->
+    <text x="0" y="-58" font-size="11" font-weight="bold" fill="#2563eb" text-anchor="middle">モーター 👆 (クリックで＋ー反転)</text>
+
+    <!-- モーター本体外枠 -->
+    <circle class="motor-body smooth-transition" cx="0" cy="0" r="34" fill="#ffffff" stroke="#64748b" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="28" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 端子 (上) -->
+    <rect x="-12" y="-42" width="24" height="10" rx="2" fill="#94a3b8"/>
+    <!-- ＋/ー表記を右側に配置 (x="20", text-anchor="start") -->
+    <text id="pol-top" x="20" y="-33" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="start" class="smooth-transition">+</text>
+
+    <!-- 端子 (下) -->
+    <rect x="-12" y="32" width="24" height="10" rx="2" fill="#94a3b8"/>
+    <!-- ＋/ー表記を右側に配置 (x="20", text-anchor="start") -->
+    <text id="pol-bottom" x="20" y="42" font-size="14" font-weight="bold" fill="#2563eb" text-anchor="start" class="smooth-transition">-</text>
+
+    <!-- プロペラ（回転部） -->
+    <g id="propeller" class="spin-cw">
+      <!-- 羽根4枚 -->
+      <path d="M 0 0 C -12 -22 -6 -30 0 -30 C 6 -30 12 -22 0 0 Z" fill="#3b82f6" opacity="0.85"/>
+      <path d="M 0 0 C 22 -12 30 -6 30 0 C 30 6 22 12 0 0 Z" fill="#3b82f6" opacity="0.85"/>
+      <path d="M 0 0 C 12 22 6 30 0 30 C -6 30 -12 22 0 0 Z" fill="#3b82f6" opacity="0.85"/>
+      <path d="M 0 0 C -22 12 -30 6 -30 0 C -30 -6 -22 -12 0 0 Z" fill="#3b82f6" opacity="0.85"/>
+      <!-- 中心軸 -->
+      <circle cx="0" cy="0" r="6" fill="#0f172a"/>
+      <circle cx="0" cy="0" r="2" fill="#ffffff"/>
+    </g>
+
+    <!-- 回転方向テキスト -->
+    <text id="rot-label" x="0" y="78" font-size="11" font-weight="bold" fill="#16a34a" text-anchor="middle" class="smooth-transition">↻ 時計回り (正回転)</text>
+  </g>
+
+  <!-- 配線接続 -->
+  <path id="wire-top" d="M 59 96 L 59 68 L 380 68 L 380 76" class="wire wire-pos"/>
+  <path d="M 59 146 L 59 154 L 75 154 L 75 96 L 91 96 L 91 104" class="wire-series"/>
+  <path id="wire-bottom" d="M 380 160 L 380 180 L 91 180 L 91 146" class="wire wire-neg"/>
+
+  <!-- 下部注釈バナー -->
+  <rect x="30" y="202" width="500" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text id="banner-text" x="280" y="217" font-size="10.5" fill="#334155" text-anchor="middle">
+    モーターをクリックすると<tspan font-weight="bold" fill="#dc2626">端子の接続が反転</tspan>して回転方向が変わります
+  </text>
+</svg>
+
+  <!-- 解説文 -->
+  <p class="parts-desc">
+    <strong>【モーターの仕組みと回転】</strong><br>
+    電気エネルギーを磁石とコイルの力で機械的な回転運動に変換するパーツです。<br><br>
+    
+    <strong>【極性と逆回転の仕組み】</strong><br>
+    端子に接続する＋（プラス）とー（マイナス）の極性を入れ替えると、内部のコイルに流れる電流の向きが反対になり、発生する磁界の引き合い・退け合いの方向も反転します。<br>
+    その結果、<strong>モーターの回転方向が逆（時計回り ↔ 反時計回り）</strong>になります。模型（ミニ四駆やラジコン、電動工具など）の進行方向や動作を切り替える際にこの仕組みが活用されています。
+  </p>
+</div>
+
+        <!-- 6. フルカラーLEDの活用 -->
+        <div id="panel-rgb" class="parts-panel hidden">
+          <!-- フルカラーLED回路SVG (クリックでRGBスイッチ操作・混色対応) -->
+<svg viewBox="0 0 560 260" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 発光グローエフェクト -->
+    <filter id="rgb-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur id="glow-blur" stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    .label-title { font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+    .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; transition: stroke 0.3s; }
+    .wire-off { stroke: #94a3b8; }
+    .wire-r-on { stroke: #ef4444; }
+    .wire-g-on { stroke: #22c55e; }
+    .wire-b-on { stroke: #3b82f6; }
+    .wire-com { stroke: #475569; }
+    
+    .clickable { cursor: pointer; }
+    .sw-bg { transition: fill 0.3s; }
+    .sw-knob { transition: transform 0.3s ease-in-out; }
+    .led-dome { transition: fill 0.3s, filter 0.3s; }
+    .smooth-text { transition: fill 0.3s; }
+    .led-pin { stroke: #94a3b8; stroke-width: 2.5; stroke-linecap: square; }
+  </style>
+
+  <script>
+    <![CDATA[
+    const rgbState = { r: false, g: false, b: false };
+
+    function toggleRgbSwitch(color) {
+      rgbState[color] = !rgbState[color];
+      updateRgbDisplay();
+    }
+
+    function updateRgbDisplay() {
+      const { r, g, b } = rgbState;
+
+      // 1. スイッチのビジュアル更新
+      document.getElementById('knob-r').setAttribute('transform', r ? 'translate(12, 0)' : 'translate(-12, 0)');
+      document.getElementById('bg-r').setAttribute('fill', r ? '#ef4444' : '#cbd5e1');
+      document.getElementById('knob-g').setAttribute('transform', g ? 'translate(12, 0)' : 'translate(-12, 0)');
+      document.getElementById('bg-g').setAttribute('fill', g ? '#22c55e' : '#cbd5e1');
+      document.getElementById('knob-b').setAttribute('transform', b ? 'translate(12, 0)' : 'translate(-12, 0)');
+      document.getElementById('bg-b').setAttribute('fill', b ? '#3b82f6' : '#cbd5e1');
+
+      // 2. 配線色更新
+      document.getElementById('wire-r').setAttribute('class', r ? 'wire wire-r-on' : 'wire wire-off');
+      document.getElementById('wire-g').setAttribute('class', g ? 'wire wire-g-on' : 'wire wire-off');
+      document.getElementById('wire-b').setAttribute('class', b ? 'wire wire-b-on' : 'wire wire-off');
+
+      // 3. 発光色の判定
+      const dome = document.getElementById('led-dome');
+      const ledCore = document.getElementById('led-core');
+      const colorLabel = document.getElementById('color-label');
+      const bannerText = document.getElementById('banner-text');
+
+      let colorHex = '#475569';
+      let colorName = '消灯 (OFF)';
+      let description = 'スイッチを入れると、各色のLEDが点灯して光が混ざります';
+      let hasGlow = true;
+
+      const code = (r ? 4 : 0) + (g ? 2 : 0) + (b ? 1 : 0);
+
+      switch (code) {
+        case 0: // OFF
+          colorHex = '#334155';
+          colorName = '消灯 (OFF)';
+          description = 'すべてのスイッチがOFFのため点灯していません';
+          hasGlow = false;
+          break;
+        case 4: // R
+          colorHex = '#ef4444';
+          colorName = '赤 (Red)';
+          description = '赤色（単色）の光が点灯しています';
+          break;
+        case 2: // G
+          colorHex = '#22c55e';
+          colorName = '緑 (Green)';
+          description = '緑色（単色）の光が点灯しています';
+          break;
+        case 1: // B
+          colorHex = '#3b82f6';
+          colorName = '青 (Blue)';
+          description = '青色（単色）の光が点灯しています';
+          break;
+        case 6: // R + G
+          colorHex = '#eab308';
+          colorName = '黄 (Yellow)';
+          description = '赤 ＋ 緑 ＝ <tspan font-weight="bold" fill="#d97706">黄色</tspan> の光に混色されます';
+          break;
+        case 3: // G + B
+          colorHex = '#06b6d4';
+          colorName = 'シアン (Cyan)';
+          description = '緑 ＋ 青 ＝ <tspan font-weight="bold" fill="#0284c7">シアン（水色）</tspan> の光に混色されます';
+          break;
+        case 5: // R + B
+          colorHex = '#d946ef';
+          colorName = 'マゼンタ (Magenta)';
+          description = '赤 ＋ 青 ＝ <tspan font-weight="bold" fill="#c026d3">マゼンタ（赤紫）</tspan> の光に混色されます';
+          break;
+        case 7: // R + G + B
+          colorHex = '#ffffff';
+          colorName = '白 (White)';
+          description = '赤 ＋ 緑 ＋ 青 ＝ <tspan font-weight="bold" fill="#0f172a">白色（光の三原色）</tspan> になります';
+          break;
+      }
+
+      dome.setAttribute('fill', colorHex);
+      dome.setAttribute('filter', hasGlow ? 'url(#rgb-glow)' : 'none');
+      ledCore.setAttribute('fill', colorHex === '#ffffff' ? '#e2e8f0' : colorHex);
+      colorLabel.textContent = '発光色: ' + colorName;
+      colorLabel.setAttribute('fill', colorHex === '#ffffff' ? '#0f172a' : (hasGlow ? colorHex : '#64748b'));
+      bannerText.innerHTML = description;
+    }
+    ]]>
+  </script>
+
+  <!-- 外枠パネル -->
+  <rect x="10" y="8" width="540" height="244" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="280" y="26" class="label-title">🌈 フルカラーLEDの合成回路（クリックで各色ON/OFF）</text>
+
+  <!-- 電源 (乾電池 3.0V) -->
+  <g transform="translate(35, 92)">
+    <!-- 電池1 -->
+    <rect x="0" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="7" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="12" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+    <text x="12" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+
+    <!-- 電池2 -->
+    <rect x="28" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="35" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="40" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+    <text x="40" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+
+    <!-- 電源ラベル -->
+    <text x="-10" y="68" font-size="10" font-weight="bold" fill="#0f172a" text-anchor="start">電源 3.0V</text>
+  </g>
+
+  <!-- VCC供給バス配線（赤） -->
+  <path d="M 47 88 L 47 68 L 170 68 L 170 158" class="wire wire-r-on"/>
+  <path d="M 170 68 L 200 68" class="wire wire-r-on"/>
+  <path d="M 170 113 L 200 113" class="wire wire-r-on"/>
+  <path d="M 170 158 L 200 158" class="wire wire-r-on"/>
+
+  <!-- スイッチエリア（クリック操作対応） -->
+  <!-- 赤 (R) スイッチ -->
+  <g transform="translate(220, 68)" class="clickable" onclick="toggleRgbSwitch('r')">
+    <text x="-5" y="-12" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">赤 (R)</text>
+    <rect id="bg-r" x="-20" y="-8" width="40" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
+    <circle id="knob-r" cx="0" cy="0" r="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5" transform="translate(-12, 0)" class="sw-knob"/>
+  </g>
+
+  <!-- 緑 (G) スイッチ -->
+  <g transform="translate(220, 113)" class="clickable" onclick="toggleRgbSwitch('g')">
+    <text x="-5" y="-12" font-size="10" font-weight="bold" fill="#22c55e" text-anchor="middle">緑 (G)</text>
+    <rect id="bg-g" x="-20" y="-8" width="40" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
+    <circle id="knob-g" cx="0" cy="0" r="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5" transform="translate(-12, 0)" class="sw-knob"/>
+  </g>
+
+  <!-- 青 (B) スイッチ -->
+  <g transform="translate(220, 158)" class="clickable" onclick="toggleRgbSwitch('b')">
+    <text x="-5" y="-12" font-size="10" font-weight="bold" fill="#3b82f6" text-anchor="middle">青 (B)</text>
+    <rect id="bg-b" x="-20" y="-8" width="40" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
+    <circle id="knob-b" cx="0" cy="0" r="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5" transform="translate(-12, 0)" class="sw-knob"/>
+  </g>
+
+  <!-- 抵抗器パーツ（各スイッチの右に配置） -->
+  <g transform="translate(265, 68)">
+    <rect x="0" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+    <line x1="6" y1="-7" x2="6" y2="7" stroke="#ef4444" stroke-width="2"/>
+    <line x1="11" y1="-7" x2="11" y2="7" stroke="#3b82f6" stroke-width="2"/>
+    <line x1="16" y1="-7" x2="16" y2="7" stroke="#d97706" stroke-width="2"/>
+    <line x1="23" y1="-7" x2="23" y2="7" stroke="#eab308" stroke-width="1.5"/>
+    <text x="15" y="-10" font-size="8" font-weight="bold" fill="#64748b" text-anchor="middle">抵抗</text>
+  </g>
+  <g transform="translate(265, 113)">
+    <rect x="0" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+    <line x1="6" y1="-7" x2="6" y2="7" stroke="#ef4444" stroke-width="2"/>
+    <line x1="11" y1="-7" x2="11" y2="7" stroke="#3b82f6" stroke-width="2"/>
+    <line x1="16" y1="-7" x2="16" y2="7" stroke="#d97706" stroke-width="2"/>
+    <line x1="23" y1="-7" x2="23" y2="7" stroke="#eab308" stroke-width="1.5"/>
+    <text x="15" y="-10" font-size="8" font-weight="bold" fill="#64748b" text-anchor="middle">抵抗</text>
+  </g>
+  <g transform="translate(265, 158)">
+    <rect x="0" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+    <line x1="6" y1="-7" x2="6" y2="7" stroke="#ef4444" stroke-width="2"/>
+    <line x1="11" y1="-7" x2="11" y2="7" stroke="#3b82f6" stroke-width="2"/>
+    <line x1="16" y1="-7" x2="16" y2="7" stroke="#d97706" stroke-width="2"/>
+    <line x1="23" y1="-7" x2="23" y2="7" stroke="#eab308" stroke-width="1.5"/>
+    <text x="15" y="-10" font-size="8" font-weight="bold" fill="#64748b" text-anchor="middle">抵抗</text>
+  </g>
+
+  <!-- 各色の信号配線（すべてLEDリード線の下側から重ならずに接続） -->
+  <!-- R線 (下側迂回ルートでRリード線端へ接続) -->
+  <path id="wire-r" d="M 240 68 L 265 68 M 295 68 L 330 68 L 330 170 L 400 170 L 400 148" class="wire wire-off"/>
+  <!-- G線 (下側迂回ルートでGリード線端へ接続) -->
+  <path id="wire-g" d="M 240 113 L 265 113 M 295 113 L 345 113 L 345 176 L 415 176 L 415 148" class="wire wire-off"/>
+  <!-- B線 (下側迂回ルートでBリード線端へ接続) -->
+  <path id="wire-b" d="M 240 158 L 265 158 M 295 158 L 360 158 L 360 182 L 430 182 L 430 148" class="wire wire-off"/>
+  <!-- 共通GND線 (最下部迂回ルートでCOMリード線端へ接続) -->
+  <path d="M 445 148 L 445 188 L 75 188 L 75 132" class="wire wire-com"/>
+
+  <!-- フルカラーLED本体ユニット -->
+  <g transform="translate(422, 98)">
+    <!-- 金属リード線（足） -->
+    <line x1="-22" y1="15" x2="-22" y2="50" class="led-pin"/>
+    <line x1="-7" y1="15" x2="-7" y2="50" class="led-pin"/>
+    <line x1="8" y1="15" x2="8" y2="50" class="led-pin"/>
+    <line x1="23" y1="15" x2="23" y2="50" class="led-pin"/>
+
+    <!-- リード線ラベル -->
+    <text x="-22" y="38" font-size="8.5" font-weight="bold" fill="#ef4444" text-anchor="middle">R</text>
+    <text x="-7" y="38" font-size="8.5" font-weight="bold" fill="#22c55e" text-anchor="middle">G</text>
+    <text x="8" y="38" font-size="8.5" font-weight="bold" fill="#3b82f6" text-anchor="middle">B</text>
+    <text x="23" y="38" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">COM</text>
+
+    <!-- 内部リフレクター/素子基盤 -->
+    <rect x="-35" y="-5" width="70" height="20" rx="3" fill="#cbd5e1" stroke="#94a3b8"/>
+    <!-- 発光素子チップ (R, G, B) -->
+    <rect x="-20" y="2" width="6" height="4" fill="#ef4444"/>
+    <rect x="-3" y="2" width="6" height="4" fill="#22c55e"/>
+    <rect x="14" y="2" width="6" height="4" fill="#3b82f6"/>
+
+    <!-- LEDドーム（レンズ） -->
+    <path id="led-dome" d="M -30 -5 C -30 -45 30 -45 30 -5 Z" fill="#334155" opacity="0.85" class="led-dome"/>
+    <!-- レンズの光沢線 -->
+    <path d="M -20 -15 C -15 -32 5 -35 15 -32" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+    <!-- コア表示用小円 -->
+    <circle id="led-core" cx="0" cy="-20" r="8" fill="#334155" opacity="0.9" class="led-dome"/>
+
+    <!-- 現在の色名表示 -->
+    <text id="color-label" x="0" y="-52" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle" class="smooth-text">発光色: 消灯 (OFF)</text>
+  </g>
+
+  <!-- 電池直列接続線 -->
+  <path d="M 47 132 L 47 140 L 61 140 L 61 88 L 75 88" stroke="#475569" stroke-width="1.8" fill="none"/>
+
+  <!-- 下部注釈バナー -->
+  <rect x="30" y="218" width="500" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text id="banner-text" x="280" y="233" font-size="10.5" fill="#334155" text-anchor="middle">
+    スイッチを入れると、各色のLEDが点灯して光が混ざります
+  </text>
+</svg>
+
+          <p class="parts-desc">
+            フルカラーLEDは、1つの小さな粒の中に「赤・緑・青」の3色のライトが一緒に入っている部品です。<br><br>
+光の三原色をまとめたもの: 絵の具を混ぜると色が変わるように、光の基本である赤・緑・青を組み合わせて様々な色を作ります。<br>
+<br>
+電気の調整で色を変える: 3つのライトに流す電気のON/OFFや強さを個別に変えることで、黄色・水色・紫・白色など、あらゆる色を自由自在に表現できます。<br>
+<br>
+<strong>身近な使われ方:</strong> スマホやテレビの画面、きれいなイルミネーションなど、色鮮やかに光る場所の多くでこの仕組みが使われています。
+<br><br>
+<strong>【色の組み合わせの例】</strong>
+<br>
+赤 ＋ 緑 ＝ 黄色<br>
+緑 ＋ 青 ＝ シアン（水色）<br>
+赤 ＋ 青 ＝ マゼンタ（赤紫色）<br>
+赤 ＋ 緑 ＋ 青（全部） ＝ 白色
+          </p>
+        </div>
+
+        <!-- 7. Cdsセルの活用 -->
+        <div id="panel-cds" class="parts-panel hidden">
+          <!-- CdSセル（光センサー）自動明暗制御回路SVG -->
+<svg viewBox="0 0 560 330" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- LED発光グローフィルター -->
+    <filter id="cds-led-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur id="cds-glow-blur" stdDeviation="5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- 光線用グラデーション -->
+    <linearGradient id="ray-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#facc15" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .label-title { font-size: 13px; font-weight: bold; text-anchor: middle; transition: fill 0.3s; }
+    .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; transition: stroke 0.3s; }
+    .cds-body { fill: #fed7aa; stroke: #ea580c; stroke-width: 1.5; }
+    .cds-pattern { fill: none; stroke: #c2410c; stroke-width: 2; stroke-linecap: round; }
+    .led-dome-cds { transition: opacity 0.2s, fill 0.2s; }
+    .led-pin { stroke: #94a3b8; stroke-width: 2.5; stroke-linecap: square; }
+    .info-label { font-size: 10px; font-weight: bold; }
+    .val-label { font-size: 11px; font-weight: bold; fill: #3b82f6; }
+    .adaptive-main { transition: fill 0.3s; }
+    .adaptive-sub { transition: fill 0.3s; }
+    .panel-bg { transition: fill 0.3s, stroke 0.3s; }
+  </style>
+
+  <script>
+    <![CDATA[
+    function updateCdsCircuit(val) {
+      const p = parseFloat(val); // 0 (暗い) 〜 100 (明るい)
+      const ratio = p / 100;
+      
+      // 1. CdS抵抗値の計算 (暗い: 100kΩ 〜 明るい: 0.5kΩ)
+      const resVal = (100 - p * 0.995).toFixed(1);
+      
+      // 2. LEDの輝度計算
+      const brightness = 0.05 + ratio * 0.95;
+      const glowRadius = ratio * 10;
+
+      // 3. 周囲の明暗に応じた動的カラー補間 (0:暗 -> 1:明)
+      function mix(c1, c2, r) {
+        return 'rgb(' + 
+          Math.round(c1[0] + (c2[0] - c1[0]) * r) + ',' +
+          Math.round(c1[1] + (c2[1] - c1[1]) * r) + ',' +
+          Math.round(c1[2] + (c2[2] - c1[2]) * r) + ')';
+      }
+
+      // 明暗に応じたカラーセット生成
+      const bgFill = mix([15, 23, 42], [248, 250, 252], ratio);       // 背景色
+      const bgStroke = mix([51, 65, 85], [226, 232, 240], ratio);     // パネル枠線
+      const textMain = mix([248, 250, 252], [30, 41, 59], ratio);     // メイン文字色
+      const textSub = mix([203, 213, 225], [71, 85, 105], ratio);     // サブ文字色
+      const opBg = mix([30, 41, 59], [255, 255, 255], ratio);         // 操作パネル背景
+      const opStroke = mix([71, 85, 105], [203, 213, 225], ratio);     // 操作パネル枠線
+      const wireStroke = mix([148, 163, 184], [71, 85, 105], ratio); // 配線色
+
+      // 背景・パネルの適用
+      const bgPanel = document.getElementById('bg-panel');
+      if (bgPanel) {
+        bgPanel.setAttribute('fill', bgFill);
+        bgPanel.setAttribute('stroke', bgStroke);
+      }
+      const opPanel = document.getElementById('op-panel');
+      if (opPanel) {
+        opPanel.setAttribute('fill', opBg);
+        opPanel.setAttribute('stroke', opStroke);
+      }
+      const bannerPanel = document.getElementById('banner-panel');
+      if (bannerPanel) {
+        bannerPanel.setAttribute('fill', opBg);
+        bannerPanel.setAttribute('stroke', opStroke);
+      }
+
+      // 配線の適用
+      const wires = document.querySelectorAll('.wire');
+      wires.forEach(w => w.style.stroke = wireStroke);
+
+      // テキスト色の動的切替
+      const mainTexts = document.querySelectorAll('.adaptive-main');
+      mainTexts.forEach(t => t.setAttribute('fill', textMain));
+
+      const subTexts = document.querySelectorAll('.adaptive-sub');
+      subTexts.forEach(t => t.setAttribute('fill', textSub));
+
+      // 4. LED要素描画更新
+      const dome = document.getElementById('cds-led-dome');
+      const glow = document.getElementById('cds-glow-blur');
+      const core = document.getElementById('cds-led-core');
+      
+      if (dome) dome.setAttribute('opacity', (0.2 + brightness * 0.8).toFixed(2));
+      if (glow) glow.setAttribute('stdDeviation', glowRadius.toFixed(1));
+      if (core) core.setAttribute('fill-opacity', brightness.toFixed(2));
+
+      // 5. 光線イラスト更新
+      const rays = document.getElementById('cds-rays');
+      if (rays) rays.setAttribute('opacity', ratio.toFixed(2));
+
+      // 6. テキスト数値表示更新
+      document.getElementById('txt-light').textContent = Math.round(p) + '%';
+      document.getElementById('txt-res').textContent = resVal + ' kΩ';
+      
+      const current = (p * 0.12).toFixed(1);
+      document.getElementById('txt-current').textContent = current + ' mA';
+
+      // 7. 解説メッセージ更新
+      const statusText = document.getElementById('cds-status-text');
+      if (p < 25) {
+        statusText.textContent = '【暗い状態】周囲が暗くなるとCdSの抵抗が極めて大きく(約' + resVal + 'kΩ)なり、LEDは消灯します。';
+      } else if (p < 75) {
+        statusText.textContent = '【やや明るい状態】光を受けるとCdSの抵抗が下がり、電流が流れてLEDが薄く点灯します。';
+      } else {
+        statusText.textContent = '【明るい状態】CdSの抵抗が大幅に低下(約' + resVal + 'kΩ)し、十分な電流が流れてLEDが強く点灯します。';
+      }
+    }
+    // 初期表示のセット
+    window.addEventListener('DOMContentLoaded', () => updateCdsCircuit(50));
+    ]]>
+  </script>
+
+  <!-- 外枠パネル -->
+  <rect id="bg-panel" x="10" y="8" width="540" height="314" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" class="panel-bg"/>
+  <text x="280" y="28" class="label-title adaptive-main" fill="#1e293b">☀️ CdS（光センサー）によるLED明暗制御回路</text>
+
+  <!-- 回路配線 -->
+  <path d="M 52 101 L 52 68 L 180 68" class="wire"/>
+  <path d="M 220 68 L 290 68" class="wire"/>
+  <path d="M 320 68 L 414 68 L 414 98" class="wire"/>
+  <path d="M 430 98 L 430 175 L 76 175 L 76 138" class="wire"/>
+
+  <!-- 電源 (乾電池 3.0V) -->
+  <g transform="translate(40, 105)">
+    <rect x="0" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="7" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="12" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+    <text x="12" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+
+    <rect x="24" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="31" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+    <text x="36" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+    <text x="36" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+
+    <!-- 回路の内側に配置した電池ラベル -->
+    <text x="56" y="24" font-size="9.5" font-weight="bold" class="adaptive-main" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
+  </g>
+
+  <!-- 電池直列接続線 -->
+  <path d="M 52 138 L 52 148 L 64 148 L 64 101 L 76 101" stroke="#64748b" stroke-width="1.5" fill="none"/>
+
+  <!-- 光線エフェクト -->
+  <g id="cds-rays" opacity="0.5" style="transition: opacity 0.2s;">
+    <polygon points="175,35 190,35 205,55 190,55" fill="url(#ray-grad)"/>
+    <polygon points="200,31 215,31 212,57 197,57" fill="url(#ray-grad)"/>
+    <polygon points="220,37 232,37 218,58 206,58" fill="url(#ray-grad)"/>
+  </g>
+
+  <!-- CdSセル -->
+  <g transform="translate(200, 68)">
+    <line x1="-20" y1="0" x2="-12" y2="0" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="12" y1="0" x2="20" y2="0" stroke="#94a3b8" stroke-width="2"/>
+    <circle cx="0" cy="0" r="14" class="cds-body"/>
+    <path d="M -8 -6 C -4 -6, -4 -2, -8 -2 C -12 -2, -12 2, -8 2 C -4 2, -4 6, -8 6 M 8 -6 C 4 -6, 4 -2, 8 -2 C 12 -2, 12 2, 8 2 C 4 2, 4 6, 8 6" class="cds-pattern"/>
+    <path d="M -7 -6 L 7 -6 M -7 -2 L 7 -2 M -7 2 L 7 2 M -7 6 L 7 6" stroke="#ea580c" stroke-width="1" opacity="0.4"/>
+    <text x="0" y="25" font-size="9.5" font-weight="bold" fill="#ea580c" text-anchor="middle">CdSセル</text>
+    <text x="0" y="35" font-size="8" class="adaptive-sub" fill="#64748b" text-anchor="middle">(光センサー)</text>
+  </g>
+
+  <!-- 保護抵抗器 -->
+  <g transform="translate(305, 68)">
+    <rect x="-15" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+    <line x1="-8" y1="-7" x2="-8" y2="7" stroke="#ef4444" stroke-width="2"/>
+    <line x1="-3" y1="-7" x2="-3" y2="7" stroke="#ef4444" stroke-width="2"/>
+    <line x1="2" y1="-7" x2="2" y2="7" stroke="#brown" stroke-width="2"/>
+    <line x1="9" y1="-7" x2="9" y2="7" stroke="#eab308" stroke-width="1.5"/>
+    <text x="0" y="18" font-size="9" font-weight="bold" class="adaptive-sub" fill="#64748b" text-anchor="middle">保護抵抗</text>
+  </g>
+
+  <!-- 発光LED -->
+  <g transform="translate(422, 103)">
+    <line x1="-8" y1="-35" x2="-8" y2="-5" class="led-pin"/>
+    <line x1="8" y1="-35" x2="8" y2="-5" class="led-pin"/>
+    <text x="-8" y="-38" font-size="8.5" font-weight="bold" fill="#ef4444" text-anchor="middle">+</text>
+    <text x="8" y="-38" font-size="8.5" font-weight="bold" fill="#3b82f6" text-anchor="middle">-</text>
+    <path id="cds-led-dome" d="M -18 -10 C -18 -38 18 -38 18 -10 Z" fill="#eab308" opacity="0.6" filter="url(#cds-led-glow)" class="led-dome-cds"/>
+    <rect x="-20" y="-10" width="40" height="6" rx="2" fill="#ca8a04"/>
+    <circle id="cds-led-core" cx="0" cy="-22" r="6" fill="#fef08a" fill-opacity="0.5"/>
+    <!-- 左側に配置したLEDラベル -->
+    <text x="-24" y="-12" font-size="9.5" font-weight="bold" fill="#ca8a04" text-anchor="end">LED</text>
+  </g>
+
+  <!-- インタラクティブ操作エリア -->
+  <g transform="translate(30, 192)">
+    <rect id="op-panel" x="0" y="0" width="500" height="78" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" class="panel-bg"/>
+
+    <!-- スライダータイトル -->
+    <text x="18" y="24" font-size="11" font-weight="bold" class="adaptive-main" fill="#1e293b">☀️ 周囲の明るさ（光度）を調節:</text>
+
+    <!-- HTML range スライダー -->
+    <foreignObject x="18" y="32" width="220" height="35">
+      <input type="range" id="cds-slider" min="0" max="100" value="50" oninput="updateCdsCircuit(this.value)" style="width: 95%; cursor: pointer; vertical-align: middle;"/>
+    </foreignObject>
+
+    <!-- アイコン表示 -->
+    <text x="18" y="67" font-size="10" class="adaptive-sub" fill="#64748b">🌑 暗い (0%)</text>
+    <text x="142" y="67" font-size="10" fill="#ea580c" font-weight="bold">☀️ 明るい (100%)</text>
+
+    <!-- ステータスメーター -->
+    <line x1="250" y1="10" x2="250" y2="68" stroke="#cbd5e1" stroke-width="1.5"/>
+
+    <text x="282" y="25" class="info-label adaptive-sub" fill="#475569">周囲の光度:</text>
+    <text id="txt-light" x="375" y="25" class="val-label">50%</text>
+
+    <text x="282" y="44" class="info-label adaptive-sub" fill="#475569">CdSセルの抵抗値:</text>
+    <text id="txt-res" x="375" y="44" class="val-label" fill="#ea580c">50.3 kΩ</text>
+
+    <text x="282" y="63" class="info-label adaptive-sub" fill="#475569">回路を流れる電流:</text>
+    <text id="txt-current" x="375" y="63" class="val-label" fill="#16a34a">6.0 mA</text>
+  </g>
+
+  <!-- 下部解説バナー -->
+  <rect id="banner-panel" x="30" y="280" width="500" height="30" rx="5" fill="#f1f5f9" stroke="#cbd5e1" class="panel-bg"/>
+  <text id="cds-status-text" x="280" y="299" font-size="10" font-weight="bold" class="adaptive-main" fill="#334155" text-anchor="middle">
+    【やや明るい状態】光を受けるとCdSの抵抗が下がり、少しずつ電流が流れてLEDが薄く点灯します。
+  </text>
+</svg>
+
+          <p class="parts-desc">
+            光の強さによって抵抗値が変化するセンサーです。明るい場所では抵抗が小さくなり、暗い場所では抵抗が大きくなります。夜間自動点灯ライトなどに使用されます。
+          </p>
+        </div>
+
+        <!-- 8. トランジスタの活用 -->
+        <div id="panel-transistor" class="parts-panel hidden">
+          <h3>トランジスタの活用</h3>
+          <img src="images/circuit_transistor.png" alt="トランジスタの参考回路" class="parts-img" />
+          <p class="parts-desc">
+            ベース（B）に微小な電流を流すことで、コレクタ（C）とエミッタ（E）間の大きな電流を制御（電子スイッチング）します。CdSセルと組み合わせて暗くなると自動でLEDを点灯させる回路などに利用できます。
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
   <script>
     const COLOR_CODE_MAP = [
       { digit: 0, color: '#000000' },
@@ -1226,7 +2484,49 @@ document.getElementById('btn-delete')?.addEventListener('click', () => {
     this.deleteSelectedComponents();
   }
 });
+          
+// パーツ説明モーダル制御
+    // モーダルイベント設定
+const modalBtn = document.getElementById('parts-modal-btn');
+const modal = document.getElementById('parts-modal');
+const closeBtn = document.getElementById('modal-close-btn');
 
+if (modalBtn && modal && closeBtn) {
+  const closeModal = () => modal.classList.add('hidden');
+
+  modalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      closeModal();
+    }
+  });
+
+  // ★メニュー切替処理を追加
+  const menuBtns = modal.querySelectorAll('.parts-menu-btn');
+  const panels = modal.querySelectorAll('.parts-panel');
+
+  menuBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // ボタンの非アクティブ化とパネルの非表示
+      menuBtns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.add('hidden'));
+
+      // 選択されたメニューのアクティブ化とパネル表示
+      btn.classList.add('active');
+      const targetId = btn.dataset.target;
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) {
+        targetPanel.classList.remove('hidden');
+      }
+    });
+  });
+}
+          
 document.getElementById('btn-undo')?.addEventListener('click', () => this.undo());
 document.getElementById('btn-redo')?.addEventListener('click', () => this.redo());
 document.getElementById('btn-clear')?.addEventListener('click', () => this.clearAll());
