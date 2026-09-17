@@ -1649,11 +1649,11 @@ textarea {
   <style>
     .label-title { font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
     .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; transition: stroke 0.3s; }
-    .wire-off { stroke: #94a3b8; }
+    .wire-off { stroke: #cbd5e1; }
     .wire-r-on { stroke: #ef4444; }
     .wire-g-on { stroke: #22c55e; }
     .wire-b-on { stroke: #3b82f6; }
-    .wire-com { stroke: #475569; }
+    .wire-com { stroke: #64748b; }
     
     .clickable { cursor: pointer; }
     .sw-bg { transition: fill 0.3s; }
@@ -1726,22 +1726,22 @@ textarea {
         case 6: // R + G
           colorHex = '#eab308';
           colorName = '黄 (Yellow)';
-          description = '赤 ＋ 緑 ＝ <tspan font-weight="bold" fill="#d97706">黄色</tspan> の光に混色されます';
+          description = '赤 ＋ 緑 ＝ 黄色の光に混色されます';
           break;
         case 3: // G + B
           colorHex = '#06b6d4';
           colorName = 'シアン (Cyan)';
-          description = '緑 ＋ 青 ＝ <tspan font-weight="bold" fill="#0284c7">シアン（水色）</tspan> の光に混色されます';
+          description = '緑 ＋ 青 ＝ シアン（水色）の光に混色されます';
           break;
         case 5: // R + B
           colorHex = '#d946ef';
           colorName = 'マゼンタ (Magenta)';
-          description = '赤 ＋ 青 ＝ <tspan font-weight="bold" fill="#c026d3">マゼンタ（赤紫）</tspan> の光に混色されます';
+          description = '赤 ＋ 青 ＝ マゼンタ（赤紫）の光に混色されます';
           break;
         case 7: // R + G + B
           colorHex = '#ffffff';
           colorName = '白 (White)';
-          description = '赤 ＋ 緑 ＋ 青 ＝ <tspan font-weight="bold" fill="#0f172a">白色（光の三原色）</tspan> になります';
+          description = '赤 ＋ 緑 ＋ 青 ＝ 白色（光の三原色）になります';
           break;
       }
 
@@ -1750,63 +1750,68 @@ textarea {
       ledCore.setAttribute('fill', colorHex === '#ffffff' ? '#e2e8f0' : colorHex);
       colorLabel.textContent = '発光色: ' + colorName;
       colorLabel.setAttribute('fill', colorHex === '#ffffff' ? '#0f172a' : (hasGlow ? colorHex : '#64748b'));
-      bannerText.innerHTML = description;
+      bannerText.textContent = description;
     }
     ]]>
   </script>
 
   <!-- 外枠パネル -->
   <rect x="10" y="8" width="540" height="244" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
-  <text x="280" y="26" class="label-title">🌈 フルカラーLEDの合成回路（クリックで各色ON/OFF）</text>
+  <text x="280" y="28" class="label-title">🌈 フルカラーLEDの合成回路（クリックで各色ON/OFF）</text>
 
   <!-- 電源 (乾電池 3.0V) -->
-  <g transform="translate(35, 92)">
-    <!-- 電池1 -->
+  <g transform="translate(35, 95)">
     <rect x="0" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
     <rect x="7" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
     <text x="12" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
     <text x="12" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
 
-    <!-- 電池2 -->
     <rect x="28" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
     <rect x="35" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
     <text x="40" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
     <text x="40" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
 
-    <!-- 電源ラベル -->
-    <text x="-10" y="68" font-size="10" font-weight="bold" fill="#0f172a" text-anchor="start">電源 3.0V</text>
+    <text x="-10" y="60" font-size="10" font-weight="bold" fill="#0f172a" text-anchor="start">電源 3.0V</text>
   </g>
 
-  <!-- VCC供給バス配線（赤） -->
-  <path d="M 47 88 L 47 68 L 170 68 L 170 158" class="wire wire-r-on"/>
-  <path d="M 170 68 L 200 68" class="wire wire-r-on"/>
-  <path d="M 170 113 L 200 113" class="wire wire-r-on"/>
-  <path d="M 170 158 L 200 158" class="wire wire-r-on"/>
+  <!-- 電池直列接続線 -->
+  <path d="M 47 135 L 47 143 L 61 143 L 61 91 L 75 91" stroke="#475569" stroke-width="1.8" fill="none"/>
 
-  <!-- スイッチエリア（クリック操作対応） -->
+  <!-- VCC供給バス配線（赤） -->
+  <path d="M 47 91 L 47 71 L 150 71 L 150 161" class="wire wire-r-on"/>
+  <path d="M 150 71 L 180 71" class="wire wire-r-on"/>
+  <path d="M 150 116 L 180 116" class="wire wire-r-on"/>
+  <path d="M 150 161 L 180 161" class="wire wire-r-on"/>
+
+  <!-- スイッチエリア -->
   <!-- 赤 (R) スイッチ -->
-  <g transform="translate(220, 68)" class="clickable" onclick="toggleRgbSwitch('r')">
+  <g transform="translate(195, 71)" class="clickable" onclick="toggleRgbSwitch('r')">
     <text x="-5" y="-12" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">赤 (R)</text>
-    <rect id="bg-r" x="-20" y="-8" width="40" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
+    <rect id="bg-r" x="-15" y="-8" width="30" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
     <circle id="knob-r" cx="0" cy="0" r="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5" transform="translate(-12, 0)" class="sw-knob"/>
   </g>
 
   <!-- 緑 (G) スイッチ -->
-  <g transform="translate(220, 113)" class="clickable" onclick="toggleRgbSwitch('g')">
+  <g transform="translate(195, 116)" class="clickable" onclick="toggleRgbSwitch('g')">
     <text x="-5" y="-12" font-size="10" font-weight="bold" fill="#22c55e" text-anchor="middle">緑 (G)</text>
-    <rect id="bg-g" x="-20" y="-8" width="40" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
+    <rect id="bg-g" x="-15" y="-8" width="30" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
     <circle id="knob-g" cx="0" cy="0" r="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5" transform="translate(-12, 0)" class="sw-knob"/>
   </g>
 
   <!-- 青 (B) スイッチ -->
-  <g transform="translate(220, 158)" class="clickable" onclick="toggleRgbSwitch('b')">
+  <g transform="translate(195, 161)" class="clickable" onclick="toggleRgbSwitch('b')">
     <text x="-5" y="-12" font-size="10" font-weight="bold" fill="#3b82f6" text-anchor="middle">青 (B)</text>
-    <rect id="bg-b" x="-20" y="-8" width="40" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
+    <rect id="bg-b" x="-15" y="-8" width="30" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
     <circle id="knob-b" cx="0" cy="0" r="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5" transform="translate(-12, 0)" class="sw-knob"/>
   </g>
 
-  <!-- 抵抗器パーツ（各スイッチの右に配置） -->
-  <g transform="translate(265, 68)">
+  <!-- スイッチと抵抗をつなぐ配線 -->
+  <line x1="210" y1="71" x2="235" y2="71" stroke="#cbd5e1" stroke-width="2.5"/>
+  <line x1="210" y1="116" x2="235" y2="116" stroke="#cbd5e1" stroke-width="2.5"/>
+  <line x1="210" y1="161" x2="235" y2="161" stroke="#cbd5e1" stroke-width="2.5"/>
+
+  <!-- 抵抗器パーツ -->
+  <g transform="translate(235, 71)">
     <rect x="0" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
     <line x1="6" y1="-7" x2="6" y2="7" stroke="#ef4444" stroke-width="2"/>
     <line x1="11" y1="-7" x2="11" y2="7" stroke="#3b82f6" stroke-width="2"/>
@@ -1814,7 +1819,7 @@ textarea {
     <line x1="23" y1="-7" x2="23" y2="7" stroke="#eab308" stroke-width="1.5"/>
     <text x="15" y="-10" font-size="8" font-weight="bold" fill="#64748b" text-anchor="middle">抵抗</text>
   </g>
-  <g transform="translate(265, 113)">
+  <g transform="translate(235, 116)">
     <rect x="0" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
     <line x1="6" y1="-7" x2="6" y2="7" stroke="#ef4444" stroke-width="2"/>
     <line x1="11" y1="-7" x2="11" y2="7" stroke="#3b82f6" stroke-width="2"/>
@@ -1822,7 +1827,7 @@ textarea {
     <line x1="23" y1="-7" x2="23" y2="7" stroke="#eab308" stroke-width="1.5"/>
     <text x="15" y="-10" font-size="8" font-weight="bold" fill="#64748b" text-anchor="middle">抵抗</text>
   </g>
-  <g transform="translate(265, 158)">
+  <g transform="translate(235, 161)">
     <rect x="0" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
     <line x1="6" y1="-7" x2="6" y2="7" stroke="#ef4444" stroke-width="2"/>
     <line x1="11" y1="-7" x2="11" y2="7" stroke="#3b82f6" stroke-width="2"/>
@@ -1831,18 +1836,19 @@ textarea {
     <text x="15" y="-10" font-size="8" font-weight="bold" fill="#64748b" text-anchor="middle">抵抗</text>
   </g>
 
-  <!-- 各色の信号配線（すべてLEDリード線の下側から重ならずに接続） -->
-  <!-- R線 (下側迂回ルートでRリード線端へ接続) -->
-  <path id="wire-r" d="M 240 68 L 265 68 M 295 68 L 330 68 L 330 170 L 400 170 L 400 148" class="wire wire-off"/>
-  <!-- G線 (下側迂回ルートでGリード線端へ接続) -->
-  <path id="wire-g" d="M 240 113 L 265 113 M 295 113 L 345 113 L 345 176 L 415 176 L 415 148" class="wire wire-off"/>
-  <!-- B線 (下側迂回ルートでBリード線端へ接続) -->
-  <path id="wire-b" d="M 240 158 L 265 158 M 295 158 L 360 158 L 360 182 L 430 182 L 430 148" class="wire wire-off"/>
-  <!-- 共通GND線 (最下部迂回ルートでCOMリード線端へ接続) -->
-  <path d="M 445 148 L 445 188 L 75 188 L 75 132" class="wire wire-com"/>
+  <!-- 抵抗器からの接続線（青:一番左, 緑:中央, 赤:一番右(LED側)で折り返し） -->
+  <!-- R線: 抵抗(265,71) → 右(305,71) → 下(305,182) → 右(380,182) → 上(380,151) -->
+  <path id="wire-r" d="M 265 71 L 305 71 L 305 182 L 380 182 L 380 151" class="wire wire-off"/>
+  <!-- G線: 抵抗(265,116) → 右(290,116) → 下(290,189) → 右(395,189) → 上(395,151) -->
+  <path id="wire-g" d="M 265 116 L 290 116 L 290 189 L 395 189 L 395 151" class="wire wire-off"/>
+  <!-- B線: 抵抗(265,161) → 右(275,161) → 下(275,196) → 右(410,196) → 上(410,151) -->
+  <path id="wire-b" d="M 265 161 L 275 161 L 275 196 L 410 196 L 410 151" class="wire wire-off"/>
+
+  <!-- 共通GND線 (COMリード線(X:425)から最下部(Y:203)を通り電源マイナス側へ) -->
+  <path d="M 425 151 L 425 203 L 75 203 L 75 135" class="wire wire-com"/>
 
   <!-- フルカラーLED本体ユニット -->
-  <g transform="translate(422, 98)">
+  <g transform="translate(402, 101)">
     <!-- 金属リード線（足） -->
     <line x1="-22" y1="15" x2="-22" y2="50" class="led-pin"/>
     <line x1="-7" y1="15" x2="-7" y2="50" class="led-pin"/>
@@ -1874,15 +1880,13 @@ textarea {
     <text id="color-label" x="0" y="-52" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle" class="smooth-text">発光色: 消灯 (OFF)</text>
   </g>
 
-  <!-- 電池直列接続線 -->
-  <path d="M 47 132 L 47 140 L 61 140 L 61 88 L 75 88" stroke="#475569" stroke-width="1.8" fill="none"/>
-
   <!-- 下部注釈バナー -->
-  <rect x="30" y="218" width="500" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
-  <text id="banner-text" x="280" y="233" font-size="10.5" fill="#334155" text-anchor="middle">
+  <rect x="30" y="224" width="500" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text id="banner-text" x="280" y="239" font-size="10.5" fill="#334155" text-anchor="middle">
     スイッチを入れると、各色のLEDが点灯して光が混ざります
   </text>
 </svg>
+
 
           <p class="parts-desc">
             フルカラーLEDは、1つの小さな粒の中に「赤・緑・青」の3色のライトが一緒に入っている部品です。<br><br>
