@@ -17,7 +17,6 @@
   margin: 0;
   padding: 0;
   font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-  touch-action: manipulation;
 }
 
 body {
@@ -332,6 +331,10 @@ body {
 svg {
   width: 100%;
   height: 100%;
+  touch-action: none; /* ★ ブラウザの標準ズーム・スクロールを完全に無効化 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #viewport-group {
@@ -995,7 +998,7 @@ textarea {
 }
 
 
-  // ★パーツ生成メソッド（トランジスタ定義を追加）
+  // ★パーツ生成メソッド（NPN / PNP トランジスタ定義を追加）
   createComponent(type, x, y) {
     const id = 'comp_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     const comp = {
@@ -1047,9 +1050,22 @@ textarea {
         ];
         break;
 
-      // ★トランジスタ（NPN型：常夜灯回路用）
+      // ★ NPNトランジスタ（ベース電圧が高いときにON）
+      case 'npn':
       case 'transistor':
-        comp.vbeThreshold = 0.6; // オンになるB-E間しきい値電圧 (0.6V)
+        comp.vbeThreshold = 0.6;
+        comp.isPnp = false; // NPNフラグ
+        comp.terminals = [
+          { id: `${id}_b`, name: 'B', polarity: 'base', relX: -20, relY: 0 },
+          { id: `${id}_c`, name: 'C', polarity: 'collector', relX: 20, relY: -20 },
+          { id: `${id}_e`, name: 'E', polarity: 'emitter', relX: 20, relY: 20 }
+        ];
+        break;
+
+      // ★ PNPトランジスタ（ベース電圧が低いときにON）
+      case 'pnp':
+        comp.vbeThreshold = 0.6;
+        comp.isPnp = true; // PNPフラグ
         comp.terminals = [
           { id: `${id}_b`, name: 'B', polarity: 'base', relX: -20, relY: 0 },
           { id: `${id}_c`, name: 'C', polarity: 'collector', relX: 20, relY: -20 },
@@ -1527,66 +1543,81 @@ initPaletteEvents() {
       }
 
       initPinchZoomEvents() {
-        let initialDist = 0;
-        let startScale = 1;
-        let startPanX = 0;
-        let startPanY = 0;
-        let startMidX = 0;
-        let startMidY = 0;
+  let initialDist = 0;
+  let startScale = 1;
+  let startPanX = 0;
+  let startPanY = 0;
+  let startMidX = 0;
+  let startMidY = 0;
+  let svgRect = null;
 
-        const getDistance = (t1, t2) => {
-          const dx = t1.clientX - t2.clientX;
-          const dy = t1.clientY - t2.clientY;
-          return Math.hypot(dx, dy);
-        };
+  // ★ 1. SVG全体の標準タッチ動作（画面スクロール等）を無効化
+  this.svg.style.touchAction = 'none';
 
-        this.svg.addEventListener('touchstart', (e) => {
-          if (e.touches.length === 2) {
-            initialDist = getDistance(e.touches[0], e.touches[1]);
-            startScale = this.scale;
-            startPanX = this.panX;
-            startPanY = this.panY;
+  const getDistance = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
 
-            startMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            startMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-          }
-        }, { passive: true });
+  this.svg.addEventListener('touchstart', (e) => {
+    if (e.touches.length >= 2) {
+      e.preventDefault();
+      this.isPinching = true;
+      this.connectingStart = null;
+      this.tempWirePos = null;
 
-        this.svg.addEventListener('touchmove', (e) => {
-          if (e.touches.length === 2 && initialDist > 0) {
-            e.preventDefault();
-            const currentDist = getDistance(e.touches[0], e.touches[1]);
-            const factor = currentDist / initialDist;
-            let newScale = startScale * factor;
-            newScale = Math.max(0.4, Math.min(newScale, 3.0));
+      initialDist = getDistance(e.touches[0], e.touches[1]);
+      startScale = this.scale;
+      startPanX = this.panX;
+      startPanY = this.panY;
 
-            const currentMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            const currentMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      startMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      startMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      svgRect = this.svg.getBoundingClientRect();
+    }
+  }, { capture: true, passive: false });
 
-            const deltaX = currentMidX - startMidX;
-            const deltaY = currentMidY - startMidY;
+  this.svg.addEventListener('touchmove', (e) => {
+    if (e.touches.length >= 2 && initialDist > 0 && svgRect) {
+      e.preventDefault();
 
-            const rect = this.svg.getBoundingClientRect();
-            const midXInSvg = startMidX - rect.left;
-            const midYInSvg = startMidY - rect.top;
+      const currentDist = getDistance(e.touches[0], e.touches[1]);
+      const factor = currentDist / initialDist;
+      let newScale = Math.max(0.4, Math.min(startScale * factor, 3.0));
 
-            this.panX = (startPanX - midXInSvg) * (newScale / startScale) + midXInSvg + deltaX;
-            this.panY = (startPanY - midYInSvg) * (newScale / startScale) + midYInSvg + deltaY;
-            this.scale = newScale;
+      const currentMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const currentMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
-            this.render();
-          }
-        }, { passive: false });
+      const deltaX = currentMidX - startMidX;
+      const deltaY = currentMidY - startMidY;
 
-        const endTouch = (e) => {
-          if (e.touches.length < 2) {
-            initialDist = 0;
-          }
-        };
+      const midXInSvg = startMidX - svgRect.left;
+      const midYInSvg = startMidY - svgRect.top;
 
-        this.svg.addEventListener('touchend', endTouch);
-        this.svg.addEventListener('touchcancel', endTouch);
+      this.panX = (startPanX - midXInSvg) * (newScale / startScale) + midXInSvg + deltaX;
+      this.panY = (startPanY - midYInSvg) * (newScale / startScale) + midYInSvg + deltaY;
+      this.scale = newScale;
+
+      // ★ 2. render() によるDOM再生成を避け、transform 属性のみを直接変更
+      if (this.viewportGroup) {
+        this.viewportGroup.setAttribute(
+          'transform',
+          `translate(${this.panX}, ${this.panY}) scale(${this.scale})`
+        );
       }
+    }
+  }, { capture: true, passive: false });
+
+  const endTouch = (e) => {
+    if (e.touches.length < 2) {
+      initialDist = 0;
+      svgRect = null;
+    }
+    if (e.touches.length === 0) {
+      this.isPinching = false;
+    }
+  };
+
+  this.svg.addEventListener('touchend', endTouch, { capture: true });
+  this.svg.addEventListener('touchcancel', endTouch, { capture: true });
+}
 
             initPdfModalEvents() {
         const pdfModal = document.getElementById('pdf-modal');
@@ -2206,7 +2237,8 @@ async generatePDFDirectDownload() {
         }
         return comp.rotation || 0;
       }
-
+        
+//端子の位置
       generateTerminals(id, type, flipped, rotation = 0) {
   const dir = flipped ? -1 : 1;
   let baseTerminals = [];
@@ -2234,15 +2266,23 @@ async generatePDFDirectDownload() {
       { id: `${id}_t2`, name: '- (カソード)', baseRelX: 35 * dir, baseRelY: 0, polarity: 'neg' }
     ];
   } else if (type === 'rgb-led') {
-    // 実物モード(real)の時は端子位置を少し下(60)に、回路図(schematic)の時はそのまま(40)に設定
-    const termY = this.mode === 'schematic' ? 30 : 60;
-
-    baseTerminals = [
-      { id: `${id}_t1`, name: '-', baseRelX: -45 * dir, baseRelY: termY, polarity: 'neg' },
-      { id: `${id}_t2`, name: '+赤', baseRelX: -15 * dir, baseRelY: termY, polarity: 'pos' },
-      { id: `${id}_t3`, name: '+緑', baseRelX: 15 * dir, baseRelY: termY, polarity: 'pos' },
-      { id: `${id}_t4`, name: '+青', baseRelX: 45 * dir, baseRelY: termY, polarity: 'pos' }
-    ];
+    if (this.mode === 'schematic') {
+      // 回路図モード: 上部中央にマイナス(-)、下部にR・G・Bを配置
+      baseTerminals = [
+        { id: `${id}_t1`, name: '-', baseRelX: 0, baseRelY: -40, polarity: 'neg' },
+        { id: `${id}_t2`, name: '+赤', baseRelX: -30 * dir, baseRelY: 50, polarity: 'pos' },
+        { id: `${id}_t3`, name: '+緑', baseRelX: 0 * dir, baseRelY: 50, polarity: 'pos' },
+        { id: `${id}_t4`, name: '+青', baseRelX: 30 * dir, baseRelY: 50, polarity: 'pos' }
+      ];
+    } else {
+      // 実物・ブレッドボードモード: 従来どおり4本並列リード線位置 (Y=60)
+      baseTerminals = [
+        { id: `${id}_t1`, name: '-', baseRelX: -45 * dir, baseRelY: 60, polarity: 'neg' },
+        { id: `${id}_t2`, name: '+赤', baseRelX: -15 * dir, baseRelY: 60, polarity: 'pos' },
+        { id: `${id}_t3`, name: '+緑', baseRelX: 15 * dir, baseRelY: 60, polarity: 'pos' },
+        { id: `${id}_t4`, name: '+青', baseRelX: 45 * dir, baseRelY: 60, polarity: 'pos' }
+      ];
+    }
   }
  else if (type === 'motor') {
     baseTerminals = [
@@ -2318,7 +2358,7 @@ async generatePDFDirectDownload() {
   comp.flipped = !comp.flipped;
 
   // 2端子パーツ：t1 ⇔ t2 を入れ替え
-  if (['battery', 'led', 'motor', 'resistor', 'cds'].includes(comp.type)) {
+  if (['battery', 'led', 'motor'].includes(comp.type)) {
     this.wires.forEach(w => {
       if (w.fromCompId === comp.id) {
         if (w.fromTermId === `${comp.id}_t1`) w.fromTermId = `${comp.id}_t2`;
@@ -2841,32 +2881,30 @@ async clearAll() {
                 // --- 3. 負荷パーツ経由の経路探索 ---
 
 else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
-  // 端子の割り当てを明確化 (t1: Emitter, t2: Collector, t3: Base)
+  // PNPトランジスタかどうかの判定
+  const isPnp = comp.isPnp || comp.type === 'pnp';
+
+  // 端子の割り当て (t1: Emitter, t2: Collector, t3: Base)
   const emitTerm = comp.terminals.find(t => t.polarity === 'emitter' || t.id.endsWith('_e') || t.id.endsWith('_t1'));
   const colTerm  = comp.terminals.find(t => t.polarity === 'collector' || t.id.endsWith('_c') || t.id.endsWith('_t2'));
   const baseTerm = comp.terminals.find(t => t.polarity === 'base' || t.id.endsWith('_b') || t.id.endsWith('_t3'));
 
   const baseNode = baseTerm ? termNodeMap.get(baseTerm.id) : null;
-  
   let isBaseOn = false;
 
   if (baseNode) {
-    // ベースノードに繋がっている全コンポーネントを取得
     const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === baseNode);
-    let rToPos = 0; // (+)電源からベースまでの抵抗
-    let rToNeg = 0; // ベースからGND(-)までの抵抗
+    let rToPos = 0; // 電源(+)側の抵抗
+    let rToNeg = 0; // GND(-)側の抵抗
 
     connectedTerms.forEach(t => {
       const parentComp = uniqueComponents.find(c => c.terminals.some(term => term.id === t.id));
       if (!parentComp) return;
 
-      // 各パーツの抵抗値を算出
       let rVal = 0;
       if (parentComp.type === 'resistor') rVal = parseFloat(parentComp.resistance) || 100;
       else if (parentComp.type === 'cds') rVal = this.getCdsResistance(parentComp);
 
-      // 上流（+電源側）か下流（-GND側）かを簡易判定
-      // (常夜灯: +電源 -> 固定抵抗 -> ベース -> CdS -> GND)
       if (parentComp.type === 'resistor') {
         rToPos += rVal;
       } else if (parentComp.type === 'cds') {
@@ -2874,25 +2912,40 @@ else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp
       }
     });
 
-    // CdSが暗い（rToNegが大きくなる）と、ベース電圧が高くなりONになる
-    // CdSが明るい（rToNegが極めて小さくなる）と、分圧によりベース電位が落ちてOFFになる
     if (rToPos > 0 && rToNeg > 0) {
-      // 分圧の比率判定（CdSの抵抗が固定抵抗の一定割合以上であればON）
       const baseVoltageRatio = rToNeg / (rToPos + rToNeg);
-      if (baseVoltageRatio > 0.3) { // 閾値（約0.6V〜相当）
-        isBaseOn = true;
+      
+      if (isPnp) {
+        // ★ PNP: 電圧比率が低いとき（CdSが明るく抵抗が下がったとき）にON
+        if (baseVoltageRatio <= 0.3) {
+          isBaseOn = true;
+        }
+      } else {
+        // ★ NPN: 電圧比率が高いとき（CdSが暗く抵抗が上がったとき）にON
+        if (baseVoltageRatio > 0.3) {
+          isBaseOn = true;
+        }
       }
     } else {
-      // 単純なスイッチ接続などのフォールバック処理
       isBaseOn = isNodeConnectedToPos(baseNode);
     }
   }
 
   if (baseTerm && inTerm.id === baseTerm.id) {
-    canPass = false; // ベース電流自体の経路はメイン負荷パスとは別に扱う
-  } else if (colTerm && inTerm.id === colTerm.id) {
+    canPass = false; 
+  } 
+  // ★ NPNの場合：コレクタ(C) から エミッタ(E) に流れる
+  else if (!isPnp && colTerm && inTerm.id === colTerm.id) {
     if (isBaseOn) {
-      outTerm = emitTerm; // コレクタ -> エミッタへ導通
+      outTerm = emitTerm;
+    } else {
+      canPass = false;
+    }
+  } 
+  // ★ PNPの場合：エミッタ(E) から コレクタ(C) に流れる
+  else if (isPnp && emitTerm && inTerm.id === emitTerm.id) {
+    if (isBaseOn) {
+      outTerm = colTerm;
     } else {
       canPass = false;
     }
@@ -3447,7 +3500,7 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
 
   const mode = this.mode;
 
-  // CdSが電池として描画される問題を解決するため、条件式から 'cds' を除外
+  // パーツの表現
   if (comp.type === 'battery' || comp.type === 'dc_source') {
     const rawV = comp.voltage !== undefined ? comp.voltage : (comp.v || 1.5);
     const vText = `${Number(rawV).toFixed(1)}V`;
@@ -3514,9 +3567,16 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
     if (mode === 'schematic') {
       const polyPoints = comp.flipped ? "10,-10 10,10 -10,0" : "-10,-10 -10,10 10,0";
       const lineX = comp.flipped ? -10 : 10;
+      
+      // 発光を表す2本の矢印 (向きに合わせて反転)
+      const arrowPath = comp.flipped
+        ? "M 2,-12 L -6,-20 M -2,-20 L -6,-20 L -6,-16 M -2,-6 L -10,-14 M -6,-14 L -10,-14 L -10,-10"
+        : "M -2,-12 L 6,-20 M 2,-20 L 6,-20 L 6,-16 M 2,-6 L 10,-14 M 6,-14 L 10,-14 L 10,-10";
+
       g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
                       <polygon points="${polyPoints}" fill="${activeColor}" fill-opacity="${opacity}" stroke="black" stroke-width="2"/>
                       <line x1="${lineX}" y1="-10" x2="${lineX}" y2="10" stroke="black" stroke-width="2"/>
+                      <path d="${arrowPath}" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                       <line x1="-35" y1="0" x2="-10" y2="0" stroke="black" stroke-width="2"/>
                       <line x1="10" y1="0" x2="35" y2="0" stroke="black" stroke-width="2"/>
                       <text x="${posX}" y="-10" font-size="11" font-weight="bold" fill="#ef4444">+</text>
@@ -3565,23 +3625,52 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
 
     const glowStyle = isWorking ? `style="filter: drop-shadow(0 0 ${glowRadius}px ${activeColor});"` : '';
     
-    // 4本のリード線位置 (x: -45, -15, 15, 45) に正確に合わせる設定
+    // 4本のリード線位置 (x: -45, -15, 15, 45) に正確に合わせる設定 (実体図用)
     const labels = comp.flipped 
       ? [{ x: -45, text: 'B', color: '#3b82f6' }, { x: -15, text: 'G', color: '#10b981' }, { x: 15, text: 'R', color: '#ef4444' }, { x: 45, text: 'ー', color: '#2563eb' }]
       : [{ x: -45, text: 'ー', color: '#2563eb' }, { x: -15, text: 'R', color: '#ef4444' }, { x: 15, text: 'G', color: '#10b981' }, { x: 45, text: 'B', color: '#3b82f6' }];
 
     if (mode === 'schematic') {
-      g.innerHTML += `<rect x="-55" y="-22" width="110" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
-                      <circle cx="0" cy="-4" r="10" fill="${isWorking ? activeColor : '#e5e7eb'}" stroke="black" stroke-width="2"/>
-                      <line x1="-45" y1="0" x2="-45" y2="13" stroke="black" stroke-width="1.5"/>
-                      <line x1="-15" y1="0" x2="-15" y2="13" stroke="black" stroke-width="1.5"/>
-                      <line x1="15" y1="0" x2="15" y2="13" stroke="black" stroke-width="1.5"/>
-                      <line x1="45" y1="0" x2="45" y2="13" stroke="black" stroke-width="1.5"/>
-                      <!-- リード線の先端 (y=15) のすぐ下にラベル配置 -->
-                      <text x="${labels[0].x}" y="22" font-size="10" font-weight="bold" fill="${labels[0].color}" text-anchor="middle">${labels[0].text}</text>
-                      <text x="${labels[1].x}" y="22" font-size="10" font-weight="bold" fill="${labels[1].color}" text-anchor="middle">${labels[1].text}</text>
-                      <text x="${labels[2].x}" y="22" font-size="10" font-weight="bold" fill="${labels[2].color}" text-anchor="middle">${labels[2].text}</text>
-                      <text x="${labels[3].x}" y="22" font-size="10" font-weight="bold" fill="${labels[3].color}" text-anchor="middle">${labels[3].text}</text>`;
+      // カソードコモン回路図用のチャンネル設定
+      const channels = comp.flipped
+        ? [
+            { id: 'b', x: -30, color: '#3b82f6', label: 'B' },
+            { id: 'g', x: 0,   color: '#10b981', label: 'G' },
+            { id: 'r', x: 30,  color: '#ef4444', label: 'R' }
+          ]
+        : [
+            { id: 'r', x: -30, color: '#ef4444', label: 'R' },
+            { id: 'g', x: 0,   color: '#10b981', label: 'G' },
+            { id: 'b', x: 30,  color: '#3b82f6', label: 'B' }
+          ];
+
+      let ledsSvg = '';
+      channels.forEach(ch => {
+        const isChActive = isWorking && (!comp.rgbChannels || comp.rgbChannels[ch.id]);
+        const chOpacity = isChActive ? opacity : 0.2;
+        const chFill = isChActive ? ch.color : '#6b7280';
+
+        ledsSvg += `
+          <!-- カソード側接続線 (上方向へ) -->
+          <line x1="${ch.x}" y1="-4" x2="${ch.x}" y2="-12" stroke="black" stroke-width="1.5"/>
+          <!-- アノード側接続線 (下方向へ) -->
+          <line x1="${ch.x}" y1="6" x2="${ch.x}" y2="22" stroke="black" stroke-width="1.5"/>
+          <!-- LEDシンボル (三角とカソードバー) -->
+          <polygon points="${ch.x - 6},6 ${ch.x + 6},6 ${ch.x},-4" fill="${chFill}" fill-opacity="${chOpacity}" stroke="black" stroke-width="1.5"/>
+          <line x1="${ch.x - 6}" y1="-4" x2="${ch.x + 6}" y2="-4" stroke="black" stroke-width="1.5"/>
+          <!-- 発光矢印 -->
+          <path d="M ${ch.x + 3},-4 L ${ch.x + 9},-10 M ${ch.x + 6},-10 L ${ch.x + 9},-10 L ${ch.x + 9},-7 M ${ch.x + 5},1 L ${ch.x + 11},-5 M ${ch.x + 8},-5 L ${ch.x + 11},-5 L ${ch.x + 11},-2" stroke="black" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <!-- 下部アノードラベル -->
+          <text x="${ch.x}" y="31" font-size="10" font-weight="bold" fill="${ch.color}" text-anchor="middle">${ch.label}</text>
+        `;
+      });
+
+      g.innerHTML += `<rect x="-48" y="-30" width="96" height="68" fill="white" stroke="black" stroke-width="2" rx="4"/>
+                      <!-- 上部共通カソード (マイナス) 配線 -->
+                      <line x1="-30" y1="-12" x2="30" y2="-12" stroke="black" stroke-width="1.5"/>
+                      <line x1="0" y1="-12" x2="0" y2="-30" stroke="black" stroke-width="1.5"/>
+                      <text x="0" y="-33" font-size="11" font-weight="bold" fill="#2563eb" text-anchor="middle">-</text>
+                      ${ledsSvg}`;
     } else {
       g.innerHTML += `<line x1="-45" y1="40" x2="-45" y2="0" stroke="#9ca3af" stroke-width="2"/>
                       <line x1="-15" y1="40" x2="-15" y2="0" stroke="#9ca3af" stroke-width="2"/>
@@ -3596,7 +3685,7 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
                       <text x="${labels[3].x}" y="50" font-size="10" font-weight="bold" fill="${labels[3].color}" text-anchor="middle">${labels[3].text}</text>`;
     }
 
-  } else if (comp.type === 'cds') {
+  }else if (comp.type === 'cds') {
     const lightVal = comp.light !== undefined ? comp.light : 50;
     comp.resistance = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(comp) : 1000;
     const rVal = comp.resistance;
@@ -3687,7 +3776,7 @@ line.setAttribute('class', isSelected ? 'wire selected-wire' : 'wire');
                       <text x="-28" y="2" font-size="9" font-weight="bold">B</text>
                       <text x="12" y="-14" font-size="9" font-weight="bold">C</text>
                       <text x="12" y="18" font-size="9" font-weight="bold">E</text>
-                      <text x="-15" y="-12" font-size="8" fill="#4b5563">${typeLabel}</text>`;
+                      <text x="-30" y="-12" font-size="8" fill="#4b5563">${typeLabel}</text>`;
     } else {
       // 3本の銀色リード線（E, C, B）
       g.innerHTML += `<line x1="-15" y1="5" x2="-15" y2="30" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/>
@@ -3795,36 +3884,73 @@ getTerminalPos(compId, termId) {
     g.innerHTML = html;
 
     // --- 2. 穴の生成（色指定・ノードID割り当て） ---
-    const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
-      const isSelected = this.selectedHole && this.selectedHole.x === x && this.selectedHole.y === y;
-      
-      const holeColor = isSelected ? '#ef4444' : (customColor || '#334155');
-      const strokeColor = isSelected ? '#b91c1c' : (customStroke || '#94a3b8');
+const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
+  const isSelected = this.selectedHole && this.selectedHole.x === x && this.selectedHole.y === y;
+  
+  const holeColor = isSelected ? '#ef4444' : (customColor || '#334155');
+  const strokeColor = isSelected ? '#b91c1c' : (customStroke || '#94a3b8');
 
-      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      rect.setAttribute('x', x - 6);
-      rect.setAttribute('y', y - 6);
-      rect.setAttribute('width', 12);
-      rect.setAttribute('height', 12);
-      rect.setAttribute('rx', 2);
-      rect.setAttribute('fill', holeColor);
-      rect.setAttribute('stroke', strokeColor);
-      rect.setAttribute('stroke-width', '1.5');
-      rect.setAttribute('class', 'bb-hole');
-      
-      rect.setAttribute('data-x', x);
-      rect.setAttribute('data-y', y);
-      if (nodeId) {
-        rect.setAttribute('data-node-id', nodeId);
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x - 6);
+  rect.setAttribute('y', y - 6);
+  rect.setAttribute('width', 12);
+  rect.setAttribute('height', 12);
+  rect.setAttribute('rx', 2);
+  rect.setAttribute('fill', holeColor);
+  rect.setAttribute('stroke', strokeColor);
+  rect.setAttribute('stroke-width', '1.5');
+  rect.setAttribute('class', 'bb-hole');
+  rect.style.touchAction = 'none';
+  
+  rect.setAttribute('data-x', x);
+  rect.setAttribute('data-y', y);
+  if (nodeId) {
+    rect.setAttribute('data-node-id', nodeId);
+  }
+
+  let startX = 0;
+  let startY = 0;
+  let isTouchMoved = false;
+
+  rect.addEventListener('pointerdown', (e) => {
+    // ピンチズーム中または2本目以降の指は無視
+    if (this.isPinching || (e.pointerType === 'touch' && !e.isPrimary)) {
+      return;
+    }
+
+    if (e.pointerType === 'touch') {
+      isTouchMoved = false;
+      startX = e.clientX; // ★ タッチ開始位置を記録
+      startY = e.clientY;
+      return;
+    }
+
+    // PC（マウス操作）の場合は即時実行
+    e.stopPropagation();
+    this.handleHoleClick(x, y, nodeId);
+  });
+
+  rect.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch' && !isTouchMoved) {
+      // ★ 移動距離を計算し、8px以上の移動のみドラッグ/ズーム操作と判定（手ブレ吸収）
+      const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
+      if (dist > 8) {
+        isTouchMoved = true;
       }
+    }
+  });
 
-      rect.addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-        this.handleHoleClick(x, y, nodeId);
-      });
+  rect.addEventListener('pointerup', (e) => {
+    // タッチ操作かつ、ズーム操作・規定以上の移動をしていない「タップ」のみ穴を選択
+    if (e.pointerType === 'touch' && !this.isPinching && !isTouchMoved) {
+      e.stopPropagation();
+      e.preventDefault();
+      this.handleHoleClick(x, y, nodeId);
+    }
+  });
 
-      return rect;
-    };
+  return rect;
+};
 
     // 電源レール穴の生成
     for (let col = 0; col < 26; col++) {
@@ -3897,8 +4023,8 @@ getTerminalPos(compId, termId) {
       rotBtn.onclick = (e) => { e.stopPropagation(); this.rotateSelectedComponent(); };
       row1.appendChild(rotBtn);
 
-      // ★ 修正：反転ボタンの対象に 'transistor' を追加 ★
-      if (['battery', 'led', 'motor', 'rgb-led', 'transistor', 'npn', 'pnp'].includes(comp.type)) {
+      // 反転ボタンの対象
+      if (['battery', 'led', 'motor', 'rgb-led'].includes(comp.type)) {
         const flipBtn = document.createElement('button');
         flipBtn.className = 'prop-btn';
         flipBtn.textContent = '⇄ 反転';
@@ -4114,22 +4240,29 @@ getTerminalPos(compId, termId) {
         this.propToolbar.appendChild(row2);
 
       } else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
-        // ★ 追加：トランジスタの NPN / PNP 切り替えボタン ★
-        const typeBtn = document.createElement('button');
-        typeBtn.className = 'prop-btn';
-        const currentType = (comp.transistorType || comp.type) === 'pnp' ? 'PNP' : 'NPN';
-        typeBtn.textContent = `タイプ: ${currentType}`;
-        typeBtn.onclick = (e) => {
-          e.stopPropagation();
-          comp.transistorType = currentType === 'NPN' ? 'pnp' : 'npn';
-          this.saveState();
-          if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
-          this.render();
-        };
+  // ★ トランジスタの NPN / PNP 切り替えボタン ★
+  const typeBtn = document.createElement('button');
+  typeBtn.className = 'prop-btn';
+  const currentType = (comp.transistorType || comp.type) === 'pnp' ? 'PNP' : 'NPN';
+  typeBtn.textContent = `タイプ: ${currentType}`;
+  
+  typeBtn.onclick = (e) => {
+    e.stopPropagation();
+    const nextType = currentType === 'NPN' ? 'pnp' : 'npn';
+    
+    // ★ 内部データ（transistorType, type, isPnp）をすべて同期して更新
+    comp.transistorType = nextType;
+    comp.type = nextType;
+    comp.isPnp = (nextType === 'pnp');
 
-        row2.appendChild(typeBtn);
-        this.propToolbar.appendChild(row2);
-      }
+    this.saveState();
+    if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+    this.render();
+  };
+
+  row2.appendChild(typeBtn);
+  this.propToolbar.appendChild(row2);
+}
 
       this.propToolbar.classList.remove('hidden');
     } else {
