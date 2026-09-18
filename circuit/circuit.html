@@ -3596,13 +3596,26 @@ textarea {
   set panY(val) { this.viewState[this.mode].panY = val; }
 
   getCdsResistance(comp) {
-  const light = comp.light !== undefined ? comp.light : 50;
-  // 光度 100% (明るい) -> 100 Ω
-  // 光度 0% (暗い) -> 100,000 Ω (100kΩ)
-  const R_MIN = 100;
-  const R_MAX = 100000;
-  return R_MAX * Math.pow(R_MIN / R_MAX, light / 100);
-}
+    const light = comp.light !== undefined ? comp.light : 50;
+    // 光度 100% (明るい) -> 100 Ω
+    // 光度 0% (暗い) -> 100,000 Ω (100kΩ)
+    const R_MIN = 100;
+    const R_MAX = 100000;
+    return R_MAX * Math.pow(R_MIN / R_MAX, light / 100);
+  }
+
+  // ★追加: 現在のモードに応じた反転状態（flipped）を取得するヘルパー関数
+  getCompFlipped(comp) {
+    if (!comp) return false;
+    if (this.mode === 'breadboard') {
+      // ブレッドボード用に個別設定されていればそれを使い、未設定なら初期値(comp.flipped)を使う
+      return comp.breadboardFlipped !== undefined ? comp.breadboardFlipped : !!comp.flipped;
+    }
+    // 実体配線図(physical)・回路図(schematic)は共通の comp.flipped を使用
+    return !!comp.flipped;
+  }
+
+
 
 
   // ★パーツ生成メソッド（NPN / PNP トランジスタ定義を追加）
@@ -5156,8 +5169,16 @@ this.components.forEach(c => {
 
   comp.flipped = !comp.flipped;
 
-  // 2端子パーツ：t1 ⇔ t2 を入れ替え
-  if (['battery', 'led', 'motor'].includes(comp.type)) {
+  // 1. トグルスイッチ（3端子）の場合：接続されている配線を削除（リセット）
+  if (comp.type === 'switch' && comp.switchType === 'toggle') {
+    if (this.wires) {
+      this.wires = this.wires.filter(w => 
+        w.fromCompId !== comp.id && w.toCompId !== comp.id
+      );
+    }
+  }
+  // 2. 通常の2端子パーツ（通常スイッチ含む）: t1 ⇔ t2 を入れ替え
+  else if (['battery', 'led', 'motor'].includes(comp.type) || (comp.type === 'switch' && comp.switchType !== 'toggle')) {
     this.wires.forEach(w => {
       if (w.fromCompId === comp.id) {
         if (w.fromTermId === `${comp.id}_t1`) w.fromTermId = `${comp.id}_t2`;
@@ -5169,7 +5190,7 @@ this.components.forEach(c => {
       }
     });
   } 
-  // トランジスタ（3端子）：左右反転（t1[エミッタ] ⇔ t3[ベース] を入れ替え）
+  // 3. トランジスタ（3端子）: 左右反転（t1[エミッタ] ⇔ t3[ベース] を入れ替え）
   else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
     this.wires.forEach(w => {
       if (w.fromCompId === comp.id) {
@@ -5186,10 +5207,12 @@ this.components.forEach(c => {
   // 反転後の端子座標を再生成
   comp.terminals = this.generateTerminals(comp.id, comp.type, comp.flipped, this.getCompRotation(comp));
   
-  this.saveState();
-  this.evaluateCircuit();
-  this.render();
+  if (typeof this.saveState === 'function') this.saveState();
+  if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+  if (typeof this.render === 'function') this.render();
 }
+
+
 
 
       exportDataToFile() {
@@ -6584,11 +6607,20 @@ line.addEventListener('pointerdown', (e) => {
     }
   } else if (comp.type === 'switch') {
     const isToggle = comp.switchType === 'toggle';
+    
+    // モードに応じた反転状態を取得
+    const isFlipped = typeof this.getCompFlipped === 'function' 
+        ? this.getCompFlipped(comp) 
+        : !!comp.flipped;
+
+    // ★ 左右反転（flipped）が true の場合、X軸方向に -1 スケールをかける
+    if (isFlipped) {
+        g.setAttribute('transform', `${g.getAttribute('transform') || ''} scale(-1, 1)`);
+    }
 
     if (mode === 'schematic') {
       if (isToggle) {
         // ★ トグルスイッチ（回路図記号：3端子）
-        // state: 0 (完全OFF: 中央/未接続), 1 (接点1: 上), 2 (接点2: 下)
         let targetY = 0; 
         if (comp.state === 1) targetY = -15;
         if (comp.state === 2) targetY = 15;
@@ -6932,19 +6964,19 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
     }
 
     if (x !== null && y !== null) {
-  const scale = this.scale || 1;
-  const panX = this.panX || 0;
-  const panY = this.panY || 0;
+      const scale = this.scale || 1;
+      const panX = this.panX || 0;
+      const panY = this.panY || 0;
 
-  const screenX = x * scale + panX;
-  const screenY = y * scale + panY - 35; // 常に画面上で配線の35px上に配置
+      const screenX = x * scale + panX;
+      const screenY = y * scale + panY - 35; // 常に画面上で配線の35px上に配置
 
-  this.propToolbar.style.left = `${screenX}px`;
-  this.propToolbar.style.top = `${screenY}px`;
-}
+      this.propToolbar.style.left = `${screenX}px`;
+      this.propToolbar.style.top = `${screenY}px`;
+    }
 
-const currentColor = selectedWire.color || '#2563eb';
-const presetColors = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#000000'];
+    const currentColor = selectedWire.color || '#2563eb';
+    const presetColors = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#000000'];
 
     presetColors.forEach(color => {
       const btn = document.createElement('button');
@@ -6978,22 +7010,6 @@ const presetColors = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#000000'];
       if (typeof this.render === 'function') this.render();
     };
     this.propToolbar.appendChild(colorPicker);
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'prop-btn';
-    delBtn.textContent = '🗑️';
-    delBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (typeof this.deleteSelected === 'function') {
-        this.deleteSelected();
-      } else {
-        this.wires = this.wires.filter(w => !this.selectedWireIds.has(w.id));
-        this.selectedWireIds.clear();
-        this.updatePropertyToolbar();
-        if (typeof this.render === 'function') this.render();
-      }
-    };
-    this.propToolbar.appendChild(delBtn);
 
     this.propToolbar.classList.remove('hidden');
     return;
@@ -7036,7 +7052,8 @@ const presetColors = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#000000'];
     };
     row1.appendChild(rotBtn);
 
-    if (['battery', 'led', 'motor', 'rgb-led'].includes(comp.type)) {
+    // switch（トグルスイッチ等）を反転可能パーツの判定対象に追加
+    if (['battery', 'led', 'motor', 'rgb-led', 'switch'].includes(comp.type)) {
       const flipBtn = document.createElement('button');
       flipBtn.className = 'prop-btn';
       flipBtn.textContent = '⇄ 反転';
@@ -7153,135 +7170,133 @@ const presetColors = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#000000'];
       row2.appendChild(rInput);
       row2.appendChild(unitSpan);
       this.propToolbar.appendChild(row2);
+
     } else if (comp.type === 'switch') {
-        // ★ スイッチ（通常 / トグル切り替えボタン）の追加…
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'prop-btn';
-        const isToggle = comp.switchType === 'toggle';
-        toggleBtn.textContent = isToggle ? '🔀 通常スイッチに変更' : '🔀 トグルスイッチに変更';
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'prop-btn';
+      const isToggle = comp.switchType === 'toggle';
+      toggleBtn.textContent = isToggle ? '🔀 通常スイッチに変更' : '🔀 トグルスイッチに変更';
 
-        toggleBtn.onclick = (e) => {
-          e.stopPropagation();
+      toggleBtn.onclick = (e) => {
+        e.stopPropagation();
 
-          if (comp.switchType === 'toggle') {
-            // 通常スイッチ（2端子）へ戻す
-            comp.switchType = 'push';
-            comp.state = false;
-            comp.terminals = [
-              { id: `${comp.id}_t1`, name: '1', polarity: 'none', relX: -20, relY: 0 },
-              { id: `${comp.id}_t2`, name: '2', polarity: 'none', relX: 20, relY: 0 }
-            ];
-          } else {
-            // トグルスイッチ（3端子: COM, 接点1, 接点2）へ変更
-            comp.switchType = 'toggle';
-            comp.state = 0; // 0: OFF, 1: 回路1, 2: 回路2
-            comp.terminals = [
-              { id: `${comp.id}_t1`, name: 'COM', polarity: 'none', relX: -25, relY: 0 },
-              { id: `${comp.id}_t2`, name: '1', polarity: 'none', relX: 25, relY: -15 },
-              { id: `${comp.id}_t3`, name: '2', polarity: 'none', relX: 25, relY: 15 }
-            ];
-          }
+        if (comp.switchType === 'toggle') {
+          comp.switchType = 'push';
+          comp.state = false;
+          comp.terminals = [
+            { id: `${comp.id}_t1`, name: '1', polarity: 'none', relX: -20, relY: 0 },
+            { id: `${comp.id}_t2`, name: '2', polarity: 'none', relX: 20, relY: 0 }
+          ];
+        } else {
+          comp.switchType = 'toggle';
+          comp.state = 0;
+          comp.terminals = [
+            { id: `${comp.id}_t1`, name: 'COM', polarity: 'none', relX: -25, relY: 0 },
+            { id: `${comp.id}_t2`, name: '1', polarity: 'none', relX: 25, relY: -15 },
+            { id: `${comp.id}_t3`, name: '2', polarity: 'none', relX: 25, relY: 15 }
+          ];
+        }
 
-          // 削除された端子（t3など）に繋がっていた配線を自動クリーンアップ
-          if (this.wires) {
-            const validTerminalIds = new Set(comp.terminals.map(t => t.id));
-            this.wires = this.wires.filter(w => {
-              if (w.fromCompId === comp.id && !validTerminalIds.has(w.fromTerminalId)) return false;
-              if (w.toCompId === comp.id && !validTerminalIds.has(w.toTerminalId)) return false;
-              return true;
-            });
-          }
+        if (this.wires) {
+          const validTerminalIds = new Set(comp.terminals.map(t => t.id));
+          this.wires = this.wires.filter(w => {
+            if (w.fromCompId === comp.id && !validTerminalIds.has(w.fromTerminalId)) return false;
+            if (w.toCompId === comp.id && !validTerminalIds.has(w.toTerminalId)) return false;
+            return true;
+          });
+        }
 
-          if (typeof this.saveState === 'function') this.saveState();
-          if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
-          this.render();
-          this.updatePropertyToolbar(); // ツールバー上のボタン表示を同期更新
-        };
+        if (typeof this.saveState === 'function') this.saveState();
+        if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+        this.render();
+        this.updatePropertyToolbar();
+      };
 
-        row2.appendChild(toggleBtn);
-        this.propToolbar.appendChild(row2);
+      row2.appendChild(toggleBtn);
+      this.propToolbar.appendChild(row2);
 
-      } else if (comp.type === 'cds') {
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.min = '0';
-        slider.max = '100';
-        slider.value = comp.light !== undefined ? comp.light : 50;
-        slider.className = 'prop-slider';
+    } else if (comp.type === 'cds') {
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = '0';
+      slider.max = '100';
+      slider.value = comp.light !== undefined ? comp.light : 50;
+      slider.className = 'prop-slider';
 
-        const lightLabel = document.createElement('span');
-        lightLabel.style.fontSize = '0.85rem';
-        lightLabel.style.fontWeight = 'bold';
+      const lightLabel = document.createElement('span');
+      lightLabel.style.fontSize = '0.85rem';
+      lightLabel.style.fontWeight = 'bold';
 
-        const formatResistance = (r) => {
-          if (r >= 1000) return `${(r / 1000).toFixed(1)} kΩ`;
-          return `${Math.round(r)} Ω`;
-        };
+      const formatResistance = (r) => {
+        if (r >= 1000) return `${(r / 1000).toFixed(1)} kΩ`;
+        return `${Math.round(r)} Ω`;
+      };
 
-        const updateLabel = () => {
-          const val = parseInt(slider.value, 10);
-          comp.light = val;
-          const R_MIN = 100;
-          const R_MAX = 100000;
-          const r = typeof this.getCdsResistance === 'function' 
-            ? this.getCdsResistance(comp) 
-            : R_MAX * Math.pow(R_MIN / R_MAX, val / 100);
-          lightLabel.textContent = ` ☀️${val}% (${formatResistance(r)}) `;
-        };
+      const updateLabel = () => {
+        const val = parseInt(slider.value, 10);
+        comp.light = val;
+        const R_MIN = 100;
+        const R_MAX = 100000;
+        const r = typeof this.getCdsResistance === 'function' 
+          ? this.getCdsResistance(comp) 
+          : R_MAX * Math.pow(R_MIN / R_MAX, val / 100);
+        lightLabel.textContent = ` ☀️${val}% (${formatResistance(r)}) `;
+      };
 
+      updateLabel();
+      row1.appendChild(lightLabel);
+
+      const stopProp = (e) => e.stopPropagation();
+      slider.addEventListener('pointerdown', stopProp);
+      slider.addEventListener('mousedown', stopProp);
+      slider.addEventListener('touchstart', stopProp);
+
+      slider.oninput = (e) => {
+        e.stopPropagation();
         updateLabel();
-        row1.appendChild(lightLabel);
+        if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+        if (typeof this.renderComponents === 'function') this.renderComponents();
+        else if (typeof this.draw === 'function') this.draw();
+      };
 
-        const stopProp = (e) => e.stopPropagation();
-        slider.addEventListener('pointerdown', stopProp);
-        slider.addEventListener('mousedown', stopProp);
-        slider.addEventListener('touchstart', stopProp);
+      slider.onchange = (e) => {
+        e.stopPropagation();
+        if (typeof this.saveState === 'function') this.saveState();
+        if (typeof this.render === 'function') this.render();
+      };
 
-        slider.oninput = (e) => {
-          e.stopPropagation();
-          updateLabel();
-          if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
-          if (typeof this.renderComponents === 'function') this.renderComponents();
-          else if (typeof this.draw === 'function') this.draw();
-        };
+      row2.appendChild(slider);
+      this.propToolbar.appendChild(row2);
 
-        slider.onchange = (e) => {
-          e.stopPropagation();
-          if (typeof this.saveState === 'function') this.saveState();
-          if (typeof this.render === 'function') this.render();
-        };
+    } else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
+      const typeBtn = document.createElement('button');
+      typeBtn.className = 'prop-btn';
+      const currentType = (comp.transistorType || comp.type) === 'pnp' ? 'PNP' : 'NPN';
+      typeBtn.textContent = `タイプ: ${currentType}`;
 
-        row2.appendChild(slider);
-        this.propToolbar.appendChild(row2);
+      typeBtn.onclick = (e) => {
+        e.stopPropagation();
+        const nextType = currentType === 'NPN' ? 'pnp' : 'npn';
+        comp.transistorType = nextType;
+        comp.type = nextType;
+        comp.isPnp = (nextType === 'pnp');
 
-      } else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
-        const typeBtn = document.createElement('button');
-        typeBtn.className = 'prop-btn';
-        const currentType = (comp.transistorType || comp.type) === 'pnp' ? 'PNP' : 'NPN';
-        typeBtn.textContent = `タイプ: ${currentType}`;
+        this.saveState();
+        if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+        this.render();
+      };
 
-        typeBtn.onclick = (e) => {
-          e.stopPropagation();
-          const nextType = currentType === 'NPN' ? 'pnp' : 'npn';
-          comp.transistorType = nextType;
-          comp.type = nextType;
-          comp.isPnp = (nextType === 'pnp');
-
-          this.saveState();
-          if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
-          this.render();
-        };
-
-        row2.appendChild(typeBtn);
-        this.propToolbar.appendChild(row2);
-      }
-
-      this.propToolbar.classList.remove('hidden');
-    } else {
-      this.propToolbar.classList.add('hidden');
-      this.propToolbar.style.display = 'none';
+      row2.appendChild(typeBtn);
+      this.propToolbar.appendChild(row2);
     }
+
+    this.propToolbar.classList.remove('hidden');
+  } else {
+    this.propToolbar.classList.add('hidden');
+    this.propToolbar.style.display = 'none';
+  }
 }
+
 
   }
 
