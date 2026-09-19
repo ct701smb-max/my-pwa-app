@@ -181,9 +181,21 @@ body {
   user-select: none;
 }
 
-.hex-r { background-color: #f00; }
-.hex-g { background-color: #0f0; color:#000;}
-.hex-b { background-color: #00f; }
+.hex-channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 6px;
+  min-width: 52px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease; /* スムーズな色の切り替え */
+}
+
+/* 個別指定の固定色は削除またはJS動的制御に任せるためクリア */
+.hex-r, .hex-g, .hex-b { }
+
 
 .hex-val {
   font-size: 20px;
@@ -909,23 +921,25 @@ body {
     if (decG) decG.textContent = hexValues.g;
     if (decB) decB.textContent = hexValues.b;
 
-    if (boxR) {
-      boxR.style.backgroundColor = 'transparent';
-      boxR.style.color = `rgb(${hexValues.r}, 0, 0)`;
-    }
-    if (boxG) {
-      boxG.style.backgroundColor = 'transparent';
-      boxG.style.color = `rgb(0, ${hexValues.g}, 0)`;
-    }
-    if (boxB) {
-      boxB.style.backgroundColor = 'transparent';
-      boxB.style.color = `rgb(0, 0, ${hexValues.b})`;
-    }
+    // 輝度（明るさ）から文字色（白または黒）を判定する補助処理
+function getTextColor(r, g, b) {
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness < 128 ? '#ffffff' : '#000000';
+}
 
-    const hexPreview = document.getElementById('hexDiagramPreview');
-    if (hexPreview) {
-      hexPreview.style.backgroundColor = `rgb(${hexValues.r}, ${hexValues.g}, ${hexValues.b})`;
-    }
+if (boxR) {
+  boxR.style.backgroundColor = `rgb(${hexValues.r}, 0, 0)`;
+  boxR.style.color = getTextColor(hexValues.r, 0, 0);
+}
+if (boxG) {
+  boxG.style.backgroundColor = `rgb(0, ${hexValues.g}, 0)`;
+  boxG.style.color = getTextColor(0, hexValues.g, 0);
+}
+if (boxB) {
+  boxB.style.backgroundColor = `rgb(0, 0, ${hexValues.b})`;
+  boxB.style.color = getTextColor(0, 0, hexValues.b);
+}
+
   }
 
   function changeHexChannel(channel, amount) {
