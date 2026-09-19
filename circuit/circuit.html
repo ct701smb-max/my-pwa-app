@@ -6974,7 +6974,7 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
       const panY = this.panY || 0;
 
       const screenX = x * scale + panX;
-      const screenY = y * scale + panY - 35; // 常に画面上で配線の35px上に配置
+      const screenY = y * scale + panY - 35; // 画面上で配線の35px上に配置
 
       this.propToolbar.style.left = `${screenX}px`;
       this.propToolbar.style.top = `${screenY}px`;
@@ -7012,6 +7012,7 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
     colorPicker.oninput = (e) => {
       selectedWire.color = e.target.value;
       if (typeof this.saveState === 'function') this.saveState();
+      this.updatePropertyToolbar(); // ツールバー表示同期を追加
       if (typeof this.render === 'function') this.render();
     };
     this.propToolbar.appendChild(colorPicker);
@@ -7057,7 +7058,6 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
     };
     row1.appendChild(rotBtn);
 
-    // switch（トグルスイッチ等）を反転可能パーツの判定対象に追加
     if (['battery', 'led', 'motor', 'rgb-led', 'switch'].includes(comp.type)) {
       const flipBtn = document.createElement('button');
       flipBtn.className = 'prop-btn';
@@ -7205,8 +7205,8 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
         if (this.wires) {
           const validTerminalIds = new Set(comp.terminals.map(t => t.id));
           this.wires = this.wires.filter(w => {
-            if (w.fromCompId === comp.id && !validTerminalIds.has(w.fromTerminalId)) return false;
-            if (w.toCompId === comp.id && !validTerminalIds.has(w.toTerminalId)) return false;
+            if (w.fromCompId === comp.id && !validTerminalIds.has(w.fromTermId)) return false;
+            if (w.toCompId === comp.id && !validTerminalIds.has(w.toTermId)) return false;
             return true;
           });
         }
@@ -7286,7 +7286,7 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
         comp.type = nextType;
         comp.isPnp = (nextType === 'pnp');
 
-        this.saveState();
+        if (typeof this.saveState === 'function') this.saveState(); // 安全チェックを追加
         if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
         this.render();
       };
@@ -7301,6 +7301,7 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
     this.propToolbar.style.display = 'none';
   }
 }
+
 
 
   }
