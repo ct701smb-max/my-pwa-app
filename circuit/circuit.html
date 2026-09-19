@@ -6613,10 +6613,14 @@ line.addEventListener('pointerdown', (e) => {
         ? this.getCompFlipped(comp) 
         : !!comp.flipped;
 
-    // ★ 左右反転（flipped）が true の場合、X軸方向に -1 スケールをかける
+    // ★ 左右反転（flipped）が true の場合、本体グループに -1 スケールを適用
     if (isFlipped) {
         g.setAttribute('transform', `${g.getAttribute('transform') || ''} scale(-1, 1)`);
     }
+
+    // ★ テキストの鏡文字化を防ぐための属性（反転時はテキスト自体を再反転させる）
+    // text-anchor="middle" で中央配置にし、x=0 を軸に再反転します
+    const textTransformAttr = isFlipped ? 'transform="scale(-1, 1)" text-anchor="middle" x="0"' : '';
 
     if (mode === 'schematic') {
       if (isToggle) {
@@ -6663,16 +6667,17 @@ line.addEventListener('pointerdown', (e) => {
         g.innerHTML += `<rect x="-25" y="-22" width="50" height="44" rx="6" fill="#374151" stroke="#1f2937" stroke-width="2"/>
                         <line x1="0" y1="0" x2="0" y2="${knobY}" stroke="#9ca3af" stroke-width="4"/>
                         <circle cx="0" cy="${knobY}" r="8" fill="${btnColor}"/>
-                        <text x="-20" y="32" font-size="10" font-weight="bold" fill="#374151">${labelText}</text>`;
+                        <text ${textTransformAttr || 'x="-20"'} y="32" font-size="10" font-weight="bold" fill="#374151">${labelText}</text>`;
       } else {
         // ★ 通常スイッチ（実物風）
         const btnColor = comp.state ? '#10b981' : '#ef4444';
         g.innerHTML += `<rect x="-25" y="-15" width="50" height="30" rx="6" fill="#374151" stroke="#1f2937" stroke-width="2"/>
                         <circle cx="${comp.state ? 8 : -8}" cy="0" r="9" fill="${btnColor}"/>
-                        <text x="-18" y="26" font-size="11" font-weight="bold" fill="#374151">${comp.state ? 'スイッチON' : 'スイッチOFF'}</text>`;
+                        <text ${textTransformAttr || 'x="-18"'} y="26" font-size="11" font-weight="bold" fill="#374151">${comp.state ? 'スイッチON' : 'スイッチOFF'}</text>`;
       }
     }
-  }else if (comp.type === 'motor') {
+  }
+else if (comp.type === 'motor') {
     let durationSec = 1.0;
     let direction = 'normal';
 
