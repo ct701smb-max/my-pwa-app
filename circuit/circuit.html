@@ -3199,102 +3199,113 @@ textarea {
 </p>
 
   <!-- NPN vs PNP 比較 SVG 図解 -->
-  <svg viewBox="0 0 700 320" class="parts-img" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; max-height: none; background: #ffffff;">
-    <style>
-      .pin-label { font-size: 12px; font-weight: bold; fill: #0f172a; }
-      .wire-line { stroke: #334155; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-      .arrow-pos { fill: #ef4444; stroke: #ef4444; }
-      .box-npn { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.5; rx: 8; }
-      .box-pnp { fill: #fef2f2; stroke: #ef4444; stroke-width: 1.5; rx: 8; }
-      .badge-npn { fill: #2563eb; }
-      .badge-pnp { fill: #dc2626; }
-      .condition-box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1; rx: 6; }
-      .desc-title { font-size: 12px; font-weight: bold; }
-    </style>
+<svg viewBox="0 0 700 320" class="parts-img" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; max-height: none; background: #ffffff;">
+  <style>
+    .pin-label { font-size: 12px; font-weight: bold; fill: #0f172a; }
+    .wire-line { stroke: #334155; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .arrow-pos { fill: #ef4444; stroke: #ef4444; stroke-width: 0.5; stroke-linejoin: round; }
+    .box-npn { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.5; rx: 8; }
+    .box-pnp { fill: #fef2f2; stroke: #ef4444; stroke-width: 1.5; rx: 8; }
+    .badge-npn { fill: #2563eb; }
+    .badge-pnp { fill: #dc2626; }
+    .condition-box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1; rx: 6; }
+    .desc-title { font-size: 12px; font-weight: bold; }
+    .zoom-btn { cursor: pointer; }
+    .zoom-btn:hover circle { fill: #f1f5f9; stroke: #94a3b8; }
+  </style>
 
-    <!-- 背景パネル -->
-    <rect x="10" y="10" width="330" height="300" class="box-npn" />
-    <rect x="360" y="10" width="330" height="300" class="box-pnp" />
+  <!-- 背景パネル -->
+  <rect x="10" y="10" width="330" height="300" class="box-npn" />
+  <rect x="360" y="10" width="330" height="300" class="box-pnp" />
 
-    <!-- ================= NPN型エリア (左) ================= -->
-    <g transform="translate(175, 35)">
-      <rect x="-70" y="-12" width="140" height="24" rx="12" class="badge-npn" />
-      <text x="0" y="4" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">NPN型 (ローサイド用)</text>
+  <!-- ================= NPN型エリア (左) ================= -->
+  <g transform="translate(175, 35)">
+    <rect x="-70" y="-12" width="140" height="24" rx="12" class="badge-npn" />
+    <text x="0" y="4" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">NPN型 (ローサイド用)</text>
+  </g>
+
+  <!-- NPN 回路記号 -->
+  <g transform="translate(175, 125)">
+    <!-- 外枠円 -->
+    <circle cx="0" cy="0" r="32" fill="#ffffff" stroke="#3b82f6" stroke-width="2" />
+    <!-- ベース板 -->
+    <line x1="-12" y1="-18" x2="-12" y2="18" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- ベース(B) 配線 -->
+    <line x1="-40" y1="0" x2="-12" y2="0" class="wire-line" />
+    <text x="-48" y="4" class="pin-label" text-anchor="end">B (ベース)</text>
+
+    <!-- コレクタ(C) 配線 -->
+    <line x1="-12" y1="-10" x2="16" y2="-22" stroke="#1e293b" stroke-width="2.5" />
+    <line x1="16" y1="-22" x2="16" y2="-45" class="wire-line" />
+    <text x="22" y="-35" class="pin-label">C (コレクタ)</text>
+
+    <!-- エミッタ(E) 配線 + 矢印 (外向き ↘) -->
+    <line x1="-12" y1="10" x2="16" y2="22" stroke="#1e293b" stroke-width="2.5" />
+    <line x1="16" y1="22" x2="16" y2="45" class="wire-line" />
+    <!-- 修正：先端(16,22)を向く綺麗な外向き矢印 -->
+    <g transform="translate(16, 22) rotate(23.2)">
+      <polygon points="0,0 -11,-5 -11,5" class="arrow-pos" />
     </g>
+    <text x="22" y="42" class="pin-label">E (エミッタ)</text>
+  </g>
 
-    <!-- NPN 回路記号 -->
-    <g transform="translate(175, 125)">
-      <!-- 外枠円 -->
-      <circle cx="0" cy="0" r="32" fill="#ffffff" stroke="#3b82f6" stroke-width="2" />
-      <!-- ベース板 -->
-      <line x1="-12" y1="-18" x2="-12" y2="18" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
-      <!-- ベース(B) 配線 -->
-      <line x1="-40" y1="0" x2="-12" y2="0" class="wire-line" />
-      <text x="-48" y="4" class="pin-label" text-anchor="end">B (ベース)</text>
+  <!-- NPN 条件説明ボックス -->
+  <g transform="translate(30, 200)">
+    <rect x="0" y="0" width="290" height="95" class="condition-box" />
+    <text x="15" y="22" class="desc-title" fill="#1d4ed8">⚡ ONになる条件 (制御電圧)</text>
+    <text x="15" y="42" font-size="11" fill="#334155">・ベース(B)に <tspan font-weight="bold" fill="#dc2626">＋電圧 (Hレベル)</tspan> を加える</text>
+    <text x="15" y="60" font-size="11" fill="#334155">・主電流の流れ: <tspan font-weight="bold" fill="#059669">C ➔ E</tspan> (コレクタからエミッタへ)</text>
+    <text x="15" y="78" font-size="11" fill="#64748b">💡 負荷(モーター/LED)をVCC(電源)側に接続</text>
+  </g>
 
-      <!-- コレクタ(C) 配線 -->
-      <line x1="-12" y1="-10" x2="16" y2="-22" stroke="#1e293b" stroke-width="2.5" />
-      <line x1="16" y1="-22" x2="16" y2="-45" class="wire-line" />
-      <text x="22" y="-35" class="pin-label">C (コレクタ)</text>
+  <!-- ================= PNP型エリア (右) ================= -->
+  <g transform="translate(525, 35)">
+    <rect x="-70" y="-12" width="140" height="24" rx="12" class="badge-pnp" />
+    <text x="0" y="4" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">PNP型 (ハイサイド用)</text>
+  </g>
 
-      <!-- エミッタ(E) 配線 + 矢印 (外向き ↘) -->
-      <line x1="-12" y1="10" x2="16" y2="22" stroke="#1e293b" stroke-width="2.5" />
-      <line x1="16" y1="22" x2="16" y2="45" class="wire-line" />
-      <polygon points="16,22 4,14 8,24" class="arrow-pos" />
-      <text x="22" y="42" class="pin-label">E (エミッタ)</text>
+  <!-- PNP 回路記号 -->
+  <g transform="translate(525, 125)">
+    <!-- 外枠円 -->
+    <circle cx="0" cy="0" r="32" fill="#ffffff" stroke="#ef4444" stroke-width="2" />
+    <!-- ベース板 -->
+    <line x1="-12" y1="-18" x2="-12" y2="18" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- ベース(B) 配線 -->
+    <line x1="-40" y1="0" x2="-12" y2="0" class="wire-line" />
+    <text x="-48" y="4" class="pin-label" text-anchor="end">B (ベース)</text>
+
+    <!-- エミッタ(E) 配線 + 矢印 (内向き ↙) -->
+    <line x1="-12" y1="-10" x2="16" y2="-22" stroke="#1e293b" stroke-width="2.5" />
+    <line x1="16" y1="-22" x2="16" y2="-45" class="wire-line" />
+    <!-- 整形された内向き矢印 (回転適用) -->
+    <g transform="translate(-12, -10) rotate(-23.2)">
+      <polygon points="0,0 11,-5 11,5" class="arrow-pos" />
     </g>
+    <text x="22" y="-35" class="pin-label">E (エミッタ)</text>
 
-    <!-- NPN 条件説明ボックス -->
-    <g transform="translate(30, 200)">
-      <rect x="0" y="0" width="290" height="95" class="condition-box" />
-      <text x="15" y="22" class="desc-title" fill="#1d4ed8">⚡ ONになる条件 (制御電圧)</text>
-      <text x="15" y="42" font-size="11" fill="#334155">・ベース(B)に <tspan font-weight="bold" fill="#dc2626">＋電圧 (Hレベル)</tspan> を加える</text>
-      <text x="15" y="60" font-size="11" fill="#334155">・主電流の流れ: <tspan font-weight="bold" fill="#059669">C ➔ E</tspan> (コレクタからエミッタへ)</text>
-      <text x="15" y="78" font-size="11" fill="#64748b">💡 負荷(モーター/LED)をVCC(電源)側に接続</text>
-    </g>
+    <!-- コレクタ(C) 配線 -->
+    <line x1="-12" y1="10" x2="16" y2="22" stroke="#1e293b" stroke-width="2.5" />
+    <line x1="16" y1="22" x2="16" y2="45" class="wire-line" />
+    <text x="22" y="42" class="pin-label">C (コレクタ)</text>
+  </g>
 
-    <!-- ================= PNP型エリア (右) ================= -->
-    <g transform="translate(525, 35)">
-      <rect x="-70" y="-12" width="140" height="24" rx="12" class="badge-pnp" />
-      <text x="0" y="4" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">PNP型 (ハイサイド用)</text>
-    </g>
+  <!-- PNP 条件説明ボックス -->
+  <g transform="translate(380, 200)">
+    <rect x="0" y="0" width="290" height="95" class="condition-box" />
+    <text x="15" y="22" class="desc-title" fill="#b91c1c">⚡ ONになる条件 (制御電圧)</text>
+    <text x="15" y="42" font-size="11" fill="#334155">・ベース(B)を <tspan font-weight="bold" fill="#2563eb">0V / GND (Lレベル)</tspan> に下げる</text>
+    <text x="15" y="60" font-size="11" fill="#334155">・主電流の流れ: <tspan font-weight="bold" fill="#059669">E ➔ C</tspan> (エミッタからコレクタへ)</text>
+    <text x="15" y="78" font-size="11" fill="#64748b">💡 負荷(センサー/機器)をGND(接地)側に接続</text>
+  </g>
 
-    <!-- PNP 回路記号 -->
-    <g transform="translate(525, 125)">
-      <!-- 外枠円 -->
-      <circle cx="0" cy="0" r="32" fill="#ffffff" stroke="#ef4444" stroke-width="2" />
-      <!-- ベース板 -->
-      <line x1="-12" y1="-18" x2="-12" y2="18" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
-      <!-- ベース(B) 配線 -->
-      <line x1="-40" y1="0" x2="-12" y2="0" class="wire-line" />
-      <text x="-48" y="4" class="pin-label" text-anchor="end">B (ベース)</text>
+  <!-- ★ 拡大ボタン -->
+  <g class="zoom-btn" transform="translate(650, 18)" title="拡大表示">
+    <circle cx="12" cy="12" r="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="12" y="16" font-size="12" text-anchor="middle">🔍</text>
+  </g>
+</svg>
 
-      <!-- エミッタ(E) 配線 + 矢印 (内向き ↙) -->
-      <line x1="-12" y1="-10" x2="16" y2="-22" stroke="#1e293b" stroke-width="2.5" />
-      <line x1="16" y1="-22" x2="16" y2="-45" class="wire-line" />
-      <polygon points="-12,-10 -2,-18 -2,-7" class="arrow-pos" />
-      <text x="22" y="-35" class="pin-label">E (エミッタ)</text>
 
-      <!-- コレクタ(C) 配線 -->
-      <line x1="-12" y1="10" x2="16" y2="22" stroke="#1e293b" stroke-width="2.5" />
-      <line x1="16" y1="22" x2="16" y2="45" class="wire-line" />
-      <text x="22" y="42" class="pin-label">C (コレクタ)</text>
-    </g>
-
-    <!-- PNP 条件説明ボックス -->
-    <g transform="translate(380, 200)">
-      <rect x="0" y="0" width="290" height="95" class="condition-box" />
-      <text x="15" y="22" class="desc-title" fill="#b91c1c">⚡ ONになる条件 (制御電圧)</text>
-      <text x="15" y="42" font-size="11" fill="#334155">・ベース(B)を <tspan font-weight="bold" fill="#2563eb">0V / GND (Lレベル)</tspan> に下げる</text>
-      <text x="15" y="60" font-size="11" fill="#334155">・主電流の流れ: <tspan font-weight="bold" fill="#059669">E ➔ C</tspan> (エミッタからコレクタへ)</text>
-      <text x="15" y="78" font-size="11" fill="#64748b">💡 負荷(センサー/機器)をGND(接地)側に接続</text>
-    </g>
-      <!-- ★ 拡大ボタン -->
-    <g class="zoom-btn" transform="translate(515, 18)" title="拡大表示">
-      <circle cx="150" cy="12" r="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
-      <text x="150" y="16" font-size="14" text-anchor="middle">🔍️</text>
-    </g>
-  </svg>
 
   <!-- 具体的な使用例（NPNとPNPの使い分け） -->
 <div style="margin-top: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
