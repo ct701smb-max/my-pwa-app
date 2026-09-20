@@ -404,10 +404,10 @@ svg {
    ========================================================================== */
 .status-bar {
   position: absolute;
-  top: 50px;    /* ← bottom: 15px から top: 50px に変更（表示モードバッジの下に配置） */
-  left: 12px;   /* ← 表示モードバッジの左位置（12px）に合わせる */
-  right: auto;  /* ← 幅を画面全体から自動（コンテンツ幅）に変更 */
-  max-width: calc(100% - 24px); /* 画面からはみ出さないよう上限を設定 */
+  top: 50px;    /* 表示モードバッジの下に配置 */
+  left: 12px;   
+  right: auto;  
+  max-width: calc(100% - 24px); 
   padding: 8px 14px;
   font-size: 0.85rem;
   font-weight: bold;
@@ -455,7 +455,7 @@ svg {
   transform: scale(0.97);
 }
 
-/* モーダル背景（.modal と .modal-overlay を統合） */
+/* モーダル背景 */
 .modal,
 .modal-overlay {
   position: fixed;
@@ -749,7 +749,7 @@ textarea {
   display: flex !important;
 }
 
-/* モーダル内のSVG表示コンテナ（画面の92%幅・85%高さを確保） */
+/* モーダル内のSVG表示コンテナ */
 .svg-modal-content {
   width: 92vw;
   height: 85vh;
@@ -758,7 +758,6 @@ textarea {
   align-items: center;
 }
 
-/* ★ 元の.parts-imgのサイズ制限を強力に上書きして大きく表示 */
 .svg-fullscreen-modal svg {
   width: 100% !important;
   height: 100% !important;
@@ -1070,7 +1069,7 @@ textarea {
               <input type="text" id="pdf-student-name" class="pdf-form-input" placeholder="フルネーム" required>
             </div>
             
-            <!-- 【追加】電源スイッチの切り替えオプション -->
+            <!-- 電源スイッチの切り替えオプション -->
             <div class="form-group full">
               <label>電源設定</label>
               <div class="checkbox-group">
@@ -1085,7 +1084,7 @@ textarea {
               <div class="checkbox-group">
                 <label class="checkbox-label"><input type="checkbox" id="chk-physical" checked> 実体配線図</label>
                 <label class="checkbox-label"><input type="checkbox" id="chk-schematic" checked> 回路図</label>
-                <label class="checkbox-label"><input type="checkbox" id="chk-breadboard" checked> ブレッドボード図</label>
+                <label class="checkbox-label"><input type="checkbox" id="chk-breadboard"> ブレッドボード図</label>
               </div>
             </div>
           </div>
@@ -2782,14 +2781,12 @@ textarea {
   <path d="M 47 135 L 47 143 L 61 143 L 61 91 L 75 91" stroke="#38bdf8" stroke-width="1.8" fill="none"/>
 
   <!-- VCC供給バス配線（赤） -->
-  <!-- 初期状態がOFFなので、クラスを wire-off にしておくのが本来は望ましい -->
   <path d="M 47 91 L 47 71 L 150 71 L 150 161" class="wire wire-off"/>
   <path d="M 150 71 L 180 71" class="wire wire-off"/>
   <path d="M 150 116 L 180 116" class="wire wire-off"/>
   <path d="M 150 161 L 180 161" class="wire wire-off"/>
 
   <!-- スイッチエリア -->
-  <!-- ★ onclick に event を追加: toggleRgbSwitch('r', event) -->
   <g transform="translate(195, 71)" class="clickable" onclick="toggleRgbSwitch('r', event)">
     <text x="-5" y="-12" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">赤 (R)</text>
     <rect id="bg-r" x="-15" y="-8" width="30" height="16" rx="8" fill="#cbd5e1" class="sw-bg"/>
@@ -3242,7 +3239,7 @@ textarea {
     <!-- エミッタ(E) 配線 + 矢印 (外向き ↘) -->
     <line x1="-12" y1="10" x2="16" y2="22" stroke="#1e293b" stroke-width="2.5" />
     <line x1="16" y1="22" x2="16" y2="45" class="wire-line" />
-    <!-- 修正：先端(16,22)を向く綺麗な外向き矢印 -->
+    <!-- 先端(16,22)を向く綺麗な外向き矢印 -->
     <g transform="translate(16, 22) rotate(23.2)">
       <polygon points="0,0 -11,-5 -11,5" class="arrow-pos" />
     </g>
