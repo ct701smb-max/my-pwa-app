@@ -3195,7 +3195,7 @@ textarea {
   トランジスタには <strong>NPN型</strong> と <strong>PNP型</strong> の2種類があります。この2つは、回路記号の矢印の向きだけでなく、<b>「電流が流れる向き」</b>や<b>「スイッチをONにするための合図（＋を流すか、0Vに落とすか）」</b>が正反対という違いがあります。
 </p>
 
-  <!-- NPN vs PNP 比較 SVG 図解 -->
+<!-- NPN vs PNP 比較 SVG 図解 -->
 <svg viewBox="0 0 700 320" class="parts-img" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; max-height: none; background: #ffffff;">
   <style>
     .pin-label { font-size: 12px; font-weight: bold; fill: #0f172a; }
@@ -3239,7 +3239,6 @@ textarea {
     <!-- エミッタ(E) 配線 + 矢印 (外向き ↘) -->
     <line x1="-12" y1="10" x2="16" y2="22" stroke="#1e293b" stroke-width="2.5" />
     <line x1="16" y1="22" x2="16" y2="45" class="wire-line" />
-    <!-- 先端(16,22)を向く綺麗な外向き矢印 -->
     <g transform="translate(16, 22) rotate(23.2)">
       <polygon points="0,0 -11,-5 -11,5" class="arrow-pos" />
     </g>
@@ -3271,19 +3270,19 @@ textarea {
     <line x1="-40" y1="0" x2="-12" y2="0" class="wire-line" />
     <text x="-48" y="4" class="pin-label" text-anchor="end">B (ベース)</text>
 
-    <!-- エミッタ(E) 配線 + 矢印 (内向き ↙) -->
+    <!-- コレクタ(C) 配線 (上側) -->
     <line x1="-12" y1="-10" x2="16" y2="-22" stroke="#1e293b" stroke-width="2.5" />
     <line x1="16" y1="-22" x2="16" y2="-45" class="wire-line" />
-    <!-- 整形された内向き矢印 (回転適用) -->
-    <g transform="translate(-12, -10) rotate(-23.2)">
-      <polygon points="0,0 11,-5 11,5" class="arrow-pos" />
-    </g>
-    <text x="22" y="-35" class="pin-label">E (エミッタ)</text>
+    <text x="22" y="-35" class="pin-label">C (コレクタ)</text>
 
-    <!-- コレクタ(C) 配線 -->
+    <!-- エミッタ(E) 配線 + 矢印 (下側・内向き ↖) -->
     <line x1="-12" y1="10" x2="16" y2="22" stroke="#1e293b" stroke-width="2.5" />
     <line x1="16" y1="22" x2="16" y2="45" class="wire-line" />
-    <text x="22" y="42" class="pin-label">C (コレクタ)</text>
+    <!-- ベース側(-12, 10)を指す内向き矢印 -->
+    <g transform="translate(-12, 10) rotate(23.2)">
+      <polygon points="0,0 11,-5 11,5" class="arrow-pos" />
+    </g>
+    <text x="22" y="42" class="pin-label">E (エミッタ)</text>
   </g>
 
   <!-- PNP 条件説明ボックス -->
@@ -3301,7 +3300,6 @@ textarea {
     <text x="12" y="16" font-size="12" text-anchor="middle">🔍</text>
   </g>
 </svg>
-
 
 
   <!-- 具体的な使用例（NPNとPNPの使い分け） -->
@@ -3663,6 +3661,8 @@ textarea {
     </div>
   </div>
 </div>
+
+  <!--スクリプト-->
   <script>
     const COLOR_CODE_MAP = [
       { digit: 0, color: '#000000' },
@@ -3773,7 +3773,7 @@ textarea {
     return R_MAX * Math.pow(R_MIN / R_MAX, light / 100);
   }
 
-  // ★追加: 現在のモードに応じた反転状態（flipped）を取得するヘルパー関数
+  // 現在のモードに応じた反転状態（flipped）を取得するヘルパー関数
   getCompFlipped(comp) {
     if (!comp) return false;
     if (this.mode === 'breadboard') {
@@ -5106,41 +5106,82 @@ this.components.forEach(c => {
         return `bb_point_${x}_${y}`;
       }
 
-      handleHoleClick(x, y) {
-        const snapped = { x, y };
+      /**
+ * ブレッドボードモードでの穴クリックハンドラ
+ * (x, y, nodeId) の引数構成に統一
+ */
+handleHoleClick(x, y, nodeId) {
+  // スナップ処理（nodeIdがあれば座標優先、なければスナップ）
+  const snapped = nodeId ? { x, y, nodeId } : this.snapToGrid(x, y);
 
-        if (this.connectingStart) {
-          this.wires.push({
-            id: 'wire_' + Date.now(),
-            mode: 'breadboard',
-            fromCompId: this.connectingStart.compId,
-            fromTermId: this.connectingStart.termId,
-            toPos: snapped
-          });
-          this.connectingStart = null;
-          this.tempWirePos = null;
-          this.saveState();
-          this.evaluateCircuit();
-        } else if (!this.selectedHole) {
-          this.selectedHole = snapped;
-        } else {
-          if (this.selectedHole.x !== snapped.x || this.selectedHole.y !== snapped.y) {
-            const bridgeWire = {
-              id: 'bridge_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-              type: 'bridge',
-              mode: 'breadboard',
-              fromPos: { x: this.selectedHole.x, y: this.selectedHole.y },
-              toPos: { x: snapped.x, y: snapped.y },
-              color: '#ef4444'
-            };
-            this.wires.push(bridgeWire);
-            this.saveState();
-            this.evaluateCircuit();
-          }
-          this.selectedHole = null;
-        }
-        this.render();
-      }
+  // 【接続ロジックの最優先化】
+
+  // パターンA：【端子 ➔ 穴】 すでに「パーツ端子」が配線開始状態にある場合、ここへ接続
+  if (this.connectingStart) {
+    this.wires.push({
+      id: 'wire_' + Date.now(),
+      mode: 'breadboard',
+      fromCompId: this.connectingStart.compId,
+      fromTermId: this.connectingStart.termId,
+      toPos: { x: snapped.x, y: snapped.y, nodeId: snapped.nodeId } // 穴の座標とIDをセット
+    });
+    // 状態クリア
+    this.connectingStart = null;
+    this.tempWirePos = null;
+    this.saveState();
+    this.evaluateCircuit();
+    this.render();
+    return; // 接続完了なので終了
+  }
+
+  // パターンB：【端子 ➔ 穴 (選択済みピン)】 配線開始ではなく「ピンが選択状態」にある場合
+  if (this.selectedPin) {
+    this.wires.push({
+      id: 'wire_' + Date.now(),
+      mode: 'breadboard',
+      fromCompId: this.selectedPin.compId,
+      fromTermId: this.selectedPin.termId,
+      toPos: { x: snapped.x, y: snapped.y, nodeId: snapped.nodeId }
+    });
+    // 状態クリア
+    this.selectedPin = null;
+    this.saveState();
+    this.evaluateCircuit();
+    this.render();
+    return;
+  }
+
+  // --- これ以降は、端子が関わらない「穴」同士の操作 ---
+
+  // パターンC：何も選択されていない ➔ この穴を選択状態にする
+  if (!this.selectedHole) {
+    this.selectedHole = snapped;
+  }
+  // パターンD：すでに別の穴が選択されている ➔ ブリッジ配線を引く
+  else {
+    // 同じ穴を2回クリックした場合は選択解除
+    if (this.selectedHole.x === snapped.x && this.selectedHole.y === snapped.y) {
+      this.selectedHole = null;
+    } else {
+      // 穴 ➔ 穴 のジャンパ線を作成
+      const bridgeWire = {
+        id: 'bridge_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        type: 'bridge',
+        mode: 'breadboard',
+        fromPos: { x: this.selectedHole.x, y: this.selectedHole.y, nodeId: this.selectedHole.nodeId },
+        toPos: { x: snapped.x, y: snapped.y, nodeId: snapped.nodeId },
+        color: '#ef4444' // ジャンパ線の色
+      };
+      this.wires.push(bridgeWire);
+      this.selectedHole = null; // 選択解除
+      this.saveState();
+      this.evaluateCircuit();
+    }
+  }
+  this.render();
+}
+
+
 
       snapToGrid(x, y) {
         if (this.mode === 'breadboard' || this.mode === 'schematic') {
@@ -5540,15 +5581,29 @@ showConfirmModal() {
       resolve(false);
     };
 
+    // キーボード操作時（EnterでOK / Escapeでキャンセル）
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleOk();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCancel();
+      }
+    };
+
     // イベントリスナーの解除と非表示化
     const cleanup = () => {
       this.confirmModal.classList.add('hidden');
       this.modalOkBtn.removeEventListener('click', handleOk);
       this.modalCancelBtn.removeEventListener('click', handleCancel);
+      window.removeEventListener('keydown', handleKeyDown);
     };
 
+    // イベントリスナーの登録
     this.modalOkBtn.addEventListener('click', handleOk);
     this.modalCancelBtn.addEventListener('click', handleCancel);
+    window.addEventListener('keydown', handleKeyDown);
   });
 }
 
@@ -5575,6 +5630,7 @@ async clearAll() {
   this.evaluateCircuit();
   this.render();
 }
+
 
 
 
@@ -6894,13 +6950,18 @@ else if (comp.type === 'motor') {
                       <text x="${posX}" y="-10" font-size="12" font-weight="bold" fill="#ef4444">+</text>
                       <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
     }
-    } else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
+   } else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
     const isNpn = (comp.transistorType || comp.type) !== 'pnp';
     const typeLabel = isNpn ? 'NPN' : 'PNP';
     const modelName = isNpn ? 'C1815' : 'A1015'; // 型番表記（PNPの場合は対となるA1015に切替）
 
     if (mode === 'schematic') {
-      const arrowPoints = isNpn ? "2,4 8,8 6,1" : "6,1 0,-3 2,4";
+      // エミッタ配線の傾き(約23.2 deg)に合わせた回転付き矢印描画
+      // NPN: 配線の先端 (8, 8) を指す外向き矢印 (↘)
+      // PNP: ベース側接点 (-6, 2) を指す内向き矢印 (↙)
+      const arrowSvg = isNpn
+        ? `<g transform="translate(8, 8) rotate(23.2)"><polygon points="0,0 -8,-4 -8,4" fill="black"/></g>`
+        : `<g transform="translate(-6, 2) rotate(23.2)"><polygon points="0,0 8,-4 8,4" fill="black"/></g>`;
 
       g.innerHTML += `<rect x="-35" y="-22" width="70" height="44" fill="white" stroke="black" stroke-width="2" rx="4"/>
                       <circle cx="0" cy="-2" r="13" fill="none" stroke="black" stroke-width="1.5"/>
@@ -6910,7 +6971,7 @@ else if (comp.type === 'motor') {
                       <line x1="8" y1="-12" x2="20" y2="-12" stroke="black" stroke-width="2"/>
                       <line x1="-6" y1="2" x2="8" y2="8" stroke="black" stroke-width="2"/>
                       <line x1="8" y1="8" x2="20" y2="8" stroke="black" stroke-width="2"/>
-                      <polygon points="${arrowPoints}" fill="black"/>
+                      ${arrowSvg}
                       <text x="-28" y="2" font-size="9" font-weight="bold">B</text>
                       <text x="12" y="-14" font-size="9" font-weight="bold">C</text>
                       <text x="12" y="18" font-size="9" font-weight="bold">E</text>
@@ -6932,7 +6993,8 @@ else if (comp.type === 'motor') {
                       <text x="0" y="42" font-size="10" font-weight="bold" fill="#10b981" text-anchor="middle">C</text>
                       <text x="15" y="42" font-size="10" font-weight="bold" fill="#3b82f6" text-anchor="middle">B</text>`;
     }
-  }
+}
+
 
 } // ← renderComponentBody の閉じカッコを正しく配置
 
