@@ -1782,6 +1782,8 @@ textarea {
       const switchText = svg.querySelector('#switch-text');
       const ledGlow = svg.querySelector('#led-glow');
       const ledRays = svg.querySelector('#led-rays');
+      const ledBody = svg.querySelector('#led-body');
+      const ledBase = svg.querySelector('#led-base');
       const currentFlow = svg.querySelector('#current-flow');
       const bannerText = svg.querySelector('#banner-text');
 
@@ -1789,25 +1791,35 @@ textarea {
       const isOff = lever.getAttribute('y2') === '4';
 
       if (isOff) {
-        // ON状態へ切り替え
+        // ON状態へ切り替え（LEDを赤色に点灯）
         lever.setAttribute('x2', '48');
         lever.setAttribute('y2', '18');
         lever.setAttribute('stroke', '#10b981');
         switchText.textContent = 'ON (通電)';
         switchText.setAttribute('fill', '#16a34a');
+        
+        // LED関連の表示変更
+        ledBody.setAttribute('fill', '#ef4444'); // ドーム部：赤
+        ledBase.setAttribute('fill', '#dc2626'); // 土台部：濃い赤
         ledGlow.style.opacity = '0.45';
         ledRays.style.opacity = '1';
+        
         currentFlow.style.opacity = '1';
         bannerText.innerHTML = 'スイッチを閉じると<tspan font-weight="bold" fill="#16a34a">回路がつながり（ON）</tspan>電流が流れてLEDが点灯します';
       } else {
-        // OFF状態へ切り替え
+        // OFF状態へ切り替え（LEDをグレーに消灯）
         lever.setAttribute('x2', '42');
         lever.setAttribute('y2', '4');
         lever.setAttribute('stroke', '#ef4444');
         switchText.textContent = 'OFF (遮断)';
         switchText.setAttribute('fill', '#dc2626');
+        
+        // LED関連の表示変更
+        ledBody.setAttribute('fill', '#94a3b8'); // ドーム部：グレー
+        ledBase.setAttribute('fill', '#64748b'); // 土台部：濃いグレー
         ledGlow.style.opacity = '0';
         ledRays.style.opacity = '0';
+        
         currentFlow.style.opacity = '0.2';
         bannerText.innerHTML = 'スイッチを開くと<tspan font-weight="bold" fill="#dc2626">回路が遮断され（OFF）</tspan>電流が止まります（クリックで操作）';
       }
@@ -1844,7 +1856,6 @@ textarea {
   </g>
 
   <!-- スイッチ (初期状態: OFF) -->
-  <!-- ★ onclick に event を追加: toggleSwitch(event) -->
   <g id="switch-group" class="clickable" transform="translate(210, 50)" onclick="toggleSwitch(event)">
     <rect class="switch-bg smooth-transition" x="0" y="0" width="60" height="36" rx="5" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
     <circle cx="12" cy="18" r="3.5" fill="#0f172a"/>
@@ -1875,9 +1886,9 @@ textarea {
       <line x1="14" y1="-6" x2="14" y2="-12" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
     </g>
 
-    <!-- LED本体 -->
-    <path d="M 2 20 A 12 12 0 0 1 26 20 L 26 32 L 2 32 Z" fill="#ef4444"/>
-    <path d="M 2 32 L 26 32 L 22 36 L 6 36 Z" fill="#dc2626"/>
+    <!-- LED本体（初期状態: グレー / クラス smooth-transition 追加） -->
+    <path id="led-body" class="smooth-transition" d="M 2 20 A 12 12 0 0 1 26 20 L 26 32 L 2 32 Z" fill="#94a3b8"/>
+    <path id="led-base" class="smooth-transition" d="M 2 32 L 26 32 L 22 36 L 6 36 Z" fill="#64748b"/>
 
     <!-- 端子足（アノード＝長足、カソード＝短足） -->
     <line x1="6" y1="36" x2="6" y2="80" stroke="#9ca3af" stroke-width="2.5"/>
@@ -1894,7 +1905,6 @@ textarea {
   </g>
 
   <!-- 配線接続 -->
-  <!-- プラス線（乾電池(+) -> スイッチ -> 抵抗器 -> 手前で下折返し -> LEDアノード下端） -->
   <path d="M 59 96 L 59 68 L 222 68" class="wire wire-pos"/>
   <path d="M 258 68 L 300 68" class="wire wire-pos"/>
   <path d="M 360 68 L 415 68 L 415 170 L 436 170 L 436 166" class="wire wire-pos"/>
@@ -1902,7 +1912,7 @@ textarea {
   <!-- 電池直列線 -->
   <path d="M 59 146 L 59 154 L 75 154 L 75 96 L 91 96 L 91 104" class="wire-series"/>
 
-  <!-- マイナス線（LEDカソード -> 乾電池(-)） -->
+  <!-- マイナス線 -->
   <path d="M 452 154 L 452 180 L 91 180 L 91 146" class="wire wire-neg"/>
 
   <!-- 下部注釈バナー -->
@@ -1910,12 +1920,13 @@ textarea {
   <text id="banner-text" x="280" y="217" font-size="10.5" fill="#334155" text-anchor="middle">
     スイッチを開くと<tspan font-weight="bold" fill="#dc2626">回路が遮断され（OFF）</tspan>電流が止まります（クリックで操作）
   </text>
-    <!-- ★ 拡大ボタン -->
-    <g class="zoom-btn" transform="translate(515, 18)" title="拡大表示">
-      <circle cx="12" cy="12" r="13" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
-      <text x="12" y="16" font-size="11" text-anchor="middle">🔍️</text>
-    </g>
+  <!-- 拡大ボタン -->
+  <g class="zoom-btn" transform="translate(515, 18)" title="拡大表示">
+    <circle cx="12" cy="12" r="13" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="12" y="16" font-size="11" text-anchor="middle">🔍️</text>
+  </g>
 </svg>
+
 
   <!-- 解説文 -->
   <p class="parts-desc">
