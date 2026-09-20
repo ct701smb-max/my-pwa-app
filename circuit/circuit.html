@@ -7300,16 +7300,19 @@ updatePropertyToolbar() {
     };
     row1.appendChild(rotBtn);
 
-    // switch（トグルスイッチ等）を反転可能パーツの判定対象に追加
-    if (['battery', 'led', 'motor', 'rgb-led', 'switch'].includes(comp.type)) {
-      const flipBtn = document.createElement('button');
-      flipBtn.className = 'prop-btn';
-      flipBtn.textContent = '⇄ 反転';
-      flipBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (typeof this.flipSelectedComponent === 'function') this.flipSelectedComponent();
-      };
-      row1.appendChild(flipBtn);
+    // ブレッドボードモード以外 ('schematic', 'physical' 等) の場合のみ反転ボタンを表示
+    if (this.mode !== 'breadboard') {
+      // switch（トグルスイッチ等）を反転可能パーツの判定対象に追加
+      if (['battery', 'led', 'motor', 'rgb-led', 'switch'].includes(comp.type)) {
+        const flipBtn = document.createElement('button');
+        flipBtn.className = 'prop-btn';
+        flipBtn.textContent = '⇄ 反転';
+        flipBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (typeof this.flipSelectedComponent === 'function') this.flipSelectedComponent();
+        };
+        row1.appendChild(flipBtn);
+      }
     }
     this.propToolbar.appendChild(row1);
 
@@ -7446,15 +7449,14 @@ updatePropertyToolbar() {
         }
 
         if (this.wires) {
-  const validTerminalIds = new Set(comp.terminals.map(t => t.id));
-  this.wires = this.wires.filter(w => {
-    // fromTermId / toTermId に修正
-    if (w.fromCompId === comp.id && !validTerminalIds.has(w.fromTermId)) return false;
-    if (w.toCompId === comp.id && !validTerminalIds.has(w.toTermId)) return false;
-    return true;
-  });
-}
-
+          const validTerminalIds = new Set(comp.terminals.map(t => t.id));
+          this.wires = this.wires.filter(w => {
+            // fromTermId / toTermId に修正
+            if (w.fromCompId === comp.id && !validTerminalIds.has(w.fromTermId)) return false;
+            if (w.toCompId === comp.id && !validTerminalIds.has(w.toTermId)) return false;
+            return true;
+          });
+        }
 
         if (typeof this.saveState === 'function') this.saveState();
         if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
@@ -7546,8 +7548,6 @@ updatePropertyToolbar() {
     this.propToolbar.style.display = 'none';
   }
 }
-
-
 
   }
 
