@@ -2153,7 +2153,7 @@ textarea {
 
     <!-- 2. ラジコンの前進と後退 -->
 <section style="margin-bottom: 32px;">
-  <h4 style="margin-bottom: 12px; color: #1e293b;">1. ラジコンの前進と後退</h4>
+  <h4 style="margin-bottom: 12px; color: #1e293b;">2. ラジコンの前進と後退</h4>
 <!-- 電流一巡（＋から出てーに戻る）可視化回路SVG -->
 <svg viewBox="0 0 580 255" class="parts-img" xmlns="http://www.w3.org/2000/svg" data-state="0">
   <style>
@@ -2417,6 +2417,170 @@ textarea {
   </g>
 </svg>
     </section>
+    
+    <!-- 3. フレミングの法則 -->
+<section style="margin-bottom: 32px;">
+  <h4 style="margin-bottom: 12px; color: #1e293b;">3. フレミングの法則</h4>
+
+  <!-- SVG図解：左手・右手の法則 -->
+
+    <svg viewBox="0 0 580 255" class="parts-img" style="width: 100%; height: auto; font-family: sans-serif; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <style>
+      .title { font-size: 13px; font-weight: bold; text-anchor: middle; }
+      .finger-title { font-size: 11.5px; font-weight: bold; }
+      .finger-sub { font-size: 9.5px; fill: #475569; }
+      .role-tag { font-size: 10.5px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .axis-line { stroke-width: 3; stroke-linecap: round; }
+      .zoom-btn { cursor: pointer; }
+      .zoom-btn:hover circle { fill: #f1f5f9; stroke: #94a3b8; }
+    </style>
+
+    <defs>
+      <!-- 矢印の定義 -->
+      <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+      </marker>
+      <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/>
+      </marker>
+      <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+      </marker>
+    </defs>
+
+    <!-- 中央の仕切り線 -->
+    <line x1="290" y1="12" x2="290" y2="243" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+    <!-- ================= 左手の法則（モーター） ================= -->
+    <g transform="translate(0, 0)">
+      <!-- タイトルヘッダー -->
+      <rect x="15" y="10" width="260" height="26" rx="5" fill="#dbeafe"/>
+      <text x="145" y="27" class="title" fill="#1e40af">左手の法則（電磁力 / モーター）</text>
+
+      <!-- 手とベクトルのグループ -->
+      <g transform="translate(145, 132) scale(0.85)">
+        <!-- 手のグラフィック（左手） -->
+        <g fill="#fed7aa" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85">
+          <!-- 親指 (左方向) -->
+          <path d="M 0 5 L -50 5 C -60 5 -60 -12 -50 -12 L -10 -5 Z"/>
+          <!-- 人差し指 (上方向) -->
+          <path d="M -5 0 L -5 -60 C -5 -70 12 -70 12 -60 L 5 0 Z"/>
+          <!-- 中指 (手前右下方向) -->
+          <path d="M 2 2 L 40 25 C 47 29 38 40 31 35 L 0 10 Z"/>
+          <!-- 手の甲/手のひら -->
+          <circle cx="2" cy="5" r="14" fill="#fed7aa"/>
+        </g>
+
+        <!-- 矢印ベクトル -->
+        <!-- 磁界 B (人差し指: 上) -->
+        <line x1="0" y1="0" x2="0" y2="-72" class="axis-line" stroke="#2563eb" marker-end="url(#arrow-blue)"/>
+        <!-- 電流 I (中指: 右下) -->
+        <line x1="0" y1="0" x2="48" y2="28" class="axis-line" stroke="#dc2626" marker-end="url(#arrow-red)"/>
+        <!-- 力 F (親指: 左) -->
+        <line x1="0" y1="0" x2="-65" y2="0" class="axis-line" stroke="#16a34a" marker-end="url(#arrow-green)"/>
+
+        <!-- ラベルテキスト -->
+        <!-- 親指 -->
+        <text x="-68" y="-16" class="finger-title" fill="#16a34a" text-anchor="end">親指：力</text>
+        <text x="-68" y="-3" class="finger-sub" text-anchor="end">（動く方向）</text>
+
+        <!-- 人差し指 -->
+        <text x="10" y="-68" class="finger-title" fill="#2563eb" text-anchor="start">人差し指：磁界</text>
+        <text x="10" y="-55" class="finger-sub" text-anchor="start">（N極 → S極）</text>
+
+        <!-- 中指 -->
+        <text x="54" y="28" class="finger-title" fill="#dc2626" text-anchor="start">中指：電流</text>
+        <text x="54" y="41" class="finger-sub" text-anchor="start">（＋ → －）</text>
+      </g>
+
+      <!-- 説明タグ -->
+      <rect x="35" y="215" width="220" height="24" rx="12" fill="#2563eb"/>
+      <text x="145" y="231" class="role-tag">電気を送ると ➔ 動く！（モーター）</text>
+    </g>
+
+    <!-- ================= 右手の法則（発電機） ================= -->
+    <g transform="translate(290, 0)">
+      <!-- タイトルヘッダー -->
+      <rect x="15" y="10" width="260" height="26" rx="5" fill="#dcfce7"/>
+      <text x="145" y="27" class="title" fill="#166534">右手の法則（電磁誘導 / 発電機）</text>
+
+      <!-- 手とベクトルのグループ -->
+      <g transform="translate(145, 132) scale(0.85)">
+        <!-- 手のグラフィック（右手） -->
+        <g fill="#fed7aa" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85">
+          <!-- 親指 (右方向) -->
+          <path d="M 0 5 L 50 5 C 60 5 60 -12 50 -12 L 10 -5 Z"/>
+          <!-- 人差し指 (上方向) -->
+          <path d="M 5 0 L 5 -60 C 5 -70 -12 -70 -12 -60 L -5 0 Z"/>
+          <!-- 中指 (手前左下方向) -->
+          <path d="M -2 2 L -40 25 C -47 29 -38 40 -31 35 L 0 10 Z"/>
+          <!-- 手の甲/手のひら -->
+          <circle cx="-2" cy="5" r="14" fill="#fed7aa"/>
+        </g>
+
+        <!-- 矢印ベクトル -->
+        <!-- 磁界 B (人差し指: 上) -->
+        <line x1="0" y1="0" x2="0" y2="-72" class="axis-line" stroke="#2563eb" marker-end="url(#arrow-blue)"/>
+        <!-- 電流 I (中指: 左下) -->
+        <line x1="0" y1="0" x2="-48" y2="28" class="axis-line" stroke="#dc2626" marker-end="url(#arrow-red)"/>
+        <!-- 動かす方向 F (親指: 右) -->
+        <line x1="0" y1="0" x2="62" y2="0" class="axis-line" stroke="#16a34a" marker-end="url(#arrow-green)"/>
+
+        <!-- ラベルテキスト -->
+        <!-- 親指 -->
+        <text x="66" y="-16" class="finger-title" fill="#16a34a" text-anchor="start">親指：動かす方向</text>
+        <text x="66" y="-3" class="finger-sub" text-anchor="start">（加える力）</text>
+
+        <!-- 人差し指 -->
+        <text x="-10" y="-68" class="finger-title" fill="#2563eb" text-anchor="end">人差し指：磁界</text>
+        <text x="-10" y="-55" class="finger-sub" text-anchor="end">（N極 → S極）</text>
+
+        <!-- 中指 -->
+        <text x="-54" y="28" class="finger-title" fill="#dc2626" text-anchor="end">中指：流れる電流</text>
+        <text x="-54" y="41" class="finger-sub" text-anchor="end">（発生する電気）</text>
+      </g>
+
+      <!-- 説明タグ -->
+      <rect x="35" y="215" width="220" height="24" rx="12" fill="#16a34a"/>
+      <text x="145" y="231" class="role-tag">手で動かすと ➔ 電気をつくる！（発電機）</text>
+    </g>
+
+    <!-- ★ 拡大ボタン -->
+    <g class="zoom-btn" transform="translate(545, 10)" title="拡大表示">
+      <circle cx="12" cy="12" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+      <text x="12" y="15.5" font-size="10" text-anchor="middle">🔍</text>
+    </g>
+</svg>
+
+
+  <!-- 中学生向け解説文 -->
+  <div style="margin-top: 16px; padding: 16px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; line-height: 1.7; font-size: 14px; color: #334155;">
+    <p style="margin: 0 0 12px 0; font-weight: bold; color: #0f172a;">
+      💡 指の覚え方はどっちも同じ！ <span style="color: #2563eb;">「電（中指）・磁（人差し指）・力（親指）」</span>
+    </p>
+    
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+      <!-- モーター解説 -->
+      <div style="flex: 1; min-width: 260px; background-color: #f0f9ff; padding: 12px 14px; border-radius: 6px; border-left: 4px solid #2563eb;">
+        <h5 style="margin: 0 0 6px 0; color: #1e40af; font-size: 15px;">① 左手の法則 ＝ モーターの仕組み</h5>
+        <p style="margin: 0; font-size: 13px;">
+          磁石がある場所（磁界）に<strong>電気を流すと、力が生まれて動き出す</strong>現象です。<br>
+          扇風機、ミニ四駆、電車など「電気で動くもの」はすべてこの仕組みを使っています。
+        </p>
+      </div>
+
+      <!-- 発電機解説 -->
+      <div style="flex: 1; min-width: 260px; background-color: #f0fdf4; padding: 12px 14px; border-radius: 6px; border-left: 4px solid #16a34a;">
+        <h5 style="margin: 0 0 6px 0; color: #166534; font-size: 15px;">② 右手の法則 ＝ 発電機の仕組み（電磁誘導）</h5>
+        <p style="margin: 0; font-size: 13px;">
+          磁石がある場所で<strong>コイルを無理やり動かすと、電気が生まれる</strong>現象（電磁誘導）です。<br>
+          自転車のライトや火力・水力発電所など「動かして電気をつくるもの」に使われます。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
 </div>
 
         <!-- 7. フルカラーLEDの活用 -->
@@ -2755,7 +2919,7 @@ textarea {
         <div id="panel-cds" class="parts-panel hidden">
             <h3>CdSセル（光センサー）の活用</h3>
           <!-- CdSセル（光センサー）自動明暗制御回路SVG -->
-<svg viewBox="0 0 560 330" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 580 330" class="parts-img" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; font-family: sans-serif;">
   <defs>
     <!-- LED発光グローフィルター -->
     <filter id="cds-led-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -2774,7 +2938,7 @@ textarea {
   </defs>
 
   <style>
-    .label-title { font-size: 13px; font-weight: bold; text-anchor: middle; transition: fill 0.3s; }
+    .label-title { font-size: 14px; font-weight: bold; text-anchor: middle; transition: fill 0.3s; }
     .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; transition: stroke 0.3s; }
     .cds-body { fill: #fed7aa; stroke: #ea580c; stroke-width: 1.5; }
     .cds-pattern { fill: none; stroke: #c2410c; stroke-width: 2; stroke-linecap: round; }
@@ -2785,15 +2949,15 @@ textarea {
     .adaptive-main { transition: fill 0.3s; }
     .adaptive-sub { transition: fill 0.3s; }
     .panel-bg { transition: fill 0.3s, stroke 0.3s; }
+    .zoom-btn { cursor: pointer; }
+    .zoom-btn:hover circle { fill: #f1f5f9; stroke: #94a3b8; }
   </style>
 
   <script>
     <![CDATA[
-    // ★ 引数を target (スライダー要素または値) に変更
     function updateCdsCircuit(target) {
       let val, svg;
       
-      // 入力要素から直接呼ばれた場合と数値指定の場合を判定
       if (typeof target === 'object' && target !== null && target.closest) {
         val = target.value;
         svg = target.closest('svg');
@@ -2807,14 +2971,14 @@ textarea {
       const p = parseFloat(val); // 0 (暗い) 〜 100 (明るい)
       const ratio = p / 100;
       
-      // 1. CdS抵抗値の計算 (暗い: 100kΩ 〜 明るい: 0.5kΩ)
+      // 1. CdS抵抗値の計算
       const resVal = (100 - p * 0.995).toFixed(1);
       
       // 2. LEDの輝度計算
       const brightness = 0.05 + ratio * 0.95;
       const glowRadius = ratio * 10;
 
-      // 3. 周囲の明暗に応じた動的カラー補間
+      // 3. カラー補間
       function mix(c1, c2, r) {
         return 'rgb(' + 
           Math.round(c1[0] + (c2[0] - c1[0]) * r) + ',' +
@@ -2830,7 +2994,6 @@ textarea {
       const opStroke = mix([71, 85, 105], [203, 213, 225], ratio);
       const wireStroke = mix([148, 163, 184], [71, 85, 105], ratio);
 
-      // ★ スコープ内の要素を取得して書き換え
       const bgPanel = svg.querySelector('#bg-panel');
       if (bgPanel) {
         bgPanel.setAttribute('fill', bgFill);
@@ -2847,18 +3010,15 @@ textarea {
         bannerPanel.setAttribute('stroke', opStroke);
       }
 
-      // 配線の適用
       const wires = svg.querySelectorAll('.wire');
       wires.forEach(w => w.style.stroke = wireStroke);
 
-      // テキスト色の動的切替
       const mainTexts = svg.querySelectorAll('.adaptive-main');
       mainTexts.forEach(t => t.style.fill = textMain);
 
       const subTexts = svg.querySelectorAll('.adaptive-sub');
       subTexts.forEach(t => t.style.fill = textSub);
 
-      // 4. LED要素描画更新
       const dome = svg.querySelector('#cds-led-dome');
       const glow = svg.querySelector('#cds-glow-blur');
       const core = svg.querySelector('#cds-led-core');
@@ -2867,11 +3027,9 @@ textarea {
       if (glow) glow.setAttribute('stdDeviation', glowRadius.toFixed(1));
       if (core) core.setAttribute('fill-opacity', brightness.toFixed(2));
 
-      // 5. 光線イラスト更新
       const rays = svg.querySelector('#cds-rays');
       if (rays) rays.setAttribute('opacity', ratio.toFixed(2));
 
-      // 6. テキスト数値表示更新
       const txtLight = svg.querySelector('#txt-light');
       if (txtLight) txtLight.textContent = Math.round(p) + '%';
       
@@ -2884,7 +3042,6 @@ textarea {
         txtCurrent.textContent = current + ' mA';
       }
 
-      // 7. 解説メッセージ更新
       const statusText = svg.querySelector('#cds-status-text');
       if (statusText) {
         if (p < 25) {
@@ -2897,7 +3054,6 @@ textarea {
       }
     }
 
-    // 全てのCdSスライダーの初期値をセット
     window.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('#cds-slider').forEach(input => updateCdsCircuit(input));
     });
@@ -2905,45 +3061,44 @@ textarea {
   </script>
 
   <!-- 外枠パネル -->
-  <rect id="bg-panel" x="-60" y="8" width="680" height="314" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" class="panel-bg"/>
-  <text x="280" y="28" class="label-title adaptive-main" fill="#1e293b">☀️ CdS（光センサー）によるLED明暗制御回路</text>
+  <rect id="bg-panel" x="10" y="10" width="560" height="310" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" class="panel-bg"/>
+  <text x="290" y="34" class="label-title adaptive-main" fill="#1e293b">☀️ CdS（光センサー）によるLED明暗制御回路</text>
 
   <!-- 回路配線 -->
-  <path d="M 52 101 L 52 68 L 180 68" class="wire"/>
-  <path d="M 220 68 L 290 68" class="wire"/>
+  <path d="M 68 95 L 68 62 L 195 62" class="wire"/>
+  <path d="M 235 62 L 315 62" class="wire"/>
   <!-- 抵抗器 -> LED手前で折返し -> アノード(+)下端へ接続 -->
-  <path d="M 320 68 L 405 68 L 405 160 L 423 160 L 423 155" class="wire"/>
+  <path d="M 345 62 L 443 62 L 443 152 L 461 152 L 461 147" class="wire"/>
   <!-- カソード(-)下端 -> 乾電池(-) -->
-  <path d="M 437 140 L 437 175 L 76 175 L 76 138" class="wire"/>
+  <path d="M 475 132 L 475 167 L 92 167 L 92 132" class="wire"/>
 
   <!-- 電源 (乾電池 3.0V) -->
-  <g transform="translate(40, 105)">
-    <rect x="0" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+  <g transform="translate(56, 99)">
+    <rect x="0" y="0" width="24" height="38" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
     <rect x="7" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
-    <text x="12" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
-    <text x="12" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+    <text x="12" y="14" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+    <text x="12" y="31" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
 
-    <rect x="24" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="24" y="0" width="24" height="38" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
     <rect x="31" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
-    <text x="36" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
-    <text x="36" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+    <text x="36" y="14" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+    <text x="36" y="31" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
 
-    <!-- 回路の内側に配置した電池ラベル -->
-    <text x="56" y="24" font-size="9.5" font-weight="bold" class="adaptive-main" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
+    <text x="54" y="23" font-size="9" font-weight="bold" class="adaptive-main" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
   </g>
 
   <!-- 電池直列接続線 -->
-  <path d="M 52 138 L 52 148 L 64 148 L 64 101 L 76 101" stroke="#38bdf8" stroke-width="1.5" fill="none"/>
+  <path d="M 68 132 L 68 141 L 80 141 L 80 95 L 92 95" stroke="#38bdf8" stroke-width="1.5" fill="none"/>
 
   <!-- 光線エフェクト -->
   <g id="cds-rays" opacity="0.5" style="transition: opacity 0.2s;">
-    <polygon points="175,35 190,35 205,55 190,55" fill="url(#ray-grad)"/>
-    <polygon points="200,31 215,31 212,57 197,57" fill="url(#ray-grad)"/>
-    <polygon points="220,37 232,37 218,58 206,58" fill="url(#ray-grad)"/>
+    <polygon points="190,30 205,30 220,50 205,50" fill="url(#ray-grad)"/>
+    <polygon points="215,26 230,26 227,52 212,52" fill="url(#ray-grad)"/>
+    <polygon points="235,32 247,32 233,53 221,53" fill="url(#ray-grad)"/>
   </g>
 
   <!-- CdSセル -->
-  <g transform="translate(200, 68)">
+  <g transform="translate(215, 62)">
     <line x1="-20" y1="0" x2="-12" y2="0" stroke="#94a3b8" stroke-width="2"/>
     <line x1="12" y1="0" x2="20" y2="0" stroke="#94a3b8" stroke-width="2"/>
     <circle cx="0" cy="0" r="14" class="cds-body"/>
@@ -2954,7 +3109,7 @@ textarea {
   </g>
 
   <!-- 保護抵抗器 -->
-  <g transform="translate(305, 68)">
+  <g transform="translate(330, 62)">
     <rect x="-15" y="-7" width="30" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
     <line x1="-8" y1="-7" x2="-8" y2="7" stroke="#ef4444" stroke-width="2"/>
     <line x1="-3" y1="-7" x2="-3" y2="7" stroke="#ef4444" stroke-width="2"/>
@@ -2964,66 +3119,68 @@ textarea {
   </g>
 
   <!-- 発光LED -->
-  <g transform="translate(430, 80)">
+  <g transform="translate(468, 72)">
     <!-- 発光ドーム & コア -->
     <path id="cds-led-dome" d="M -16 -10 C -16 -38 16 -38 16 -10 Z" fill="#eab308" opacity="0.6" filter="url(#cds-led-glow)" class="led-dome-cds"/>
     <rect x="-18" y="-10" width="36" height="6" rx="2" fill="#ca8a04"/>
     <circle id="cds-led-core" cx="0" cy="-22" r="6" fill="#fef08a" fill-opacity="0.5"/>
 
-    <!-- 下向きリード線（アノード＝長足、カソード＝短足） -->
+    <!-- 下向きリード線 -->
     <line x1="-7" y1="-4" x2="-7" y2="75" class="led-pin"/>
     <line x1="7" y1="-4" x2="7" y2="60" class="led-pin"/>
 
     <!-- 極性 & リード長表記 -->
-    <text x="-30" y="45" font-size="9.5" font-weight="bold" fill="#ef4444" text-anchor="end">アノード (+)</text>
-    <text x="-30" y="57" font-size="8" fill="#ef4444" text-anchor="end">（長足）</text>
+    <text x="-28" y="45" font-size="9" font-weight="bold" fill="#ef4444" text-anchor="end">アノード (+)</text>
+    <text x="-28" y="56" font-size="7.5" fill="#ef4444" text-anchor="end">（長足）</text>
 
-    <text x="15" y="45" font-size="9.5" font-weight="bold" fill="#3b82f6" text-anchor="start">カソード (-)</text>
-    <text x="15" y="57" font-size="8" fill="#3b82f6" text-anchor="start">（短足）</text>
+    <text x="14" y="45" font-size="9" font-weight="bold" fill="#3b82f6" text-anchor="start">カソード (-)</text>
+    <text x="14" y="56" font-size="7.5" fill="#3b82f6" text-anchor="start">（短足）</text>
 
-    <text x="25" y="-10" font-size="11" font-weight="bold" class="adaptive-main" fill="#1e293b" text-anchor="start">LED</text>
+    <text x="22" y="-10" font-size="10.5" font-weight="bold" class="adaptive-main" fill="#1e293b" text-anchor="start">LED</text>
   </g>
 
   <!-- インタラクティブ操作エリア -->
-  <g transform="translate(30, 192)">
-    <rect id="op-panel" x="0" y="0" width="500" height="78" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" class="panel-bg"/>
+  <g transform="translate(30, 185)">
+    <rect id="op-panel" x="0" y="0" width="520" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" class="panel-bg"/>
 
     <!-- スライダータイトル -->
     <text x="18" y="24" font-size="11" font-weight="bold" class="adaptive-main" fill="#1e293b">☀️ 周囲の明るさ（光度）を調節:</text>
 
-    <!-- ★ HTML range スライダー: oninput="updateCdsCircuit(this)" に変更 -->
-    <foreignObject x="18" y="32" width="220" height="35">
+    <!-- Range スライダー -->
+    <foreignObject x="18" y="32" width="230" height="35">
       <input type="range" id="cds-slider" min="0" max="100" value="0" oninput="updateCdsCircuit(this)" style="width: 95%; cursor: pointer; vertical-align: middle;"/>
     </foreignObject>
 
     <!-- アイコン表示 -->
-    <text x="18" y="67" font-size="10" class="adaptive-sub" fill="#64748b">🌑 暗い (0%)</text>
-    <text x="142" y="67" font-size="10" fill="#ea580c" font-weight="bold">☀️ 明るい (100%)</text>
+    <text x="18" y="68" font-size="10" class="adaptive-sub" fill="#64748b">🌑 暗い (0%)</text>
+    <text x="150" y="68" font-size="10" fill="#ea580c" font-weight="bold">☀️ 明るい (100%)</text>
 
     <!-- ステータスメーター -->
-    <line x1="250" y1="10" x2="250" y2="68" stroke="#cbd5e1" stroke-width="1.5"/>
+    <line x1="265" y1="10" x2="265" y2="70" stroke="#cbd5e1" stroke-width="1.5"/>
 
-    <text x="282" y="25" class="info-label adaptive-sub" fill="#475569">周囲の光度:</text>
-    <text id="txt-light" x="375" y="25" class="val-label">50%</text>
+    <text x="290" y="26" class="info-label adaptive-sub" fill="#475569">周囲の光度:</text>
+    <text id="txt-light" x="390" y="26" class="val-label">0%</text>
 
-    <text x="282" y="44" class="info-label adaptive-sub" fill="#475569">CdSセルの抵抗値:</text>
-    <text id="txt-res" x="375" y="44" class="val-label" fill="#ea580c">50.3 kΩ</text>
+    <text x="290" y="45" class="info-label adaptive-sub" fill="#475569">CdSセルの抵抗値:</text>
+    <text id="txt-res" x="390" y="45" class="val-label" fill="#ea580c">100.0 kΩ</text>
 
-    <text x="282" y="63" class="info-label adaptive-sub" fill="#475569">回路を流れる電流:</text>
-    <text id="txt-current" x="375" y="63" class="val-label" fill="#16a34a">6.0 mA</text>
+    <text x="290" y="64" class="info-label adaptive-sub" fill="#475569">回路を流れる電流:</text>
+    <text id="txt-current" x="390" y="64" class="val-label" fill="#16a34a">0.0 mA</text>
   </g>
 
   <!-- 下部解説バナー -->
-  <rect id="banner-panel" x="30" y="280" width="500" height="30" rx="5" fill="#f1f5f9" stroke="#cbd5e1" class="panel-bg"/>
-  <text id="cds-status-text" x="280" y="299" font-size="10" font-weight="bold" class="adaptive-main" fill="#334155" text-anchor="middle">
-    【やや明るい状態】光を受けるとCdSの抵抗が下がり、少しずつ電流が流れてLEDが薄く点灯します。
+  <rect id="banner-panel" x="30" y="277" width="520" height="30" rx="5" fill="#f1f5f9" stroke="#cbd5e1" class="panel-bg"/>
+  <text id="cds-status-text" x="290" y="296" font-size="10" font-weight="bold" class="adaptive-main" fill="#334155" text-anchor="middle">
+    【暗い状態】周囲が暗くなるとCdSの抵抗が極めて大きく(約100.0kΩ)なり、LEDは消灯します。
   </text>
-    <!-- ★ 拡大ボタン -->
-    <g class="zoom-btn" transform="translate(515, 18)" title="拡大表示">
-      <circle cx="70" cy="12" r="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
-      <text x="70" y="16" font-size="14" text-anchor="middle">🔍️</text>
-    </g>
+
+  <!-- ★ 拡大ボタン -->
+  <g class="zoom-btn" transform="translate(535, 20)" title="拡大表示">
+    <circle cx="12" cy="12" r="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+    <text x="12" y="16" font-size="11" text-anchor="middle">🔍</text>
+  </g>
 </svg>
+
 
           <p class="parts-desc">
             光の強さによって抵抗値が変化するセンサーです。明るい場所では抵抗が小さくなり、暗い場所では抵抗が大きくなります。トランジスタと併用することで夜間自動点灯ライトなどに使用されます。
@@ -3180,7 +3337,7 @@ textarea {
   <section style="margin-bottom: 32px;">
     <h4 style="margin-bottom: 12px; color: #1e293b;">2. トランジスタ自動点灯回路</h4>
   <!-- トランジスタ自動点灯回路SVG -->
-  <svg viewBox="0 0 560 330" class="parts-img" xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 580 330" class="parts-img" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; font-family: sans-serif;">
     <defs>
       <!-- LED発光グローフィルター -->
       <filter id="tr-led-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -3199,7 +3356,7 @@ textarea {
     </defs>
 
     <style>
-      .label-title { font-size: 13px; font-weight: bold; text-anchor: middle; transition: fill 0.3s; }
+      .label-title { font-size: 14px; font-weight: bold; text-anchor: middle; transition: fill 0.3s; }
       .wire { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; transition: stroke 0.3s; }
       .cds-body { fill: #fed7aa; stroke: #ea580c; stroke-width: 1.5; }
       .cds-pattern { fill: none; stroke: #c2410c; stroke-width: 2; stroke-linecap: round; }
@@ -3212,15 +3369,15 @@ textarea {
       .panel-bg { transition: fill 0.3s, stroke 0.3s; }
       .pin-label-plus { font-size: 8.5px; font-weight: bold; fill: #ef4444; }
       .pin-label-minus { font-size: 8.5px; font-weight: bold; fill: #3b82f6; }
+      .zoom-btn { cursor: pointer; }
+      .zoom-btn:hover circle { fill: #f1f5f9; stroke: #94a3b8; }
     </style>
 
     <script>
       <![CDATA[
-      // ★ 引数を target (スライダー要素または値) に変更
       function updateNightlightCircuit(target) {
         let val, svg;
         
-        // 入力要素から直接呼ばれた場合と数値指定の場合を判定
         if (typeof target === 'object' && target !== null && target.closest) {
           val = target.value;
           svg = target.closest('svg');
@@ -3263,7 +3420,6 @@ textarea {
         const opStroke = mix([71, 85, 105], [203, 213, 225], ratio);
         const wireStroke = mix([148, 163, 184], [71, 85, 105], ratio);
 
-        // ★ スコープ内の要素を取得して書き換え
         const bgPanel = svg.querySelector('#tr-bg-panel');
         if (bgPanel) {
           bgPanel.setAttribute('fill', bgFill);
@@ -3280,7 +3436,6 @@ textarea {
           bannerPanel.setAttribute('stroke', opStroke);
         }
 
-        // 配線色の適用 (スコープ対応＆セレクタ修正)
         const wires = svg.querySelectorAll('.wire-std');
         wires.forEach(w => w.style.stroke = wireStroke);
 
@@ -3289,14 +3444,12 @@ textarea {
         if (wireBase) wireBase.style.stroke = isDark ? '#f59e0b' : wireStroke;
         if (wireColl) wireColl.style.stroke = isDark ? '#ef4444' : wireStroke;
 
-        // テキスト色の動的切替
         const mainTexts = svg.querySelectorAll('.adaptive-main');
         mainTexts.forEach(t => t.style.fill = textMain);
 
         const subTexts = svg.querySelectorAll('.adaptive-sub');
         subTexts.forEach(t => t.style.fill = textSub);
 
-        // 4. LED描画更新
         const dome = svg.querySelector('#tr-led-dome');
         const glow = svg.querySelector('#tr-glow-blur');
         const core = svg.querySelector('#tr-led-core');
@@ -3310,11 +3463,9 @@ textarea {
           core.setAttribute('fill-opacity', isDark ? brightness.toFixed(2) : '0');
         }
 
-        // 5. 光線イラスト更新
         const rays = svg.querySelector('#tr-rays');
         if (rays) rays.setAttribute('opacity', ratio.toFixed(2));
 
-        // 6. テキスト数値表示更新
         const txtLight = svg.querySelector('#tr-txt-light');
         if (txtLight) txtLight.textContent = Math.round(p) + '%';
         
@@ -3330,7 +3481,6 @@ textarea {
           txtLed.setAttribute('fill', isDark ? '#ef4444' : textSub);
         }
 
-        // 7. 解説メッセージ更新
         const statusText = svg.querySelector('#tr-status-text');
         if (statusText) {
           if (p < 40) {
@@ -3341,7 +3491,6 @@ textarea {
         }
       }
       
-      // 全てのトランジスタ回路スライダーの初期値をセット
       window.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('#tr-slider').forEach(input => updateNightlightCircuit(input));
       });
@@ -3349,58 +3498,57 @@ textarea {
     </script>
 
     <!-- 外枠パネル -->
-    <rect id="tr-bg-panel" x="-60" y="8" width="680" height="314" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" class="panel-bg"/>
-    <text x="280" y="28" class="label-title adaptive-main" fill="#1e293b">🌙 トランジスタによる自動点灯回路</text>
+    <rect id="tr-bg-panel" x="10" y="10" width="560" height="310" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" class="panel-bg"/>
+    <text x="290" y="34" class="label-title adaptive-main" fill="#1e293b">🌙 トランジスタによる自動点灯回路</text>
 
     <!-- ==================== 回路配線 ==================== -->
-    <!-- 電源(+)ライン (50px高さ) -->
-    <path d="M 52 105 L 52 50 L 430 50" class="wire wire-std"/>
-    <path d="M 180 50 L 180 72" class="wire wire-std"/> <!-- 5.6k抵抗(+)へ -->
-    <path d="M 430 50 L 430 55" class="wire wire-std"/> <!-- 220Ω抵抗(+)へ -->
+    <!-- 電源(+)ライン -->
+    <path d="M 68 95 L 68 50 L 452 50" class="wire wire-std"/>
+    <path d="M 195 50 L 195 72" class="wire wire-std"/> <!-- 5.6k抵抗(+)へ -->
+    <path d="M 452 50 L 452 55" class="wire wire-std"/> <!-- 220Ω抵抗(+)へ -->
 
-    <!-- 電源(-)GNDライン (175px高さ) -->
-    <path d="M 75 145 L 75 175 L 315 175" class="wire wire-std"/>
-    <path d="M 180 148 L 180 175" class="wire wire-std"/> <!-- CdS(-)GNDへ -->
-    <path d="M 315 148 L 315 175" class="wire wire-std"/> <!-- トランジスタE(エミッタ)GNDへ -->
+    <!-- 電源(-)GNDライン -->
+    <path d="M 92 132 L 92 165 L 330 165" class="wire wire-std"/>
+    <path d="M 195 148 L 195 165" class="wire wire-std"/> <!-- CdS(-)GNDへ -->
+    <path d="M 330 148 L 330 165" class="wire wire-std"/> <!-- トランジスタE(エミッタ)GNDへ -->
 
     <!-- 分圧ノード → トランジスタB(ベース) -->
-    <path d="M 180 98 L 180 118" class="wire wire-std"/> <!-- 抵抗とCdSの接続 -->
-    <path id="tr-wire-base" d="M 180 108 L 285 108 L 285 133 L 290 133" class="wire" stroke="#94a3b8"/>
+    <path d="M 195 98 L 195 118" class="wire wire-std"/> <!-- 抵抗とCdSの接続 -->
+    <path id="tr-wire-base" d="M 195 108 L 300 108 L 300 133 L 305 133" class="wire" stroke="#94a3b8"/>
 
     <!-- 220Ω抵抗 → LEDアノード(+) -->
-    <path d="M 430 81 L 430 95" class="wire wire-std"/>
+    <path d="M 452 81 L 452 95" class="wire wire-std"/>
 
-    <!-- トランジスタC(コレクタ) → 中間(x=372)まで右に進んでから下(y=162)に降り、LEDの−極へ下から接続 -->
-    <path id="tr-wire-coll" d="M 315 115 L 372 115 L 372 162 L 430 162 L 430 148" class="wire" stroke="#94a3b8"/>
+    <!-- トランジスタC(コレクタ) → LEDの−極へ下から接続 -->
+    <path id="tr-wire-coll" d="M 330 115 L 392 115 L 392 152 L 452 152 L 452 143" class="wire" stroke="#94a3b8"/>
 
     <!-- ==================== コンポーネント配置 ==================== -->
     <!-- 電源 (乾電池 3.0V) -->
-  <g transform="translate(40, 105)">
-    <rect x="0" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
-    <rect x="7" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
-    <text x="12" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
-    <text x="12" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+    <g transform="translate(56, 99)">
+      <rect x="0" y="0" width="24" height="38" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+      <rect x="7" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+      <text x="12" y="14" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+      <text x="12" y="31" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
 
-    <rect x="24" y="0" width="24" height="40" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
-    <rect x="31" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
-    <text x="36" y="15" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
-    <text x="36" y="33" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
+      <rect x="24" y="0" width="24" height="38" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+      <rect x="31" y="-4" width="10" height="4" rx="1" fill="#94a3b8"/>
+      <text x="36" y="14" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">+</text>
+      <text x="36" y="31" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">-</text>
 
-    <!-- 回路の内側に配置した電池ラベル -->
-    <text x="56" y="24" font-size="9.5" font-weight="bold" class="adaptive-main" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
-  </g>
+      <text x="54" y="23" font-size="9" font-weight="bold" class="adaptive-main" fill="#0f172a" text-anchor="start">乾電池 3.0V</text>
+    </g>
 
-  <!-- 電池直列接続線 -->
-  <path d="M 52 138 L 52 148 L 64 148 L 64 101 L 76 101" stroke="#38bdf8" stroke-width="1.5" fill="none"/>
+    <!-- 電池直列接続線 -->
+    <path d="M 68 132 L 68 141 L 80 141 L 80 95 L 92 95" stroke="#38bdf8" stroke-width="1.5" fill="none"/>
 
     <!-- 光線エフェクト -->
     <g id="tr-rays" opacity="0.2" style="transition: opacity 0.2s;">
-      <polygon points="155,80 170,80 185,120 170,120" fill="url(#tr-ray-grad)"/>
-      <polygon points="180,76 195,76 192,122 177,122" fill="url(#tr-ray-grad)"/>
+      <polygon points="170,80 185,80 200,120 185,120" fill="url(#tr-ray-grad)"/>
+      <polygon points="195,76 210,76 207,122 192,122" fill="url(#tr-ray-grad)"/>
     </g>
 
     <!-- 5.6kΩ 抵抗器 (分圧用) -->
-    <g transform="translate(180, 85)">
+    <g transform="translate(195, 85)">
       <line x1="0" y1="-13" x2="0" y2="-18" stroke="#94a3b8" stroke-width="2"/>
       <line x1="0" y1="13" x2="0" y2="18" stroke="#94a3b8" stroke-width="2"/>
       <rect x="-12" y="-13" width="24" height="26" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
@@ -3411,7 +3559,7 @@ textarea {
     </g>
 
     <!-- CdSセル (センサー) -->
-    <g transform="translate(180, 133)">
+    <g transform="translate(195, 133)">
       <line x1="0" y1="-13" x2="0" y2="-15" stroke="#94a3b8" stroke-width="2"/>
       <line x1="0" y1="13" x2="0" y2="15" stroke="#94a3b8" stroke-width="2"/>
       <circle cx="0" cy="0" r="13" class="cds-body"/>
@@ -3420,7 +3568,7 @@ textarea {
     </g>
 
     <!-- NPNトランジスタ -->
-    <g transform="translate(300, 133)">
+    <g transform="translate(315, 133)">
       <path d="M -10 -15 L -10 15" stroke="#475569" stroke-width="3"/>
       <line x1="-20" y1="0" x2="-10" y2="0" stroke="#94a3b8" stroke-width="2"/> <!-- B -->
       <line x1="-10" y1="-8" x2="15" y2="-18" stroke="#94a3b8" stroke-width="2"/> <!-- C -->
@@ -3430,11 +3578,11 @@ textarea {
       <text x="-23" y="-3" font-size="8" class="adaptive-main" font-weight="bold" fill="#1e293b" text-anchor="end">B</text>
       <text x="18" y="-20" font-size="8" class="adaptive-main" font-weight="bold" fill="#1e293b" text-anchor="start">C</text>
       <text x="18" y="21" font-size="8" class="adaptive-main" font-weight="bold" fill="#1e293b" text-anchor="start">E</text>
-      <text x="2" y="-35" font-size="9" font-weight="bold" class="adaptive-sub" fill="#64748b" text-anchor="middle">NPNトランジスタ</text>
+      <text x="2" y="-32" font-size="9" font-weight="bold" class="adaptive-sub" fill="#64748b" text-anchor="middle">NPNトランジスタ</text>
     </g>
 
     <!-- 220Ω 保護抵抗器 -->
-    <g transform="translate(430, 68)">
+    <g transform="translate(452, 68)">
       <line x1="0" y1="-13" x2="0" y2="-18" stroke="#94a3b8" stroke-width="2"/>
       <line x1="0" y1="13" x2="0" y2="18" stroke="#94a3b8" stroke-width="2"/>
       <rect x="-12" y="-13" width="24" height="26" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
@@ -3445,12 +3593,12 @@ textarea {
     </g>
 
     <!-- 発光LED -->
-    <g transform="translate(430, 125)">
-      <line x1="0" y1="-30" x2="0" y2="-15" class="led-pin"/> <!-- 上側ピン：アノード(+) -->
+    <g transform="translate(452, 120)">
+      <line x1="0" y1="-25" x2="0" y2="-15" class="led-pin"/> <!-- 上側ピン：アノード(+) -->
       <line x1="0" y1="0" x2="0" y2="23" class="led-pin"/>      <!-- 下側ピン：カソード(-) -->
       
       <!-- 極性表記 -->
-      <text x="-8" y="-22" class="pin-label-plus" text-anchor="end">+</text>
+      <text x="-8" y="-18" class="pin-label-plus" text-anchor="end">+</text>
       <text x="-8" y="18" class="pin-label-minus" text-anchor="end">-</text>
       
       <path id="tr-led-dome" d="M -15 -10 C -15 -32 15 -32 15 -10 Z" fill="#ef4444" opacity="0.9" filter="url(#tr-led-glow)" class="led-dome-tr"/>
@@ -3460,42 +3608,44 @@ textarea {
     </g>
 
     <!-- インタラクティブ操作エリア -->
-    <g transform="translate(30, 192)">
-      <rect id="tr-op-panel" x="0" y="0" width="500" height="78" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" class="panel-bg"/>
+    <g transform="translate(30, 185)">
+      <rect id="tr-op-panel" x="0" y="0" width="520" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" class="panel-bg"/>
 
       <text x="18" y="24" font-size="11" font-weight="bold" class="adaptive-main" fill="#1e293b">☀️ 周囲の明るさ（光度）を調節:</text>
 
-      <!-- ★ HTML range スライダー: oninput="updateNightlightCircuit(this)" に変更 -->
-      <foreignObject x="18" y="32" width="220" height="35">
+      <!-- スライダー -->
+      <foreignObject x="18" y="32" width="230" height="35">
         <input type="range" id="tr-slider" min="0" max="100" value="100" oninput="updateNightlightCircuit(this)" style="width: 95%; cursor: pointer; vertical-align: middle;"/>
       </foreignObject>
 
-      <text x="18" y="67" font-size="10" class="adaptive-sub" fill="#64748b">🌑 暗い (0%)</text>
-      <text x="142" y="67" font-size="10" fill="#ea580c" font-weight="bold">☀️ 明るい (100%)</text>
+      <text x="18" y="68" font-size="10" class="adaptive-sub" fill="#64748b">🌑 暗い (0%)</text>
+      <text x="150" y="68" font-size="10" fill="#ea580c" font-weight="bold">☀️ 明るい (100%)</text>
 
-      <line x1="250" y1="10" x2="250" y2="68" stroke="#cbd5e1" stroke-width="1.5"/>
+      <line x1="265" y1="10" x2="265" y2="70" stroke="#cbd5e1" stroke-width="1.5"/>
 
-      <text x="282" y="25" class="info-label adaptive-sub" fill="#475569">周囲の光度:</text>
-      <text id="tr-txt-light" x="385" y="25" class="val-label">20%</text>
+      <text x="290" y="26" class="info-label adaptive-sub" fill="#475569">周囲の光度:</text>
+      <text id="tr-txt-light" x="390" y="26" class="val-label">100%</text>
 
-      <text x="282" y="44" class="info-label adaptive-sub" fill="#475569">トランジスタ状態:</text>
-      <text id="tr-txt-tr" x="385" y="44" class="val-label" fill="#22c55e">ON (導通)</text>
+      <text x="290" y="45" class="info-label adaptive-sub" fill="#475569">トランジスタ状態:</text>
+      <text id="tr-txt-tr" x="390" y="45" class="val-label" fill="#64748b">OFF (遮断)</text>
 
-      <text x="282" y="63" class="info-label adaptive-sub" fill="#475569">LED出力状態:</text>
-      <text id="tr-txt-led" x="385" y="63" class="val-label" fill="#ef4444">点灯 (ON)</text>
+      <text x="290" y="64" class="info-label adaptive-sub" fill="#475569">LED出力状態:</text>
+      <text id="tr-txt-led" x="390" y="64" class="val-label" fill="#64748b">消灯 (OFF)</text>
     </g>
 
     <!-- 下部解説バナー -->
-    <rect id="tr-banner-panel" x="30" y="280" width="500" height="30" rx="5" fill="#f1f5f9" stroke="#cbd5e1" class="panel-bg"/>
-    <text id="tr-status-text" x="280" y="299" font-size="10" font-weight="bold" class="adaptive-main" fill="#334155" text-anchor="middle">
-      【暗い状態】CdSが高抵抗になり、ベース(B)に電流が流れトランジスタがON→LEDが自動点灯！
+    <rect id="tr-banner-panel" x="30" y="277" width="520" height="30" rx="5" fill="#f1f5f9" stroke="#cbd5e1" class="panel-bg"/>
+    <text id="tr-status-text" x="290" y="296" font-size="10" font-weight="bold" class="adaptive-main" fill="#334155" text-anchor="middle">
+      【明るい状態】CdSが低抵抗(約0.5kΩ)になり、ベース(B)の電圧が下がってトランジスタOFF→LED消灯。
     </text>
-        <!-- ★ 拡大ボタン -->
-    <g class="zoom-btn" transform="translate(515, 18)" title="拡大表示">
-      <circle cx="70" cy="12" r="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
-      <text x="70" y="16" font-size="14" text-anchor="middle">🔍️</text>
+
+    <!-- ★ 拡大ボタン -->
+    <g class="zoom-btn" transform="translate(535, 20)" title="拡大表示">
+      <circle cx="12" cy="12" r="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+      <text x="12" y="16" font-size="11" text-anchor="middle">🔍</text>
     </g>
 </svg>
+
 <p class="parts-desc">
             ベース（B）に微小な電流を流すことで、コレクタ（C）とエミッタ（E）間の大きな電流を制御（電子スイッチング）します。CdSセルと組み合わせて暗くなると自動でLEDを点灯させる回路などに利用できます。
           </p>
