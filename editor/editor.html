@@ -1706,6 +1706,10 @@ button.btn-primary:hover {
         <button class="footer-tab-btn" onclick="switchFooterTab('colors')">
           <i class="fa-solid fa-palette" style="color:#ff4081;"></i> カラー
         </button>
+           <!-- プリセットタブボタン -->
+        <button class="footer-tab-btn" onclick="switchFooterTab('preset')">
+          <i class="fa-solid fa-file-code" style="color:#1572b6;"></i> プリセット
+        </button>
       </div>
 
       
@@ -1769,17 +1773,6 @@ button.btn-primary:hover {
             </div>
           </div>
 
-          <!-- リスト・フォームの横に配置したプリセットグループ -->
-          <div class="tag-sub-group">
-            <div class="tag-sub-title"><i class="fa-solid fa-file-code"></i> プリセット</div>
-            <div class="tag-grid">
-              <span class="tag-chip" onclick="insertTag('&lt;!DOCTYPE html&gt;\n&lt;html lang=&quot;ja&quot;&gt;\n&lt;head&gt;\n  &lt;meta charset=&quot;UTF-8&quot;&gt;\n  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;\n  &lt;title&gt;Document&lt;/title&gt;\n  &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;\n&lt;/head&gt;\n&lt;body&gt;\n  $0\n  &lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;\n&lt;/body&gt;\n&lt;/html&gt;')" title="HTML基本テンプレート">HTML一括生成</span>
-              <span class="tag-chip" onclick="insertTag('&lt;!-- メニュー部分 開始 --&gt;\n&lt;!-- ハンバーガーメニュー --&gt;\n&lt;div class=&quot;menu-toggle&quot; id=&quot;menu-toggle&quot;&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n&lt;/div&gt;\n&lt;!-- メニュー本体 --&gt;\n&lt;div id=&quot;menu&quot;&gt;\n  &lt;ul&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス$0&quot; target=&quot;_blank&quot;&gt;リンク１&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク２&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク３&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク４&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク５&lt;/a&gt;&lt;/li&gt;\n  &lt;/ul&gt;\n&lt;/div&gt;')" title="メニュー構造HTML">メニュー作成</span>
-        <span class="tag-chip" onclick="insertTag('&lt;!-- 地図 の読み込み --&gt;\n&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/leaflet@1.0.3/dist/leaflet.css&quot;&gt;$0\n&lt;script src=&quot;https://unpkg.com/leaflet@1.0.3/dist/leaflet.js&quot;&gt;&lt;/script&gt;')" title="Leaflet地図ライブラリ読み込み">地図（head内）</span>
-        <span class="tag-chip" onclick="insertTag('&lt;!-- 地図 の表示 --&gt;\n&lt;div class=&quot;map-info&quot;&gt;\n&lt;div class=&quot;map&quot; id=&quot;h_map&quot;&gt;&lt;/div&gt;\n&lt;/div&gt;')" title="地図表示（Leaflet設定）">地図(body内)</span>
-        
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1821,16 +1814,6 @@ button.btn-primary:hover {
         <span class="tag-chip" onclick="insertTag('padding: 10px 10px 10px 10px; /* 枠線の「内側」の余白（上・右・下・左） */')" title="padding">パディング</span>
       </div>
     </div>
-
-    <!-- メニュー用プリセット -->
-    <div class="tag-sub-group">
-      <div class="tag-sub-title"><i class="fa-solid fa-bars"></i> プリセット</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('padding: 0.4em 0.5em; /* 文字の上下・左右の余白 */\n  color: #000000; /* 文字色 */\n  background: #f4f4f4; /* 背景色 */\n  border-left: solid 5px #7db4e6;   /* 左線 */\n  border-bottom: solid 3px #d7d7d7; /* 下線 */\n  font-size: 25px; /* 文字サイズ */')" title="見出しセット">見出しセット</span>
-        <span class="tag-chip" onclick="insertTag('/* メニューバー */\n/*========= PC表示 ==========*/\n#menu {\n  border-top: 3px solid #cccccc;\n  border-bottom: 3px solid #cccccc;\n  background: #ffffff;\n  height: 47px;\n  width: 100%;\n  color: #ffffff;\n}\n\n#menu ul {\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n#menu ul li {\n  flex: 1; /* 均等に分ける */\n  height: 47px;\n  border-right: 1px solid #ffffff;\n}\n\n#menu ul li:last-child {\n  border-right: none;\n}\n\n#menu ul li a { /* マウスを重ねる前 */\n  display: block;\n  color: #ffffff; /* 文字の色 */\n  background: #000000; /* 背景の色 */\n  font-weight: bold;\n  font-size: 18px;\n  text-align: center;\n  letter-spacing: 2px;\n  line-height: 47px;\n  text-decoration: none;\n}\n\n#menu ul li a:hover { /* マウスを重ねた後 */\n  color: #000000; /* 文字の色 */\n  background: #cccccc; /* 背景の色 */\n  text-decoration: underline;\n}\n\n/*========= ハンバーガーボタン ==========*/\n.menu-toggle {\n  display: none;\n  cursor: pointer;\n  width: 30px;\n  height: 25px;\n  position: fixed;\n  top: 15px;\n  right: 15px;\n  z-index: 1001;\n  background: rgba(0, 0, 0, 0.7);\n  border-radius: 5px;\n  padding: 5px;\n}\n\n.menu-toggle span {\n  display: block;\n  height: 3px;\n  background: #fff;\n  margin: 4px 0;\n  transition: 0.4s;\n  border-radius: 2px;\n}\n\n.menu-toggle.active span:nth-child(1) {\n  transform: rotate(45deg) translate(5px, 5px);\n}\n.menu-toggle.active span:nth-child(2) {\n  opacity: 0;\n}\n.menu-toggle.active span:nth-child(3) {\n  transform: rotate(-45deg) translate(6px, -6px);\n}\n\n/*========= スマホ表示 ==========*/\n@media screen and (max-width: 600px) {\n  #menu {\n    height: auto; /* 高さ固定しない */\n    border: none;\n    background: transparent;\n  }\n\n  #menu ul {\n    position: fixed;\n    top: 60px;\n    right: 15px;\n    width: 50vw;\n    max-height: 80vh;\n    background: #fff;\n    display: none;\n    flex-direction: column;\n    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);\n    border-radius: 5px;\n    overflow-y: auto;\n    z-index: 1000;\n  }\n\n  #menu ul.active {\n    display: flex;\n  }\n\n  #menu ul li {\n    border-bottom: 1px solid #ddd;\n    width: 100%;\n  }\n\n  #menu ul li:last-child {\n    border-bottom: none;\n  }\n\n  #menu ul li a {\n    display: block;\n    padding: 15px;\n    color: #000;\n    background: transparent;\n    font-size: 16px;\n    text-align: left;\n    line-height: 1.5;\n  }\n\n  #menu ul li a:hover {\n    background: #eee;\n    color: #000;\n  }\n\n  .menu-toggle {\n    display: block;\n  }\n}\n$0')" title="レスポンシブ対応メニューCSS">メニュースタイル</span>
-      <span class="tag-chip" onclick="insertTag('/* 地図 */\n.map-info {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 20px;\n  justify-content: center;\n  margin-top: 20px;\n}\n\n.map {\n  width: 48%;\n  min-width: 300px;\n  height: $0300px;\n  border: 2px solid #808080;\n}')" title="地図スタイル（CSS）">地図スタイル</span>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1847,17 +1830,6 @@ button.btn-primary:hover {
         <span class="tag-chip" onclick="insertTag('function $0() {\n  \n}')" title="関数定義">function</span>
         <span class="tag-chip" onclick="insertTag('document.querySelector(&quot;$0&quot;)')" title="要素取得">querySelector</span>
         <span class="tag-chip" onclick="insertTag('$0.addEventListener(&quot;click&quot;, (e) =&gt; {\n  \n});')" title="イベントリスナー">addEventListener</span>
-      </div>
-    </div>
-
-    <!-- ハンバーガーメニュー用JSプリセット -->
-    <div class="tag-sub-group">
-      <div class="tag-sub-title"><i class="fa-solid fa-bars-staggered"></i> プリセット</div>
-      <div class="tag-grid">
-        <span class="tag-chip" onclick="insertTag('document.addEventListener(&quot;DOMContentLoaded&quot;, function () {\n  const toggle = document.getElementById(&quot;menu-toggle&quot;);\n  const menu = document.getElementById(&quot;menu&quot;);\n  const menuLists = document.querySelectorAll(&quot;#menu ul&quot;);\n\n  // メニュー開閉\n  toggle.addEventListener(&quot;click&quot;, function (e) {\n    e.stopPropagation(); // イベントのバブリングを防止\n    toggle.classList.toggle(&quot;active&quot;);\n    menuLists.forEach(function (ul) {\n      ul.classList.toggle(&quot;active&quot;);\n    });\n  });\n\n  // メニューの外をクリックしたら閉じる\n  document.addEventListener(&quot;click&quot;, function (event) {\n    if (!toggle.contains(event.target) &amp;&amp; !menu.contains(event.target)) {\n      toggle.classList.remove(&quot;active&quot;);\n      menuLists.forEach(function (ul) {\n        ul.classList.remove(&quot;active&quot;);\n      });\n    }\n  });\n});\n$0')" title="ハンバーガーメニュー制御JS">メニュー制御</span>
-      
-      <span class="tag-chip" onclick="insertTag('&lt;!--地図の座標などを指定（日本国内限定）--&gt;\n  window.onload = function () {\n    var map = L.map(&quot;h_map&quot;);\n\n    var tileLayer_gsi = L.tileLayer(\n      &quot;https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png&quot;,\n      { attribution: &quot;&lt;a href=\'https://maps.gsi.go.jp/development/ichiran.html\' target=\'_blank\'&gt;国土地理院&lt;/a&gt;&quot; }\n    );\n    tileLayer_gsi.addTo(map);\n          \n    //緯度・経度をGoogleマップなどからコピペする\n    var points = [\n      [34.687337892506655, 135.52576861539666$0]\n    ];\n\n    map.setView(points[0], 14);\n\n    //マーカーをクリックしたときに表示する名前と画像\n    var marker = L.marker(points[0]);\n    marker.bindPopup(&quot;大阪城&lt;br&gt;&lt;img src=\'画像アドレス\' width=\'100\' height=\'100\'&gt;&quot;);\n    marker.addTo(map);\n\n    var polyline = L.polyline(points, { color: &quot;blue&quot; });\n    polyline.addTo(map);\n  }')" title="地図制御JS">地図座標制御</span>
-
       </div>
     </div>
   </div>
@@ -2111,6 +2083,50 @@ button.btn-primary:hover {
   </div><!-- /.tag-list-container を閉じる -->
 </div><!-- /#footer-pane-colors を閉じる -->
 
+<!-- HTMLタグ一覧 -->
+      <div id="footer-pane-preset" class="footer-pane active">
+        <div class="tag-list-container">
+          <div class="tag-sub-group">
+            <div class="tag-sub-title"><i class="fa-brands fa-html5"></i> HTML設定</div>
+            <div class="tag-grid">
+              
+              <span class="tag-chip" onclick="insertTag('&lt;!DOCTYPE html&gt;\n&lt;html lang=&quot;ja&quot;&gt;\n&lt;head&gt;\n  &lt;meta charset=&quot;UTF-8&quot;&gt;\n  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;\n  &lt;title&gt;Document&lt;/title&gt;\n  &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;\n&lt;/head&gt;\n&lt;body&gt;\n  $0\n  &lt;script src=&quot;script.js&quot;&gt;&lt;/script&gt;\n&lt;/body&gt;\n&lt;/html&gt;')" title="HTML基本テンプレート">HTML一括生成</span>
+              <span class="tag-chip" onclick="insertTag('&lt;!-- メニュー部分 開始 --&gt;\n&lt;!-- ハンバーガーメニュー --&gt;\n&lt;div class=&quot;menu-toggle&quot; id=&quot;menu-toggle&quot;&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n  &lt;span&gt;&lt;/span&gt;\n&lt;/div&gt;\n&lt;!-- メニュー本体 --&gt;\n&lt;div id=&quot;menu&quot;&gt;\n  &lt;ul&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス$0&quot; target=&quot;_blank&quot;&gt;リンク１&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク２&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク３&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク４&lt;/a&gt;&lt;/li&gt;\n    &lt;li&gt;&lt;a href=&quot;アドレス&quot; target=&quot;_blank&quot;&gt;リンク５&lt;/a&gt;&lt;/li&gt;\n  &lt;/ul&gt;\n&lt;/div&gt;')" title="メニュー構造HTML">メニュー作成</span>
+        <span class="tag-chip" onclick="insertTag('&lt;!-- 地図 の読み込み --&gt;\n&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/leaflet@1.0.3/dist/leaflet.css&quot;&gt;$0\n&lt;script src=&quot;https://unpkg.com/leaflet@1.0.3/dist/leaflet.js&quot;&gt;&lt;/script&gt;')" title="Leaflet地図ライブラリ読み込み">地図（head内）</span>
+        <span class="tag-chip" onclick="insertTag('&lt;!-- 地図 の表示 --&gt;\n&lt;div class=&quot;map-info&quot;&gt;\n&lt;div class=&quot;map&quot; id=&quot;h_map&quot;&gt;&lt;/div&gt;\n&lt;/div&gt;')" title="地図表示（Leaflet設定）">地図(body内)</span>
+        <span class="tag-chip" onclick="insertTag('&lt;button id=&quot;openModalBtn&quot; class=&quot;btn-primary&quot;&gt;モーダルを開く&lt;/button&gt;\n &lt;div id=&quot;modal&quot; class=&quot;modal&quot;&gt;\n   &lt;div class=&quot;modal-content&quot;&gt;\n   &lt;span id=&quot;closeModalBtn&quot; class=&quot;close-btn&quot;&gt;&times;&lt;/span&gt;\n     &lt;h2&gt;モーダルのタイトル&lt;/h2&gt;\n    &lt;p&gt;ここにモーダルのコンテンツが入ります。&lt;/p&gt;\n  &lt;/div&gt;\n&lt;/div&gt;')" title="モーダル(html)">モーダル</span>
+        
+            </div>
+          </div>
+
+<!-- メニュー用プリセット -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-brands fa-css3-alt"></i> CSS設定</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('padding: 0.4em 0.5em; /* 文字の上下・左右の余白 */\n  color: #000000; /* 文字色 */\n  background: #f4f4f4; /* 背景色 */\n  border-left: solid 5px #7db4e6;   /* 左線 */\n  border-bottom: solid 3px #d7d7d7; /* 下線 */\n  font-size: 25px; /* 文字サイズ */')" title="見出しセット">見出しセット</span>
+        <span class="tag-chip" onclick="insertTag('/* メニューバー */\n/*========= PC表示 ==========*/\n#menu {\n  border-top: 3px solid #cccccc;\n  border-bottom: 3px solid #cccccc;\n  background: #ffffff;\n  height: 47px;\n  width: 100%;\n  color: #ffffff;\n}\n\n#menu ul {\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n#menu ul li {\n  flex: 1; /* 均等に分ける */\n  height: 47px;\n  border-right: 1px solid #ffffff;\n}\n\n#menu ul li:last-child {\n  border-right: none;\n}\n\n#menu ul li a { /* マウスを重ねる前 */\n  display: block;\n  color: #ffffff; /* 文字の色 */\n  background: #000000; /* 背景の色 */\n  font-weight: bold;\n  font-size: 18px;\n  text-align: center;\n  letter-spacing: 2px;\n  line-height: 47px;\n  text-decoration: none;\n}\n\n#menu ul li a:hover { /* マウスを重ねた後 */\n  color: #000000; /* 文字の色 */\n  background: #cccccc; /* 背景の色 */\n  text-decoration: underline;\n}\n\n/*========= ハンバーガーボタン ==========*/\n.menu-toggle {\n  display: none;\n  cursor: pointer;\n  width: 30px;\n  height: 25px;\n  position: fixed;\n  top: 15px;\n  right: 15px;\n  z-index: 1001;\n  background: rgba(0, 0, 0, 0.7);\n  border-radius: 5px;\n  padding: 5px;\n}\n\n.menu-toggle span {\n  display: block;\n  height: 3px;\n  background: #fff;\n  margin: 4px 0;\n  transition: 0.4s;\n  border-radius: 2px;\n}\n\n.menu-toggle.active span:nth-child(1) {\n  transform: rotate(45deg) translate(5px, 5px);\n}\n.menu-toggle.active span:nth-child(2) {\n  opacity: 0;\n}\n.menu-toggle.active span:nth-child(3) {\n  transform: rotate(-45deg) translate(6px, -6px);\n}\n\n/*========= スマホ表示 ==========*/\n@media screen and (max-width: 600px) {\n  #menu {\n    height: auto; /* 高さ固定しない */\n    border: none;\n    background: transparent;\n  }\n\n  #menu ul {\n    position: fixed;\n    top: 60px;\n    right: 15px;\n    width: 50vw;\n    max-height: 80vh;\n    background: #fff;\n    display: none;\n    flex-direction: column;\n    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);\n    border-radius: 5px;\n    overflow-y: auto;\n    z-index: 1000;\n  }\n\n  #menu ul.active {\n    display: flex;\n  }\n\n  #menu ul li {\n    border-bottom: 1px solid #ddd;\n    width: 100%;\n  }\n\n  #menu ul li:last-child {\n    border-bottom: none;\n  }\n\n  #menu ul li a {\n    display: block;\n    padding: 15px;\n    color: #000;\n    background: transparent;\n    font-size: 16px;\n    text-align: left;\n    line-height: 1.5;\n  }\n\n  #menu ul li a:hover {\n    background: #eee;\n    color: #000;\n  }\n\n  .menu-toggle {\n    display: block;\n  }\n}\n$0')" title="レスポンシブ対応メニューCSS">メニュースタイル</span>
+      <span class="tag-chip" onclick="insertTag('/* 地図 */\n.map-info {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 20px;\n  justify-content: center;\n  margin-top: 20px;\n}\n\n.map {\n  width: 48%;\n  min-width: 300px;\n  height: $0300px;\n  border: 2px solid #808080;\n}')" title="地図スタイル（CSS）">地図スタイル</span>
+      <span class="tag-chip" onclick="insertTag('/* --- モーダルを開くボタンのデザイン --- */\n.btn-primary {\n  background-color: #007bff;\n  color: #ffffff;\n  border: none;\n  padding: 12px 24px;\n  font-size: 16px;\n  font-weight: bold;\n  border-radius: 6px;\n  cursor: pointer;\n  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n  transition: background-color 0.2s ease, transform 0.1s ease;\n}\n\n/* ホバー時の装飾 */\n.btn-primary:hover {\n  background-color: #0056b3;\n}\n\n/* クリック（押した瞬間）の動き */\n.btn-primary:active {\n  transform: scale(0.98);\n}\n\n/* --- モーダル本体のスタイル --- */\n.modal {\n  display: none;\n  position: fixed;\n  z-index: 1000;\n  left: 0;\n  top: 0;\n  width: 100%;\n  height: 100%;\n  background-color: rgba(0, 0, 0, 0.5);\n}\n\n.modal-content {\n  background-color: #fff;\n  margin: 15% auto;\n  padding: 24px;\n  border-radius: 8px;\n  width: 80%;\n  max-width: 500px;\n  position: relative;\n  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);\n}\n\n/* 閉じるボタン */\n.close-btn {\n  position: absolute;\n  right: 16px;\n  top: 12px;\n  font-size: 24px;\n  color: #aaa;\n  cursor: pointer;\n  transition: color 0.2s;\n}\n\n.close-btn:hover {\n  color: #333;\n}')" title="モーダルスタイル（CSS）">モーダルスタイル</span>
+      </div>
+    </div>
+
+<!-- JSプリセット -->
+    <div class="tag-sub-group">
+      <div class="tag-sub-title"><i class="fa-brands fa-js"></i> JS設定</div>
+      <div class="tag-grid">
+        <span class="tag-chip" onclick="insertTag('document.addEventListener(&quot;DOMContentLoaded&quot;, function () {\n  const toggle = document.getElementById(&quot;menu-toggle&quot;);\n  const menu = document.getElementById(&quot;menu&quot;);\n  const menuLists = document.querySelectorAll(&quot;#menu ul&quot;);\n\n  // メニュー開閉\n  toggle.addEventListener(&quot;click&quot;, function (e) {\n    e.stopPropagation(); // イベントのバブリングを防止\n    toggle.classList.toggle(&quot;active&quot;);\n    menuLists.forEach(function (ul) {\n      ul.classList.toggle(&quot;active&quot;);\n    });\n  });\n\n  // メニューの外をクリックしたら閉じる\n  document.addEventListener(&quot;click&quot;, function (event) {\n    if (!toggle.contains(event.target) &amp;&amp; !menu.contains(event.target)) {\n      toggle.classList.remove(&quot;active&quot;);\n      menuLists.forEach(function (ul) {\n        ul.classList.remove(&quot;active&quot;);\n      });\n    }\n  });\n});\n$0')" title="ハンバーガーメニュー制御JS">メニュー制御</span>
+      
+      <span class="tag-chip" onclick="insertTag('&lt;!--地図の座標などを指定（日本国内限定）--&gt;\n  window.onload = function () {\n    var map = L.map(&quot;h_map&quot;);\n\n    var tileLayer_gsi = L.tileLayer(\n      &quot;https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png&quot;,\n      { attribution: &quot;&lt;a href=\'https://maps.gsi.go.jp/development/ichiran.html\' target=\'_blank\'&gt;国土地理院&lt;/a&gt;&quot; }\n    );\n    tileLayer_gsi.addTo(map);\n          \n    //緯度・経度をGoogleマップなどからコピペする\n    var points = [\n      [34.687337892506655, 135.52576861539666$0]\n    ];\n\n    map.setView(points[0], 14);\n\n    //マーカーをクリックしたときに表示する名前と画像\n    var marker = L.marker(points[0]);\n    marker.bindPopup(&quot;大阪城&lt;br&gt;&lt;img src=\'画像アドレス\' width=\'100\' height=\'100\'&gt;&quot;);\n    marker.addTo(map);\n\n    var polyline = L.polyline(points, { color: &quot;blue&quot; });\n    polyline.addTo(map);\n  }')" title="地図制御JS">地図座標制御</span>
+          
+<span class="tag-chip" onclick="insertTag('&lt;!--  モーダルウインドウ制御  --&gt;\nconst modal = document.getElementById(\'modal\');\nconst openBtn = document.getElementById(\'openModalBtn\');\nconst closeBtn = document.getElementById(\'closeModalBtn\');\n\n// ボタンクリックでモーダルを表示\nopenBtn.addEventListener(\'click\', () => {\n  modal.style.display = \'block\';\n});\n\n// 閉じるボタン（×）クリックで非表示\ncloseBtn.addEventListener(\'click\', () => {\n  modal.style.display = \'none\';\n});\n\n// モーダルの外側（背景）をクリックした時に非表示\nwindow.addEventListener(\'click\', (event) => {\n  if (event.target === modal) {\n  modal.style.display = \'none\';\n}\n});')" title="モーダル制御JS">モーダル制御</span>
+
+          
+      </div>
+    </div>
+            
+        </div>
+      </div>
+        
     </div><!-- /.footer-content-area -->
   </div><!-- /#editor-footer -->
 
