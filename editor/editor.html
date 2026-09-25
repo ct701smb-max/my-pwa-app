@@ -4492,6 +4492,23 @@ function showToast(message) {
 }
       
 // --- Preview System ---
+function closePreview() {
+  const modal = document.getElementById('preview-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Escキーで閉じる処理（グローバルイベント）
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('preview-modal');
+    if (modal && modal.style.display !== 'none') {
+      closePreview();
+    }
+  }
+});
+
 function openInBrowser() {
   let modal = document.getElementById('preview-modal');
   
@@ -4508,6 +4525,13 @@ function openInBrowser() {
       background: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex;
       flex-direction: column; align-items: center; justify-content: center;
     `;
+
+    // 1. 画面外（モーダル背景）クリックで閉じる処理
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closePreview();
+      }
+    });
 
     modal.innerHTML = `
       <div style="width: 90%; height: 90%; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
