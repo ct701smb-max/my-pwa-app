@@ -1130,6 +1130,7 @@ textarea {
         <button type="button" class="parts-menu-btn" data-target="panel-rgb">フルカラーLEDの活用</button>
         <button type="button" class="parts-menu-btn" data-target="panel-cds">CdSセルの活用</button>
         <button type="button" class="parts-menu-btn" data-target="panel-transistor">トランジスタの活用</button>
+        <button type="button" class="parts-menu-btn" data-target="panel-board">ブレッドボードの使い方</button>
       </nav>
 
       <!-- 右側：詳細・参考回路表示エリア -->
@@ -3657,10 +3658,195 @@ textarea {
           </p>
       </section>
      </div>
+
+
+          <!-- 10.ブレッドボード解説パネル -->
+<div id="panel-board" class="parts-panel hidden">
+  <h3>ブレッドボード（試用・実験用基板）</h3>
+
+  <p class="parts-desc" style="margin-bottom: 16px;">
+    ブレッドボードは、<b>ハンダ付け（金属を溶かしてくっつける作業）をせずに電子回路を組める便利な板</b>です。穴の中に小さな金属バネが入っており、パーツの足を差し込むだけで電気をつなぐことができます。
+  </p>
+
+  <!-- ブレッドボード内部構造 SVG 図解 -->
+  <svg viewBox="0 0 600 320" class="parts-img" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; background: #ffffff;">
+  <style>
+    /* 全体スタイル・明るくはっきりした配色 */
+    .bb-border { fill: #f1f5f9; stroke: #94a3b8; stroke-width: 2; rx: 12; }
+    .bb-surface { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 8; }
+    
+    /* ピンホール（穴） */
+    .pin-hole { fill: #64748b; stroke: #cbd5e1; stroke-width: 0.8; }
+    
+    /* 電源ライン */
+    .power-pos-line { stroke: #ef4444; stroke-width: 2; stroke-linecap: round; }
+    .power-neg-line { stroke: #3b82f6; stroke-width: 2; stroke-linecap: round; }
+    .power-sign { font-size: 13px; font-weight: bold; font-family: sans-serif; text-anchor: middle; }
+
+    /* アドレス文字（行列ラベル） */
+    .grid-num { font-size: 10px; font-weight: bold; fill: #475569; text-anchor: middle; font-family: monospace; }
+    .grid-alpha { font-size: 10px; font-weight: bold; fill: #475569; text-anchor: middle; font-family: monospace; }
+
+    /* 内部接続の導通ハイライト */
+    .highlight-vert { fill: #22c55e; fill-opacity: 0.15; stroke: #16a34a; stroke-width: 1.5; stroke-dasharray: 3,2; rx: 4; }
+    .highlight-horiz { fill: #ef4444; fill-opacity: 0.12; stroke: #ef4444; stroke-width: 1.5; stroke-dasharray: 3,2; rx: 4; }
+
+    /* 注釈説明カード */
+    .card-power { fill: #ffffff; stroke: #ef4444; stroke-width: 1.5; rx: 6; }
+    .card-term { fill: #ffffff; stroke: #16a34a; stroke-width: 1.5; rx: 6; }
+    .card-groove { fill: #ffffff; stroke: #64748b; stroke-width: 1.5; rx: 6; }
+    .card-title { font-size: 10.5px; font-weight: bold; }
+    .card-text { font-size: 9px; fill: #334155; }
+  </style>
+
+  <!-- 1. ブレッドボード本体外郭 (白ベースの明るい板) -->
+  <rect x="15" y="10" width="570" height="300" class="bb-border"/>
+  <rect x="25" y="20" width="550" height="280" class="bb-surface"/>
+
+  <!-- 2. 電源ライン (上下) -->
+  <!-- 上側電源ライン -->
+  <rect x="58" y="32" width="484" height="24" class="highlight-horiz"/>
+  <line x1="65" y1="38" x2="535" y2="38" class="power-pos-line"/>
+  <line x1="65" y1="50" x2="535" y2="50" class="power-neg-line"/>
+  <text x="44" y="42" class="power-sign" fill="#dc2626">+</text>
+  <text x="44" y="54" class="power-sign" fill="#2563eb">-</text>
+  <text x="556" y="42" class="power-sign" fill="#dc2626">+</text>
+  <text x="556" y="54" class="power-sign" fill="#2563eb">-</text>
+
+  <!-- 下側電源ライン -->
+  <line x1="65" y1="260" x2="535" y2="260" class="power-pos-line"/>
+  <line x1="65" y1="272" x2="535" y2="272" class="power-neg-line"/>
+  <text x="44" y="264" class="power-sign" fill="#dc2626">+</text>
+  <text x="44" y="276" class="power-sign" fill="#2563eb">-</text>
+  <text x="556" y="264" class="power-sign" fill="#dc2626">+</text>
+  <text x="556" y="276" class="power-sign" fill="#2563eb">-</text>
+
+  <!-- 3. 中央溝 (ICセパレーター) -->
+  <rect x="38" y="151" width="524" height="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1" rx="2"/>
+
+  <!-- 4. 内部導通ハイライト (10番列の縦5穴接続例) -->
+  <rect x="200" y="78" width="16" height="66" class="highlight-vert"/>
+  <line x1="208" y1="84" x2="208" y2="138" stroke="#15803d" stroke-width="2"/>
+
+  <!-- 5. 上下列番号 (1, 5, 10, 15, 20, 25, 30) -->
+  <g class="grid-num">
+    <text x="68" y="71">1</text><text x="130" y="71">5</text><text x="208" y="71">10</text><text x="286" y="71">15</text><text x="364" y="71">20</text><text x="442" y="71">25</text><text x="520" y="71">30</text>
+    <text x="68" y="250">1</text><text x="130" y="250">5</text><text x="208" y="250">10</text><text x="286" y="250">15</text><text x="364" y="250">20</text><text x="442" y="250">25</text><text x="520" y="250">30</text>
+  </g>
+
+  <!-- 6. 左右行アルファベット (a~e / f~j) -->
+  <g class="grid-alpha">
+    <!-- 左側 -->
+    <text x="46" y="88">A</text><text x="46" y="101">B</text><text x="46" y="114">C</text><text x="46" y="127">D</text><text x="46" y="140">E</text>
+    <text x="46" y="174">F</text><text x="46" y="187">G</text><text x="46" y="200">H</text><text x="46" y="213">I</text><text x="46" y="226">J</text>
+    <!-- 右側 -->
+    <text x="554" y="88">A</text><text x="554" y="101">B</text><text x="554" y="114">C</text><text x="554" y="127">D</text><text x="554" y="140">E</text>
+    <text x="554" y="174">F</text><text x="554" y="187">G</text><text x="554" y="200">H</text><text x="554" y="213">I</text><text x="554" y="226">J</text>
+  </g>
+
+  <!-- 7. ピンホール（穴穴グリッド） -->
+  <!-- 上電源穴 -->
+  <g transform="translate(68, 38)">
+    <circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="15.5" cy="0" r="2.2" class="pin-hole"/><circle cx="31" cy="0" r="2.2" class="pin-hole"/><circle cx="46.5" cy="0" r="2.2" class="pin-hole"/><circle cx="62" cy="0" r="2.2" class="pin-hole"/>
+    <circle cx="140" cy="0" r="2.2" class="pin-hole"/><circle cx="218" cy="0" r="2.2" class="pin-hole"/><circle cx="296" cy="0" r="2.2" class="pin-hole"/><circle cx="374" cy="0" r="2.2" class="pin-hole"/><circle cx="452" cy="0" r="2.2" class="pin-hole"/>
+  </g>
+  <g transform="translate(68, 50)">
+    <circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="15.5" cy="0" r="2.2" class="pin-hole"/><circle cx="31" cy="0" r="2.2" class="pin-hole"/><circle cx="46.5" cy="0" r="2.2" class="pin-hole"/><circle cx="62" cy="0" r="2.2" class="pin-hole"/>
+    <circle cx="140" cy="0" r="2.2" class="pin-hole"/><circle cx="218" cy="0" r="2.2" class="pin-hole"/><circle cx="296" cy="0" r="2.2" class="pin-hole"/><circle cx="374" cy="0" r="2.2" class="pin-hole"/><circle cx="452" cy="0" r="2.2" class="pin-hole"/>
+  </g>
+
+  <!-- 中央部品穴（a~e） -->
+  <g transform="translate(68, 85)">
+    <g transform="translate(0,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(62,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(140,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(218,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(296,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(374,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(452,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+  </g>
+
+  <!-- 中央部品穴（f~j） -->
+  <g transform="translate(68, 171)">
+    <g transform="translate(0,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(62,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(140,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(218,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(296,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(374,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+    <g transform="translate(452,0)"><circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="0" cy="13" r="2.2" class="pin-hole"/><circle cx="0" cy="26" r="2.2" class="pin-hole"/><circle cx="0" cy="39" r="2.2" class="pin-hole"/><circle cx="0" cy="52" r="2.2" class="pin-hole"/></g>
+  </g>
+
+  <!-- 下電源穴 -->
+  <g transform="translate(68, 260)">
+    <circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="15.5" cy="0" r="2.2" class="pin-hole"/><circle cx="31" cy="0" r="2.2" class="pin-hole"/><circle cx="46.5" cy="0" r="2.2" class="pin-hole"/><circle cx="62" cy="0" r="2.2" class="pin-hole"/>
+    <circle cx="140" cy="0" r="2.2" class="pin-hole"/><circle cx="218" cy="0" r="2.2" class="pin-hole"/><circle cx="296" cy="0" r="2.2" class="pin-hole"/><circle cx="374" cy="0" r="2.2" class="pin-hole"/><circle cx="452" cy="0" r="2.2" class="pin-hole"/>
+  </g>
+  <g transform="translate(68, 272)">
+    <circle cx="0" cy="0" r="2.2" class="pin-hole"/><circle cx="15.5" cy="0" r="2.2" class="pin-hole"/><circle cx="31" cy="0" r="2.2" class="pin-hole"/><circle cx="46.5" cy="0" r="2.2" class="pin-hole"/><circle cx="62" cy="0" r="2.2" class="pin-hole"/>
+    <circle cx="140" cy="0" r="2.2" class="pin-hole"/><circle cx="218" cy="0" r="2.2" class="pin-hole"/><circle cx="296" cy="0" r="2.2" class="pin-hole"/><circle cx="374" cy="0" r="2.2" class="pin-hole"/><circle cx="452" cy="0" r="2.2" class="pin-hole"/>
+  </g>
+
+  <!-- 8. 強調説明カード（くっきり見やすい白背景カード） -->
+  <!-- ① 電源ラインカード -->
+  <g transform="translate(250, 16)">
+    <path d="M -8 14 L -30 20" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,2" fill="none"/>
+    <rect x="-8" y="0" width="220" height="28" class="card-power"/>
+    <text x="2" y="12" class="card-title" fill="#b91c1c">① 電源ライン (電源レール)</text>
+    <text x="2" y="22" class="card-text">横一列(＋と－)がすべて裏でつながっています</text>
+  </g>
+
+  <!-- ② 部品エリアカード -->
+  <g transform="translate(80, 96)">
+    <path d="M 120 15 L 128 15" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="3,2" fill="none"/>
+    <rect x="0" y="0" width="120" height="30" class="card-term"/>
+    <text x="8" y="12" class="card-title" fill="#15803d">② 部品エリア</text>
+    <text x="8" y="22" class="card-text">縦5穴(A~E)が金具で接続</text>
+  </g>
+
+  <!-- ③ 中央の溝カード -->
+  <g transform="translate(320, 140)">
+    <rect x="0" y="0" width="180" height="28" class="card-groove"/>
+    <text x="8" y="12" class="card-title" fill="#1e293b">③ 中央の溝（ICディバイダー）</text>
+    <text x="8" y="22" class="card-text">上下(E行とF行)を電気的に分離します</text>
+  </g>
+
+  <!-- 拡大ボタン -->
+  <g class="zoom-btn" transform="translate(545, 18)" title="拡大表示">
+    <circle cx="12" cy="12" r="13" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="12" y="16" font-size="11" text-anchor="middle">🔍️</text>
+  </g>
+</svg>
+
+  <!-- 中学生向け仕組み解説テキスト -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; font-size: 0.85rem; line-height: 1.6;">
+  <!-- 電源ライン -->
+  <div style="background: #ffffff; padding: 12px; border-radius: 6px; border-left: 4px solid #ef4444; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <strong style="color: #dc2626; display: block; margin-bottom: 4px;">1. 電源ライン（上下の長い列）</strong>
+    <p style="margin: 0; color: #334155;">
+      赤色（＋）と青色（－）のラインは、<b>「横にずーっと」</b>電気が繋がっています。乾電池や電源からのコードを挿しておくと、どこからでも電源が取り出せて便利です。
+    </p>
+  </div>
+
+  <!-- 部品エリア -->
+  <div style="background: #ffffff; padding: 12px; border-radius: 6px; border-left: 4px solid #16a34a; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <strong style="color: #15803d; display: block; margin-bottom: 4px;">2. 部品挿入エリア（中央の溝）</strong>
+    <p style="margin: 0; color: #334155;">
+      左右のアルファベット（<b>A〜E</b> / <b>F〜J</b>）と上下の列番号（<b>1〜30</b>）で区切られており、<b>「縦に5つの穴」</b>が内部の金具で繋がっています。
+    </p>
+  </div>
+</div>
+
+<!-- 注意事項（ショート注意） -->
+<div style="margin-top: 12px; padding: 10px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 0.82rem; color: #991b1b; line-height: 1.5;">
+  <strong>⚠️ やってはいけないミス（ショートの防止）：</strong><br>
+  抵抗器やLEDなどの「同じパーツの2本の足」を、<b>同じ番号の縦一列（例：10番列のAとCなど）に挿さないでください</b>。電気パーツを通らずにショートしてしまいます。必ず別の列の穴（例：10番列と15番列など）に跨ぐように挿しましょう！
+</div>
+  </div>
+</div>
       </div>
     </div>
   </div>
-</div>
 
   <!--スクリプト-->
   <script>
