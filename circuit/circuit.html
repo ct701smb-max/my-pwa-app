@@ -7206,41 +7206,44 @@ getTerminalPos(compId, termId) {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'breadboard-bg');
 
+    // ★ シミュレータ互換の基準座標（変更厳禁） ★
     const startX = 140;
 
     // --- 1. 背景・テキスト・導通線の生成 ---
     let html = `
-      <!-- 土台 -->
+      <!-- 土台（明るいホワイト基板） -->
       <rect x="100" y="50" width="580" height="360" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="4"/>
       <rect x="110" y="60" width="560" height="340" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
-      <rect x="110" y="220" width="560" height="20" fill="#e2e8f0"/>
+      
+      <!-- 中央溝（ICディバイダー） -->
+      <rect x="110" y="222" width="560" height="16" fill="#e2e8f0"/>
 
-      <!-- 電源ガイド線 & +/- -->
-      <line x1="135" y1="72" x2="645" y2="72" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,4"/>
-      <line x1="135" y1="112" x2="645" y2="112" stroke="#3b82f6" stroke-width="2" stroke-dasharray="6,4"/>
+      <!-- 電源ガイド線 & +/- 表記 -->
+      <line x1="135" y1="72" x2="645" y2="72" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line x1="135" y1="112" x2="645" y2="112" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
       <text x="120" y="84" font-size="12" font-weight="bold" fill="#ef4444">+</text>
       <text x="120" y="104" font-size="12" font-weight="bold" fill="#3b82f6">-</text>
 
-      <line x1="135" y1="348" x2="645" y2="348" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,4"/>
-      <line x1="135" y1="388" x2="645" y2="388" stroke="#3b82f6" stroke-width="2" stroke-dasharray="6,4"/>
+      <line x1="135" y1="348" x2="645" y2="348" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line x1="135" y1="388" x2="645" y2="388" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
       <text x="120" y="364" font-size="12" font-weight="bold" fill="#ef4444">+</text>
       <text x="120" y="384" font-size="12" font-weight="bold" fill="#3b82f6">-</text>
 
-      <!-- ★ 内部導通線（黄色） ★ -->
+      <!-- ★ 内部導通線（配線やLEDが見やすくなるよう薄めの黄透明に調整） ★ -->
       <!-- 1. 電源レールの横方向導通線 -->
-      <line x1="${startX}" y1="80" x2="${startX + 25 * 20}" y2="80" stroke="#eab308" stroke-width="2.5" opacity="0.8"/>
-      <line x1="${startX}" y1="100" x2="${startX + 25 * 20}" y2="100" stroke="#eab308" stroke-width="2.5" opacity="0.8"/>
-      <line x1="${startX}" y1="360" x2="${startX + 25 * 20}" y2="360" stroke="#eab308" stroke-width="2.5" opacity="0.8"/>
-      <line x1="${startX}" y1="380" x2="${startX + 25 * 20}" y2="380" stroke="#eab308" stroke-width="2.5" opacity="0.8"/>
+      <line x1="${startX}" y1="80" x2="${startX + 25 * 20}" y2="80" stroke="#eab308" stroke-width="2" opacity="0.4"/>
+      <line x1="${startX}" y1="100" x2="${startX + 25 * 20}" y2="100" stroke="#eab308" stroke-width="2" opacity="0.4"/>
+      <line x1="${startX}" y1="360" x2="${startX + 25 * 20}" y2="360" stroke="#eab308" stroke-width="2" opacity="0.4"/>
+      <line x1="${startX}" y1="380" x2="${startX + 25 * 20}" y2="380" stroke="#eab308" stroke-width="2" opacity="0.4"/>
     `;
 
     // 2. メイン端子の縦方向導通線（A-E / F-J）
     for (let col = 0; col < 26; col++) {
       const x = startX + col * 20;
       // 上段（A-E）の縦導通線
-      html += `<line x1="${x}" y1="130" x2="${x}" y2="210" stroke="#eab308" stroke-width="2.5" opacity="0.8"/>`;
+      html += `<line x1="${x}" y1="130" x2="${x}" y2="210" stroke="#eab308" stroke-width="2" opacity="0.35"/>`;
       // 下段（F-J）の縦導通線
-      html += `<line x1="${x}" y1="250" x2="${x}" y2="330" stroke="#eab308" stroke-width="2.5" opacity="0.8"/>`;
+      html += `<line x1="${x}" y1="250" x2="${x}" y2="330" stroke="#eab308" stroke-width="2" opacity="0.35"/>`;
     }
 
     // 行ラベル (A-E / F-J)
@@ -7269,74 +7272,71 @@ getTerminalPos(compId, termId) {
 
     g.innerHTML = html;
 
-    // --- 2. 穴の生成（色指定・ノードID割り当て） ---
-const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
-  const isSelected = this.selectedHole && this.selectedHole.x === x && this.selectedHole.y === y;
-  
-  const holeColor = isSelected ? '#ef4444' : (customColor || '#334155');
-  const strokeColor = isSelected ? '#b91c1c' : (customStroke || '#94a3b8');
+    // --- 2. 穴の生成（中心座標を保ちつつ穴サイズを9pxにスリム化して実質間隔を拡張） ---
+    const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
+      const isSelected = this.selectedHole && this.selectedHole.x === x && this.selectedHole.y === y;
+      
+      const holeColor = isSelected ? '#ef4444' : (customColor || '#475569');
+      const strokeColor = isSelected ? '#b91c1c' : (customStroke || '#cbd5e1');
 
-  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  rect.setAttribute('x', x - 6);
-  rect.setAttribute('y', y - 6);
-  rect.setAttribute('width', 12);
-  rect.setAttribute('height', 12);
-  rect.setAttribute('rx', 2);
-  rect.setAttribute('fill', holeColor);
-  rect.setAttribute('stroke', strokeColor);
-  rect.setAttribute('stroke-width', '1.5');
-  rect.setAttribute('class', 'bb-hole');
-  rect.style.touchAction = 'none';
-  
-  rect.setAttribute('data-x', x);
-  rect.setAttribute('data-y', y);
-  if (nodeId) {
-    rect.setAttribute('data-node-id', nodeId);
-  }
-
-  let startX = 0;
-  let startY = 0;
-  let isTouchMoved = false;
-
-  rect.addEventListener('pointerdown', (e) => {
-    // ピンチズーム中または2本目以降の指は無視
-    if (this.isPinching || (e.pointerType === 'touch' && !e.isPrimary)) {
-      return;
-    }
-
-    if (e.pointerType === 'touch') {
-      isTouchMoved = false;
-      startX = e.clientX; // ★ タッチ開始位置を記録
-      startY = e.clientY;
-      return;
-    }
-
-    // PC（マウス操作）の場合は即時実行
-    e.stopPropagation();
-    this.handleHoleClick(x, y, nodeId);
-  });
-
-  rect.addEventListener('pointermove', (e) => {
-    if (e.pointerType === 'touch' && !isTouchMoved) {
-      // ★ 移動距離を計算し、8px以上の移動のみドラッグ/ズーム操作と判定（手ブレ吸収）
-      const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
-      if (dist > 8) {
-        isTouchMoved = true;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      // ★ 中心座標(x,y)を変えずに、穴のサイズを12px->9pxにすることで隣との隙間を8px->11pxに拡大 ★
+      rect.setAttribute('x', x - 4.5);
+      rect.setAttribute('y', y - 4.5);
+      rect.setAttribute('width', 9);
+      rect.setAttribute('height', 9);
+      rect.setAttribute('rx', 1.5);
+      rect.setAttribute('fill', holeColor);
+      rect.setAttribute('stroke', strokeColor);
+      rect.setAttribute('stroke-width', '1');
+      rect.setAttribute('class', 'bb-hole');
+      rect.style.touchAction = 'none';
+      
+      rect.setAttribute('data-x', x);
+      rect.setAttribute('data-y', y);
+      if (nodeId) {
+        rect.setAttribute('data-node-id', nodeId);
       }
-    }
-  });
 
-  rect.addEventListener('pointerup', (e) => {
-    // タッチ操作かつ、ズーム操作・規定以上の移動をしていない「タップ」のみ穴を選択
-    if (e.pointerType === 'touch' && !this.isPinching && !isTouchMoved) {
-      e.stopPropagation();
-      e.preventDefault();
-      this.handleHoleClick(x, y, nodeId);
-    }
-  });
+      let startXPos = 0;
+      let startYPos = 0;
+      let isTouchMoved = false;
 
-  return rect;
-};
+      rect.addEventListener('pointerdown', (e) => {
+        if (this.isPinching || (e.pointerType === 'touch' && !e.isPrimary)) {
+          return;
+        }
+
+        if (e.pointerType === 'touch') {
+          isTouchMoved = false;
+          startXPos = e.clientX;
+          startYPos = e.clientY;
+          return;
+        }
+
+        e.stopPropagation();
+        this.handleHoleClick(x, y, nodeId);
+      });
+
+      rect.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'touch' && !isTouchMoved) {
+          const dist = Math.hypot(e.clientX - startXPos, e.clientY - startYPos);
+          if (dist > 8) {
+            isTouchMoved = true;
+          }
+        }
+      });
+
+      rect.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch' && !this.isPinching && !isTouchMoved) {
+          e.stopPropagation();
+          e.preventDefault();
+          this.handleHoleClick(x, y, nodeId);
+        }
+      });
+
+      return rect;
+    };
 
     // 電源レール穴の生成
     for (let col = 0; col < 26; col++) {
@@ -7365,7 +7365,7 @@ const createSquareHole = (x, y, nodeId, customColor, customStroke) => {
     }
 
     this.viewportGroup.appendChild(g);
-  }
+}
 
 
 updatePropertyToolbar() {
