@@ -6973,10 +6973,8 @@ line.addEventListener('pointerdown', (e) => {
         const chFill = isChActive ? ch.color : '#6b7280';
 
         ledsSvg += `
-          <!-- カソード側接続線 (上方向へ) -->
-          <line x1="${ch.x}" y1="-4" x2="${ch.x}" y2="-12" stroke="black" stroke-width="1.5"/>
-          <!-- アノード側接続線 (下方向へ) -->
-          <line x1="${ch.x}" y1="6" x2="${ch.x}" y2="22" stroke="black" stroke-width="1.5"/>
+          <!-- 上下を貫通する縦の接続線 -->
+          <line x1="${ch.x}" y1="-12" x2="${ch.x}" y2="22" stroke="black" stroke-width="1.5"/>
           <!-- LEDシンボル (三角とカソードバー) -->
           <polygon points="${ch.x - 6},6 ${ch.x + 6},6 ${ch.x},-4" fill="${chFill}" fill-opacity="${chOpacity}" stroke="black" stroke-width="1.5"/>
           <line x1="${ch.x - 6}" y1="-4" x2="${ch.x + 6}" y2="-4" stroke="black" stroke-width="1.5"/>
