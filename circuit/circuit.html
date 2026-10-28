@@ -95,7 +95,33 @@ body {
   align-items: center;
   gap: 6px;
 }
+/* モードバッジとステータスボタンをまとめるコンテナ */
+.mode-control-container {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 100; /* キャンバス描画より前面に配置 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+/* 元の .mode-badge の absolute 配置をリセットして Flexbox 内に正しく納める */
+.mode-control-container .mode-badge {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* ボタンのサイズ調整 */
+.status-toggle-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
 /* ==========================================================================
    3. パレットバー (Palette Bar)
    ========================================================================== */
@@ -425,6 +451,66 @@ svg {
 .status-warning { background-color: #fef3c7; color: #92400e; }
 .status-error   { background-color: #fee2e2; color: #991b1b; }
 
+/* 回路ごとの個別ステータスカード */
+.status-bar.status-multi {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.status-item.status-success {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+.status-item.status-warning {
+  background: #fef9c3;
+  color: #a16207;
+  border-color: #fde047;
+}
+
+.status-item.status-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.status-item.status-info {
+  background: #f3f4f6;
+  color: #4b5563;
+  border-color: #e5e7eb;
+}
+
+/* ステータスバー非表示用のスタイル */
+.status-bar.hidden {
+  display: none !important;
+}
+
+/* ボタン活性時のスタイル（必要に応じて） */
+#toggleStatusBtn.active {
+  background-color: #e5e7eb;
+  color: #374151;
+}
 /* ==========================================================================
    8. モーダルダイアログ (Modal Dialog)
    ========================================================================== */
@@ -1026,24 +1112,40 @@ textarea {
       </svg>
       トランジスタ
     </div>
+      <div class="palette-item" data-type="circuit-label" draggable="true">
+  <div class="palette-icon" style="background: #ffffff; color: #000000; border: 1.5px solid #000000; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 36px; height: 24px; border-radius: 4px;">
+    回路1
+  </div>
+  <span>回路ラベル</span>
+</div>
   </div>
   <span class="help-text">（下へドラッグで配置 / 横スライドで一覧移動）</span>
 </div>
 
     <div class="main-content">
-      <main class="canvas-container" id="canvas-container">
-        <div class="mode-badge" id="mode-indicator">表示モード: 実体配線図</div>
-        <div id="property-toolbar" class="property-toolbar hidden"></div>
-        <svg id="circuit-svg">
-          <g id="viewport-group"></g>
-        </svg>
-
-        <footer id="status-bar" class="status-bar status-info">
-          <span id="status-icon">ℹ️</span>
-          <span id="status-message">回路を作成して電源をONにしてください。</span>
-        </footer>
-      </main>
+  <main class="canvas-container" id="canvas-container">
+    
+    <!-- ★ コンテナ要素に変更してまとめる ★ -->
+    <div class="mode-control-container">
+      <div class="mode-badge" id="mode-indicator">表示モード: 実体配線図</div>
+      <button id="toggleStatusBtn" class="btn status-toggle-btn" title="ステータスバーの表示/非表示を切替">
+        📝 ステータス（表示中）
+      </button>
     </div>
+    
+    <div id="property-toolbar" class="property-toolbar hidden"></div>
+    <svg id="circuit-svg">
+      <g id="viewport-group"></g>
+    </svg>
+
+    <footer id="status-bar" class="status-bar status-info">
+      <span id="status-icon">ℹ️</span>
+      <span id="status-message">回路を作成して電源をONにしてください。</span>
+    </footer>
+  </main>
+</div>
+
+        
 
     <div id="drag-ghost" class="drag-ghost hidden"></div>
 
@@ -1068,7 +1170,13 @@ textarea {
               <label for="pdf-student-name">氏名</label>
               <input type="text" id="pdf-student-name" class="pdf-form-input" placeholder="フルネーム" required>
             </div>
-            
+
+<!-- パーツリスト -->
+            <div class="form-group full">
+              <label>パーツリストへの対応</label>
+              <label class="checkbox-label">※「回路ラベル」に対応したパーツリストを生成するため、<br>　回路の近くに「回路ラベル（回路1,回路2⋯）」を設置してください</label>
+            </div>
+              
             <!-- 電源スイッチの切り替えオプション -->
             <div class="form-group full">
               <label>電源設定</label>
@@ -3896,12 +4004,24 @@ textarea {
       return `${res}Ω`;
     }
 
-    class CircuitApp {
+   class CircuitApp {
   constructor() {
     this.mode = 'physical';
     this.powerOn = true;
     this.components = [];
     this.wires = [];
+
+    // 表示フラグとカウンターの初期化
+    this.isStatusVisible = true;
+    this.circuitLabelCounter = 1;
+
+    this.toggleStatusBtn = document.getElementById('toggleStatusBtn');
+    if (this.toggleStatusBtn) {
+      this.toggleStatusBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleStatusVisibility();
+      });
+    }
 
     // 選択状態の管理
     this.selectedComponentIds = new Set();
@@ -3909,7 +4029,7 @@ textarea {
     this.selectedWireId = null; // 単数形プロパティの初期化漏れ防止
     this.selectedHole = null;
 
-    // DOM・ツールバー要素の初期取得（ページ読み込み直後の動作不具合を防止）
+    // DOM・ツールバー要素の初期取得
     this.propToolbar = document.getElementById('prop-toolbar');
     this.svg = document.getElementById('circuit-svg') || document.querySelector('svg');
     this.canvasContainer = document.getElementById('canvas-container');
@@ -3952,25 +4072,44 @@ textarea {
 
   getCdsResistance(comp) {
     const light = comp.light !== undefined ? comp.light : 50;
-    // 光度 100% (明るい) -> 100 Ω
-    // 光度 0% (暗い) -> 100,000 Ω (100kΩ)
     const R_MIN = 100;
     const R_MAX = 100000;
     return R_MAX * Math.pow(R_MIN / R_MAX, light / 100);
   }
 
-  // 現在のモードに応じた反転状態（flipped）を取得するヘルパー関数
   getCompFlipped(comp) {
     if (!comp) return false;
     if (this.mode === 'breadboard') {
-      // ブレッドボード用に個別設定されていればそれを使い、未設定なら初期値(comp.flipped)を使う
       return comp.breadboardFlipped !== undefined ? comp.breadboardFlipped : !!comp.flipped;
     }
-    // 実体配線図(physical)・回路図(schematic)は共通の comp.flipped を使用
     return !!comp.flipped;
   }
 
+  toggleStatusVisibility() {
+    this.isStatusVisible = !this.isStatusVisible;
+    
+    if (this.statusBar) {
+      this.statusBar.classList.toggle('hidden', !this.isStatusVisible);
+    }
 
+    if (this.toggleStatusBtn) {
+      if (this.isStatusVisible) {
+        this.toggleStatusBtn.textContent = '📃 ステータス（表示中）';
+        this.toggleStatusBtn.classList.remove('active');
+      } else {
+        this.toggleStatusBtn.textContent = '⛔️ ステータス（非表示中）';
+        this.toggleStatusBtn.classList.add('active');
+      }
+    }
+  } // ★ ここに閉じカッコを追加
+
+  updateCircuitLabelNumbers() {
+    const labels = this.components.filter(c => c.type === 'circuit-label');
+    labels.forEach((comp, index) => {
+      comp.text = `回路${index + 1}`;
+    });
+    this.circuitLabelCounter = labels.length + 1;
+  }
 
 
   // ★パーツ生成メソッド（NPN / PNP トランジスタ定義を追加）
@@ -4050,6 +4189,18 @@ textarea {
         ];
         break;
 
+      // ★ 追加：回路ラベル（自動ナンバリング・配線端子なし）
+      case 'circuit-label':
+        if (typeof this.circuitLabelCounter === 'undefined') {
+          this.circuitLabelCounter = 1;
+        }
+        comp.text = `回路${this.circuitLabelCounter}`;
+        this.circuitLabelCounter++;
+        comp.width = 80;
+        comp.height = 32;
+        comp.terminals = []; // 回路接続を行わないため空配列
+        break;
+
       default:
         comp.terminals = [
           { id: `${id}_t1`, name: '1', polarity: 'none', relX: -20, relY: 0 },
@@ -4079,6 +4230,9 @@ textarea {
       });
 
       this.selectedComponentIds.clear();
+
+      // ★ 追加：回路ラベルの削除に伴い番号を「回路1」「回路2」...と自動的に詰め直す
+      this.updateCircuitLabelNumbers();
     }
 
     // 2. 選択された配線の削除
@@ -5005,135 +5159,276 @@ wires.forEach(w => {
 
 async generatePDFDirectDownload() {
   const submitBtn = document.getElementById('btn-modal-download');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'PDF生成中...';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'PDF生成中...';
+  }
 
   const originalPowerState = this.powerOn;
-  
-  // 画面の電源チェックボックスから状態を取得（なければデフォルト true）
   const chkPowerOn = document.getElementById('chk-power-on')?.checked ?? true;
 
-  // PDF出力用に一時的に電源を設定
   this.powerOn = chkPowerOn;
-  this.evaluateCircuit();
-  this.render();
+  if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+  if (typeof this.render === 'function') this.render();
 
   try {
-    const grade = document.getElementById('pdf-grade').value || '-';
-    const className = document.getElementById('pdf-class-name').value || '-';
-    const studentNo = document.getElementById('pdf-student-no').value || '-';
-    const studentName = document.getElementById('pdf-student-name').value || '未入力';
+    const grade = document.getElementById('pdf-grade')?.value || '-';
+    const className = document.getElementById('pdf-class-name')?.value || '-';
+    const studentNo = document.getElementById('pdf-student-no')?.value || '-';
+    const studentName = document.getElementById('pdf-student-name')?.value || '未入力';
 
-    const chkPhysical = document.getElementById('chk-physical').checked;
-    const chkBreadboard = document.getElementById('chk-breadboard').checked;
-    const chkSchematic = document.getElementById('chk-schematic').checked;
+    const chkPhysical = document.getElementById('chk-physical')?.checked ?? true;
+    const chkBreadboard = document.getElementById('chk-breadboard')?.checked ?? false;
+    const chkSchematic = document.getElementById('chk-schematic')?.checked ?? true;
 
     if (!chkPhysical && !chkBreadboard && !chkSchematic) {
       alert('出力する図を少なくとも1つ選択してください。');
       return;
     }
 
+    const safeFormatResistance = (r) => {
+      if (typeof formatResistance === 'function') return formatResistance(r);
+      if (typeof this.formatResistance === 'function') return this.formatResistance(r);
+      const num = parseFloat(r);
+      if (isNaN(num) || num <= 0) return '100 Ω';
+      if (num >= 1000000) return `${(num / 1000000).toFixed(1)} MΩ`;
+      if (num >= 1000) return `${(num / 1000).toFixed(1)} kΩ`;
+      return `${Math.round(num)} Ω`;
+    };
+
+    const getPos = (comp) => {
+      if (!comp) return { x: 0, y: 0 };
+      if (typeof this.getCompPos === 'function') {
+        const p = this.getCompPos(comp);
+        if (p && typeof p.x === 'number') return p;
+      }
+      if (comp.positions && comp.positions[this.mode]) {
+        return comp.positions[this.mode];
+      }
+      return { x: comp.x || 0, y: comp.y || 0 };
+    };
+
     const getColorCodeName = (val) => {
-  if (!val || val <= 0) return '抵抗器';
-  const colorNames = ['黒', '茶', '赤', '橙', '黄', '緑', '青', '紫', '灰', '白'];
-  let log10 = Math.floor(Math.log10(val));
-  let mult = log10 - 1;
-  let sig = Math.round(val / Math.pow(10, mult));
-  if (sig >= 100) {
-    sig = Math.round(sig / 10);
-    mult += 1;
-  }
-  let d1 = Math.floor(sig / 10);
-  let d2 = sig % 10;
-  let c1 = colorNames[d1] || '黒';
-  let c2 = colorNames[d2] || '黒';
-  let c3 = mult >= 0 && mult < 10 ? colorNames[mult] : (mult === -1 ? '金' : '黒');
-  let c4 = '金';
-  return `抵抗器（${c1}・${c2}・${c3}・${c4}）`;
-};
+      if (!val || val <= 0) return '抵抗器';
+      const colorNames = ['黒', '茶', '赤', '橙', '黄', '緑', '青', '紫', '灰', '白'];
+      let log10 = Math.floor(Math.log10(val));
+      let mult = log10 - 1;
+      let sig = Math.round(val / Math.pow(10, mult));
+      if (sig >= 100) {
+        sig = Math.round(sig / 10);
+        mult += 1;
+      }
+      let d1 = Math.floor(sig / 10);
+      let d2 = sig % 10;
+      let c1 = colorNames[d1] || '黒';
+      let c2 = colorNames[d2] || '黒';
+      let c3 = mult >= 0 && mult < 10 ? colorNames[mult] : (mult === -1 ? '金' : '黒');
+      let c4 = '金';
+      return `抵抗器（${c1}・${c2}・${c3}・${c4}）`;
+    };
 
-// ★ 1. ソート順（並び順）
-const typeOrder = ['battery', 'resistor', 'switch', 'led', 'rgb-led', 'motor', 'cds', 'transistor'];
+    const typeOrder = ['battery', 'resistor', 'switch', 'led', 'rgb-led', 'motor', 'cds', 'transistor'];
+    const names = { 
+      battery: '乾電池', resistor: '抵抗器', switch: 'スイッチ', led: 'LED', 
+      'rgb-led': 'フルカラーLED', motor: 'モーター', cds: '光導電セル', transistor: 'トランジスタ'
+    };
 
-// ★ 2. 基本表示名マップ
-const names = { 
-  battery: '乾電池', 
-  resistor: '抵抗器', 
-  switch: 'スイッチ', 
-  led: 'LED', 
-  'rgb-led': 'フルカラーLED', 
-  motor: 'モーター',
-  cds: '光導電セル',
-  transistor: 'トランジスタ'
-};
+    const getComponentName = (comp) => {
+      if (comp.type === 'resistor') return getColorCodeName(comp.resistance);
+      if (comp.type === 'switch') return comp.switchType === 'toggle' ? 'トグルスイッチ' : 'スイッチ';
+      if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
+        const isPnp = comp.isPnp || comp.transistorType === 'pnp' || comp.type === 'pnp';
+        return `トランジスタ（${isPnp ? 'PNP' : 'NPN'}型）`;
+      }
+      return names[comp.type] || 'パーツ';
+    };
 
-// ★ 3. コンポーネントに応じた詳細表示名を取得する関数
-const getComponentName = (comp) => {
-  if (comp.type === 'resistor') {
-    return getColorCodeName(comp.resistance);
-  }
-  if (comp.type === 'switch') {
-    return comp.switchType === 'toggle' ? 'トグルスイッチ' : 'スイッチ';
-  }
-  if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
-    const isPnp = comp.isPnp || comp.transistorType === 'pnp' || comp.type === 'pnp';
-    return `トランジスタ（${isPnp ? 'PNP' : 'NPN'}型）`;
-  }
-  return names[comp.type] || 'パーツ';
-};
+    // -----------------------------------------------------------------
+    // 1. 回路ラベルの抽出 ＆ 数値順（回路1, 回路2...）ソート
+    // -----------------------------------------------------------------
+    const circuitLabels = (this.components || [])
+      .filter(c => c && c.type === 'circuit-label')
+      .sort((a, b) => {
+        const numA = parseInt((a.text || '').replace(/[^0-9]/g, ''), 10) || 0;
+        const numB = parseInt((b.text || '').replace(/[^0-9]/g, ''), 10) || 0;
+        if (numA !== numB) return numA - numB;
+        return getPos(a).y - getPos(b).y;
+      });
 
-const partsMap = {};
+    const circuitPartsGroup = {};
+    if (circuitLabels.length > 0) {
+      circuitLabels.forEach(l => {
+        const labelText = l.text || '回路';
+        if (!circuitPartsGroup[labelText]) {
+          circuitPartsGroup[labelText] = {};
+        }
+      });
+    } else {
+      circuitPartsGroup['全体'] = {};
+    }
 
-this.components.forEach(c => {
-  // ★ getComponentName を呼び出して名称を一括取得
-  let name = getComponentName(c);
-  let spec = '-';
-  let countAdd = 1;
+    // -----------------------------------------------------------------
+    // 2. 配線接続によるサブ回路抽出と回路ラベル割り当て
+    // -----------------------------------------------------------------
+    const validComps = (this.components || []).filter(c => c && c.type !== 'circuit-label');
+    const compMap = new Map(validComps.map(c => [c.id, c]));
+    const adj = new Map();
+    validComps.forEach(c => adj.set(c.id, []));
 
-  if (c.type === 'battery') {
-    const v = Number(c.voltage) || 1.5;
-    spec = '1.5V';
-    countAdd = Math.max(1, Math.round(v / 1.5));
-  } else if (c.type === 'resistor') {
-    spec = formatResistance(c.resistance);
-  } else if (c.type === 'switch') {
-    // ★ スイッチの仕様（端子数）を追加
-    spec = c.switchType === 'toggle' ? '3端子 (ON-OFF-ON)' : '2端子';
-  } else if (c.type === 'led') {
-    spec = '1.5V点灯';
-  } else if (c.type === 'rgb-led') {
-    spec = 'RGB 4端子';
-  } else if (c.type === 'motor') {
-    spec = '1.5V-3.0V DC(直流)';
-  } else if (c.type === 'cds') {
-    const lightVal = c.light !== undefined ? c.light : 50;
-    const resVal = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(c) : 1000;
-    spec = `光度:${lightVal}% (${formatResistance(resVal)})`;
-  } else if (c.type === 'transistor' || c.type === 'npn' || c.type === 'pnp') {
-    // ★ トランジスタの型を判定して仕様に反映
-    const isPnp = c.isPnp || c.transistorType === 'pnp' || c.type === 'pnp';
-    spec = `${isPnp ? 'PNP' : 'NPN'}型 3端子`;
-  }
-
-  // 個別の仕様ごとにまとめるため key に spec を含める
-  const key = `${c.type}_${name}_${spec}`;
-  if (!partsMap[key]) {
-    partsMap[key] = { type: c.type, name, spec, count: 0 };
-  }
-  partsMap[key].count += countAdd;
-});
-
-    const sortedParts = Object.values(partsMap).sort((a, b) => {
-      const indexA = typeOrder.indexOf(a.type);
-      const indexB = typeOrder.indexOf(b.type);
-      return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+    (this.wires || []).forEach(w => {
+      if (adj.has(w.fromCompId) && adj.has(w.toCompId)) {
+        adj.get(w.fromCompId).push(w.toCompId);
+        adj.get(w.toCompId).push(w.fromCompId);
+      }
     });
-      
-    let partsRows = '';
-    sortedParts.forEach(item => {
-      partsRows += `<tr><td>${item.name}</td><td>${item.spec}</td><td>${item.count} 個</td></tr>`;
+
+    const visited = new Set();
+    const subgraphs = [];
+
+    validComps.forEach(c => {
+      if (!visited.has(c.id)) {
+        const group = [];
+        const queue = [c.id];
+        visited.add(c.id);
+
+        while (queue.length > 0) {
+          const currId = queue.shift();
+          const currComp = compMap.get(currId);
+          if (currComp) group.push(currComp);
+
+          (adj.get(currId) || []).forEach(neighborId => {
+            if (!visited.has(neighborId)) {
+              visited.add(neighborId);
+              queue.push(neighborId);
+            }
+          });
+        }
+
+        let sumX = 0, sumY = 0;
+        group.forEach(comp => {
+          const p = getPos(comp);
+          sumX += p.x;
+          sumY += p.y;
+        });
+        group.avgX = sumX / group.length;
+        group.avgY = sumY / group.length;
+
+        subgraphs.push(group);
+      }
     });
-    if (!partsRows) partsRows = '<tr><td colspan="3">使用パーツなし</td></tr>';
+
+    subgraphs.forEach(subgraph => {
+      let targetLabelName = '全体';
+
+      if (circuitLabels.length > 0) {
+        let minDist = Infinity;
+        circuitLabels.forEach(l => {
+          const lPos = getPos(l);
+          const dx = subgraph.avgX - lPos.x;
+          const dy = subgraph.avgY - lPos.y;
+          const dist = Math.sqrt(dx * dx + dy * dy * 4);
+          if (dist < minDist) {
+            minDist = dist;
+            targetLabelName = l.text || '回路';
+          }
+        });
+      }
+
+      if (!circuitPartsGroup[targetLabelName]) {
+        circuitPartsGroup[targetLabelName] = {};
+      }
+
+      subgraph.forEach(c => {
+        let name = getComponentName(c);
+        let spec = '-';
+        let countAdd = 1;
+
+        if (c.type === 'battery') {
+          const v = Number(c.voltage) || 1.5;
+          spec = '1.5V';
+          countAdd = Math.max(1, Math.round(v / 1.5));
+        } else if (c.type === 'resistor') {
+          spec = safeFormatResistance(c.resistance);
+        } else if (c.type === 'switch') {
+          spec = c.switchType === 'toggle' ? '3端子 (ON-OFF-ON)' : '2端子';
+        } else if (c.type === 'led') {
+          spec = '2V点灯';
+        } else if (c.type === 'rgb-led') {
+          spec = 'RGB 4端子';
+        } else if (c.type === 'motor') {
+          spec = '1.5V-3.0V DC(直流)';
+        } else if (c.type === 'cds') {
+          const lightVal = c.light !== undefined ? c.light : 50;
+          const resVal = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(c) : 1000;
+          spec = `光度:${lightVal}% (${safeFormatResistance(resVal)})`;
+        } else if (c.type === 'transistor' || c.type === 'npn' || c.type === 'pnp') {
+          const isPnp = c.isPnp || c.transistorType === 'pnp' || c.type === 'pnp';
+          spec = `${isPnp ? 'PNP' : 'NPN'}型 3端子`;
+        }
+
+        const key = `${c.type}_${name}_${spec}`;
+        if (!circuitPartsGroup[targetLabelName][key]) {
+          circuitPartsGroup[targetLabelName][key] = { type: c.type, name, spec, count: 0 };
+        }
+        circuitPartsGroup[targetLabelName][key].count += countAdd;
+      });
+    });
+
+    // -----------------------------------------------------------------
+    // 3. パーツリストの最適改ページ判定（限界上限の拡張 ＆ テーブル余白詰めで1ページ化）
+    // -----------------------------------------------------------------
+    const sortedGroupNames = Object.keys(circuitPartsGroup).sort((a, b) => {
+      const numA = parseInt((a || '').replace(/[^0-9]/g, ''), 10) || 0;
+      const numB = parseInt((b || '').replace(/[^0-9]/g, ''), 10) || 0;
+      return numA - numB;
+    });
+
+    // ★ 1ページ目の限界行数は 28 行
+    const MAX_ROWS_FIRST_PAGE = 28; 
+    const MAX_ROWS_SUB_PAGE = 28;   
+
+    const partsPageHtmlList = [''];
+    let currentPageIdx = 0;
+    let currentPageRows = 0;
+
+    sortedGroupNames.forEach(groupName => {
+      const groupMap = circuitPartsGroup[groupName];
+      const sortedParts = Object.values(groupMap).sort((a, b) => {
+        const indexA = typeOrder.indexOf(a.type);
+        const indexB = typeOrder.indexOf(b.type);
+        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+      });
+
+      // 現在の回路ブロックの行数コスト（パーツ行数 + 見出し/ヘッダー分1.5行）
+      const groupRowCount = Math.max(1, sortedParts.length) + 1.5;
+      const maxLimit = (currentPageIdx === 0) ? MAX_ROWS_FIRST_PAGE : MAX_ROWS_SUB_PAGE;
+
+      // 限界を超え、かつ現在のページに既にコンテンツがある場合のみ次ページへ送る
+      if (currentPageRows > 0 && (currentPageRows + groupRowCount > maxLimit)) {
+        currentPageIdx++;
+        currentPageRows = 0;
+        partsPageHtmlList[currentPageIdx] = '';
+      }
+
+      let partsRows = '';
+      sortedParts.forEach(item => {
+        partsRows += `<tr><td>${item.name}</td><td>${item.spec}</td><td>${item.count} 個</td></tr>`;
+      });
+      if (!partsRows) partsRows = '<tr><td colspan="3">使用パーツなし</td></tr>';
+
+      const groupTitle = circuitLabels.length > 0 ? `■ 使用パーツ一覧（${groupName}）` : `■ 使用パーツ一覧`;
+
+      // 余白を最小限に抑えてコンパクトに描画
+      partsPageHtmlList[currentPageIdx] += `
+        <div style="width: 90%; margin: 6px auto 1px auto; font-size: 11px; font-weight: bold;">${groupTitle}</div>
+        <table class="pdf-parts-table" style="margin-bottom: 4px;">
+          <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
+          <tbody>${partsRows}</tbody>
+        </table>
+      `;
+
+      currentPageRows += groupRowCount;
+    });
 
     const statusBarEl = document.querySelector('.status-bar');
     const statusText = statusBarEl 
@@ -5146,68 +5441,90 @@ this.components.forEach(c => {
     if (chkSchematic) images.schematic = await this.captureCanvasImageForMode('schematic', chkPowerOn);
 
     const container = document.getElementById('pdf-render-container');
+    if (!container) throw new Error('PDF描画用コンテナ(#pdf-render-container)が見つかりません。');
     
-    let diagramsHtml = '';
+    // -----------------------------------------------------------------
+    // 4. 動的HTML構築
+    // -----------------------------------------------------------------
+    let fullHtml = '';
+    const totalPartsPages = partsPageHtmlList.length;
+
+    // A. パーツリストページ群
+    partsPageHtmlList.forEach((htmlContent, pIdx) => {
+      const pageNum = pIdx + 1;
+      const titleSub = totalPartsPages > 1 ? ` (${pageNum}/${totalPartsPages})` : '';
+
+      fullHtml += `
+        <div id="pdf-page-parts-${pageNum}" style="min-height: 900px; padding: 15px 0;">
+          <div class="pdf-page-title">電子回路実験レポート${titleSub}</div>
+          ${pIdx === 0 ? `
+            <table class="pdf-info-table">
+              <tr>
+                <td><strong>学年:</strong> ${grade}年</td>
+                <td><strong>クラス:</strong> ${className}組</td>
+                <td><strong>出席番号:</strong> ${studentNo}番</td>
+                <td><strong>氏名:</strong> ${studentName}</td>
+              </tr>
+            </table>
+          ` : ''}
+          ${htmlContent}
+        </div>
+      `;
+    });
+
+    // B. ステータス ＆ 実体配線図・回路図ページ
+    let diagramHtml = '';
     if (chkPhysical && chkSchematic) {
-      diagramsHtml = `
-        <div class="pdf-row-container">
-          <div class="pdf-img-block">
-            <div class="pdf-img-title">■ 実体配線図</div>
-            <img src="${images.physical}" class="pdf-img-element-tall" />
+      diagramHtml = `
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 92%; margin: 8px auto;">
+          <div class="pdf-img-block" style="width: 100%;">
+            <div class="pdf-img-title" style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 実体配線図</div>
+            <img src="${images.physical}" style="width: 100%; max-height: 320px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 4px;" />
           </div>
-          <div class="pdf-img-block">
-            <div class="pdf-img-title">■ 回路図</div>
-            <img src="${images.schematic}" class="pdf-img-element-tall" />
+          <div class="pdf-img-block" style="width: 100%;">
+            <div class="pdf-img-title" style="font-size: 12px; font-weight: bold; margin-bottom: 2px;">■ 回路図</div>
+            <img src="${images.schematic}" style="width: 100%; max-height: 320px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 4px;" />
           </div>
         </div>
       `;
     } else if (chkPhysical) {
-      diagramsHtml = `
-        <div class="pdf-row-container">
-          <div class="pdf-img-block">
-            <div class="pdf-img-title">■ 実体配線図</div>
-            <img src="${images.physical}" class="pdf-img-element-tall" />
+      diagramHtml = `
+        <div style="width: 92%; margin: 10px auto;">
+          <div class="pdf-img-block" style="width: 100%;">
+            <div class="pdf-img-title" style="font-size: 12px; font-weight: bold; margin-bottom: 4px;">■ 実体配線図</div>
+            <img src="${images.physical}" style="width: 100%; max-height: 680px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 4px;" />
           </div>
         </div>
       `;
     } else if (chkSchematic) {
-      diagramsHtml = `
-        <div class="pdf-row-container">
-          <div class="pdf-img-block">
-            <div class="pdf-img-title">■ 回路図</div>
-            <img src="${images.schematic}" class="pdf-img-element-tall" />
+      diagramHtml = `
+        <div style="width: 92%; margin: 10px auto;">
+          <div class="pdf-img-block" style="width: 100%;">
+            <div class="pdf-img-title" style="font-size: 12px; font-weight: bold; margin-bottom: 4px;">■ 回路図</div>
+            <img src="${images.schematic}" style="width: 100%; max-height: 680px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 4px;" />
           </div>
         </div>
       `;
     }
 
-    container.innerHTML = `
-      <div id="pdf-page-1" style="min-height: 900px; padding-bottom: 20px;">
-        <div class="pdf-page-title">電子回路実験レポート</div>
-        <table class="pdf-info-table">
-          <tr>
-            <td><strong>学年:</strong> ${grade}年</td>
-            <td><strong>クラス:</strong> ${className}組</td>
-            <td><strong>出席番号:</strong> ${studentNo}番</td>
-            <td><strong>氏名:</strong> ${studentName}</td>
-          </tr>
-        </table>
+    if (chkPhysical || chkSchematic) {
+      fullHtml += `
+        <div id="pdf-page-diagrams" style="min-height: 900px; padding: 20px 0;">
+          <div class="pdf-page-title">電子回路実験レポート (回路図・配線図)</div>
+          
+          <div style="width: 92%; margin: 8px auto 10px auto; padding: 6px 12px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; color: #334155;">
+            <strong>■ 回路動作ステータス:</strong> ${statusText}
+          </div>
 
-        <div style="width: 90%; margin: 0 auto 4px auto; font-size: 12px; font-weight: bold;">■ 使用パーツ一覧</div>
-        <table class="pdf-parts-table">
-          <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
-          <tbody>${partsRows}</tbody>
-        </table>
-
-        <div style="width: 90%; margin: 6px auto 12px auto; padding: 6px 12px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; color: #334155;">
-          <strong>■ 回路動作ステータス:</strong> ${statusText}
+          ${diagramHtml}
         </div>
+      `;
+    }
 
-        ${diagramsHtml}
-      </div>
-
-      ${chkBreadboard ? `
-        <div id="pdf-page-2" style="min-height: 900px; padding-top: 10px;">
+    // C. ブレッドボード図ページ
+    if (chkBreadboard) {
+      fullHtml += `
+        <div id="pdf-page-bb" style="min-height: 900px; padding: 20px 0;">
           <div class="pdf-page-title">電子回路実験レポート (ブレッドボード図)</div>
           <div class="pdf-row-container" style="width: 95%; margin: 0 auto;">
             <div class="pdf-img-block" style="margin-top: 15px; width: 100%;">
@@ -5216,26 +5533,37 @@ this.components.forEach(c => {
             </div>
           </div>
         </div>
-      ` : ''}
-    `;
+      `;
+    }
 
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    container.innerHTML = fullHtml;
+
+    // -----------------------------------------------------------------
+    // 5. PDFファイル出力
+    // -----------------------------------------------------------------
+    const jsPDFLib = window.jspdf?.jsPDF || window.jsPDF;
+    if (!jsPDFLib || !window.html2canvas) {
+      throw new Error('jsPDF または html2canvas ライブラリが読み込まれていません。');
+    }
+
+    const targetPageIds = [];
+    partsPageHtmlList.forEach((_, pIdx) => targetPageIds.push(`pdf-page-parts-${pIdx + 1}`));
+    if (chkPhysical || chkSchematic) targetPageIds.push('pdf-page-diagrams');
+    if (chkBreadboard) targetPageIds.push('pdf-page-bb');
+
+    const pdf = new jsPDFLib('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
 
-    const page1El = document.getElementById('pdf-page-1');
-    const canvas1 = await html2canvas(page1El, { scale: 2, useCORS: true });
-    const imgData1 = canvas1.toDataURL('image/png');
-    const pdfHeight1 = (canvas1.height * pdfWidth) / canvas1.width;
-    pdf.addImage(imgData1, 'PNG', 0, 0, pdfWidth, pdfHeight1);
+    for (let i = 0; i < targetPageIds.length; i++) {
+      const pageEl = document.getElementById(targetPageIds[i]);
+      if (!pageEl) continue;
 
-    const page2El = document.getElementById('pdf-page-2');
-    if (page2El) {
-      pdf.addPage();
-      const canvas2 = await html2canvas(page2El, { scale: 2, useCORS: true });
-      const imgData2 = canvas2.toDataURL('image/png');
-      const pdfHeight2 = (canvas2.height * pdfWidth) / canvas2.width;
-      pdf.addImage(imgData2, 'PNG', 0, 0, pdfWidth, pdfHeight2);
+      if (i > 0) pdf.addPage();
+
+      const canvas = await html2canvas(pageEl, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     }
 
     const toHalfWidthDigits = (val) => {
@@ -5248,28 +5576,24 @@ this.components.forEach(c => {
     const gNum = toHalfWidthDigits(grade);
     const cNum = toHalfWidthDigits(className);
     let sNum = toHalfWidthDigits(studentNo);
+    if (sNum && sNum.length === 1) sNum = sNum.padStart(2, '0');
 
-    if (sNum && sNum.length === 1) {
-      sNum = sNum.padStart(2, '0');
-    }
-
-    const fileName = (gNum || cNum || sNum)
-      ? `circuit-${gNum}${cNum}${sNum}.pdf`
-      : 'circuit_report.pdf';
-
+    const fileName = (gNum || cNum || sNum) ? `circuit-${gNum}${cNum}${sNum}.pdf` : 'circuit_report.pdf';
     pdf.save(fileName);
 
-    document.getElementById('pdf-modal').classList.add('hidden');
+    document.getElementById('pdf-modal')?.classList.add('hidden');
   } catch (err) {
     console.error('PDF生成処理エラー:', err);
-    alert('PDFの出力中にエラーが発生しました。');
+    alert(`PDFの出力中にエラーが発生しました。\n【エラー理由】\n${err.message || err}`);
   } finally {
     this.powerOn = originalPowerState;
-    this.evaluateCircuit();
-    this.render();
+    if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+    if (typeof this.render === 'function') this.render();
 
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'PDFダウンロード保存';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'PDFダウンロード保存';
+    }
   }
 }
 
@@ -5402,29 +5726,63 @@ handleHoleClick(x, y, nodeId) {
       }
 
       addComponent(type, rawX, rawY) {
-        const { x, y } = this.snapToGrid(rawX, rawY);
-        const id = 'comp_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-        
-        const voltage = (type === 'battery') ? 1.5 : undefined;
-        const resistance = (type === 'resistor') ? 100 : undefined;
-        const light = (type === 'cds') ? 50 : undefined;
-        const hFE = (type === 'transistor') ? 100 : undefined; // ★ トランジスタ用の増幅率などを保持する場合（任意）
-        const flipped = false;
+    const { x, y } = this.snapToGrid(rawX, rawY);
+    const id = 'comp_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    
+    const voltage = (type === 'battery') ? 1.5 : undefined;
+    const resistance = (type === 'resistor') ? 100 : undefined;
+    const light = (type === 'cds') ? 50 : undefined;
+    const hFE = (type === 'transistor') ? 100 : undefined;
+    const flipped = false;
 
-        const rotation = { physical: 0, schematic: 0, breadboard: 0 };
-        const positions = { physical: { x, y }, breadboard: { x, y }, schematic: { x, y } };
-        const terminals = this.generateTerminals(id, type, flipped, rotation[this.mode]);
+    let text = undefined;
+    let width = undefined;
+    let height = undefined;
 
-        const newComp = { id, type, positions, state: false, voltage, resistance, light, hFE, flipped, rotation, terminals };
-        this.components.push(newComp);
-        
-        this.selectedComponentIds.clear();
-        this.selectedComponentIds.add(id);
-        this.selectedWireId = null;
-
-        this.saveState();
-        this.render();
+    if (type === 'circuit-label') {
+      if (typeof this.circuitLabelCounter === 'undefined') {
+        this.circuitLabelCounter = 1;
       }
+      text = `回路${this.circuitLabelCounter}`;
+      width = 80;
+      height = 32;
+    }
+
+    const rotation = { physical: 0, schematic: 0, breadboard: 0 };
+    const positions = { physical: { x, y }, breadboard: { x, y }, schematic: { x, y } };
+    const terminals = this.generateTerminals(id, type, flipped, rotation[this.mode]);
+
+    const newComp = { 
+      id, 
+      type, 
+      text, 
+      width, 
+      height, 
+      positions, 
+      state: false, 
+      voltage, 
+      resistance, 
+      light, 
+      hFE, 
+      flipped, 
+      rotation, 
+      terminals 
+    };
+
+    this.components.push(newComp);
+
+    // ★ 追加後に番号を整列＆カウンターを更新
+    if (type === 'circuit-label') {
+      this.updateCircuitLabelNumbers();
+    }
+    
+    this.selectedComponentIds.clear();
+    this.selectedComponentIds.add(id);
+    this.selectedWireId = null;
+
+    this.saveState();
+    this.render();
+  }
 
       getCompRotation(comp) {
         if (typeof comp.rotation === 'object' && comp.rotation !== null) {
@@ -5468,7 +5826,7 @@ handleHoleClick(x, y, nodeId) {
         { id: `${id}_t2`, name: '2', baseRelX: 30 * dir, baseRelY: 0, polarity: 'none' }
       ];
     }
-  }else if (type === 'led') {
+  } else if (type === 'led') {
     baseTerminals = [
       { id: `${id}_t1`, name: '+ (アノード)', baseRelX: -35 * dir, baseRelY: 0, polarity: 'pos' },
       { id: `${id}_t2`, name: '- (カソード)', baseRelX: 35 * dir, baseRelY: 0, polarity: 'neg' }
@@ -5491,8 +5849,7 @@ handleHoleClick(x, y, nodeId) {
         { id: `${id}_t4`, name: '+青', baseRelX: 45 * dir, baseRelY: 60, polarity: 'pos' }
       ];
     }
-  }
- else if (type === 'motor') {
+  } else if (type === 'motor') {
     baseTerminals = [
       { id: `${id}_t1`, name: '+', baseRelX: -35 * dir, baseRelY: 0, polarity: 'pos' },
       { id: `${id}_t2`, name: '-', baseRelX: 35 * dir, baseRelY: 0, polarity: 'neg' }
@@ -5516,6 +5873,9 @@ handleHoleClick(x, y, nodeId) {
         { id: `${id}_t3`, name: 'B (ベース)',   baseRelX: 15 * dir, baseRelY: 50, polarity: 'none' }
       ];
     }
+  // ★ 追加：回路ラベルパーツ（端子を持たないため空配列）
+  } else if (type === 'circuit-label') {
+    baseTerminals = [];
   }
 
 
@@ -5821,615 +6181,696 @@ async clearAll() {
 
 
       evaluateCircuit() {
-  const uniqueComponents = Array.from(
-    new Map(this.components.map(c => [c.id, c])).values()
-  );
+    try {
+      const uniqueComponents = Array.from(
+        new Map((this.components || []).map(c => [c.id, c])).values()
+      );
 
-  const activeMap = new Map();
-  const currentMap = new Map();
+      const activeMap = new Map();
+      const currentMap = new Map();
 
-  uniqueComponents.forEach(c => {
-    activeMap.set(c.id, false);
-    currentMap.set(c.id, 0);
-  });
+      uniqueComponents.forEach(c => {
+        activeMap.set(c.id, false);
+        currentMap.set(c.id, 0);
+      });
 
-  if (!this.powerOn) {
-    this.setStatus('info', 'ℹ️', '電源はOFFです。');
-    return { status: 'OFF', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-  }
+      if (!this.powerOn) {
+        this.setStatus('info', 'ℹ️', '電源はOFFです。');
+        return { status: 'OFF', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+      }
 
-  const batteries = uniqueComponents.filter(c => c.type === 'battery');
-  if (batteries.length === 0) {
-    this.setStatus('error', '⚠️', '電源（乾電池）が配置されていません。');
-    return { status: 'NO_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-  }
+      if (uniqueComponents.length === 0) {
+        this.setStatus('info', 'ℹ️', 'パーツが配置されていません。');
+        return { status: 'EMPTY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
+      }
 
-  // --- 1. ノード構築 ---
-  const termNodeMap = new Map();
-  const allTerms = [];
-  this.components.forEach(c => c.terminals.forEach(t => allTerms.push(t)));
+      // --- 1. ノード構築 ---
+      const termNodeMap = new Map();
+      const allTerms = [];
+      uniqueComponents.forEach(c => {
+        if (c && c.terminals && Array.isArray(c.terminals)) {
+          c.terminals.forEach(t => allTerms.push(t));
+        }
+      });
 
-  let nodeIdCounter = 0;
-  allTerms.forEach(t => termNodeMap.set(t.id, null));
-
-  const validWires = this.wires.filter(w => {
-    if (this.mode === 'breadboard') {
-      return w.mode === 'breadboard';
-    } else {
-      return w.mode !== 'breadboard' && w.type !== 'bridge';
-    }
-  });
-
-  const unionNodes = (idA, idB) => {
-    const n1 = termNodeMap.get(idA);
-    const n2 = termNodeMap.get(idB);
-    if (n1 === null && n2 === null) {
-      const newN = 'node_' + (++nodeIdCounter);
-      termNodeMap.set(idA, newN);
-      termNodeMap.set(idB, newN);
-    } else if (n1 !== null && n2 === null) {
-      termNodeMap.set(idB, n1);
-    } else if (n1 === null && n2 !== null) {
-      termNodeMap.set(idA, n2);
-    } else if (n1 !== n2) {
+      let nodeIdCounter = 0;
       allTerms.forEach(t => {
-        if (termNodeMap.get(t.id) === n2) termNodeMap.set(t.id, n1);
+        if (t && t.id) termNodeMap.set(t.id, null);
       });
-    }
-  };
 
-  validWires.forEach(w => {
-    if (w.fromTermId && w.toTermId) {
-      unionNodes(w.fromTermId, w.toTermId);
-    }
-  });
-
-  if (this.mode === 'breadboard') {
-    const holeToTerms = new Map();
-
-    allTerms.forEach(t => {
-      const p = this.getTerminalPosByTermId(t.id);
-      if (!p) return;
-      const holeNode = this.getBreadboardHoleNodeId(p.x, p.y);
-      if (!holeToTerms.has(holeNode)) {
-        holeToTerms.set(holeNode, []);
-      }
-      holeToTerms.get(holeNode).push(t.id);
-    });
-
-    validWires.forEach(w => {
-      if (w.fromTermId && w.toPos) {
-        const hNode = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
-        if (!holeToTerms.has(hNode)) holeToTerms.set(hNode, []);
-        holeToTerms.get(hNode).push(w.fromTermId);
-      } else if (w.type === 'bridge' && w.fromPos && w.toPos) {
-        const hNode1 = this.getBreadboardHoleNodeId(w.fromPos.x, w.fromPos.y);
-        const hNode2 = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
-        
-        const list1 = holeToTerms.get(hNode1) || [];
-        const list2 = holeToTerms.get(hNode2) || [];
-        const merged = [...list1, ...list2];
-        holeToTerms.set(hNode1, merged);
-        holeToTerms.set(hNode2, merged);
-      }
-    });
-
-    holeToTerms.forEach((terms) => {
-      for (let i = 0; i < terms.length; i++) {
-        for (let j = i + 1; j < terms.length; j++) {
-          unionNodes(terms[i], terms[j]);
-        }
-      }
-    });
-  } else {
-    allTerms.forEach(t1 => {
-      const p1 = this.getTerminalPosByTermId(t1.id);
-      if (!p1) return;
-      allTerms.forEach(t2 => {
-        if (t1.id === t2.id) return;
-        const p2 = this.getTerminalPosByTermId(t2.id);
-        if (!p2) return;
-        if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < 10) {
-          unionNodes(t1.id, t2.id);
+      const validWires = (this.wires || []).filter(w => {
+        if (this.mode === 'breadboard') {
+          return w.mode === 'breadboard';
+        } else {
+          return w.mode !== 'breadboard' && w.type !== 'bridge';
         }
       });
-    });
-  }
 
-  allTerms.forEach(t => {
-    if (termNodeMap.get(t.id) === null) {
-      termNodeMap.set(t.id, 'node_' + (++nodeIdCounter));
-    }
-  });
+      const unionNodes = (idA, idB) => {
+        if (!idA || !idB) return;
+        const n1 = termNodeMap.get(idA);
+        const n2 = termNodeMap.get(idB);
+        if (n1 === null && n2 === null) {
+          const newN = 'node_' + (++nodeIdCounter);
+          termNodeMap.set(idA, newN);
+          termNodeMap.set(idB, newN);
+        } else if (n1 !== null && n2 === null) {
+          termNodeMap.set(idB, n1);
+        } else if (n1 === null && n2 !== null) {
+          termNodeMap.set(idA, n2);
+        } else if (n1 !== n2 && n1 !== null && n2 !== null) {
+          allTerms.forEach(t => {
+            if (termNodeMap.get(t.id) === n2) termNodeMap.set(t.id, n1);
+          });
+        }
+      };
 
-  // --- 2. 電池ネットワークの電位解析 ---
-  const nodeVoltageMap = new Map();
-  let hasReverseShort = false;
+      validWires.forEach(w => {
+        if (w.fromTermId && w.toTermId) {
+          unionNodes(w.fromTermId, w.toTermId);
+        }
+      });
 
-  const batteryNodes = new Set();
-  batteries.forEach(b => {
-    b.terminals.forEach(t => {
-      const nId = termNodeMap.get(t.id);
-      if (nId) batteryNodes.add(nId);
-    });
-  });
+      if (this.mode === 'breadboard') {
+        const holeToTerms = new Map();
 
-  const visitedBatteries = new Set();
+        allTerms.forEach(t => {
+          const p = this.getTerminalPosByTermId(t.id);
+          if (!p) return;
+          const holeNode = this.getBreadboardHoleNodeId(p.x, p.y);
+          if (!holeNode) return;
+          if (!holeToTerms.has(holeNode)) {
+            holeToTerms.set(holeNode, []);
+          }
+          holeToTerms.get(holeNode).push(t.id);
+        });
 
-  batteryNodes.forEach(startNodeId => {
-    if (!nodeVoltageMap.has(startNodeId)) {
-      nodeVoltageMap.set(startNodeId, 0);
-
-      const queue = [startNodeId];
-      while (queue.length > 0) {
-        const currNode = queue.shift();
-        const currV = nodeVoltageMap.get(currNode);
-
-        batteries.forEach(b => {
-          if (visitedBatteries.has(b.id)) return;
-
-          const posTerm = b.terminals.find(t => t.polarity === 'pos');
-          const negTerm = b.terminals.find(t => t.polarity === 'neg');
-          if (!posTerm || !negTerm) return;
-
-          const posNode = termNodeMap.get(posTerm.id);
-          const negNode = termNodeMap.get(negTerm.id);
-          const bVoltage = Number(b.voltage) || 1.5;
-
-          if (currNode === negNode) {
-            const targetV = currV + bVoltage;
-            if (nodeVoltageMap.has(posNode)) {
-              const existingPosV = nodeVoltageMap.get(posNode);
-              if (existingPosV > currV) {
-                if (targetV > existingPosV) {
-                  nodeVoltageMap.set(posNode, targetV);
-                }
-              } else {
-                hasReverseShort = true;
-              }
-            } else {
-              nodeVoltageMap.set(posNode, targetV);
-              queue.push(posNode);
+        validWires.forEach(w => {
+          if (w.fromTermId && w.toPos) {
+            const hNode = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
+            if (hNode) {
+              if (!holeToTerms.has(hNode)) holeToTerms.set(hNode, []);
+              holeToTerms.get(hNode).push(w.fromTermId);
             }
-            visitedBatteries.add(b.id);
-          } else if (currNode === posNode) {
-            const targetV = currV - bVoltage;
-            if (nodeVoltageMap.has(negNode)) {
-              const existingNegV = nodeVoltageMap.get(negNode);
-              if (existingNegV < currV) {
-                if (targetV < existingNegV) {
-                  nodeVoltageMap.set(negNode, targetV);
-                }
-              } else {
-                hasReverseShort = true;
-              }
-            } else {
-              nodeVoltageMap.set(negNode, targetV);
-              queue.push(negNode);
+          } else if (w.type === 'bridge' && w.fromPos && w.toPos) {
+            const hNode1 = this.getBreadboardHoleNodeId(w.fromPos.x, w.fromPos.y);
+            const hNode2 = this.getBreadboardHoleNodeId(w.toPos.x, w.toPos.y);
+            
+            if (hNode1 && hNode2) {
+              const list1 = holeToTerms.get(hNode1) || [];
+              const list2 = holeToTerms.get(hNode2) || [];
+              const merged = [...list1, ...list2];
+              holeToTerms.set(hNode1, merged);
+              holeToTerms.set(hNode2, merged);
             }
-            visitedBatteries.add(b.id);
           }
         });
-      }
-    }
-  });
 
-  if (hasReverseShort) {
-    this.setStatus('error', '💥', '電池の向き（極性）が逆向きに接続されており、ショートしています！');
-    return { status: 'SHORT', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-  }
-
-    // ★ 電源のプラス極から指定ノードまで辿れ、かつCdSの明暗状態を考慮する判定
-  const isNodeConnectedToPos = (startNodeId) => {
-    if (!startNodeId) return false;
-
-    // 1. 電池の正極(+)と負極(-)のノードを取得
-    const posNodes = new Set();
-    const negNodes = new Set();
-    batteries.forEach(b => {
-      const posTerm = b.terminals.find(t => t.polarity === 'pos');
-      const negTerm = b.terminals.find(t => t.polarity === 'neg');
-      if (posTerm) posNodes.add(termNodeMap.get(posTerm.id));
-      if (negTerm) negNodes.add(termNodeMap.get(negTerm.id));
-    });
-
-    // 2. ベースノードに繋がっているCdSの抵抗値を直接チェック
-    const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === startNodeId);
-    for (const t of connectedTerms) {
-      const comp = uniqueComponents.find(c => c.terminals.some(term => term.id === t.id));
-      if (comp && comp.type === 'cds') {
-        // 光度から抵抗値を算出（明るい＝低抵抗、暗い＝高抵抗）
-        const rCds = this.getCdsResistance(comp);
-        
-        // CdSの抵抗が10kΩ未満（明るい状態）なら、電流がGNDに逃げてベースはOFF
-        if (rCds < 10000) {
-          return false;
-        }
-      }
-    }
-
-    // 3. CdSが暗い（高抵抗）場合、固定抵抗経由で電池の(+)から電圧が来ているかチェック
-    const visited = new Set();
-    const queue = [startNodeId];
-
-    while (queue.length > 0) {
-      const curr = queue.shift();
-      if (visited.has(curr)) continue;
-      visited.add(curr);
-
-      if (posNodes.has(curr)) return true;
-
-      const terms = allTerms.filter(t => termNodeMap.get(t.id) === curr);
-      for (const t of terms) {
-        const comp = uniqueComponents.find(c => c.terminals.some(term => term.id === t.id));
-        if (!comp || comp.type === 'battery' || comp.type === 'transistor') continue;
-        if (comp.type === 'switch' && !comp.state) continue;
-
-        comp.terminals.forEach(otherT => {
-          if (otherT.id !== t.id) {
-            const nextN = termNodeMap.get(otherT.id);
-            if (nextN && !visited.has(nextN)) queue.push(nextN);
+        holeToTerms.forEach((terms) => {
+          for (let i = 0; i < terms.length; i++) {
+            for (let j = i + 1; j < terms.length; j++) {
+              unionNodes(terms[i], terms[j]);
+            }
           }
         });
-      }
-    }
-    return false;
-  };
-
-
-
-  // --- 3. 負荷パーツ経由の経路探索 ---
-  const rawPaths = [];
-  const startNodes = Array.from(nodeVoltageMap.keys());
-
-  startNodes.forEach(startNode => {
-    const vStart = nodeVoltageMap.get(startNode);
-
-    const traceFromNode = (currentNode, currentPath, visitedComps) => {
-      const vCurr = nodeVoltageMap.get(currentNode);
-
-      if (vCurr !== undefined && vCurr < vStart && currentPath.length > 0) {
-        const pathVoltage = vStart - vCurr;
-        rawPaths.push({ path: [...currentPath], voltage: pathVoltage });
-        return;
-      }
-
-      const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === currentNode);
-      connectedTerms.forEach(inTerm => {
-        const comp = uniqueComponents.find(c => c.terminals.some(t => t.id === inTerm.id));
-        if (!comp || comp.type === 'battery' || visitedComps.has(comp.id)) return;
-
-        let canPass = true;
-        let outTerm = null;
-
-        if (comp.type === 'switch') {
-  if (comp.switchType === 'toggle') {
-    // IDの末尾（_t1 = COM, _t2 = 接点1, _t3 = 接点2）で確実に特定
-    const comTerm = comp.terminals.find(t => t.id.endsWith('_t1'));
-    const term1   = comp.terminals.find(t => t.id.endsWith('_t2'));
-    const term2   = comp.terminals.find(t => t.id.endsWith('_t3'));
-
-    // スイッチの状態(state)に応じて導通先を判定
-    // state === 1 : COM (_t1) ⇔ 接点1 (_t2)
-    // state === 2 : COM (_t1) ⇔ 接点2 (_t3)
-    if (comp.state === 1) {
-      if (inTerm.id === comTerm?.id) {
-        outTerm = term1;
-      } else if (inTerm.id === term1?.id) {
-        outTerm = comTerm;
       } else {
-        canPass = false; // 接点2(_t3)から入ってきた場合は通過不可
+        allTerms.forEach(t1 => {
+          const p1 = this.getTerminalPosByTermId(t1.id);
+          if (!p1) return;
+          allTerms.forEach(t2 => {
+            if (t1.id === t2.id) return;
+            const p2 = this.getTerminalPosByTermId(t2.id);
+            if (!p2) return;
+            if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < 10) {
+              unionNodes(t1.id, t2.id);
+            }
+          });
+        });
       }
-    } else if (comp.state === 2) {
-      if (inTerm.id === comTerm?.id) {
-        outTerm = term2;
-      } else if (inTerm.id === term2?.id) {
-        outTerm = comTerm;
-      } else {
-        canPass = false; // 接点1(_t2)から入ってきた場合は通過不可
-      }
-    } else {
-      canPass = false;
-    }
-  } else if (!comp.state) {
-    // 通常の2端子スイッチ（OFF時）
-    canPass = false;
-  } else {
-    // 通常の2端子スイッチ（ON時）
-    outTerm = comp.terminals.find(t => t.id !== inTerm.id);
-  }
-}
- else if (comp.type === 'led' || comp.type === 'rgb-led') {
-  if (inTerm.polarity === 'pos') {
-    outTerm = comp.terminals.find(t => t.polarity === 'neg');
-  } else {
-    canPass = false;
-  }
-} 
-// --- 3. 負荷パーツ経由の経路探索 ---
 
-else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
-  // PNPトランジスタかどうかの判定
-  const isPnp = comp.isPnp || comp.type === 'pnp';
-
-  // 端子の割り当て (t1: Emitter, t2: Collector, t3: Base)
-  const emitTerm = comp.terminals.find(t => t.polarity === 'emitter' || t.id.endsWith('_e') || t.id.endsWith('_t1'));
-  const colTerm  = comp.terminals.find(t => t.polarity === 'collector' || t.id.endsWith('_c') || t.id.endsWith('_t2'));
-  const baseTerm = comp.terminals.find(t => t.polarity === 'base' || t.id.endsWith('_b') || t.id.endsWith('_t3'));
-
-  const baseNode = baseTerm ? termNodeMap.get(baseTerm.id) : null;
-  let isBaseOn = false;
-
-  if (baseNode) {
-    const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === baseNode);
-    let rToPos = 0; // 電源(+)側の抵抗
-    let rToNeg = 0; // GND(-)側の抵抗
-
-    connectedTerms.forEach(t => {
-      const parentComp = uniqueComponents.find(c => c.terminals.some(term => term.id === t.id));
-      if (!parentComp) return;
-
-      let rVal = 0;
-      if (parentComp.type === 'resistor') rVal = parseFloat(parentComp.resistance) || 100;
-      else if (parentComp.type === 'cds') rVal = this.getCdsResistance(parentComp);
-
-      if (parentComp.type === 'resistor') {
-        rToPos += rVal;
-      } else if (parentComp.type === 'cds') {
-        rToNeg += rVal;
-      }
-    });
-
-    if (rToPos > 0 && rToNeg > 0) {
-      const baseVoltageRatio = rToNeg / (rToPos + rToNeg);
-      
-      if (isPnp) {
-        // ★ PNP: 電圧比率が低いとき（CdSが明るく抵抗が下がったとき）にON
-        if (baseVoltageRatio <= 0.3) {
-          isBaseOn = true;
-        }
-      } else {
-        // ★ NPN: 電圧比率が高いとき（CdSが暗く抵抗が上がったとき）にON
-        if (baseVoltageRatio > 0.3) {
-          isBaseOn = true;
-        }
-      }
-    } else {
-      isBaseOn = isNodeConnectedToPos(baseNode);
-    }
-  }
-
-  if (baseTerm && inTerm.id === baseTerm.id) {
-    canPass = false; 
-  } 
-  // ★ NPNの場合：コレクタ(C) から エミッタ(E) に流れる
-  else if (!isPnp && colTerm && inTerm.id === colTerm.id) {
-    if (isBaseOn) {
-      outTerm = emitTerm;
-    } else {
-      canPass = false;
-    }
-  } 
-  // ★ PNPの場合：エミッタ(E) から コレクタ(C) に流れる
-  else if (isPnp && emitTerm && inTerm.id === emitTerm.id) {
-    if (isBaseOn) {
-      outTerm = colTerm;
-    } else {
-      canPass = false;
-    }
-  } else {
-    canPass = false;
-  }
-} else {
-  outTerm = comp.terminals.find(t => t.id !== inTerm.id);
-}
-
-        if (canPass && outTerm) {
-          const nextNode = termNodeMap.get(outTerm.id);
-          const nextVisited = new Set(visitedComps).add(comp.id);
-          traceFromNode(nextNode, [...currentPath, { comp, inTerm }], nextVisited);
-        }
-      });
-    };
-
-    traceFromNode(startNode, [], new Set());
-  });
-
-  if (rawPaths.length === 0) {
-    const switches = uniqueComponents.filter(c => c.type === 'switch');
-    if (switches.some(s => !s.state)) {
-      this.setStatus('warning', '🔘', 'スイッチがオフになっているか、回路が未完成です。');
-    } else {
-      this.setStatus('error', '⚡', '回路がつながっていないか、LED/トランジスタの接続を確認してください。');
-    }
-    return { status: 'OPEN', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-  }
-
-  // 経路重複排除
-  const validPaths = [];
-  const seenPathKeys = new Set();
-  rawPaths.forEach(item => {
-    const key = item.path.map(p => String(p.comp.id)).sort().join(',');
-    if (!seenPathKeys.has(key)) {
-      seenPathKeys.add(key);
-      validPaths.push(item);
-    }
-  });
-
-  const totalVoltage = validPaths.length > 0 
-    ? Math.max(0, ...validPaths.map(p => p.voltage)) 
-    : 0;
-
-  if (totalVoltage <= 0) {
-    this.setStatus('warning', '⚠️', '電池の向き（極性）が互いに打ち消し合っているか、正しく接続されていません。');
-    return { status: 'REVERSE_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-  }
-
-  // --- 4. 合成抵抗とショート判定 ---
-  // ★ 1. 抵抗値取得ヘルパー関数（先頭で定義）
-  const getResValue = (r) => {
-    if (r.type === 'cds') {
-      const val = this.getCdsResistance(r);
-      // 暗い場合(0%)は十分高い抵抗値(100kΩ)を返す
-      return (typeof val === 'number' && !isNaN(val) && val > 0) ? val : 100000;
-    }
-    const parsed = parseFloat(r.resistance);
-    return (!isNaN(parsed) && parsed > 0) ? parsed : 100;
-  };
-
-  const branchMap = new Map();
-  validPaths.forEach(item => {
-    const resistors = item.path.map(p => p.comp).filter(c => c.type === 'resistor' || c.type === 'cds');
-    if (resistors.length > 0) {
-      const key = resistors.map(r => String(r.id)).sort().join('-');
-      if (!branchMap.has(key)) {
-        branchMap.set(key, resistors);
-      }
-    }
-  });
-
-  const branchList = Array.from(branchMap.values());
-  let totalResistance = 0;
-
-  if (branchList.length > 0) {
-    const commonResistorIds = branchList[0]
-      .map(r => String(r.id))
-      .filter(id => branchList.every(b => b.some(r => String(r.id) === id)));
-
-    let R_common = 0;
-    branchList[0].forEach(r => {
-      if (commonResistorIds.includes(String(r.id))) {
-        R_common += getResValue(r); // ★ getResValueを使用
-      }
-    });
-
-    let branchConductance = 0;
-    branchList.forEach(resistors => {
-      let R_branch_unique = 0;
-      resistors.forEach(r => {
-        if (!commonResistorIds.includes(String(r.id))) {
-          R_branch_unique += getResValue(r); // ★ getResValueを使用
+      allTerms.forEach(t => {
+        if (termNodeMap.get(t.id) === null) {
+          termNodeMap.set(t.id, 'node_' + (++nodeIdCounter));
         }
       });
 
-      if (R_branch_unique > 0) {
-        branchConductance += (1 / R_branch_unique);
+      // --- 2. 独立した回路グループへの分割 ---
+      const compNodeMap = new Map();
+      uniqueComponents.forEach(c => {
+        const nodes = new Set();
+        (c.terminals || []).forEach(t => {
+          const nId = termNodeMap.get(t.id);
+          if (nId) nodes.add(nId);
+        });
+        compNodeMap.set(c.id, nodes);
+      });
+
+      const visitedComps = new Set();
+      const rawSubCircuits = [];
+
+      uniqueComponents.forEach(startComp => {
+        if (visitedComps.has(startComp.id)) return;
+
+        const groupComps = [];
+        const queue = [startComp];
+        visitedComps.add(startComp.id);
+
+        while (queue.length > 0) {
+          const currComp = queue.shift();
+          groupComps.push(currComp);
+
+          const currNodes = compNodeMap.get(currComp.id) || new Set();
+
+          uniqueComponents.forEach(otherComp => {
+            if (visitedComps.has(otherComp.id)) return;
+            const otherNodes = compNodeMap.get(otherComp.id) || new Set();
+
+            let isConnected = false;
+            for (const n of currNodes) {
+              if (otherNodes.has(n)) {
+                isConnected = true;
+                break;
+              }
+            }
+
+            if (isConnected) {
+              visitedComps.add(otherComp.id);
+              queue.push(otherComp);
+            }
+          });
+        }
+
+        rawSubCircuits.push(groupComps);
+      });
+
+      const subCircuits = rawSubCircuits.filter(group => {
+        const hasBattery = group.some(c => c.type === 'battery');
+        return hasBattery || group.length >= 2;
+      });
+
+      if (subCircuits.length === 0) {
+        this.setStatus('warning', '⚠️', '電源（乾電池）が配置されていないか、回路が未接続です。');
+        return { status: 'NO_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
       }
-    });
 
-    const R_parallel = branchConductance > 0 ? (1 / branchConductance) : 0;
-    totalResistance = R_common + R_parallel;
-  }
+      // --- 3. 各独立回路ごとの評価ヘルパー ---
+      const getResValue = (r) => {
+        if (r.type === 'cds') {
+          const val = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(r) : 100000;
+          return (typeof val === 'number' && !isNaN(val) && val > 0) ? val : 100000;
+        }
+        const parsed = parseFloat(r.resistance);
+        return (!isNaN(parsed) && parsed > 0) ? parsed : 100;
+      };
 
-  // ★ ショート・過電流判定の修正
-  let isShortCircuit = false;
-  
-  validPaths.forEach(item => {
-    // 回路中に「抵抗器(resistor)」または「CdS」が存在するか確認
-    const hasResistor = item.path.some(p => 
-      p.comp.type === 'resistor' || 
-      p.comp.type === 'cds'
-    );
-    
-    // 電池とLED/スイッチだけで抵抗が入っていない場合はショート（過電流）とする
-    if (!hasResistor) {
-      isShortCircuit = true;
-    }
-  });
+      const isNodeConnectedToPos = (startNodeId, subComps) => {
+        if (!startNodeId) return false;
 
-  if (isShortCircuit) {
-    this.setStatus('error', '💥', 'ショート（過電流）しています！LEDの焼き切れを防ぐため、抵抗器を接続してください。');
-    return { status: 'SHORT', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
-  }
+        const posNodes = new Set();
+        const batteriesInSub = subComps.filter(c => c.type === 'battery');
+        batteriesInSub.forEach(b => {
+          const posTerm = (b.terminals || []).find(t => t.polarity === 'pos');
+          if (posTerm) posNodes.add(termNodeMap.get(posTerm.id));
+        });
 
-  this.components.forEach(c => {
-    if (c.type === 'rgb-led') {
-      c.rgbChannels = { r: false, g: false, b: false };
-    }
-  });
-
-  const totalCurrent = totalResistance > 0 ? (totalVoltage / totalResistance) : totalVoltage;
-
-  // --- 5. コンポーネント動作状態の更新 ---
-  const VF_PER_LED = 2.0;
-  let hasLedInCircuit = false;
-
-  validPaths.forEach(item => {
-    const path = item.path;
-    const ledCountInPath = path.filter(p => p.comp.type === 'led' || p.comp.type === 'rgb-led').length;
-
-    if (ledCountInPath > 0) {
-      hasLedInCircuit = true;
-    }
-
-    const requiredVoltage = ledCountInPath * VF_PER_LED;
-
-    path.forEach(pItem => {
-      const comp = pItem.comp;
-      const inTerm = pItem.inTerm;
-
-      if (comp.type === 'led' || comp.type === 'rgb-led') {
-        if (totalVoltage >= requiredVoltage) {
-          activeMap.set(comp.id, true);
-          currentMap.set(comp.id, (currentMap.get(comp.id) || 0) + totalCurrent);
-
-          if (comp.type === 'rgb-led' && inTerm) {
-            const name = (inTerm.name || '').toLowerCase();
-            const id = (inTerm.id || '').toLowerCase();
-
-            const isRed = name.includes('赤') || name.includes('r') || id.endsWith('t2');
-            const isGreen = name.includes('緑') || name.includes('g') || id.endsWith('t3');
-            const isBlue = name.includes('青') || name.includes('b') || id.endsWith('t4');
-
-            if (isRed) comp.rgbChannels.r = true;
-            if (isGreen) comp.rgbChannels.g = true;
-            if (isBlue) comp.rgbChannels.b = true;
+        const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === startNodeId);
+        for (const t of connectedTerms) {
+          const comp = subComps.find(c => (c.terminals || []).some(term => term.id === t.id));
+          if (comp && comp.type === 'cds') {
+            const rCds = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(comp) : 100000;
+            if (rCds < 10000) return false;
           }
         }
-      } else if (comp.type !== 'battery') {
-        activeMap.set(comp.id, true);
 
-        let currentVal = totalCurrent;
-        if (comp.type === 'motor' && inTerm) {
-          if (inTerm.polarity === 'neg' || inTerm.id.endsWith('_t2')) {
-            currentVal = -totalCurrent;
+        const visited = new Set();
+        const queue = [startNodeId];
+
+        while (queue.length > 0) {
+          const curr = queue.shift();
+          if (visited.has(curr)) continue;
+          visited.add(curr);
+
+          if (posNodes.has(curr)) return true;
+
+          const terms = allTerms.filter(t => termNodeMap.get(t.id) === curr);
+          for (const t of terms) {
+            const comp = subComps.find(c => (c.terminals || []).some(term => term.id === t.id));
+            if (!comp || comp.type === 'battery' || comp.type === 'transistor') continue;
+            if (comp.type === 'switch' && !comp.state) continue;
+
+            (comp.terminals || []).forEach(otherT => {
+              if (otherT.id !== t.id) {
+                const nextN = termNodeMap.get(otherT.id);
+                if (nextN && !visited.has(nextN)) queue.push(nextN);
+              }
+            });
           }
         }
-        currentMap.set(comp.id, currentVal);
-      }
-    });
-  });
+        return false;
+      };
 
-  // --- 6. ステータス表示 ---
-  const vText = `約 ${totalVoltage.toFixed(1)}V`;
+      const subCircuitResults = [];
 
-  const rText = totalResistance >= 1000 
-    ? `約 ${(totalResistance / 1000).toFixed(2)} kΩ` 
-    : `約 ${totalResistance.toFixed(1)} Ω`;
+      // --- 4. 独立回路ごとに解析を実行 ---
+      subCircuits.forEach((subComps, index) => {
+        const circuitId = index + 1;
+        const batteriesInSub = subComps.filter(c => c.type === 'battery');
 
-  const iText = totalCurrent >= 1 
-    ? `約 ${totalCurrent.toFixed(2)} A` 
-    : `約 ${(totalCurrent * 1000).toFixed(1)} mA`;
+        if (batteriesInSub.length === 0) {
+          subCircuitResults.push({
+            id: circuitId,
+            status: 'NO_BATTERY',
+            type: 'warning',
+            icon: '⚠️',
+            msg: '電源（乾電池）が接続されていません',
+            totalVoltage: 0,
+            totalResistance: 0,
+            totalCurrent: 0
+          });
+          return;
+        }
 
-  const anyLedActive = uniqueComponents
-    .filter(c => c.type === 'led' || c.type === 'rgb-led')
-    .some(c => activeMap.get(c.id));
+        const nodeVoltageMap = new Map();
+        let hasReverseShort = false;
 
-  if (hasLedInCircuit && !anyLedActive) {
-    this.setStatus('warning', '💡', `電圧不足です (電源: ${vText})。LEDの点灯に必要な電圧(LED1個あたり約${VF_PER_LED.toFixed(1)}V)に達していません。`);
-    return { status: 'LOW_VOLTAGE', activeMap, currentMap, totalResistance, totalCurrent };
+        const batteryNodes = new Set();
+        batteriesInSub.forEach(b => {
+          (b.terminals || []).forEach(t => {
+            const nId = termNodeMap.get(t.id);
+            if (nId) batteryNodes.add(nId);
+          });
+        });
+
+        const visitedBatteries = new Set();
+
+        batteryNodes.forEach(startNodeId => {
+          if (!nodeVoltageMap.has(startNodeId)) {
+            nodeVoltageMap.set(startNodeId, 0);
+
+            const queue = [startNodeId];
+            while (queue.length > 0) {
+              const currNode = queue.shift();
+              const currV = nodeVoltageMap.get(currNode);
+
+              batteriesInSub.forEach(b => {
+                if (visitedBatteries.has(b.id)) return;
+
+                const posTerm = (b.terminals || []).find(t => t.polarity === 'pos');
+                const negTerm = (b.terminals || []).find(t => t.polarity === 'neg');
+                if (!posTerm || !negTerm) return;
+
+                const posNode = termNodeMap.get(posTerm.id);
+                const negNode = termNodeMap.get(negTerm.id);
+                const bVoltage = Number(b.voltage) || 1.5;
+
+                if (currNode === negNode) {
+                  const targetV = currV + bVoltage;
+                  if (nodeVoltageMap.has(posNode)) {
+                    const existingPosV = nodeVoltageMap.get(posNode);
+                    if (existingPosV > currV) {
+                      if (targetV > existingPosV) nodeVoltageMap.set(posNode, targetV);
+                    } else {
+                      hasReverseShort = true;
+                    }
+                  } else {
+                    nodeVoltageMap.set(posNode, targetV);
+                    queue.push(posNode);
+                  }
+                  visitedBatteries.add(b.id);
+                } else if (currNode === posNode) {
+                  const targetV = currV - bVoltage;
+                  if (nodeVoltageMap.has(negNode)) {
+                    const existingNegV = nodeVoltageMap.get(negNode);
+                    if (existingNegV < currV) {
+                      if (targetV < existingNegV) nodeVoltageMap.set(negNode, targetV);
+                    } else {
+                      hasReverseShort = true;
+                    }
+                  } else {
+                    nodeVoltageMap.set(negNode, targetV);
+                    queue.push(negNode);
+                  }
+                  visitedBatteries.add(b.id);
+                }
+              });
+            }
+          }
+        });
+
+        if (hasReverseShort) {
+          subCircuitResults.push({
+            id: circuitId,
+            status: 'SHORT',
+            type: 'error',
+            icon: '💥',
+            msg: '電池の向き（極性）が逆向き接続でショートしています！',
+            totalVoltage: 0,
+            totalResistance: 0,
+            totalCurrent: 0
+          });
+          return;
+        }
+
+        const rawPaths = [];
+        const startNodes = Array.from(nodeVoltageMap.keys());
+
+        startNodes.forEach(startNode => {
+          const vStart = nodeVoltageMap.get(startNode);
+
+          const traceFromNode = (currentNode, currentPath, visitedCompSet) => {
+            const vCurr = nodeVoltageMap.get(currentNode);
+
+            if (vCurr !== undefined && vCurr < vStart && currentPath.length > 0) {
+              const pathVoltage = vStart - vCurr;
+              rawPaths.push({ path: [...currentPath], voltage: pathVoltage });
+              return;
+            }
+
+            const connectedTerms = allTerms.filter(t => termNodeMap.get(t.id) === currentNode);
+            connectedTerms.forEach(inTerm => {
+              const comp = subComps.find(c => (c.terminals || []).some(t => t.id === inTerm.id));
+              if (!comp || comp.type === 'battery' || visitedCompSet.has(comp.id)) return;
+
+              let canPass = true;
+              let outTerm = null;
+
+              const terms = comp.terminals || [];
+
+              if (comp.type === 'switch') {
+                if (comp.switchType === 'toggle') {
+                  const comTerm = terms.find(t => t.id.endsWith('_t1'));
+                  const term1   = terms.find(t => t.id.endsWith('_t2'));
+                  const term2   = terms.find(t => t.id.endsWith('_t3'));
+
+                  if (comp.state === 1) {
+                    if (inTerm.id === comTerm?.id) outTerm = term1;
+                    else if (inTerm.id === term1?.id) outTerm = comTerm;
+                    else canPass = false;
+                  } else if (comp.state === 2) {
+                    if (inTerm.id === comTerm?.id) outTerm = term2;
+                    else if (inTerm.id === term2?.id) outTerm = comTerm;
+                    else canPass = false;
+                  } else {
+                    canPass = false;
+                  }
+                } else if (!comp.state) {
+                  canPass = false;
+                } else {
+                  outTerm = terms.find(t => t.id !== inTerm.id);
+                }
+              } else if (comp.type === 'led' || comp.type === 'rgb-led') {
+                if (inTerm.polarity === 'pos') {
+                  outTerm = terms.find(t => t.polarity === 'neg');
+                } else {
+                  canPass = false;
+                }
+              } else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp') {
+                const isPnp = comp.isPnp || comp.type === 'pnp';
+                const emitTerm = terms.find(t => t.polarity === 'emitter' || t.id.endsWith('_e') || t.id.endsWith('_t1'));
+                const colTerm  = terms.find(t => t.polarity === 'collector' || t.id.endsWith('_c') || t.id.endsWith('_t2'));
+                const baseTerm = terms.find(t => t.polarity === 'base' || t.id.endsWith('_b') || t.id.endsWith('_t3'));
+
+                const baseNode = baseTerm ? termNodeMap.get(baseTerm.id) : null;
+                let isBaseOn = false;
+
+                if (baseNode) {
+                  const connTerms = allTerms.filter(t => termNodeMap.get(t.id) === baseNode);
+                  let rToPos = 0;
+                  let rToNeg = 0;
+
+                  connTerms.forEach(t => {
+                    const parentComp = subComps.find(c => (c.terminals || []).some(term => term.id === t.id));
+                    if (!parentComp) return;
+
+                    let rVal = 0;
+                    if (parentComp.type === 'resistor') rVal = parseFloat(parentComp.resistance) || 100;
+                    else if (parentComp.type === 'cds') rVal = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(parentComp) : 100000;
+
+                    if (parentComp.type === 'resistor') rToPos += rVal;
+                    else if (parentComp.type === 'cds') rToNeg += rVal;
+                  });
+
+                  if (rToPos > 0 && rToNeg > 0) {
+                    const baseVoltageRatio = rToNeg / (rToPos + rToNeg);
+                    if (isPnp) {
+                      if (baseVoltageRatio <= 0.3) isBaseOn = true;
+                    } else {
+                      if (baseVoltageRatio > 0.3) isBaseOn = true;
+                    }
+                  } else {
+                    isBaseOn = isNodeConnectedToPos(baseNode, subComps);
+                  }
+                }
+
+                if (baseTerm && inTerm.id === baseTerm.id) {
+                  canPass = false;
+                } else if (!isPnp && colTerm && inTerm.id === colTerm.id) {
+                  if (isBaseOn) outTerm = emitTerm;
+                  else canPass = false;
+                } else if (isPnp && emitTerm && inTerm.id === emitTerm.id) {
+                  if (isBaseOn) outTerm = colTerm;
+                  else canPass = false;
+                } else {
+                  canPass = false;
+                }
+              } else {
+                outTerm = terms.find(t => t.id !== inTerm.id);
+              }
+
+              if (canPass && outTerm) {
+                const nextNode = termNodeMap.get(outTerm.id);
+                const nextVisited = new Set(visitedCompSet).add(comp.id);
+                traceFromNode(nextNode, [...currentPath, { comp, inTerm }], nextVisited);
+              }
+            });
+          };
+
+          traceFromNode(startNode, [], new Set());
+        });
+
+        if (rawPaths.length === 0) {
+          const hasOffSwitch = subComps.some(c => c.type === 'switch' && !c.state);
+          const icon = hasOffSwitch ? '🔘' : '⚡';
+          const msg = hasOffSwitch
+            ? 'スイッチがOFFになっています'
+            : '回路が未接続か、接続向きが正しくありません';
+
+          subCircuitResults.push({
+            id: circuitId,
+            status: 'OPEN',
+            type: 'warning',
+            icon: icon,
+            msg: msg,
+            totalVoltage: 0,
+            totalResistance: 0,
+            totalCurrent: 0
+          });
+          return;
+        }
+
+        const validPaths = [];
+        const seenPathKeys = new Set();
+        rawPaths.forEach(item => {
+          const key = item.path.map(p => String(p.comp.id)).sort().join(',');
+          if (!seenPathKeys.has(key)) {
+            seenPathKeys.add(key);
+            validPaths.push(item);
+          }
+        });
+
+        const totalVoltage = validPaths.length > 0 ? Math.max(0, ...validPaths.map(p => p.voltage)) : 0;
+
+        if (totalVoltage <= 0) {
+          subCircuitResults.push({
+            id: circuitId,
+            status: 'REVERSE_BATTERY',
+            type: 'warning',
+            icon: '⚠️',
+            msg: '電池の向き（極性）が打ち消し合っています',
+            totalVoltage: 0,
+            totalResistance: 0,
+            totalCurrent: 0
+          });
+          return;
+        }
+
+        const branchMap = new Map();
+        validPaths.forEach(item => {
+          const resistors = item.path.map(p => p.comp).filter(c => c.type === 'resistor' || c.type === 'cds');
+          if (resistors.length > 0) {
+            const key = resistors.map(r => String(r.id)).sort().join('-');
+            if (!branchMap.has(key)) {
+              branchMap.set(key, resistors);
+            }
+          }
+        });
+
+        const branchList = Array.from(branchMap.values());
+        let totalResistance = 0;
+
+        if (branchList.length > 0) {
+          const commonResistorIds = branchList[0]
+            .map(r => String(r.id))
+            .filter(id => branchList.every(b => b.some(r => String(r.id) === id)));
+
+          let R_common = 0;
+          branchList[0].forEach(r => {
+            if (commonResistorIds.includes(String(r.id))) {
+              R_common += getResValue(r);
+            }
+          });
+
+          let branchConductance = 0;
+          branchList.forEach(resistors => {
+            let R_branch_unique = 0;
+            resistors.forEach(r => {
+              if (!commonResistorIds.includes(String(r.id))) {
+                R_branch_unique += getResValue(r);
+              }
+            });
+
+            if (R_branch_unique > 0) {
+              branchConductance += (1 / R_branch_unique);
+            }
+          });
+
+          const R_parallel = branchConductance > 0 ? (1 / branchConductance) : 0;
+          totalResistance = R_common + R_parallel;
+        }
+
+        let isShortCircuit = false;
+        validPaths.forEach(item => {
+          const hasResistor = item.path.some(p => p.comp.type === 'resistor' || p.comp.type === 'cds');
+          if (!hasResistor) {
+            isShortCircuit = true;
+          }
+        });
+
+        if (isShortCircuit) {
+          subCircuitResults.push({
+            id: circuitId,
+            status: 'SHORT',
+            type: 'error',
+            icon: '💥',
+            msg: 'ショート（過電流）！抵抗器を接続してください',
+            totalVoltage,
+            totalResistance: 0,
+            totalCurrent: 0
+          });
+          return;
+        }
+
+        subComps.forEach(c => {
+          if (c.type === 'rgb-led') {
+            c.rgbChannels = { r: false, g: false, b: false };
+          }
+        });
+
+        const totalCurrent = totalResistance > 0 ? (totalVoltage / totalResistance) : totalVoltage;
+
+        const VF_PER_LED = 2.0;
+        let hasLedInCircuit = false;
+        let subLedActiveCount = 0;
+
+        validPaths.forEach(item => {
+          const path = item.path;
+          const ledCountInPath = path.filter(p => p.comp.type === 'led' || p.comp.type === 'rgb-led').length;
+          if (ledCountInPath > 0) hasLedInCircuit = true;
+
+          const requiredVoltage = ledCountInPath * VF_PER_LED;
+
+          path.forEach(pItem => {
+            const comp = pItem.comp;
+            const inTerm = pItem.inTerm;
+
+            if (comp.type === 'led' || comp.type === 'rgb-led') {
+              if (totalVoltage >= requiredVoltage) {
+                activeMap.set(comp.id, true);
+                currentMap.set(comp.id, (currentMap.get(comp.id) || 0) + totalCurrent);
+                subLedActiveCount++;
+
+                if (comp.type === 'rgb-led' && inTerm) {
+                  const name = (inTerm.name || '').toLowerCase();
+                  const id = (inTerm.id || '').toLowerCase();
+
+                  const isRed = name.includes('赤') || name.includes('r') || id.endsWith('t2');
+                  const isGreen = name.includes('緑') || name.includes('g') || id.endsWith('t3');
+                  const isBlue = name.includes('青') || name.includes('b') || id.endsWith('t4');
+
+                  if (isRed) comp.rgbChannels.r = true;
+                  if (isGreen) comp.rgbChannels.g = true;
+                  if (isBlue) comp.rgbChannels.b = true;
+                }
+              }
+            } else if (comp.type !== 'battery') {
+              activeMap.set(comp.id, true);
+
+              let currentVal = totalCurrent;
+              if (comp.type === 'motor' && inTerm) {
+                if (inTerm.polarity === 'neg' || inTerm.id.endsWith('_t2')) {
+                  currentVal = -totalCurrent;
+                }
+              }
+              currentMap.set(comp.id, currentVal);
+            }
+          });
+        });
+
+        if (hasLedInCircuit && subLedActiveCount === 0) {
+          subCircuitResults.push({
+            id: circuitId,
+            status: 'LOW_VOLTAGE',
+            type: 'warning',
+            icon: '💡',
+            msg: `電圧不足 (電源: 約 ${totalVoltage.toFixed(1)}V) / LED点灯の必要電圧に達していません`,
+            totalVoltage,
+            totalResistance,
+            totalCurrent
+          });
+          return;
+        }
+
+        const formatV = `約 ${totalVoltage.toFixed(1)}V`;
+        const formatR = totalResistance >= 1000 ? `約 ${(totalResistance / 1000).toFixed(2)} kΩ` : `約 ${totalResistance.toFixed(1)} Ω`;
+        const formatI = totalCurrent >= 1 ? `約 ${totalCurrent.toFixed(2)} A` : `約 ${(totalCurrent * 1000).toFixed(1)} mA`;
+
+        subCircuitResults.push({
+          id: circuitId,
+          status: 'OK',
+          type: 'success',
+          icon: '✅',
+          msg: `動作中 ｜ 電圧: ${formatV} ｜ 合成抵抗: ${formatR} ｜ 全電流: ${formatI}`,
+          totalVoltage,
+          totalResistance,
+          totalCurrent
+        });
+      });
+
+      // --- 5. 個別背景色付きアイテムリストの生成・レンダリング ---
+      const statusItems = subCircuitResults.map(r => {
+        const prefix = subCircuitResults.length > 1 ? `【回路 ${r.id}】` : '';
+        return {
+          type: r.type,
+          icon: r.icon,
+          msg: `${prefix}${r.msg}`
+        };
+      });
+
+      this.setStatus(statusItems);
+
+      return {
+        status: 'OK',
+        activeMap,
+        currentMap,
+        totalResistance: subCircuitResults[0]?.totalResistance || 0,
+        totalCurrent: subCircuitResults[0]?.totalCurrent || 0
+      };
+
+    } catch (err) {
+      console.error('evaluateCircuit Error:', err);
+      return { status: 'ERROR', activeMap: new Map(), currentMap: new Map(), totalResistance: 0, totalCurrent: 0 };
+    }
   }
-
-  const anyActive = Array.from(activeMap.values()).some(v => v);
-
-  if (anyActive) {
-    this.setStatus('success', '✅', `回路動作中 ｜ 電圧: ${vText} ｜ 抵抗器の合成抵抗: ${rText} ｜ 全電流: ${iText}`);
-    return { status: 'OK', activeMap, currentMap, totalResistance, totalCurrent };
-  } else {
-    this.setStatus('warning', '🔘', `回路が正しく作動していません。`);
-    return { status: 'INACTIVE', activeMap, currentMap, totalResistance, totalCurrent };
-  }
-}
 
 
 
@@ -6443,11 +6884,48 @@ else if (comp.type === 'transistor' || comp.type === 'npn' || comp.type === 'pnp
         return null;
       }
 
-      setStatus(type, icon, msg) {
-        this.statusBar.className = `status-bar status-${type}`;
-        this.statusIcon.textContent = icon;
-        this.statusMessage.textContent = msg;
+      setStatus(typeOrItems, icon, msg) {
+    if (!this.statusMessage) return;
+
+    // ★ 非表示フラグの状態に応じて .hidden クラスを維持する
+    const hiddenClass = !this.isStatusVisible ? ' hidden' : '';
+
+    // 配列が渡された場合（回路ごとの個別ステータス表示）
+    if (Array.isArray(typeOrItems)) {
+      const items = typeOrItems;
+      if (this.statusBar) {
+        this.statusBar.className = `status-bar status-multi${hiddenClass}`;
       }
+      if (this.statusIcon) {
+        this.statusIcon.style.display = 'none';
+      }
+
+      this.statusMessage.innerHTML = '';
+      const container = document.createElement('div');
+      container.className = 'status-list';
+
+      items.forEach(item => {
+        const badge = document.createElement('div');
+        badge.className = `status-item status-${item.type}`;
+        badge.innerHTML = `<span class="status-item-icon">${item.icon}</span> <span class="status-item-text">${item.msg}</span>`;
+        container.appendChild(badge);
+      });
+
+      this.statusMessage.appendChild(container);
+    } else {
+      // 単一ステータス表示
+      const type = typeOrItems;
+      if (this.statusBar) {
+        this.statusBar.className = `status-bar status-${type}${hiddenClass}`;
+      }
+      if (this.statusIcon) {
+        this.statusIcon.style.display = '';
+        this.statusIcon.textContent = icon;
+      }
+      this.statusMessage.innerHTML = '';
+      this.statusMessage.textContent = msg;
+    }
+  }
 
       render() {
         this.viewportGroup.innerHTML = '';
@@ -7176,6 +7654,35 @@ else if (comp.type === 'motor') {
                       <text x="0" y="42" font-size="10" font-weight="bold" fill="#10b981" text-anchor="middle">C</text>
                       <text x="15" y="42" font-size="10" font-weight="bold" fill="#3b82f6" text-anchor="middle">B</text>`;
     }
+}// パーツ描画処理の中に追加 (comp.type === 'circuit-label' の場合)
+else if (comp.type === 'circuit-label') {
+  const w = comp.width || 80;
+  const h = comp.height || 32;
+
+  // 1. 背景の白四角（黒枠線）
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', -w / 2);
+  rect.setAttribute('y', -h / 2);
+  rect.setAttribute('width', w);
+  rect.setAttribute('height', h);
+  rect.setAttribute('fill', '#ffffff');
+  rect.setAttribute('stroke', '#000000');
+  rect.setAttribute('stroke-width', '1.5');
+  rect.setAttribute('rx', '4');
+  rect.setAttribute('ry', '4');
+  g.appendChild(rect);
+
+  // 2. 中央の黒文字
+  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  text.setAttribute('x', '0');
+  text.setAttribute('y', '0');
+  text.setAttribute('fill', '#000000');
+  text.setAttribute('font-size', '13');
+  text.setAttribute('font-weight', 'bold');
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('dominant-baseline', 'central');
+  text.textContent = comp.text || '回路';
+  g.appendChild(text);
 }
 
 
@@ -7474,18 +7981,20 @@ updatePropertyToolbar() {
     row1.style.gap = '4px';
     row1.style.alignItems = 'center';
 
-    const rotBtn = document.createElement('button');
-    rotBtn.className = 'prop-btn';
-    rotBtn.textContent = '🔄 回転';
-    rotBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (typeof this.rotateSelectedComponent === 'function') this.rotateSelectedComponent();
-    };
-    row1.appendChild(rotBtn);
+    // ★ 回路ラベル以外の場合のみ「回転」ボタンを追加
+    if (comp.type !== 'circuit-label') {
+      const rotBtn = document.createElement('button');
+      rotBtn.className = 'prop-btn';
+      rotBtn.textContent = '🔄 回転';
+      rotBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof this.rotateSelectedComponent === 'function') this.rotateSelectedComponent();
+      };
+      row1.appendChild(rotBtn);
+    }
 
     // ブレッドボードモード以外 ('schematic', 'physical' 等) の場合のみ反転ボタンを表示
     if (this.mode !== 'breadboard') {
-      // switch（トグルスイッチ等）を反転可能パーツの判定対象に追加
       if (['battery', 'led', 'motor', 'rgb-led', 'switch'].includes(comp.type)) {
         const flipBtn = document.createElement('button');
         flipBtn.className = 'prop-btn';
@@ -7497,7 +8006,10 @@ updatePropertyToolbar() {
         row1.appendChild(flipBtn);
       }
     }
-    this.propToolbar.appendChild(row1);
+    
+    if (row1.children.length > 0) {
+      this.propToolbar.appendChild(row1);
+    }
 
     // 2段目（パーツ固有の設定）
     const row2 = document.createElement('div');
@@ -7634,7 +8146,6 @@ updatePropertyToolbar() {
         if (this.wires) {
           const validTerminalIds = new Set(comp.terminals.map(t => t.id));
           this.wires = this.wires.filter(w => {
-            // fromTermId / toTermId に修正
             if (w.fromCompId === comp.id && !validTerminalIds.has(w.fromTermId)) return false;
             if (w.toCompId === comp.id && !validTerminalIds.has(w.toTermId)) return false;
             return true;
@@ -7725,7 +8236,13 @@ updatePropertyToolbar() {
       this.propToolbar.appendChild(row2);
     }
 
-    this.propToolbar.classList.remove('hidden');
+    // ★ ボタンが1つもない場合（回路ラベルなど）は枠を表示しない
+    if (this.propToolbar.children.length === 0) {
+      this.propToolbar.classList.add('hidden');
+      this.propToolbar.style.display = 'none';
+    } else {
+      this.propToolbar.classList.remove('hidden');
+    }
   } else {
     this.propToolbar.classList.add('hidden');
     this.propToolbar.style.display = 'none';
