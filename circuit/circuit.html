@@ -1025,7 +1025,7 @@ textarea {
   <div class="app-container">
     <header class="toolbar">
       <div class="brand">
-  <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
+  <a href="../../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
   <span class="brand-title">
     <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <!-- 回路配線 -->
@@ -5731,142 +5731,174 @@ async generatePDFDirectDownload() {
 }
 
 
-      getBreadboardHoleNodeId(x, y) {
-        if (y === 80) return 'bb_power_top_pos';
-        if (y === 100) return 'bb_power_top_neg';
-        if (y === 360) return 'bb_power_bottom_pos';
-        if (y === 380) return 'bb_power_bottom_neg';
-
-        const startX = 140;
-        const col = Math.round((x - startX) / 20) + 1;
-        if (col >= 1 && col <= 27) {
-          if (y >= 130 && y <= 210) {
-            return `bb_col_${col}_top`;
-          } else if (y >= 250 && y <= 330) {
-            return `bb_col_${col}_bottom`;
-          }
-        }
-        return `bb_point_${x}_${y}`;
-      }
-
       /**
- * ブレッドボードモードでの穴クリックハンドラ
- * (x, y, nodeId) の引数構成に統一
- */
-handleHoleClick(x, y, nodeId) {
-  // スナップ処理（nodeIdがあれば座標優先、なければスナップ）
-  const snapped = nodeId ? { x, y, nodeId } : this.snapToGrid(x, y);
+   * 穴の座標からブレッドボードのノードIDを取得
+   */
+  getBreadboardHoleNodeId(x, y) {
+    if (y === 80) return 'bb_power_top_pos';
+    if (y === 100) return 'bb_power_top_neg';
+    if (y === 360) return 'bb_power_bottom_pos';
+    if (y === 380) return 'bb_power_bottom_neg';
 
-  // 【接続ロジックの最優先化】
-
-  // パターンA：【端子 ➔ 穴】 すでに「パーツ端子」が配線開始状態にある場合、ここへ接続
-  if (this.connectingStart) {
-    this.wires.push({
-      id: 'wire_' + Date.now(),
-      mode: 'breadboard',
-      fromCompId: this.connectingStart.compId,
-      fromTermId: this.connectingStart.termId,
-      toPos: { x: snapped.x, y: snapped.y, nodeId: snapped.nodeId } // 穴の座標とIDをセット
-    });
-    // 状態クリア
-    this.connectingStart = null;
-    this.tempWirePos = null;
-    this.saveState();
-    this.evaluateCircuit();
-    this.render();
-    return; // 接続完了なので終了
-  }
-
-  // パターンB：【端子 ➔ 穴 (選択済みピン)】 配線開始ではなく「ピンが選択状態」にある場合
-  if (this.selectedPin) {
-    this.wires.push({
-      id: 'wire_' + Date.now(),
-      mode: 'breadboard',
-      fromCompId: this.selectedPin.compId,
-      fromTermId: this.selectedPin.termId,
-      toPos: { x: snapped.x, y: snapped.y, nodeId: snapped.nodeId }
-    });
-    // 状態クリア
-    this.selectedPin = null;
-    this.saveState();
-    this.evaluateCircuit();
-    this.render();
-    return;
-  }
-
-  // --- これ以降は、端子が関わらない「穴」同士の操作 ---
-
-  // パターンC：何も選択されていない ➔ この穴を選択状態にする
-  if (!this.selectedHole) {
-    this.selectedHole = snapped;
-  }
-  // パターンD：すでに別の穴が選択されている ➔ ブリッジ配線を引く
-  else {
-    // 同じ穴を2回クリックした場合は選択解除
-    if (this.selectedHole.x === snapped.x && this.selectedHole.y === snapped.y) {
-      this.selectedHole = null;
-    } else {
-      // 穴 ➔ 穴 のジャンパ線を作成
-      const bridgeWire = {
-        id: 'bridge_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-        type: 'bridge',
-        mode: 'breadboard',
-        fromPos: { x: this.selectedHole.x, y: this.selectedHole.y, nodeId: this.selectedHole.nodeId },
-        toPos: { x: snapped.x, y: snapped.y, nodeId: snapped.nodeId },
-        color: '#ef4444' // ジャンパ線の色
-      };
-      this.wires.push(bridgeWire);
-      this.selectedHole = null; // 選択解除
-      this.saveState();
-      this.evaluateCircuit();
+    const startX = 140;
+    const col = Math.round((x - startX) / 20) + 1;
+    if (col >= 1 && col <= 27) {
+      if (y >= 130 && y <= 210) {
+        return `bb_col_${col}_top`;
+      } else if (y >= 250 && y <= 330) {
+        return `bb_col_${col}_bottom`;
+      }
     }
+    return `bb_point_${x}_${y}`;
   }
-  this.render();
-}
 
+  /**
+   * ブレッドボードモードでの穴クリックハンドラ
+   */
+  handleHoleClick(x, y, nodeId) {
+    // ★ 1. 元の座標保持ロジックを復元（nodeIdがあればそのまま使用）
+    const holePos = nodeId 
+      ? { x, y, nodeId } 
+      : { ...this.snapToGrid(x, y), nodeId: this.getBreadboardHoleNodeId(x, y) };
 
+    // 【パターンA：端子 ➔ 穴】 すでに端子が配線開始状態にある場合
+    const startPin = this.connectingStart || this.selectedPin;
+    if (startPin) {
+      this.wires.push({
+        id: 'wire_' + Date.now(),
+        mode: 'breadboard',
+        isBreadboard: true,
+        fromCompId: startPin.compId || startPin.componentId,
+        fromTermId: startPin.termId || startPin.terminalId,
+        toPos: holePos
+      });
 
-      snapToGrid(x, y) {
-        if (this.mode === 'breadboard' || this.mode === 'schematic') {
-          return {
-            x: Math.round(x / this.gridSize) * this.gridSize,
-            y: Math.round(y / this.gridSize) * this.gridSize
-          };
-        }
-        return { x, y };
-      }
+      // 状態クリア
+      this.connectingStart = null;
+      this.selectedPin = null;
+      this.tempWirePos = null;
 
-      getCompPos(comp) {
-        if (!comp.positions) {
-          comp.positions = {
-            physical: { x: comp.x || 150, y: comp.y || 150 },
-            breadboard: { x: comp.x || 150, y: comp.y || 150 },
-            schematic: { x: comp.x || 150, y: comp.y || 150 }
-          };
-        }
-        if (!comp.positions[this.mode]) {
-          comp.positions[this.mode] = { x: 150, y: 150 };
-        }
-        return comp.positions[this.mode];
-      }
+      if (typeof this.saveState === 'function') this.saveState();
+      if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+      this.render();
+      return;
+    }
 
-      getTerminalAbsolutePos(comp, terminal) {
-        const pos = this.getCompPos(comp);
-        return {
-          x: pos.x + terminal.relX,
-          y: pos.y + terminal.relY
+    // --- 端子が関わらない穴同士の操作 ---
+
+    // 【パターンB】何も選択されていない ➔ この穴を選択状態にする
+    if (!this.selectedHole) {
+      this.selectedHole = holePos;
+    } 
+    // 【パターンC】すでに別の穴が選択されている ➔ ジャンパ配線を引く
+    else {
+      // 同じ穴を2回クリックした場合は選択解除
+      if (this.selectedHole.x === holePos.x && this.selectedHole.y === holePos.y) {
+        this.selectedHole = null;
+      } else {
+        const bridgeWire = {
+          id: 'bridge_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          type: 'bridge',
+          mode: 'breadboard',
+          isBreadboard: true,
+          fromPos: { ...this.selectedHole },
+          toPos: holePos,
+          color: '#ef4444'
         };
-      }
+        this.wires.push(bridgeWire);
+        this.selectedHole = null; // 選択解除
 
-getVisibleComponents() {
+        if (typeof this.saveState === 'function') this.saveState();
+        if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+      }
+    }
+    this.render();
+  }
+
+  /**
+   * ★ パーツ端子（ピン）クリックハンドラ
+   * （穴 ➔ 端子、端子 ➔ 穴 のどちらにも対応）
+   */
+  handleTerminalClick(comp, terminal) {
+    if (!comp || !terminal) return;
+
+    const compId = comp.id || comp;
+    const termId = terminal.id || terminal;
+
+    // 【パターンD：穴 ➔ 端子】 すでに穴が選択されている場合
+    if (this.selectedHole) {
+      this.wires.push({
+        id: 'wire_' + Date.now(),
+        mode: 'breadboard',
+        isBreadboard: true,
+        fromCompId: compId,
+        fromTermId: termId,
+        toPos: { ...this.selectedHole }
+      });
+
+      this.selectedHole = null; // 選択解除
+
+      if (typeof this.saveState === 'function') this.saveState();
+      if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+      this.render();
+      return;
+    }
+
+    // 【パターンE：端子 ➔ 穴】 端子をクリックして配線開始
+    if (!this.connectingStart) {
+      this.connectingStart = { compId, termId };
+      this.selectedPin = { compId, termId };
+      this.selectedHole = null; // 穴選択をクリア
+    } else {
+      // 再クリックで解除
+      this.connectingStart = null;
+      this.selectedPin = null;
+    }
+    this.render();
+  }
+
+  snapToGrid(x, y) {
+    if (this.mode === 'breadboard' || this.mode === 'schematic') {
+      return {
+        x: Math.round(x / (this.gridSize || 10)) * (this.gridSize || 10),
+        y: Math.round(y / (this.gridSize || 10)) * (this.gridSize || 10)
+      };
+    }
+    return { x, y };
+  }
+
+  getCompPos(comp) {
+    if (!comp) return { x: 150, y: 150 };
+    if (!comp.positions) {
+      comp.positions = {
+        physical: { x: comp.x || 150, y: comp.y || 150 },
+        breadboard: { x: comp.x || 150, y: comp.y || 150 },
+        schematic: { x: comp.x || 150, y: comp.y || 150 }
+      };
+    }
+    const mode = this.mode || 'physical';
+    if (!comp.positions[mode]) {
+      comp.positions[mode] = { x: comp.x || 150, y: comp.y || 150 };
+    }
+    return comp.positions[mode];
+  }
+
+  getTerminalAbsolutePos(comp, terminal) {
+    if (!comp || !terminal) return { x: 0, y: 0 };
+    const pos = this.getCompPos(comp);
+    return {
+      x: pos.x + (terminal.relX || 0),
+      y: pos.y + (terminal.relY || 0)
+    };
+  }
+
+  getVisibleComponents() {
     if (!this.components) return [];
 
     if (this.mode === 'breadboard') {
-      // ブレッドボードモード：isBreadboard が true のパーツのみ表示
-      return this.components.filter(c => c.isBreadboard === true);
+      return this.components.filter(c => c && c.isBreadboard === true);
     } else {
-      // 実体配線図・回路図モード：isBreadboard が false (または未定義) のパーツのみ表示
-      return this.components.filter(c => !c.isBreadboard);
+      return this.components.filter(c => c && !c.isBreadboard);
     }
   }
             
@@ -8406,8 +8438,7 @@ if (this.selectedComponentIds && this.selectedComponentIds.size === 1) {
     this.propToolbar.style.display = 'none';
   }
 }
-
-  }
+}
 
 
     window.addEventListener('DOMContentLoaded', () => {
