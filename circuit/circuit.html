@@ -1025,7 +1025,7 @@ textarea {
   <div class="app-container">
     <header class="toolbar">
       <div class="brand">
-  <a href="../../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
+  <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
   <span class="brand-title">
     <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <!-- 回路配線 -->
@@ -1080,6 +1080,13 @@ textarea {
     パーツ解説
   </button>
 
+<div class="palette-item" data-type="circuit-label" draggable="true">
+  <div class="palette-icon" style="background: #ffffff; color: #000000; border: 1.5px solid #000000; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 36px; height: 24px; border-radius: 4px;">
+    回路1
+  </div>
+  <span>ラベル</span>
+</div>
+        
   <div class="palette-items">
     <div class="palette-item" draggable="true" data-type="battery">🔋 乾電池</div>
     
@@ -1112,12 +1119,7 @@ textarea {
       </svg>
       トランジスタ
     </div>
-      <div class="palette-item" data-type="circuit-label" draggable="true">
-  <div class="palette-icon" style="background: #ffffff; color: #000000; border: 1.5px solid #000000; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 36px; height: 24px; border-radius: 4px;">
-    回路1
-  </div>
-  <span>回路ラベル</span>
-</div>
+      
   </div>
   <span class="help-text">（下へドラッグで配置 / 横スライドで一覧移動）</span>
 </div>
@@ -1174,7 +1176,7 @@ textarea {
 <!-- パーツリスト -->
             <div class="form-group full">
               <label>パーツリストへの対応</label>
-              <label class="checkbox-label">※「回路ラベル」に対応したパーツリストを生成するため、<br>　回路の近くに「回路ラベル（回路1,回路2⋯）」を設置してください</label>
+              <label class="checkbox-label">※ 各回路の「ラベル」に対応したパーツリストを生成するため、<br>　回路の近くに「ラベル（回路1,回路2⋯）」を設置してください</label>
             </div>
               
             <!-- 電源スイッチの切り替えオプション -->
@@ -1248,6 +1250,12 @@ textarea {
 <div id="panel-overview" class="parts-panel active">
   <h3>パーツの説明</h3>
   <ul class="parts-info-list">
+    <li style="display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px;">
+    <span class="palette-icon" style="background: #ffffff; color: #000000; border: 1.5px solid #000000; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 45px; height: 24px; border-radius: 4px; flex-shrink: 0;">
+      回路1
+    </span> 
+    <strong>ラベル:</strong> 回路のナンバーを振るラベルです。
+  </li>
     <li><strong>🔋 乾電池:</strong> 電気を供給する電源です。通常、約1.5Vの電圧です。</li>
     <li>
       <strong>
