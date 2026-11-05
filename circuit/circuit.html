@@ -5290,204 +5290,207 @@ async generatePDFDirectDownload() {
     };
 
     // -----------------------------------------------------------------
-    // 1. 回路ラベルの抽出 ＆ 数値順（回路1, 回路2...）ソート
-    // -----------------------------------------------------------------
-    const circuitLabels = (this.components || [])
-      .filter(c => c && c.type === 'circuit-label')
-      .sort((a, b) => {
-        const numA = parseInt((a.text || '').replace(/[^0-9]/g, ''), 10) || 0;
-        const numB = parseInt((b.text || '').replace(/[^0-9]/g, ''), 10) || 0;
-        if (numA !== numB) return numA - numB;
-        return getPos(a).y - getPos(b).y;
-      });
+// 1. 回路ラベルの抽出 ＆ 数値順（回路1, 回路2...）ソート
+// -----------------------------------------------------------------
+const circuitLabels = (this.components || [])
+  .filter(c => c && c.type === 'circuit-label')
+  .sort((a, b) => {
+    const numA = parseInt((a.text || '').replace(/[^0-9]/g, ''), 10) || 0;
+    const numB = parseInt((b.text || '').replace(/[^0-9]/g, ''), 10) || 0;
+    if (numA !== numB) return numA - numB;
+    return getPos(a).y - getPos(b).y;
+  });
 
-    const circuitPartsGroup = {};
-    if (circuitLabels.length > 0) {
-      circuitLabels.forEach(l => {
-        const labelText = l.text || '回路';
-        if (!circuitPartsGroup[labelText]) {
-          circuitPartsGroup[labelText] = {};
+const circuitPartsGroup = {};
+if (circuitLabels.length > 0) {
+  circuitLabels.forEach(l => {
+    const labelText = l.text || '回路';
+    if (!circuitPartsGroup[labelText]) {
+      circuitPartsGroup[labelText] = {};
+    }
+  });
+} else {
+  circuitPartsGroup['全体'] = {};
+}
+
+// -----------------------------------------------------------------
+// 2. 配線接続によるサブ回路抽出と回路ラベル割り当て
+// -----------------------------------------------------------------
+// ★ 修正ポイント: ブレッドボード専用パーツを除外して回路パーツのみに絞る
+const validComps = (this.components || []).filter(c => 
+  c && 
+  !c.isBreadboard && 
+  c.mode !== 'breadboard' && 
+  c.type !== 'circuit-label'
+);
+
+const compMap = new Map(validComps.map(c => [c.id, c]));
+const adj = new Map();
+validComps.forEach(c => adj.set(c.id, []));
+
+(this.wires || []).forEach(w => {
+  if (adj.has(w.fromCompId) && adj.has(w.toCompId)) {
+    adj.get(w.fromCompId).push(w.toCompId);
+    adj.get(w.toCompId).push(w.fromCompId);
+  }
+});
+
+const visited = new Set();
+const subgraphs = [];
+
+validComps.forEach(c => {
+  if (!visited.has(c.id)) {
+    const group = [];
+    const queue = [c.id];
+    visited.add(c.id);
+
+    while (queue.length > 0) {
+      const currId = queue.shift();
+      const currComp = compMap.get(currId);
+      if (currComp) group.push(currComp);
+
+      (adj.get(currId) || []).forEach(neighborId => {
+        if (!visited.has(neighborId)) {
+          visited.add(neighborId);
+          queue.push(neighborId);
         }
       });
-    } else {
-      circuitPartsGroup['全体'] = {};
     }
 
-    // -----------------------------------------------------------------
-    // 2. 配線接続によるサブ回路抽出と回路ラベル割り当て
-    // -----------------------------------------------------------------
-    const validComps = (this.components || []).filter(c => c && c.type !== 'circuit-label');
-    const compMap = new Map(validComps.map(c => [c.id, c]));
-    const adj = new Map();
-    validComps.forEach(c => adj.set(c.id, []));
+    let sumX = 0, sumY = 0;
+    group.forEach(comp => {
+      const p = getPos(comp);
+      sumX += p.x;
+      sumY += p.y;
+    });
+    group.avgX = sumX / group.length;
+    group.avgY = sumY / group.length;
 
-    (this.wires || []).forEach(w => {
-      if (adj.has(w.fromCompId) && adj.has(w.toCompId)) {
-        adj.get(w.fromCompId).push(w.toCompId);
-        adj.get(w.toCompId).push(w.fromCompId);
+    subgraphs.push(group);
+  }
+});
+
+subgraphs.forEach(subgraph => {
+  let targetLabelName = '全体';
+
+  if (circuitLabels.length > 0) {
+    let minDist = Infinity;
+    circuitLabels.forEach(l => {
+      const lPos = getPos(l);
+      const dx = subgraph.avgX - lPos.x;
+      const dy = subgraph.avgY - lPos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy * 4);
+      if (dist < minDist) {
+        minDist = dist;
+        targetLabelName = l.text || '回路';
       }
     });
+  }
 
-    const visited = new Set();
-    const subgraphs = [];
+  if (!circuitPartsGroup[targetLabelName]) {
+    circuitPartsGroup[targetLabelName] = {};
+  }
 
-    validComps.forEach(c => {
-      if (!visited.has(c.id)) {
-        const group = [];
-        const queue = [c.id];
-        visited.add(c.id);
+  subgraph.forEach(c => {
+    let name = getComponentName(c);
+    let spec = '-';
+    let countAdd = 1;
 
-        while (queue.length > 0) {
-          const currId = queue.shift();
-          const currComp = compMap.get(currId);
-          if (currComp) group.push(currComp);
+    if (c.type === 'battery') {
+      const v = Number(c.voltage) || 1.5;
+      spec = '1.5V';
+      countAdd = Math.max(1, Math.round(v / 1.5));
+    } else if (c.type === 'resistor') {
+      spec = safeFormatResistance(c.resistance);
+    } else if (c.type === 'switch') {
+      spec = c.switchType === 'toggle' ? '3端子 (ON-OFF-ON)' : '2端子';
+    } else if (c.type === 'led') {
+      spec = '2V点灯';
+    } else if (c.type === 'rgb-led') {
+      spec = 'RGB 4端子';
+    } else if (c.type === 'motor') {
+      spec = '1.5V-3.0V DC(直流)';
+    } else if (c.type === 'cds') {
+      const lightVal = c.light !== undefined ? c.light : 50;
+      const resVal = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(c) : 1000;
+      spec = `光度:${lightVal}% (${safeFormatResistance(resVal)})`;
+    } else if (c.type === 'transistor' || c.type === 'npn' || c.type === 'pnp') {
+      const isPnp = c.isPnp || c.transistorType === 'pnp' || c.type === 'pnp';
+      spec = `${isPnp ? 'PNP' : 'NPN'}型 3端子`;
+    }
 
-          (adj.get(currId) || []).forEach(neighborId => {
-            if (!visited.has(neighborId)) {
-              visited.add(neighborId);
-              queue.push(neighborId);
-            }
-          });
-        }
+    const key = `${c.type}_${name}_${spec}`;
+    if (!circuitPartsGroup[targetLabelName][key]) {
+      circuitPartsGroup[targetLabelName][key] = { type: c.type, name, spec, count: 0 };
+    }
+    circuitPartsGroup[targetLabelName][key].count += countAdd;
+  });
+});
 
-        let sumX = 0, sumY = 0;
-        group.forEach(comp => {
-          const p = getPos(comp);
-          sumX += p.x;
-          sumY += p.y;
-        });
-        group.avgX = sumX / group.length;
-        group.avgY = sumY / group.length;
+// -----------------------------------------------------------------
+// 3. パーツリストの最適改ページ判定（限界上限の拡張 ＆ テーブル余白詰めで1ページ化）
+// -----------------------------------------------------------------
+const sortedGroupNames = Object.keys(circuitPartsGroup).sort((a, b) => {
+  const numA = parseInt((a || '').replace(/[^0-9]/g, ''), 10) || 0;
+  const numB = parseInt((b || '').replace(/[^0-9]/g, ''), 10) || 0;
+  return numA - numB;
+});
 
-        subgraphs.push(group);
-      }
-    });
+const MAX_ROWS_FIRST_PAGE = 28; 
+const MAX_ROWS_SUB_PAGE = 28;   
 
-    subgraphs.forEach(subgraph => {
-      let targetLabelName = '全体';
+const partsPageHtmlList = [''];
+let currentPageIdx = 0;
+let currentPageRows = 0;
 
-      if (circuitLabels.length > 0) {
-        let minDist = Infinity;
-        circuitLabels.forEach(l => {
-          const lPos = getPos(l);
-          const dx = subgraph.avgX - lPos.x;
-          const dy = subgraph.avgY - lPos.y;
-          const dist = Math.sqrt(dx * dx + dy * dy * 4);
-          if (dist < minDist) {
-            minDist = dist;
-            targetLabelName = l.text || '回路';
-          }
-        });
-      }
+sortedGroupNames.forEach(groupName => {
+  const groupMap = circuitPartsGroup[groupName];
+  const sortedParts = Object.values(groupMap).sort((a, b) => {
+    const indexA = typeOrder.indexOf(a.type);
+    const indexB = typeOrder.indexOf(b.type);
+    return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+  });
 
-      if (!circuitPartsGroup[targetLabelName]) {
-        circuitPartsGroup[targetLabelName] = {};
-      }
+  const groupRowCount = Math.max(1, sortedParts.length) + 1.5;
+  const maxLimit = (currentPageIdx === 0) ? MAX_ROWS_FIRST_PAGE : MAX_ROWS_SUB_PAGE;
 
-      subgraph.forEach(c => {
-        let name = getComponentName(c);
-        let spec = '-';
-        let countAdd = 1;
+  if (currentPageRows > 0 && (currentPageRows + groupRowCount > maxLimit)) {
+    currentPageIdx++;
+    currentPageRows = 0;
+    partsPageHtmlList[currentPageIdx] = '';
+  }
 
-        if (c.type === 'battery') {
-          const v = Number(c.voltage) || 1.5;
-          spec = '1.5V';
-          countAdd = Math.max(1, Math.round(v / 1.5));
-        } else if (c.type === 'resistor') {
-          spec = safeFormatResistance(c.resistance);
-        } else if (c.type === 'switch') {
-          spec = c.switchType === 'toggle' ? '3端子 (ON-OFF-ON)' : '2端子';
-        } else if (c.type === 'led') {
-          spec = '2V点灯';
-        } else if (c.type === 'rgb-led') {
-          spec = 'RGB 4端子';
-        } else if (c.type === 'motor') {
-          spec = '1.5V-3.0V DC(直流)';
-        } else if (c.type === 'cds') {
-          const lightVal = c.light !== undefined ? c.light : 50;
-          const resVal = typeof this.getCdsResistance === 'function' ? this.getCdsResistance(c) : 1000;
-          spec = `光度:${lightVal}% (${safeFormatResistance(resVal)})`;
-        } else if (c.type === 'transistor' || c.type === 'npn' || c.type === 'pnp') {
-          const isPnp = c.isPnp || c.transistorType === 'pnp' || c.type === 'pnp';
-          spec = `${isPnp ? 'PNP' : 'NPN'}型 3端子`;
-        }
+  let partsRows = '';
+  sortedParts.forEach(item => {
+    partsRows += `<tr><td>${item.name}</td><td>${item.spec}</td><td>${item.count} 個</td></tr>`;
+  });
+  if (!partsRows) partsRows = '<tr><td colspan="3">使用パーツなし</td></tr>';
 
-        const key = `${c.type}_${name}_${spec}`;
-        if (!circuitPartsGroup[targetLabelName][key]) {
-          circuitPartsGroup[targetLabelName][key] = { type: c.type, name, spec, count: 0 };
-        }
-        circuitPartsGroup[targetLabelName][key].count += countAdd;
-      });
-    });
+  const groupTitle = circuitLabels.length > 0 ? `■ 使用パーツ一覧（${groupName}）` : `■ 使用パーツ一覧`;
 
-    // -----------------------------------------------------------------
-    // 3. パーツリストの最適改ページ判定（限界上限の拡張 ＆ テーブル余白詰めで1ページ化）
-    // -----------------------------------------------------------------
-    const sortedGroupNames = Object.keys(circuitPartsGroup).sort((a, b) => {
-      const numA = parseInt((a || '').replace(/[^0-9]/g, ''), 10) || 0;
-      const numB = parseInt((b || '').replace(/[^0-9]/g, ''), 10) || 0;
-      return numA - numB;
-    });
+  partsPageHtmlList[currentPageIdx] += `
+    <div style="width: 90%; margin: 6px auto 1px auto; font-size: 11px; font-weight: bold;">${groupTitle}</div>
+    <table class="pdf-parts-table" style="margin-bottom: 4px;">
+      <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
+      <tbody>${partsRows}</tbody>
+    </table>
+  `;
 
-    // ★ 1ページ目の限界行数は 28 行
-    const MAX_ROWS_FIRST_PAGE = 28; 
-    const MAX_ROWS_SUB_PAGE = 28;   
+  currentPageRows += groupRowCount;
+});
 
-    const partsPageHtmlList = [''];
-    let currentPageIdx = 0;
-    let currentPageRows = 0;
+const statusBarEl = document.querySelector('.status-bar');
+const statusText = statusBarEl 
+  ? statusBarEl.innerText.replace(/\s+/g, ' ').trim() 
+  : '回路状態: 正常';
 
-    sortedGroupNames.forEach(groupName => {
-      const groupMap = circuitPartsGroup[groupName];
-      const sortedParts = Object.values(groupMap).sort((a, b) => {
-        const indexA = typeOrder.indexOf(a.type);
-        const indexB = typeOrder.indexOf(b.type);
-        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-      });
+const images = {};
+if (chkPhysical) images.physical = await this.captureCanvasImageForMode('physical', chkPowerOn);
+if (chkBreadboard) images.breadboard = await this.captureCanvasImageForMode('breadboard', chkPowerOn);
+if (chkSchematic) images.schematic = await this.captureCanvasImageForMode('schematic', chkPowerOn);
 
-      // 現在の回路ブロックの行数コスト（パーツ行数 + 見出し/ヘッダー分1.5行）
-      const groupRowCount = Math.max(1, sortedParts.length) + 1.5;
-      const maxLimit = (currentPageIdx === 0) ? MAX_ROWS_FIRST_PAGE : MAX_ROWS_SUB_PAGE;
-
-      // 限界を超え、かつ現在のページに既にコンテンツがある場合のみ次ページへ送る
-      if (currentPageRows > 0 && (currentPageRows + groupRowCount > maxLimit)) {
-        currentPageIdx++;
-        currentPageRows = 0;
-        partsPageHtmlList[currentPageIdx] = '';
-      }
-
-      let partsRows = '';
-      sortedParts.forEach(item => {
-        partsRows += `<tr><td>${item.name}</td><td>${item.spec}</td><td>${item.count} 個</td></tr>`;
-      });
-      if (!partsRows) partsRows = '<tr><td colspan="3">使用パーツなし</td></tr>';
-
-      const groupTitle = circuitLabels.length > 0 ? `■ 使用パーツ一覧（${groupName}）` : `■ 使用パーツ一覧`;
-
-      // 余白を最小限に抑えてコンパクトに描画
-      partsPageHtmlList[currentPageIdx] += `
-        <div style="width: 90%; margin: 6px auto 1px auto; font-size: 11px; font-weight: bold;">${groupTitle}</div>
-        <table class="pdf-parts-table" style="margin-bottom: 4px;">
-          <thead><tr><th>パーツ名</th><th>規格・仕様</th><th>数量</th></tr></thead>
-          <tbody>${partsRows}</tbody>
-        </table>
-      `;
-
-      currentPageRows += groupRowCount;
-    });
-
-    const statusBarEl = document.querySelector('.status-bar');
-    const statusText = statusBarEl 
-      ? statusBarEl.innerText.replace(/\s+/g, ' ').trim() 
-      : '回路状態: 正常';
-
-    const images = {};
-    if (chkPhysical) images.physical = await this.captureCanvasImageForMode('physical', chkPowerOn);
-    if (chkBreadboard) images.breadboard = await this.captureCanvasImageForMode('breadboard', chkPowerOn);
-    if (chkSchematic) images.schematic = await this.captureCanvasImageForMode('schematic', chkPowerOn);
-
-    const container = document.getElementById('pdf-render-container');
-    if (!container) throw new Error('PDF描画用コンテナ(#pdf-render-container)が見つかりません。');
+const container = document.getElementById('pdf-render-container');
+if (!container) throw new Error('PDF描画用コンテナ(#pdf-render-container)が見つかりません。');
     
     // -----------------------------------------------------------------
     // 4. 動的HTML構築
@@ -5656,13 +5659,13 @@ if (chkPhysical || chkSchematic) {
         bbStatusText = '回路未接続または動作確認中';
       }
 
-      // 3. HTML構築（中央寄せ ＆ 右方向へのオフセット補正）
+      // 3. HTML構築（2倍拡大・左寄せ調整）
       fullHtml += `
         <div id="pdf-page-bb" style="min-height: 900px; padding: 15px 0; box-sizing: border-box;">
           <div class="pdf-page-title">電子回路実験レポート (ブレッドボード図)</div>
           
           <!-- ステータスバー -->
-          <div style="width: 92%; margin: 8px auto 6px auto; padding: 6px 12px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; color: #334155;">
+          <div style="width: 92%; margin: 8px auto 6px auto; padding: 6px 12px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; color: #334155; box-sizing: border-box;">
             <strong>■ ブレッドボード動作ステータス:</strong> ${bbStatusText}
           </div>
 
@@ -5674,10 +5677,10 @@ if (chkPhysical || chkSchematic) {
           </table>
 
           <!-- ブレッドボード拡大図 -->
-          <div style="width: 200%; margin: 8px auto 0 auto;">
-            <div class="pdf-img-title" style="font-size: 12px; font-weight: bold; margin-bottom: 4px; width: 100%; text-align: left;">　　■ ブレッドボード図</div>
-            <div style="width: 100%; height: 480px; position: relative; overflow: hidden; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #ffffff; display: flex; justify-content: center; align-items: center;">
-              <img src="${images.breadboard}" class="pdf-img-element-bb" style="max-width: 90%; max-height: 90%; object-fit: contain; transform: scale(1.4) translateX(3%); transform-origin: center center;" />
+          <div style="width: 92%; margin: 8px auto 0 auto; box-sizing: border-box;">
+            <div class="pdf-img-title" style="font-size: 12px; font-weight: bold; margin-bottom: 4px; text-align: left;">■ ブレッドボード図</div>
+            <div style="width: 100%; height: 500px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #ffffff; display: flex; justify-content: center; align-items: center; padding: 8px; box-sizing: border-box; overflow: hidden;">
+              <img src="${images.breadboard}" class="pdf-img-element-bb" style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; margin: auto; display: block; transform: scale(1.6) translateX(-20%) translateY(20%); transform-origin: center center;" />
             </div>
           </div>
         </div>
