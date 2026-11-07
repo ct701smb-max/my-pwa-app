@@ -6421,7 +6421,7 @@ async clearAll() {
         if (t && t.id) termNodeMap.set(t.id, null);
       });
 
-      // ★ 2. 配線も現在のモードに一致するものだけにフィルタリング
+      // ★ 配線のフィルタリング
       const validWires = (this.wires || []).filter(w => {
         const isBbWire = w.isBreadboard === true || w.mode === 'breadboard';
         if (this.mode === 'breadboard') {
@@ -6504,6 +6504,12 @@ async clearAll() {
           if (!p1) return;
           allTerms.forEach(t2 => {
             if (t1.id === t2.id) return;
+            
+            // ★【修正点2】同じコンポーネント内の端子同士は自動結合しない
+            const comp1 = uniqueComponents.find(c => (c.terminals || []).some(t => t.id === t1.id));
+            const comp2 = uniqueComponents.find(c => (c.terminals || []).some(t => t.id === t2.id));
+            if (comp1 && comp2 && comp1.id === comp2.id) return;
+
             const p2 = this.getTerminalPosByTermId(t2.id);
             if (!p2) return;
             if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < 10) {
@@ -6578,6 +6584,15 @@ async clearAll() {
         return { status: 'NO_BATTERY', activeMap, currentMap, totalResistance: 0, totalCurrent: 0 };
       }
 
+      // トグル端子の安全取得関数
+      const getToggleTerms = (comp) => {
+        const terms = comp.terminals || [];
+        const comTerm = terms.find(t => t.id?.endsWith('_t1') || t.name === 'COM') || terms[0];
+        const term1   = terms.find(t => t.id?.endsWith('_t2') || t.name === '1')   || terms[1];
+        const term2   = terms.find(t => t.id?.endsWith('_t3') || t.name === '2')   || terms[2];
+        return { comTerm, term1, term2 };
+      };
+
       // --- 3. 各独立回路ごとの評価ヘルパー ---
       const getResValue = (r) => {
         if (r.type === 'cds') {
@@ -6621,7 +6636,31 @@ async clearAll() {
           for (const t of terms) {
             const comp = subComps.find(c => (c.terminals || []).some(term => term.id === t.id));
             if (!comp || comp.type === 'battery' || comp.type === 'transistor') continue;
-            if (comp.type === 'switch' && !comp.state) continue;
+
+            // ★【修正点1】isNodeConnectedToPos 内でトグルスイッチの分岐を正しく処理
+            if (comp.type === 'switch') {
+              const stateNum = Number(comp.state);
+              if (comp.switchType === 'toggle') {
+                const { comTerm, term1, term2 } = getToggleTerms(comp);
+
+                let targetTerm = null;
+                if (stateNum === 1) {
+                  if (t.id === comTerm?.id) targetTerm = term1;
+                  else if (t.id === term1?.id) targetTerm = comTerm;
+                } else if (stateNum === 2) {
+                  if (t.id === comTerm?.id) targetTerm = term2;
+                  else if (t.id === term2?.id) targetTerm = comTerm;
+                }
+
+                if (targetTerm) {
+                  const nextN = termNodeMap.get(targetTerm.id);
+                  if (nextN && !visited.has(nextN)) queue.push(nextN);
+                }
+                continue; // トグルスイッチの判定を抜ける
+              } else if (!stateNum) {
+                continue; // 通常スイッチがOFFの場合は探索中止
+              }
+            }
 
             (comp.terminals || []).forEach(otherT => {
               if (otherT.id !== t.id) {
@@ -6762,23 +6801,23 @@ async clearAll() {
               const terms = comp.terminals || [];
 
               if (comp.type === 'switch') {
+                // ★【修正点3】数値に確実にキャストして判定
+                const stateNum = Number(comp.state);
                 if (comp.switchType === 'toggle') {
-                  const comTerm = terms.find(t => t.id.endsWith('_t1'));
-                  const term1   = terms.find(t => t.id.endsWith('_t2'));
-                  const term2   = terms.find(t => t.id.endsWith('_t3'));
+                  const { comTerm, term1, term2 } = getToggleTerms(comp);
 
-                  if (comp.state === 1) {
+                  if (stateNum === 1) {
                     if (inTerm.id === comTerm?.id) outTerm = term1;
                     else if (inTerm.id === term1?.id) outTerm = comTerm;
                     else canPass = false;
-                  } else if (comp.state === 2) {
+                  } else if (stateNum === 2) {
                     if (inTerm.id === comTerm?.id) outTerm = term2;
                     else if (inTerm.id === term2?.id) outTerm = comTerm;
                     else canPass = false;
                   } else {
                     canPass = false;
                   }
-                } else if (!comp.state) {
+                } else if (!stateNum) {
                   canPass = false;
                 } else {
                   outTerm = terms.find(t => t.id !== inTerm.id);
@@ -6854,7 +6893,7 @@ async clearAll() {
         });
 
         if (rawPaths.length === 0) {
-          const hasOffSwitch = subComps.some(c => c.type === 'switch' && !c.state);
+          const hasOffSwitch = subComps.some(c => c.type === 'switch' && !Number(c.state));
           const icon = hasOffSwitch ? '🔘' : '⚡';
           const msg = hasOffSwitch
             ? 'スイッチがOFFになっています'
@@ -7051,7 +7090,6 @@ async clearAll() {
         });
       });
 
-      // --- 5. 個別背景色付きアイテムリストの生成・レンダリング ---
       const statusItems = subCircuitResults.map(r => {
         const prefix = subCircuitResults.length > 1 ? `【回路 ${r.id}】` : '';
         return {
@@ -7067,7 +7105,7 @@ async clearAll() {
         status: 'OK',
         activeMap,
         currentMap,
-        statusMessages: subCircuitResults.map(r => r.msg), // ★ ここを追加
+        statusMessages: subCircuitResults.map(r => r.msg),
         totalResistance: subCircuitResults[0]?.totalResistance || 0,
         totalCurrent: subCircuitResults[0]?.totalCurrent || 0
       };
@@ -7076,7 +7114,7 @@ async clearAll() {
       console.error('evaluateCircuit Error:', err);
       return { status: 'ERROR', activeMap: new Map(), currentMap: new Map(), totalResistance: 0, totalCurrent: 0 };
     }
-  }
+}
 
   // ★ 3. 座標検索ヘルパーも表示モード内のパーツのみを対象にするよう更新
   getTerminalPosByTermId(termId) {
