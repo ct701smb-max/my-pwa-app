@@ -4022,7 +4022,8 @@ textarea {
     // 表示フラグとカウンターの初期化
     this.isStatusVisible = true;
     this.circuitLabelCounter = 1;
-
+    this.clipboard = null;
+      
     this.toggleStatusBtn = document.getElementById('toggleStatusBtn');
     if (this.toggleStatusBtn) {
       this.toggleStatusBtn.addEventListener('click', (e) => {
@@ -4109,7 +4110,7 @@ textarea {
         this.toggleStatusBtn.classList.add('active');
       }
     }
-  } // ★ ここに閉じカッコを追加
+  } 
 
   updateCircuitLabelNumbers() {
     const labels = this.components.filter(c => c.type === 'circuit-label');
@@ -4119,8 +4120,142 @@ textarea {
     this.circuitLabelCounter = labels.length + 1;
   }
 
+// ★ 選択要素のコピー処理 (Ctrl+C)
+  copySelected() {
+    if (!this.selectedComponentIds || this.selectedComponentIds.size === 0) {
+      this.clipboard = null;
+      return;
+    }
 
-  // ★パーツ生成メソッド（NPN / PNP トランジスタ定義を追加）
+    const copiedComps = (this.components || [])
+      .filter(c => this.selectedComponentIds.has(c.id))
+      .map(c => JSON.parse(JSON.stringify(c)));
+
+    const copiedCompIds = new Set(copiedComps.map(c => c.id));
+
+    const isBbMode = this.mode === 'breadboard';
+    const copiedWires = (this.wires || [])
+      .filter(w => {
+        const isWireBb = w.isBreadboard === true || w.mode === 'breadboard';
+        if (isBbMode !== isWireBb) return false;
+
+        const isSelected = this.selectedWireIds && this.selectedWireIds.has(w.id);
+        const isBothEndsCopied = copiedCompIds.has(w.fromCompId) && copiedCompIds.has(w.toCompId);
+        return isSelected || isBothEndsCopied;
+      })
+      .map(w => JSON.parse(JSON.stringify(w)));
+
+    this.clipboard = {
+      components: copiedComps,
+      wires: copiedWires,
+      mode: this.mode
+    };
+  }
+
+  // ★ クリップボードからの貼り付け処理 (Ctrl+V)
+// クリップボードからの貼り付け処理 (Ctrl+V)
+paste() {
+  if (!this.clipboard || !this.clipboard.components || this.clipboard.components.length === 0) {
+    return;
+  }
+
+  const idMap = new Map();
+  const termIdMap = new Map();
+  const newComps = [];
+  const newWires = [];
+
+  const OFFSET = 30; // 貼り付け時の表示オフセット (px)
+
+  // 1. クリップボード内の全パーツ座標を前進させてから複製
+  this.clipboard.components.forEach(oldComp => {
+    // クリップボード側（コピー元データ）の座標を更新して次回貼り付け位置をズラす
+    if (oldComp.x !== undefined) oldComp.x += OFFSET;
+    if (oldComp.y !== undefined) oldComp.y += OFFSET;
+
+    if (oldComp.positions) {
+      Object.keys(oldComp.positions).forEach(m => {
+        if (oldComp.positions[m]) {
+          if (typeof oldComp.positions[m].x === 'number') oldComp.positions[m].x += OFFSET;
+          if (typeof oldComp.positions[m].y === 'number') oldComp.positions[m].y += OFFSET;
+        }
+      });
+    }
+
+    const newComp = JSON.parse(JSON.stringify(oldComp));
+    const newCompId = 'comp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+    idMap.set(oldComp.id, newCompId);
+    newComp.id = newCompId;
+
+    // 回路ラベルの場合、＋1した新しい番号を割り当てる
+    if (newComp.type === 'circuit-label') {
+      if (typeof this.circuitLabelCounter === 'undefined') {
+        this.circuitLabelCounter = 1;
+      }
+      newComp.text = `回路${this.circuitLabelCounter}`;
+      this.circuitLabelCounter++;
+    }
+
+    // 端子IDの再割り当て
+    if (newComp.terminals && Array.isArray(newComp.terminals)) {
+      newComp.terminals.forEach(t => {
+        const oldTermId = t.id;
+        const newTermId = `${newCompId}_${t.name || t.polarity || Math.random().toString(36).substr(2, 4)}`;
+        termIdMap.set(oldTermId, newTermId);
+        t.id = newTermId;
+      });
+    }
+
+    newComps.push(newComp);
+  });
+
+  // 2. クリップボード内の配線座標も同様に更新
+  this.clipboard.wires.forEach(oldWire => {
+    if (oldWire.fromPos) {
+      oldWire.fromPos.x += OFFSET;
+      oldWire.fromPos.y += OFFSET;
+    }
+    if (oldWire.toPos) {
+      oldWire.toPos.x += OFFSET;
+      oldWire.toPos.y += OFFSET;
+    }
+
+    const newWire = JSON.parse(JSON.stringify(oldWire));
+    const newWireId = 'wire_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+    newWire.id = newWireId;
+
+    if (idMap.has(oldWire.fromCompId)) newWire.fromCompId = idMap.get(oldWire.fromCompId);
+    if (idMap.has(oldWire.toCompId)) newWire.toCompId = idMap.get(oldWire.toCompId);
+    if (termIdMap.has(oldWire.fromTermId)) newWire.fromTermId = termIdMap.get(oldWire.fromTermId);
+    if (termIdMap.has(oldWire.toTermId)) newWire.toTermId = termIdMap.get(oldWire.toTermId);
+
+    newWires.push(newWire);
+  });
+
+  this.components.push(...newComps);
+  this.wires.push(...newWires);
+
+  // 貼り付け後に全回路ラベルの連番を整列・更新
+  if (typeof this.updateCircuitLabelNumbers === 'function') {
+    this.updateCircuitLabelNumbers();
+  }
+
+  if (!this.selectedComponentIds) this.selectedComponentIds = new Set();
+  if (!this.selectedWireIds) this.selectedWireIds = new Set();
+
+  this.selectedComponentIds.clear();
+  this.selectedWireIds.clear();
+
+  newComps.forEach(c => this.selectedComponentIds.add(c.id));
+  newWires.forEach(w => this.selectedWireIds.add(w.id));
+
+  if (typeof this.saveState === 'function') this.saveState();
+  if (typeof this.evaluateCircuit === 'function') this.evaluateCircuit();
+  if (typeof this.updatePropertyToolbar === 'function') this.updatePropertyToolbar();
+  this.render();
+}
+  // ★パーツ生成メソッド
   createComponent(type, x, y) {
     const id = 'comp_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     const comp = {
@@ -4197,7 +4332,7 @@ textarea {
         ];
         break;
 
-      // ★ 追加：回路ラベル（自動ナンバリング・配線端子なし）
+      // ★ 回路ラベル（自動ナンバリング・配線端子なし）
       case 'circuit-label':
         if (typeof this.circuitLabelCounter === 'undefined') {
           this.circuitLabelCounter = 1;
@@ -4425,58 +4560,72 @@ textarea {
     document.getElementById('btn-load-data')?.addEventListener('click', () => document.getElementById('file-input')?.click());
     document.getElementById('file-input')?.addEventListener('change', (e) => this.importDataFromFile(e));
 
-   // 7. キーボードショートカット（Delete, Ctrl+Z, Ctrl+Y, Ctrl+A をまとめて登録）
-    window.addEventListener('keydown', (e) => {
-      const activeTag = document.activeElement ? document.activeElement.tagName : '';
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
+   // 7. キーボードショートカット（Delete, Ctrl+Z, Ctrl+Y, Ctrl+A, Ctrl+C, Ctrl+V をまとめて登録）
+window.addEventListener('keydown', (e) => {
+  const activeTag = document.activeElement ? document.activeElement.tagName : '';
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
 
-      const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+  const isCmdOrCtrl = e.ctrlKey || e.metaKey;
 
-      // 削除処理 (Delete / Backspace)
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        e.preventDefault();
-        if (typeof this.deleteSelected === 'function') {
-          this.deleteSelected();
-        } else if (typeof this.deleteSelectedComponents === 'function') {
-          this.deleteSelectedComponents();
-        }
-      }
+  // 削除処理 (Delete / Backspace)
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    if (typeof this.deleteSelected === 'function') {
+      this.deleteSelected();
+    } else if (typeof this.deleteSelectedComponents === 'function') {
+      this.deleteSelectedComponents();
+    }
+  }
 
-      // Undo / Redo (Ctrl+Z / Ctrl+Y)
-      if (isCmdOrCtrl && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); this.undo(); }
-      if (isCmdOrCtrl && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); this.redo(); }
+  // Undo / Redo (Ctrl+Z / Ctrl+Y)
+  if (isCmdOrCtrl && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); this.undo(); }
+  if (isCmdOrCtrl && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); this.redo(); }
 
-      // 全選択 (Ctrl+A / Cmd+A)
-      if (isCmdOrCtrl && (e.key === 'a' || e.key === 'A')) {
-        e.preventDefault();
+  // 全選択 (Ctrl+A / Cmd+A)
+  if (isCmdOrCtrl && (e.key === 'a' || e.key === 'A')) {
+    e.preventDefault();
 
-        if (!this.selectedComponentIds) this.selectedComponentIds = new Set();
-        if (!this.selectedWireIds) this.selectedWireIds = new Set();
+    if (!this.selectedComponentIds) this.selectedComponentIds = new Set();
+    if (!this.selectedWireIds) this.selectedWireIds = new Set();
 
-        this.selectedComponentIds.clear();
-        this.selectedWireIds.clear();
-        this.selectedWireId = null;
+    this.selectedComponentIds.clear();
+    this.selectedWireIds.clear();
+    this.selectedWireId = null;
 
-        // ★ 1. 全パーツ(this.components)ではなく、現在表示中のモードの可視パーツのみを選択
-        const visibleComps = typeof this.getVisibleComponents === 'function'
-          ? this.getVisibleComponents()
-          : (this.components || []);
+    const visibleComps = typeof this.getVisibleComponents === 'function'
+      ? this.getVisibleComponents()
+      : (this.components || []);
 
-        visibleComps.forEach(comp => this.selectedComponentIds.add(comp.id));
+    visibleComps.forEach(comp => this.selectedComponentIds.add(comp.id));
 
-        // ★ 2. 現在表示中のモードの可視配線のみを選択
-        const isBbMode = this.mode === 'breadboard';
-        (this.wires || []).forEach(wire => {
-          const isWireBb = wire.isBreadboard === true || wire.mode === 'breadboard';
-          if (isBbMode === isWireBb) {
-            this.selectedWireIds.add(wire.id);
-          }
-        });
-
-        if (typeof this.updatePropertyToolbar === 'function') this.updatePropertyToolbar();
-        this.render();
+    const isBbMode = this.mode === 'breadboard';
+    (this.wires || []).forEach(wire => {
+      const isWireBb = wire.isBreadboard === true || wire.mode === 'breadboard';
+      if (isBbMode === isWireBb) {
+        this.selectedWireIds.add(wire.id);
       }
     });
+
+    if (typeof this.updatePropertyToolbar === 'function') this.updatePropertyToolbar();
+    this.render();
+  }
+
+  // ★ コピー (Ctrl+C / Cmd+C)
+  if (isCmdOrCtrl && (e.key === 'c' || e.key === 'C')) {
+    e.preventDefault();
+    if (typeof this.copySelected === 'function') {
+      this.copySelected();
+    }
+  }
+
+  // ★ 貼り付け (Ctrl+V / Cmd+V)
+  if (isCmdOrCtrl && (e.key === 'v' || e.key === 'V')) {
+    e.preventDefault();
+    if (typeof this.paste === 'function') {
+      this.paste();
+    }
+  }
+});
 
     // 8. その他のサブ初期化メソッドを実行
     this.initSvgZoom();
@@ -4486,7 +4635,7 @@ textarea {
     this.initPdfModalEvents();
   } // <-- initEvents メソッドをここで確実に閉じる
 
-  // ★ SVG拡大用メソッド（修正版）
+  // ★ SVG拡大用メソッド
 initSvgZoom() {
   if (document.querySelector('.svg-fullscreen-modal')) return;
 
@@ -5681,7 +5830,7 @@ if (chkPhysical || chkSchematic) {
           <div style="width: 92%; margin: 8px auto 0 auto; box-sizing: border-box;">
             <div class="pdf-img-title" style="font-size: 12px; font-weight: bold; margin-bottom: 4px; text-align: left;">■ ブレッドボード図</div>
             <div style="width: 100%; height: 500px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #ffffff; display: flex; justify-content: center; align-items: center; padding: 8px; box-sizing: border-box; overflow: hidden;">
-              <img src="${images.breadboard}" class="pdf-img-element-bb" style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; margin: auto; display: block; transform: scale(2.0) translateX(5%) translateY(20%); transform-origin: center center;" />
+              <img src="${images.breadboard}" class="pdf-img-element-bb" style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; margin: auto; display: block; transform: scale(1.6) translateX(-20%) translateY(20%); transform-origin: center center;" />
             </div>
           </div>
         </div>
