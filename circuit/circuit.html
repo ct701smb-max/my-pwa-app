@@ -1025,7 +1025,7 @@ textarea {
   <div class="app-container">
     <header class="toolbar">
       <div class="brand">
-  <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
+  <a href="../../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
   <span class="brand-title">
     <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <!-- 回路配線 -->
@@ -4626,8 +4626,18 @@ window.addEventListener('keydown', (e) => {
     }
   }
 });
+// ★ 8. 右クリックおよびタッチ長押しメニューの無効化
+    window.addEventListener('contextmenu', (e) => {
+      const activeTag = e.target ? e.target.tagName : '';
+      if (['INPUT', 'TEXTAREA'].includes(activeTag)) return; // 文字入力欄はメニュー許可
+      e.preventDefault();
+    });
 
-    // 8. その他のサブ初期化メソッドを実行
+    // タッチデバイスでの長押し選択・ポップアップのスタイル制御
+    document.documentElement.style.webkitTouchCallout = 'none';
+    document.documentElement.style.webkitUserSelect = 'none';
+    document.documentElement.style.userSelect = 'none';
+    // 9. その他のサブ初期化メソッドを実行
     this.initSvgZoom();
     this.initPaletteEvents();
     this.initCanvasEvents();
