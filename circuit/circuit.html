@@ -1025,7 +1025,7 @@ textarea {
   <div class="app-container">
     <header class="toolbar">
       <div class="brand">
-  <a href="../../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
+  <a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a>
   <span class="brand-title">
     <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <!-- 回路配線 -->
@@ -4153,7 +4153,6 @@ textarea {
   }
 
   // ★ クリップボードからの貼り付け処理 (Ctrl+V)
-// クリップボードからの貼り付け処理 (Ctrl+V)
 paste() {
   if (!this.clipboard || !this.clipboard.components || this.clipboard.components.length === 0) {
     return;
@@ -4610,21 +4609,16 @@ window.addEventListener('keydown', (e) => {
     this.render();
   }
 
-  // ★ コピー (Ctrl+C / Cmd+C)
+  // ★ Ctrl+C で「コピー ＋ 即時貼り付け」を実行
   if (isCmdOrCtrl && (e.key === 'c' || e.key === 'C')) {
     e.preventDefault();
-    if (typeof this.copySelected === 'function') {
-      this.copySelected();
+    if (typeof this.copySelected === 'function' && typeof this.paste === 'function') {
+      this.copySelected(); // 1. 選択中の要素をコピー
+      this.paste();        // 2. そのまま貼り付け（ズレて配置＆自動番号繰り上げ）
     }
   }
 
-  // ★ 貼り付け (Ctrl+V / Cmd+V)
-  if (isCmdOrCtrl && (e.key === 'v' || e.key === 'V')) {
-    e.preventDefault();
-    if (typeof this.paste === 'function') {
-      this.paste();
-    }
-  }
+  
 });
 // ★ 8. 右クリックおよびタッチ長押しメニューの無効化
     window.addEventListener('contextmenu', (e) => {
@@ -6374,20 +6368,38 @@ if (chkPhysical || chkSchematic) {
         e.target.value = '';
       }
 
-      saveState() {
-  if (this.historyIndex < this.history.length - 1) {
-    this.history = this.history.slice(0, this.historyIndex + 1);
-  }
-  const state = JSON.stringify({ components: this.components, wires: this.wires, viewState: this.viewState });
-  this.history.push(state);
-  this.historyIndex++;
-
-  // ローカル環境（file://）などのアクセス拒否エラーを捕捉
+     // ★ ストレージ保存処理の共通化（キー名: circuit_sim_data_v9 で統一）
+saveToLocalStorage() {
   try {
+    const state = JSON.stringify({
+      components: this.components,
+      wires: this.wires,
+      viewState: this.viewState,
+      circuitLabelCounter: this.circuitLabelCounter
+    });
     localStorage.setItem('circuit_sim_data_v9', state);
   } catch (e) {
     console.warn("localStorage への保存に失敗しました（ローカル環境など）:", e);
   }
+}
+
+saveState() {
+  if (this.historyIndex < this.history.length - 1) {
+    this.history = this.history.slice(0, this.historyIndex + 1);
+  }
+
+  const state = JSON.stringify({
+    components: this.components,
+    wires: this.wires,
+    viewState: this.viewState,
+    circuitLabelCounter: this.circuitLabelCounter
+  });
+
+  this.history.push(state);
+  this.historyIndex++;
+
+  // ストレージに上書き保存
+  this.saveToLocalStorage();
 }
 
 loadState() {
@@ -6406,6 +6418,11 @@ loadState() {
       this.wires = data.wires || [];
       if (data.viewState) this.viewState = data.viewState;
 
+      // ★ 回路ラベルのカウンター復元
+      if (data.circuitLabelCounter !== undefined) {
+        this.circuitLabelCounter = data.circuitLabelCounter;
+      }
+
       this.components.forEach(c => {
         if (c.rotation === undefined) c.rotation = { physical: 0, schematic: 0, breadboard: 0 };
         if (c.type === 'resistor' && !c.resistance) c.resistance = 100;
@@ -6416,7 +6433,11 @@ loadState() {
       this.history = [saved];
       this.historyIndex = 0;
 
-      // ★ 追加: データを復元した直後に回路を再評価して描画を更新する
+      // ★ 復元時に回路ラベルの番号を整合
+      if (typeof this.updateCircuitLabelNumbers === 'function') {
+        this.updateCircuitLabelNumbers();
+      }
+
       if (typeof this.evaluateCircuit === 'function') {
         this.evaluateCircuit();
       }
@@ -6427,38 +6448,73 @@ loadState() {
     } catch (e) {
       console.error("保存データのパースエラー:", e);
     }
+  } else {
+    // ★ 初回起動時（データなし）に空の状態を最初の履歴として記録
+    this.saveState();
   }
 }
 
 
 
       undo() {
-        if (this.historyIndex > 0) {
-          this.historyIndex--;
-          const data = JSON.parse(this.history[this.historyIndex]);
-          this.components = data.components;
-          this.wires = data.wires;
-          if (data.viewState) this.viewState = data.viewState;
-          this.selectedComponentIds.clear();
-          this.selectedWireId = null;
-          this.evaluateCircuit();
-          this.render();
-        }
-      }
+  if (this.historyIndex > 0) {
+    this.historyIndex--;
+    const data = JSON.parse(this.history[this.historyIndex]);
+    this.components = data.components || [];
+    this.wires = data.wires || [];
+    if (data.viewState) this.viewState = data.viewState;
 
-      redo() {
-        if (this.historyIndex < this.history.length - 1) {
-          this.historyIndex++;
-          const data = JSON.parse(this.history[this.historyIndex]);
-          this.components = data.components;
-          this.wires = data.wires;
-          if (data.viewState) this.viewState = data.viewState;
-          this.selectedComponentIds.clear();
-          this.selectedWireId = null;
-          this.evaluateCircuit();
-          this.render();
-        }
-      }
+    // 選択状態のクリア
+    this.selectedComponentIds.clear();
+    if (this.selectedWireIds) this.selectedWireIds.clear();
+    this.selectedWireId = null;
+
+    // ★ Undo後の最新状態をストレージに上書き保存
+    if (typeof this.saveToLocalStorage === 'function') {
+      this.saveToLocalStorage();
+    } else if (typeof this.saveStateToLocalStorage === 'function') {
+      this.saveStateToLocalStorage();
+    }
+
+    // 回路ラベル等の連番再計算（ある場合）
+    if (typeof this.updateCircuitLabelNumbers === 'function') {
+      this.updateCircuitLabelNumbers();
+    }
+
+    this.evaluateCircuit();
+    this.render();
+  }
+}
+
+redo() {
+  if (this.historyIndex < this.history.length - 1) {
+    this.historyIndex++;
+    const data = JSON.parse(this.history[this.historyIndex]);
+    this.components = data.components || [];
+    this.wires = data.wires || [];
+    if (data.viewState) this.viewState = data.viewState;
+
+    // 選択状態のクリア
+    this.selectedComponentIds.clear();
+    if (this.selectedWireIds) this.selectedWireIds.clear();
+    this.selectedWireId = null;
+
+    // ★ Redo後の最新状態をストレージに上書き保存
+    if (typeof this.saveToLocalStorage === 'function') {
+      this.saveToLocalStorage();
+    } else if (typeof this.saveStateToLocalStorage === 'function') {
+      this.saveStateToLocalStorage();
+    }
+
+    // 回路ラベル等の連番再計算（ある場合）
+    if (typeof this.updateCircuitLabelNumbers === 'function') {
+      this.updateCircuitLabelNumbers();
+    }
+
+    this.evaluateCircuit();
+    this.render();
+  }
+}
 
       // 全削除モーダルを表示してユーザーの選択（OK / キャンセル）を待つ汎用メソッド
 showConfirmModal() {
