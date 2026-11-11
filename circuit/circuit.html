@@ -7210,26 +7210,30 @@ async clearAll() {
         }
 
         let isShortCircuit = false;
-        validPaths.forEach(item => {
-          const hasResistor = item.path.some(p => p.comp.type === 'resistor' || p.comp.type === 'cds');
-          if (!hasResistor) {
-            isShortCircuit = true;
-          }
-        });
+validPaths.forEach(item => {
+  // ★ パス内の抵抗・CdSの合計抵抗値を計算
+  const pathResistors = item.path.filter(p => p.comp.type === 'resistor' || p.comp.type === 'cds');
+  const pathResistance = pathResistors.reduce((sum, p) => sum + getResValue(p.comp), 0);
 
-        if (isShortCircuit) {
-          subCircuitResults.push({
-            id: circuitId,
-            status: 'SHORT',
-            type: 'error',
-            icon: '💥',
-            msg: 'ショート（過電流）！抵抗器を接続してください',
-            totalVoltage,
-            totalResistance: 0,
-            totalCurrent: 0
-          });
-          return;
-        }
+  // ★ 抵抗器がない、または合計抵抗値が 100Ω 未満の場合はショート（過電流）判定
+  if (pathResistors.length === 0 || pathResistance < 100) {
+    isShortCircuit = true;
+  }
+});
+
+if (isShortCircuit) {
+  subCircuitResults.push({
+    id: circuitId,
+    status: 'SHORT',
+    type: 'error',
+    icon: '💥',
+    msg: 'ショート（過電流）！適切な抵抗器を接続してください',
+    totalVoltage,
+    totalResistance: 0,
+    totalCurrent: 0
+  });
+  return;
+}
 
         subComps.forEach(c => {
   if (c.type === 'rgb-led') {
