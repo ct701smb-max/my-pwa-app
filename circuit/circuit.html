@@ -1249,6 +1249,7 @@ textarea {
         <!-- 1. パーツの説明 -->
 <div id="panel-overview" class="parts-panel active">
   <h3>パーツの説明</h3>
+  <h4>※ パーツを選択中にCtrl + Cでコピペができます</h4>
   <ul class="parts-info-list">
     <li style="display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px;">
     <span class="palette-icon" style="background: #ffffff; color: #000000; border: 1.5px solid #000000; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 45px; height: 24px; border-radius: 4px; flex-shrink: 0;">
@@ -4093,7 +4094,17 @@ textarea {
     }
     return !!comp.flipped;
   }
-
+// 抵抗値(Ω)に応じた輝度(0〜255)の段階判定
+getLuminanceFromResistance(r) {
+  if (r <= 100)     return 255; // 100Ω以下 : MAX (255)
+  if (r <= 220)     return 220; // 220Ω     : 約86%
+  if (r <= 330)     return 180; // 330Ω     : 約70%
+  if (r <= 1000)    return 130; // 1kΩ      : 約50%
+  if (r <= 5600)    return 80;  // 5.6kΩ    : 約30%
+  if (r <= 10000)   return 45;  // 10kΩ     : 約18%
+  if (r <= 100000)  return 15;  // 100kΩ    : 約6% (うっすら)
+  return 0;                     // 1MΩ以上  : 0 (消灯)
+}
   toggleStatusVisibility() {
     this.isStatusVisible = !this.isStatusVisible;
     
@@ -7221,10 +7232,11 @@ async clearAll() {
         }
 
         subComps.forEach(c => {
-          if (c.type === 'rgb-led') {
-            c.rgbChannels = { r: false, g: false, b: false };
-          }
-        });
+  if (c.type === 'rgb-led') {
+    c.rgbCurrents = { r: 0, g: 0, b: 0 };
+    c.rgbChannels = { r: false, g: false, b: false };
+  }
+});
 
         const totalCurrent = totalResistance > 0 ? (totalVoltage / totalResistance) : totalVoltage;
 
@@ -7250,17 +7262,29 @@ async clearAll() {
                 subLedActiveCount++;
 
                 if (comp.type === 'rgb-led' && inTerm) {
-                  const name = (inTerm.name || '').toLowerCase();
-                  const id = (inTerm.id || '').toLowerCase();
+  // ★ 該当パスに接続されている抵抗器の合計抵抗値を計算
+  const pathResistors = path.filter(p => p.comp.type === 'resistor' || p.comp.type === 'cds');
+  const pathResistance = pathResistors.reduce((sum, p) => sum + getResValue(p.comp), 0);
 
-                  const isRed = name.includes('赤') || name.includes('r') || id.endsWith('t2');
-                  const isGreen = name.includes('緑') || name.includes('g') || id.endsWith('t3');
-                  const isBlue = name.includes('青') || name.includes('b') || id.endsWith('t4');
+  const name = (inTerm.name || '').toLowerCase();
+  const id = (inTerm.id || '').toLowerCase();
 
-                  if (isRed) comp.rgbChannels.r = true;
-                  if (isGreen) comp.rgbChannels.g = true;
-                  if (isBlue) comp.rgbChannels.b = true;
-                }
+  let ch = null;
+  if (name.includes('赤') || name.includes('r') || id.endsWith('t2') || id.endsWith('_r')) ch = 'r';
+  else if (name.includes('緑') || name.includes('g') || id.endsWith('t3') || id.endsWith('_g')) ch = 'g';
+  else if (name.includes('青') || name.includes('b') || id.endsWith('t4') || id.endsWith('_b')) ch = 'b';
+
+  if (ch) {
+    if (!comp.rgbChannels) comp.rgbChannels = { r: 0, g: 0, b: 0 };
+
+    // ★ 抵抗値の段階に応じた輝度 (0〜255) を判定して代入
+    const luminance = typeof this.getLuminanceFromResistance === 'function'
+      ? this.getLuminanceFromResistance(pathResistance)
+      : (pathResistance <= 100 ? 255 : 128);
+
+    comp.rgbChannels[ch] = luminance;
+  }
+}
               }
             } else if (comp.type !== 'battery') {
               activeMap.set(comp.id, true);
@@ -7853,39 +7877,49 @@ async clearAll() {
                       <text x="${negX}" y="-10" font-size="12" font-weight="bold" fill="#2563eb">-</text>`;
     }
   } else if (comp.type === 'rgb-led') {
-    let opacity = 0.3;
-    let glowRadius = 0;
-    let activeColor = '#6b7280';
+  let opacity = 0.3;
+  let glowRadius = 0;
+  let activeColor = '#6b7280';
 
-    if (isWorking) {
-      if (comp.color) {
-        activeColor = comp.color;
-      } else if (comp.activeColor) {
-        activeColor = comp.activeColor;
-      } else {
-        let r = false, gVal = false, b = false;
-        if (comp.rgbChannels) {
-          r = !!comp.rgbChannels.r;
-          gVal = !!comp.rgbChannels.g;
-          b = !!comp.rgbChannels.b;
-        }
+  if (isWorking) {
+    if (comp.color) {
+      activeColor = comp.color;
+    } else if (comp.activeColor) {
+      activeColor = comp.activeColor;
+    } else {
+      // ★ 各チャンネルの段階輝度 (0〜255) を読み出し
+      let rVal = 0, gVal = 0, bVal = 0;
 
-        if (r && gVal && b)       activeColor = '#ffffff';
-        else if (r && gVal)       activeColor = '#eab308';
-        else if (gVal && b)       activeColor = '#06b6d4';
-        else if (r && b)          activeColor = '#a855f7';
-        else if (r)               activeColor = '#ef4444';
-        else if (gVal)            activeColor = '#10b981';
-        else if (b)               activeColor = '#3b82f6';
-        else                      activeColor = '#ef4444';
+      if (comp.rgbChannels) {
+        const parseLum = (val) => {
+          if (typeof val === 'number') return Math.min(255, Math.max(0, val));
+          return val ? 255 : 0; // boolean 互換
+        };
+
+        rVal = parseLum(comp.rgbChannels.r);
+        gVal = parseLum(comp.rgbChannels.g);
+        bVal = parseLum(comp.rgbChannels.b);
       }
 
-      const ratio = Math.min(current / 0.02, 1.5);
-      const factor = Math.sqrt(ratio);
-
-      opacity = Math.min(Math.max(0.15 + factor * 0.85, 0.15), 1.0);
-      glowRadius = Math.round(factor * 18);
+      // いずれかのチャンネルが点灯していれば合成色を生成
+      if (rVal > 0 || gVal > 0 || bVal > 0) {
+        activeColor = `rgb(${rVal}, ${gVal}, ${bVal})`;
+      } else {
+        activeColor = '#6b7280';
+      }
     }
+
+    // 3チャンネル全体の最大輝度から透過度とグロー量を決定
+    const maxLum = Math.max(
+      Number(comp.rgbChannels?.r) || 0,
+      Number(comp.rgbChannels?.g) || 0,
+      Number(comp.rgbChannels?.b) || 0
+    );
+    const lumRatio = maxLum / 255;
+
+    opacity = Math.min(Math.max(0.2 + lumRatio * 0.8, 0.2), 1.0);
+    glowRadius = Math.round(lumRatio * 18);
+  }
 
     const glowStyle = isWorking ? `style="filter: drop-shadow(0 0 ${glowRadius}px ${activeColor});"` : '';
     
@@ -7910,8 +7944,16 @@ async clearAll() {
 
       let ledsSvg = '';
       channels.forEach(ch => {
-        const isChActive = isWorking && (!comp.rgbChannels || comp.rgbChannels[ch.id]);
-        const chOpacity = isChActive ? opacity : 0.2;
+        // ★ 各素子の点灯判定と個別の明るさ(透明度)計算
+        let chVal = 0;
+        if (comp.rgbCurrents && comp.rgbCurrents[ch.id]) {
+          chVal = comp.rgbCurrents[ch.id];
+        } else if (comp.rgbChannels && comp.rgbChannels[ch.id]) {
+          chVal = comp.rgbChannels[ch.id];
+        }
+
+        const isChActive = isWorking && !!chVal;
+        const chOpacity = isChActive ? Math.min(Math.max(0.3, (typeof chVal === 'number' ? (chVal > 1 ? chVal / 255 : chVal) : 1)), 1.0) : 0.2;
         const chFill = isChActive ? ch.color : '#6b7280';
 
         ledsSvg += `
