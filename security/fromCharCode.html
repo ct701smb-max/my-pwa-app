@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>fromCharCodeメソッド()</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 8px; }
+    button { margin-top: 10px; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+<h1>fromCharCode()メソッドによるエンコード・デコード</h1>
+  <h2>文字列のエンコード（Unicode）</h2>
+  <textarea id="inputText" rows="3" placeholder="ここに文字を入力してください"></textarea>
+  <button onclick="encodeText()">エンコード</button>
+  <textarea id="encodedText" rows="3" readonly placeholder="エンコード結果"></textarea>
+
+  <h2>Unicode値からデコード</h2>
+  <textarea id="unicodeInput" rows="3" placeholder="例: 72,101,108,108,111"></textarea>
+  <button onclick="decodeText()">デコード</button>
+  <textarea id="decodedText" rows="3" readonly placeholder="デコード結果"></textarea>
+
+  <script>
+    function encodeText() {
+      const text = document.getElementById("inputText").value;
+      const codes = [];
+      for (let i = 0; i < text.length; i++) {
+        codes.push(text.charCodeAt(i));
+      }
+      document.getElementById("encodedText").value = codes.join(",");
+    }
+
+    function decodeText() {
+      const input = document.getElementById("unicodeInput").value.trim();
+      const codePoints = input.split(/,/).map(Number);
+      const decoded = String.fromCharCode(...codePoints);
+      document.getElementById("decodedText").value = decoded;
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ログインシステム2</title>
+    
+<!--ページデザイン-->
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #808080;
+      font-family: sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .card-container {
+      width: 100%;
+      max-width: 900px;
+      padding: 30px 20px;
+      background-color: #000;
+      text-align: center;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    }
+
+    form {
+      width: 100%;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    h1, p {
+      color: #fff;
+      font-weight: 500;
+      margin: 5px 0;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    /* ソースコード表示ボタン */
+    .source-view-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 14px auto 0 auto;
+      padding: 8px 20px;
+      background-color: #111;
+      color: #00ff00;
+      border: 2px solid #006400;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.25s;
+      touch-action: manipulation;
+    }
+
+    .source-view-btn:hover {
+      background-color: #006400;
+      color: #fff;
+      border-color: #00ff00;
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.45);
+    }
+
+    .source-view-btn:active {
+      transform: scale(0.96);
+    }
+
+    input[type="password"] {
+      border: 0;
+      background: none;
+      display: block;
+      margin: 18px auto 20px auto;
+      border: 2px solid #006400;
+      padding: 15px 10px;
+      width: 220px;
+      max-width: 85%;
+      outline: none;
+      border-radius: 24px;
+      transition: 0.25s;
+      text-align: center;
+      font-size: 20px;
+      color: #fff;
+    }
+
+    input[type="password"]:focus {
+      width: 280px;
+      max-width: 92%;
+      background-color: #353535;
+    }
+
+    input[type="submit"] {
+      border: 0;
+      background: none;
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #f0f8ff;
+      padding: 12px 10px;
+      width: 220px;
+      max-width: 85%;
+      outline: none;
+      color: #fff;
+      border-radius: 25px;
+      transition: 0.25s;
+      text-align: center;
+      cursor: pointer;
+      font-size: 18px;
+      touch-action: manipulation;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #006400;
+      border: 2px solid #006400;
+    }
+
+    /* ソースコード表示用モーダル */
+    #source-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background-color: rgba(0, 0, 0, 0.88);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      padding: 14px;
+    }
+
+    #source-modal.open {
+      display: flex;
+    }
+
+    .source-modal-box {
+      width: 100%;
+      max-width: 820px;
+      height: 82vh;
+      height: 82dvh;
+      max-height: 680px;
+      background-color: #0a0a0a;
+      border: 2px solid #006400;
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .source-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background-color: #111;
+      border-bottom: 1px solid #222;
+      gap: 10px;
+    }
+
+    .source-modal-title {
+      color: #00ff00;
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-align: left;
+    }
+
+    .source-modal-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .source-code-body {
+      flex: 1;
+      margin: 0;
+      padding: 14px 16px;
+      overflow: auto;
+      background-color: #050505;
+      color: #e6e6e6;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      text-align: left;
+      white-space: pre;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .source-code-body::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .source-code-body::-webkit-scrollbar-track {
+      background: #111;
+    }
+
+    .source-code-body::-webkit-scrollbar-thumb {
+      background: #006400;
+      border-radius: 4px;
+    }
+
+    #status-message {
+      color: #ff4500;
+      font-size: 14px;
+      font-weight: bold;
+      min-height: 24px;
+      margin-top: 15px;
+      line-height: 1.6;
+      word-break: break-all;
+    }
+
+    #status-message a {
+      color: #00ffff;
+      text-decoration: underline;
+    }
+
+    #status-message a:hover {
+      color: #7fffd4;
+    }
+
+    #ubongo-stage {
+      display: none;
+      margin-top: 5px;
+    }
+
+    .stage-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+      text-align: left;
+    }
+
+    .board-section {
+      width: 265px;
+      background-color: #111;
+      padding: 15px 10px;
+      border-radius: 8px;
+      border: 1px solid #222;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .board-outer {
+      position: relative;
+      width: 234px;
+      height: 234px;
+      margin: 12px auto;
+      background-color: #ffffff;
+      border: 3px solid #666666;
+      border-radius: 8px;
+      padding: 3px;
+      z-index: 1;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.25);
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 42px);
+      grid-template-rows: repeat(5, 42px);
+      gap: 3px;
+    }
+
+    .cell {
+      width: 42px;
+      height: 42px;
+      background-color: #f0f0f0;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .cell:hover:not(.blocked) {
+      background-color: #e0f7fa;
+    }
+
+    .cell.blocked {
+      background: repeating-linear-gradient(
+        45deg,
+        #1a1a1a,
+        #1a1a1a 5px,
+        #2b2b2b 5px,
+        #2b2b2b 10px
+      );
+      border: 1px solid #444;
+      cursor: not-allowed;
+    }
+
+    .tray-section {
+      width: 580px;
+      background-color: #111;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid #222;
+    }
+
+    .tray-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .control-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ctrl-btn {
+      background-color: #1a1a1a;
+      color: #fff;
+      border: 2px solid #006400;
+      border-radius: 20px;
+      padding: 7px 16px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      touch-action: manipulation;
+    }
+
+    .ctrl-btn:hover:not(:disabled) {
+      background-color: #006400;
+      border-color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+
+    .ctrl-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .ctrl-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      border-color: #444;
+    }
+
+    .tray {
+      position: relative;
+      width: 550px;
+      height: 365px;
+      margin: 0 auto;
+      background-color: #080808;
+      border: 1px solid #333;
+      border-radius: 8px;
+      overflow: visible;
+      z-index: 10;
+    }
+
+    #clear-result {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 15px;
+    }
+
+    #clear-result h2 {
+      color: #00ff00;
+      font-size: clamp(22px, 5vw, 32px);
+      margin: 0 0 20px 0;
+      letter-spacing: 2px;
+      text-shadow: 0 0 12px rgba(0, 255, 0, 0.6);
+    }
+
+    .winner-link-btn {
+      display: inline-block;
+      padding: 16px 38px;
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: bold;
+      color: #000;
+      background-color: #00ffff;
+      border: 3px solid #00ffff;
+      border-radius: 40px;
+      text-decoration: none;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+      transition: 0.25s;
+    }
+
+    .winner-link-btn:hover {
+      background-color: #000;
+      color: #00ffff;
+      transform: scale(1.06);
+    }
+
+    .form-fallback-link {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #aaa;
+      text-decoration: underline;
+    }
+
+    .piece {
+      position: absolute;
+      cursor: pointer;
+      touch-action: none;
+      transform-origin: 0 0;
+      transition: transform 0.15s ease;
+      z-index: 20;
+    }
+
+    .piece.selected {
+      z-index: 100;
+      filter: drop-shadow(0 0 8px #ffffff) drop-shadow(0 0 14px #00ff00);
+    }
+
+    .piece.selected .block {
+      border: 3px solid #ffffff !important;
+      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .piece:active {
+      cursor: grabbing;
+      z-index: 1000;
+    }
+
+    .piece-grid {
+      display: grid;
+      gap: 3px;
+    }
+
+    .block {
+      width: 42px;
+      height: 42px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.4);
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .p1  .block { background-color: #00bfff; box-shadow: 0 0 6px rgba(0,191,255,0.6); } /* I */
+    .p2  .block { background-color: #ff1493; box-shadow: 0 0 6px rgba(255,20,147,0.6); } /* L */
+    .p3  .block { background-color: #32cd32; box-shadow: 0 0 6px rgba(50,205,50,0.6); } /* P */
+    .p4  .block { background-color: #ff8c00; box-shadow: 0 0 6px rgba(255,140,0,0.6); } /* N */
+    .p5  .block { background-color: #ba55d3; box-shadow: 0 0 6px rgba(186,85,211,0.6); } /* Y */
+    .p6  .block { background-color: #ffd700; box-shadow: 0 0 6px rgba(255,215,0,0.6); } /* T */
+    .p7  .block { background-color: #00fa9a; box-shadow: 0 0 6px rgba(0,250,154,0.6); } /* F */
+    .p8  .block { background-color: #ff4500; box-shadow: 0 0 6px rgba(255,69,0,0.6); }   /* V */
+    .p9  .block { background-color: #1e90ff; box-shadow: 0 0 6px rgba(30,144,255,0.6); } /* W */
+    .p10 .block { background-color: #ff69b4; box-shadow: 0 0 6px rgba(255,105,180,0.6); }/* Z */
+    .p11 .block { background-color: #00ffff; box-shadow: 0 0 6px rgba(0,255,255,0.6); } /* U */
+    .p12 .block { background-color: #a8ff00; box-shadow: 0 0 6px rgba(168,255,0,0.6); }  /* X */
+
+    .instructions {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    #clear-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    #clear-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    #clear-banner {
+      font-size: clamp(36px, 10vw, 72px);
+      font-weight: 900;
+      color: #00ff00;
+      text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+      animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      letter-spacing: 3px;
+    }
+
+    #clear-subtext {
+      font-size: clamp(16px, 4.5vw, 24px);
+      color: #ffffff;
+      margin-top: 15px;
+      letter-spacing: 1.5px;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.2); opacity: 0; }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    #clear-overlay.fade-out {
+      opacity: 0;
+    }
+
+    /* スマホ・タブレット向けレスポンシブ調整 */
+    @media (max-width: 920px) {
+      body {
+        align-items: flex-start;
+        padding: 8px;
+      }
+
+      .card-container {
+        padding: 18px 10px;
+        border-radius: 10px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+
+      .stage-flex {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .board-section {
+        width: 100%;
+        padding: 10px 8px;
+      }
+
+      .board-outer {
+        margin: 8px auto;
+      }
+
+      .tray-section {
+        width: 100%;
+        padding: 10px 8px;
+      }
+
+      .tray-top-bar {
+        flex-wrap: wrap;
+      }
+
+      .ctrl-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+
+      .tray {
+        width: 100%;
+      }
+
+      .instructions {
+        font-size: 11px;
+      }
+
+      .source-modal-header {
+        padding: 10px 12px;
+      }
+
+      .source-modal-title {
+        font-size: 13px;
+      }
+
+      .source-modal-actions .ctrl-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+
+<!--ページ本体-->
+<body>
+
+  <div class="card-container">
+    
+    <!-- PHASE 1: パスワード入力 -->
+    <div id="password-stage">
+      <form name="form1" id="login-form" onsubmit="return false;">
+        <h1>LOGIN 2</h1>
+        <p>Passwordをご入力の上、「Enter」ボタンをクリックしてください。</p>
+        <button type="button" class="source-view-btn" id="btn-show-source">📄 ソースコードを見る</button>
+        <input type="password" name="pass2" id="password-input" placeholder="Password" autocomplete="off">
+        <input type="submit" value="Enter">
+      </form>
+    </div>
+
+    <!-- PHASE 2: パズル認証 -->
+    <div id="ubongo-stage">
+      <h1>パズル認証</h1>
+      <p style="margin-bottom: 10px;">12種類のピースから正しいピースを選び、白い20マスをすべて埋めてください。</p>
+
+      <div class="stage-flex">
+        <!-- 上／左側：パズル枠 -->
+        <div class="board-section">
+          <p style="color:#00ff00; font-weight:bold;">パズル枠</p>
+          <div class="board-outer" id="board-outer">
+            <div class="board-grid" id="board-grid">
+
+            </div>
+          </div>
+          <div class="instructions">💡 黒いマスには置けません<br>💡 選択後に枠タップ or ドラッグで配置</div>
+        </div>
+
+        <!-- 下／右側：パーツトレイ ＆ 操作ボタン -->
+        <div class="tray-section">
+          <div class="tray-top-bar">
+            <p id="tray-header" style="color:#fff; margin:0;">パーツトレイ (12 ピース)</p>
+            <div class="control-buttons" id="control-buttons">
+              <button type="button" class="ctrl-btn" id="btn-rotate" disabled>🔄 回転</button>
+              <button type="button" class="ctrl-btn" id="btn-flip" disabled>⇄ 反転</button>
+            </div>
+          </div>
+          
+          <div class="tray" id="tray">
+            <div id="clear-result">
+              <h2>🎉 ログイン成功！ 🎉</h2>
+              <a id="winner-list-link" class="winner-link-btn" href="#" target="_blank">突破者リスト</a>
+              <a id="form-direct-link" class="form-fallback-link" href="#" target="_blank">自動で開かない場合はこちら（回答フォーム）</a>
+            </div>
+          </div>
+          <div id="tray-instructions" class="instructions">💡 タップで選択（枠が発光） → 再タップ or「回転」で回転 ／「反転」で左右反転</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="status-message"></div>
+
+  </div>
+
+  <!-- ソースコード表示モーダル -->
+  <div id="source-modal" role="dialog" aria-modal="true" aria-labelledby="source-modal-title">
+    <div class="source-modal-box">
+      <div class="source-modal-header">
+        <span class="source-modal-title" id="source-modal-title">📄 PAGE SOURCE CODE</span>
+        <div class="source-modal-actions">
+          <button type="button" class="ctrl-btn" id="btn-copy-source">📋 コピー</button>
+          <button type="button" class="ctrl-btn" id="btn-close-source">✕ 閉じる</button>
+        </div>
+      </div>
+      <pre class="source-code-body"><code id="source-code-content"></code></pre>
+    </div>
+  </div>
+
+  <div id="clear-overlay">
+    <div id="clear-banner">🎉 CLEAR!! 🎉</div>
+    <div id="clear-subtext">認証成功！ ページへ移動します...</div>
+  </div>
+
+
+<!--ページシステム-->
+  <script>
+    const pageSourceText = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+    document.addEventListener('contextmenu', (e) => {
+        
+      if (!e.target.closest('.source-code-body')) {
+        e.preventDefault();
+      }
+    });
+
+    const sourceModal = document.getElementById('source-modal');
+    const sourceCodeContent = document.getElementById('source-code-content');
+    const btnShowSource = document.getElementById('btn-show-source');
+    const btnCloseSource = document.getElementById('btn-close-source');
+    const btnCopySource = document.getElementById('btn-copy-source');
+
+    btnShowSource.addEventListener('click', () => {
+      sourceCodeContent.textContent = pageSourceText;
+      sourceModal.classList.add('open');
+    });
+
+    btnCloseSource.addEventListener('click', () => {
+      sourceModal.classList.remove('open');
+    });
+
+    sourceModal.addEventListener('click', (e) => {
+      if (e.target === sourceModal) {
+        sourceModal.classList.remove('open');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && sourceModal.classList.contains('open')) {
+        sourceModal.classList.remove('open');
+      }
+    });
+
+    btnCopySource.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pageSourceText);
+        btnCopySource.textContent = '✓ コピー完了';
+        setTimeout(() => {
+          btnCopySource.textContent = '📋 コピー';
+        }, 1800);
+      } catch (err) {
+        const range = document.createRange();
+        range.selectNodeContents(sourceCodeContent);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    });
+
+    let CELL_SIZE = 42;
+    const GAP_SIZE = 3;
+    let STEP = CELL_SIZE + GAP_SIZE;
+    const BOARD_ROWS = 5;
+    const BOARD_COLS = 5;
+    let TRAY_SCALE = 0.6;
+
+    let failCount = 0;
+
+    // ログインパスワード
+    // fromCharCode()メソッドでデコード（復号）してみよう
+    const correctPassword = String.fromCharCode(49,50,51,52);
+
+    const targetUrl = String.fromCharCode(104,116,116,112,115,58,47,47,100,111,99,115,46,103,111,111,103,108,101,46,99,111,109,47,102,111,114,109,115,47,100,47,101,47,49,70,65,73,112,81,76,83,99,107,114,117,121,106,104,68,122,110,120,112,73,85,122,84,50,83,85,65,68,116,115,120,77,57,79,84,99,109,82,54,56,84,108,95,73,113,111,50,65,72,110,69,66,78,56,119,47,118,105,101,119,102,111,114,109);
+
+    const displayUrl = "https://docs.google.com/spreadsheets/d/1OXCxszi_UR4tgxr9Mtv04KcWD6AcIHY7MVECnk9sYu4/edit?gid=61667610#gid=61667610";
+
+    const passStage = document.getElementById('password-stage');
+    const ubongoStage = document.getElementById('ubongo-stage');
+    const msg = document.getElementById('status-message');
+    const passInput = document.getElementById('password-input');
+    const boardOuter = document.getElementById('board-outer');
+    const boardGrid = document.getElementById('board-grid');
+    const tray = document.getElementById('tray');
+    const btnRotate = document.getElementById('btn-rotate');
+    const btnFlip = document.getElementById('btn-flip');
+
+    let boardState = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
+    let selectedPiece = null;
+    let isCleared = false;
+    let pieceInstances = [];
+
+    const piecesData = [
+      { id: 'p1',  colorClass: 'p1',  shape: [[1,1,1,1,1]] },             // I
+      { id: 'p2',  colorClass: 'p2',  shape: [[1,0],[1,0],[1,0],[1,1]] },  // L
+      { id: 'p3',  colorClass: 'p3',  shape: [[1,1],[1,1],[1,0]] },       // P
+      { id: 'p4',  colorClass: 'p4',  shape: [[0,1],[1,1],[1,0],[1,0]] },  // N
+      { id: 'p5',  colorClass: 'p5',  shape: [[0,1],[1,1],[0,1],[0,1]] },  // Y
+      { id: 'p6',  colorClass: 'p6',  shape: [[1,1,1],[0,1,0],[0,1,0]] },  // T
+      { id: 'p7',  colorClass: 'p7',  shape: [[0,1,1],[1,1,0],[0,1,0]] },  // F
+      { id: 'p8',  colorClass: 'p8',  shape: [[1,0,0],[1,0,0],[1,1,1]] },  // V
+      { id: 'p9',  colorClass: 'p9',  shape: [[1,0,0],[1,1,0],[0,1,1]] },  // W
+      { id: 'p10', colorClass: 'p10', shape: [[1,1,0],[0,1,0],[0,1,1]] },  // Z
+      { id: 'p11', colorClass: 'p11', shape: [[1,0,1],[1,1,1]] },          // U
+      { id: 'p12', colorClass: 'p12', shape: [[0,1,0],[1,1,1],[0,1,0]] }   // X
+    ];
+
+    function updateLayoutMetrics() {
+      const isMobile = window.innerWidth <= 920;
+
+      if (!isMobile) {
+        CELL_SIZE = 42;
+        STEP = CELL_SIZE + GAP_SIZE;
+        TRAY_SCALE = 0.6;
+
+        tray.style.width = '550px';
+        tray.style.height = '365px';
+
+        const cols = 4;
+        const rows = 3;
+        const colWidth = 550 / cols;
+        const rowHeight = 365 / rows;
+
+        piecesData.forEach((data, i) => {
+          const c = i % cols;
+          const r = Math.floor(i / cols);
+          data.initX = c * colWidth + 10;
+          data.initY = r * rowHeight + 10;
+        });
+      } else {
+        tray.style.width = '100%';
+        const trayWidth = tray.clientWidth || Math.max(280, window.innerWidth - 36);
+
+        CELL_SIZE = Math.min(44, Math.max(36, Math.floor((trayWidth - 20) / 5) - GAP_SIZE));
+        STEP = CELL_SIZE + GAP_SIZE;
+
+        const cols = 3;
+        const rows = 4;
+        const colWidth = trayWidth / cols;
+        const maxPieceFullWidth = 5 * CELL_SIZE + 4 * GAP_SIZE;
+
+        TRAY_SCALE = Math.min(0.55, Math.max(0.32, (colWidth - 10) / maxPieceFullWidth));
+        const rowHeight = Math.max(66, Math.ceil((3 * CELL_SIZE + 2 * GAP_SIZE) * TRAY_SCALE + 18));
+        const trayHeight = rowHeight * rows + 8;
+
+        tray.style.height = `${trayHeight}px`;
+
+        piecesData.forEach((data, i) => {
+          const c = i % cols;
+          const r = Math.floor(i / cols);
+          data.initX = c * colWidth + 8;
+          data.initY = r * rowHeight + 8;
+        });
+      }
+
+      const boardInnerSize = CELL_SIZE * BOARD_COLS + GAP_SIZE * (BOARD_COLS - 1);
+      const boardOuterSize = boardInnerSize + 12;
+      boardOuter.style.width = `${boardOuterSize}px`;
+      boardOuter.style.height = `${boardOuterSize}px`;
+      boardGrid.style.gridTemplateColumns = `repeat(5, ${CELL_SIZE}px)`;
+      boardGrid.style.gridTemplateRows = `repeat(5, ${CELL_SIZE}px)`;
+
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.style.width = `${CELL_SIZE}px`;
+        cell.style.height = `${CELL_SIZE}px`;
+      });
+
+      const boardRect = boardOuter.getBoundingClientRect();
+      const trayRect = tray.getBoundingClientRect();
+
+      pieceInstances.forEach((p, i) => {
+        p.initX = piecesData[i].initX;
+        p.initY = piecesData[i].initY;
+        p.render();
+
+        if (p.placedR !== null) {
+          const snapLeft = (boardRect.left + 6 + p.placedC * STEP) - trayRect.left;
+          const snapTop = (boardRect.top + 6 + p.placedR * STEP) - trayRect.top;
+          p.element.style.left = `${snapLeft}px`;
+          p.element.style.top = `${snapTop}px`;
+        } else {
+          p.updateScale(TRAY_SCALE);
+          p.element.style.left = `${p.initX}px`;
+          p.element.style.top = `${p.initY}px`;
+        }
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (ubongoStage.style.display === 'block') {
+        updateLayoutMetrics();
+      }
+    });
+
+    function selectPiece(piece) {
+      if (isCleared) return;
+      if (selectedPiece && selectedPiece !== piece) {
+        selectedPiece.element.classList.remove('selected');
+      }
+      selectedPiece = piece;
+      if (selectedPiece) {
+        selectedPiece.element.classList.add('selected');
+        btnRotate.disabled = false;
+        btnFlip.disabled = false;
+      } else {
+        btnRotate.disabled = true;
+        btnFlip.disabled = true;
+      }
+    }
+
+    btnRotate.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (selectedPiece && !isCleared) {
+        selectedPiece.rotate();
+      }
+    });
+
+    btnFlip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (selectedPiece && !isCleared) {
+        selectedPiece.flip();
+      }
+    });
+
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      if (passInput.value === correctPassword) {
+        failCount = 0;
+        msg.innerHTML = "";
+        msg.style.display = 'none';
+        passStage.style.display = 'none';
+        ubongoStage.style.display = 'block';
+        initPuzzle();
+      } else {
+        failCount++;
+        msg.style.color = "#ff4500";
+
+        if (failCount >= 3) {
+          msg.innerHTML = "パスワードが違います。<br>fromCharCode()メソッドでデコード（復号）してみよう<br><a href='https://its-office.jp/samplecode/strtocodejs.html' target='_blank'>https://its-office.jp/samplecode/strtocodejs.html</a>";
+        } else {
+          msg.innerHTML = "パスワードが違います。";
+        }
+
+        passInput.focus();
+        passInput.select();
+      }
+    });
+
+    function getOrientations(shape) {
+      const orientations = [];
+      let curr = shape;
+      for (let i = 0; i < 4; i++) {
+        const rLen = curr.length;
+        const cLen = curr[0].length;
+        const rot = Array(cLen).fill(null).map((_, c) =>
+          Array(rLen).fill(null).map((__, r) => curr[rLen - 1 - r][c])
+        );
+        const flipped = curr.map(row => [...row].reverse());
+        [curr, flipped].forEach(cand => {
+          const str = JSON.stringify(cand);
+          if (!orientations.some(o => JSON.stringify(o) === str)) {
+            orientations.push(cand);
+          }
+        });
+        curr = rot;
+      }
+      return orientations;
+    }
+
+    const allOrientations = {};
+    piecesData.forEach(p => {
+      allOrientations[p.id] = getOrientations(p.shape);
+    });
+
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function generateSolvableBoard() {
+      for (let attempt = 0; attempt < 50; attempt++) {
+        const chosen = shuffleArray(piecesData).slice(0, 4);
+        const simBoard = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
+
+        const canSimPlace = (shape, r, c) => {
+          if (r + shape.length > BOARD_ROWS || c + shape[0].length > BOARD_COLS) return false;
+          for (let dr = 0; dr < shape.length; dr++) {
+            for (let dc = 0; dc < shape[0].length; dc++) {
+              if (shape[dr][dc] === 1 && simBoard[r + dr][c + dc] !== null) return false;
+            }
+          }
+          return true;
+        };
+
+        const simPlace = (shape, r, c, val) => {
+          for (let dr = 0; dr < shape.length; dr++) {
+            for (let dc = 0; dc < shape[0].length; dc++) {
+              if (shape[dr][dc] === 1) simBoard[r + dr][c + dc] = val;
+            }
+          }
+        };
+
+        const backtrack = (idx) => {
+          if (idx === 4) return true;
+          const pid = chosen[idx].id;
+          const orients = shuffleArray(allOrientations[pid]);
+          const positions = [];
+          for (let r = 0; r < BOARD_ROWS; r++) {
+            for (let c = 0; c < BOARD_COLS; c++) {
+              positions.push([r, c]);
+            }
+          }
+          const shuffledPos = shuffleArray(positions);
+
+          for (const shape of orients) {
+            for (const [r, c] of shuffledPos) {
+              if (canSimPlace(shape, r, c)) {
+                simPlace(shape, r, c, pid);
+                if (backtrack(idx + 1)) return true;
+                simPlace(shape, r, c, null);
+              }
+            }
+          }
+          return false;
+        };
+
+        if (backtrack(0)) {
+          const blockedSet = new Set();
+          for (let r = 0; r < BOARD_ROWS; r++) {
+            for (let c = 0; c < BOARD_COLS; c++) {
+              if (simBoard[r][c] === null) {
+                blockedSet.add(`${r},${c}`);
+              }
+            }
+          }
+          return blockedSet;
+        }
+      }
+      return new Set(['0,4', '1,4', '2,4', '3,4', '4,4']);
+    }
+
+    function initPuzzle() {
+      isCleared = false;
+      selectPiece(null);
+      document.querySelectorAll('.piece').forEach(el => el.remove());
+      pieceInstances = [];
+
+      updateLayoutMetrics();
+
+      const blockedSet = generateSolvableBoard();
+
+      boardGrid.innerHTML = '';
+      boardState = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
+
+      for (let r = 0; r < BOARD_ROWS; r++) {
+        for (let c = 0; c < BOARD_COLS; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.style.width = `${CELL_SIZE}px`;
+          cell.style.height = `${CELL_SIZE}px`;
+          if (blockedSet.has(`${r},${c}`)) {
+            cell.classList.add('blocked');
+            boardState[r][c] = 'BLOCKED';
+          } else {
+            cell.addEventListener('click', () => {
+              if (!selectedPiece || isCleared) return;
+              tryTapPlace(selectedPiece, r, c);
+            });
+          }
+          boardGrid.appendChild(cell);
+        }
+      }
+
+      piecesData.forEach(data => {
+        const p = new Piece(data);
+        pieceInstances.push(p);
+      });
+    }
+
+    function tryTapPlace(piece, tapR, tapC) {
+      const wasPlaced = piece.placedR !== null;
+      const oldR = piece.placedR;
+      const oldC = piece.placedC;
+      if (wasPlaced) piece.removeFromBoard();
+
+      const h = piece.shape.length;
+      const w = piece.shape[0].length;
+      const candidates = [
+        [tapR, tapC],
+        [tapR - Math.floor(h / 2), tapC - Math.floor(w / 2)],
+        [tapR - (h - 1), tapC],
+        [tapR, tapC - (w - 1)],
+        [tapR - (h - 1), tapC - (w - 1)]
+      ];
+
+      for (const [candR, candC] of candidates) {
+        if (piece.canPlace(candR, candC)) {
+          piece.placeOnBoard(candR, candC, boardOuter.getBoundingClientRect(), tray.getBoundingClientRect());
+          checkClear();
+          return;
+        }
+      }
+
+      if (wasPlaced) {
+        piece.placeOnBoard(oldR, oldC, boardOuter.getBoundingClientRect(), tray.getBoundingClientRect());
+      }
+    }
+
+    class Piece {
+      constructor(data) {
+        this.id = data.id;
+        this.colorClass = data.colorClass;
+        this.shape = data.shape;
+        this.initX = data.initX;
+        this.initY = data.initY;
+
+        this.placedR = null;
+        this.placedC = null;
+        this.currentScale = TRAY_SCALE;
+
+        this.element = document.createElement('div');
+        this.element.className = `piece ${this.colorClass}`;
+        tray.appendChild(this.element);
+
+        this.render();
+        this.resetPosition();
+        this.initDrag();
+      }
+
+      render() {
+        this.element.innerHTML = '';
+        const grid = document.createElement('div');
+        grid.className = 'piece-grid';
+        grid.style.gridTemplateRows = `repeat(${this.shape.length}, ${CELL_SIZE}px)`;
+        grid.style.gridTemplateColumns = `repeat(${this.shape[0].length}, ${CELL_SIZE}px)`;
+
+        for (let r = 0; r < this.shape.length; r++) {
+          for (let c = 0; c < this.shape[0].length; c++) {
+            const block = document.createElement('div');
+            block.style.width = `${CELL_SIZE}px`;
+            block.style.height = `${CELL_SIZE}px`;
+            if (this.shape[r][c] === 1) {
+              block.className = 'block';
+            } else {
+              block.style.visibility = 'hidden';
+            }
+            grid.appendChild(block);
+          }
+        }
+        this.element.appendChild(grid);
+        this.updateScale(this.currentScale);
+      }
+
+      updateScale(scale) {
+        this.currentScale = scale;
+        this.element.style.transform = `scale(${scale})`;
+      }
+
+      rotate() {
+        if (this.placedR !== null) this.removeFromBoard();
+
+        const rows = this.shape.length;
+        const cols = this.shape[0].length;
+        let rotated = Array(cols).fill(null).map(() => Array(rows).fill(0));
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            rotated[c][rows - 1 - r] = this.shape[r][c];
+          }
+        }
+        this.shape = rotated;
+        this.render();
+        this.resetPosition();
+      }
+
+      flip() {
+        if (this.placedR !== null) this.removeFromBoard();
+
+        this.shape = this.shape.map(row => [...row].reverse());
+        this.render();
+        this.resetPosition();
+      }
+
+      resetPosition() {
+        this.removeFromBoard();
+        this.updateScale(TRAY_SCALE);
+        this.element.style.left = `${this.initX}px`;
+        this.element.style.top = `${this.initY}px`;
+      }
+
+      initDrag() {
+        let isDragging = false;
+        let startPointerX, startPointerY;
+        let grabOffsetRatioX = 0.5, grabOffsetRatioY = 0.5;
+        let hasDragged = false;
+        let wasAlreadySelected = false;
+
+        this.element.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          if (isCleared) return;
+          selectPiece(this);
+          this.flip();
+        });
+
+        this.element.addEventListener('pointerdown', (e) => {
+          if (e.button === 2 || isCleared) return;
+
+          wasAlreadySelected = (selectedPiece === this);
+          selectPiece(this);
+
+          isDragging = true;
+          hasDragged = false;
+          startPointerX = e.clientX;
+          startPointerY = e.clientY;
+
+          const rect = this.element.getBoundingClientRect();
+
+          grabOffsetRatioX = (e.clientX - rect.left) / rect.width;
+          grabOffsetRatioY = (e.clientY - rect.top) / rect.height;
+
+          this.element.setPointerCapture(e.pointerId);
+        });
+
+        this.element.addEventListener('pointermove', (e) => {
+          if (!isDragging || isCleared) return;
+
+          const dx = e.clientX - startPointerX;
+          const dy = e.clientY - startPointerY;
+
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+            if (!hasDragged) {
+              hasDragged = true;
+              if (this.placedR !== null) {
+                this.removeFromBoard();
+              }
+            }
+          }
+
+          if (!hasDragged) return;
+
+          const boardRect = boardOuter.getBoundingClientRect();
+          const trayRect = tray.getBoundingClientRect();
+
+          const touchLift = (e.pointerType === 'touch') ? 45 : 0;
+          const effectiveY = e.clientY - touchLift;
+
+          const isOverBoard = (
+            e.clientX >= boardRect.left - 15 && e.clientX <= boardRect.right + 15 &&
+            effectiveY >= boardRect.top - 15 && effectiveY <= boardRect.bottom + 15
+          );
+
+          const targetScale = isOverBoard ? 1.0 : TRAY_SCALE;
+          this.updateScale(targetScale);
+
+          const pieceWidth = (this.shape[0].length * CELL_SIZE + (this.shape[0].length - 1) * GAP_SIZE) * targetScale;
+          const pieceHeight = (this.shape.length * CELL_SIZE + (this.shape.length - 1) * GAP_SIZE) * targetScale;
+
+          const posX = (e.clientX - trayRect.left) - (grabOffsetRatioX * pieceWidth);
+          const posY = (effectiveY - trayRect.top) - (grabOffsetRatioY * pieceHeight);
+
+          this.element.style.left = `${posX}px`;
+          this.element.style.top = `${posY}px`;
+        });
+
+        this.element.addEventListener('pointerup', (e) => {
+          if (!isDragging) return;
+          isDragging = false;
+          this.element.releasePointerCapture(e.pointerId);
+
+          if (isCleared) return;
+
+          if (!hasDragged && e.button === 0) {
+            if (wasAlreadySelected) {
+              this.rotate();
+            }
+            return;
+          }
+
+          const boardRect = boardOuter.getBoundingClientRect();
+          const pieceRect = this.element.getBoundingClientRect();
+
+          const relX = pieceRect.left - (boardRect.left + 6);
+          const relY = pieceRect.top - (boardRect.top + 6);
+
+          const targetC = Math.round(relX / STEP);
+          const targetR = Math.round(relY / STEP);
+
+          if (this.canPlace(targetR, targetC)) {
+            this.placeOnBoard(targetR, targetC, boardRect, tray.getBoundingClientRect());
+            checkClear();
+          } else {
+            this.resetPosition();
+          }
+        });
+      }
+
+      canPlace(r, c) {
+        for (let pr = 0; pr < this.shape.length; pr++) {
+          for (let pc = 0; pc < this.shape[0].length; pc++) {
+            if (this.shape[pr][pc] === 1) {
+              const br = r + pr;
+              const bc = c + pc;
+              if (br < 0 || br >= BOARD_ROWS || bc < 0 || bc >= BOARD_COLS) return false;
+              if (boardState[br][bc] !== null) return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      placeOnBoard(r, c, boardRect, trayRect) {
+        this.placedR = r;
+        this.placedC = c;
+        this.updateScale(1.0);
+        for (let pr = 0; pr < this.shape.length; pr++) {
+          for (let pc = 0; pc < this.shape[0].length; pc++) {
+            if (this.shape[pr][pc] === 1) {
+              boardState[r + pr][c + pc] = this.id;
+            }
+          }
+        }
+
+        const snapLeft = (boardRect.left + 6 + c * STEP) - trayRect.left;
+        const snapTop = (boardRect.top + 6 + r * STEP) - trayRect.top;
+
+        this.element.style.left = `${snapLeft}px`;
+        this.element.style.top = `${snapTop}px`;
+      }
+
+      removeFromBoard() {
+        if (this.placedR === null) return;
+        for (let r = 0; r < BOARD_ROWS; r++) {
+          for (let c = 0; c < BOARD_COLS; c++) {
+            if (boardState[r][c] === this.id) {
+              boardState[r][c] = null;
+            }
+          }
+        }
+        this.placedR = null;
+        this.placedC = null;
+      }
+    }
+
+    function checkClear() {
+      for (let r = 0; r < BOARD_ROWS; r++) {
+        for (let c = 0; c < BOARD_COLS; c++) {
+          if (boardState[r][c] === null) return;
+        }
+      }
+
+      selectPiece(null);
+      isCleared = true;
+
+      document.getElementById('tray-header').innerText = "AUTHENTICATION COMPLETE";
+      document.getElementById('control-buttons').style.visibility = "hidden";
+      document.getElementById('tray-instructions').style.visibility = "hidden";
+
+      const boardRect = boardOuter.getBoundingClientRect();
+      const trayRect = tray.getBoundingClientRect();
+
+      pieceInstances.forEach(p => {
+        p.element.classList.remove('selected');
+        if (p.placedR === null) {
+          p.element.style.display = 'none';
+        } else {
+          const snapLeft = (boardRect.left + 6 + p.placedC * STEP) - trayRect.left;
+          const snapTop = (boardRect.top + 6 + p.placedR * STEP) - trayRect.top;
+          p.element.style.left = `${snapLeft}px`;
+          p.element.style.top = `${snapTop}px`;
+          p.element.style.pointerEvents = 'none';
+          p.element.style.cursor = 'default';
+        }
+      });
+
+      document.getElementById('winner-list-link').href = displayUrl;
+      document.getElementById('form-direct-link').href = targetUrl;
+      document.getElementById('clear-result').style.display = 'flex';
+
+      const overlay = document.getElementById('clear-overlay');
+      overlay.classList.add('show');
+
+      setTimeout(() => {
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+          overlay.classList.remove('show', 'fade-out');
+          window.open(targetUrl, '_blank');
+        }, 600);
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
