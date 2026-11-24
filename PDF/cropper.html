@@ -39,26 +39,8 @@
             flex-shrink: 0; /* ボタンのサイズが変わらないように */
         }
 
-        /* 削除ボタン */
-        .remove-btn {
-            color: #ff4d4f; 
-            border-color: #ffccc7;
-        }
 
-        /* 個別ダウンロードボタン */
-        .download-single-btn {
-            color: #1890ff; 
-            border-color: #91d5ff;
-            font-weight: bold;
-        }
-        /* 長押し・選択・拡大メニューを無効化 */
-#imageDisplay,
-#imageDisplay * {
-    -webkit-touch-callout: none; /* iOS 長押しメニュー禁止 */
-    -webkit-user-select: none;
-    user-select: none;
-    touch-action: none; /* ジェスチャー抑制 */
-}
+        
     </style>
 </head>
 <body>
@@ -66,7 +48,12 @@
     <div id="editorContainer">
         <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> 画像トリミングツール</h1>
 
-        <input type="file" id="imageInput" accept="image/*" multiple>
+        <div id="inputControls">
+            <button type="button" id="fileSelectButton">🖼️ ファイルを選択</button>
+            <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+            <button type="button" id="folderSelectButton">📁 フォルダを選択</button>
+            <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;">
+        </div>
 
         <hr>
 

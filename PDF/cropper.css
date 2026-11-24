@@ -324,3 +324,30 @@ button:disabled {
 .alert-popup.show {
     opacity: 1;
 }
+/* --- ファイル・フォルダ選択エリア --- */
+#inputControls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+#fileSelectButton,
+#folderSelectButton {
+    flex: 1;
+    min-width: 160px;
+    max-width: 240px;
+    min-height: 48px;
+    margin: 0;
+    background-color: #17a2b8;
+    color: white;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+#fileSelectButton:hover:not(:disabled),
+#folderSelectButton:hover:not(:disabled) {
+    background-color: #138496;
+}

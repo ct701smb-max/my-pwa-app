@@ -1,4 +1,7 @@
+const fileSelectButton = document.getElementById('fileSelectButton');
 const imageInput = document.getElementById('imageInput');
+const folderSelectButton = document.getElementById('folderSelectButton');
+const folderInput = document.getElementById('folderInput');
 const imageDisplay = document.getElementById('imageDisplay');
 const prevButton = document.getElementById('prevButton');
 const nextButton = document.getElementById('nextButton');
@@ -279,27 +282,69 @@ function reorderFiles(fromIndex, toIndex) {
 // イベントリスナー
 // ===========================================
 
-// --- 1. 複数の画像の一括挿入と再選択の許可 ---
-imageInput.addEventListener('change', (e) => {
-    const newFiles = Array.from(e.target.files);
-    
+// --- 1. 複数の画像・フォルダの一括挿入と再選択の許可 ---
+
+/**
+ * 選択されたファイル群から画像のみを抽出してリストに追加する共通関数
+ */
+function handleFilesAdd(selectedFiles, isFolder = false) {
+    const rawFiles = Array.from(selectedFiles);
+
+    // 画像ファイルのみを抽出（フォルダ選択時は画像以外のファイルも混ざるため）
+    const validImageFiles = rawFiles.filter(file => {
+        return file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|svg|avif)$/i.test(file.name);
+    });
+
+    if (validImageFiles.length === 0) {
+        showTemporaryAlert("⚠️ 画像ファイルが見つかりませんでした", 2500);
+        return;
+    }
+
+    // フォルダ読み込み時はファイル名の自然順（1, 2, 10...）で並べる
+    if (isFolder) {
+        validImageFiles.sort((a, b) =>
+            a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+        );
+    }
+
     const startLength = imageFiles.length;
-    imageFiles.push(...newFiles);
-    
-    for (let i = 0; i < newFiles.length; i++) {
+    imageFiles.push(...validImageFiles);
+
+    for (let i = 0; i < validImageFiles.length; i++) {
         croppedImages.push(null);
     }
-    
-    e.target.value = ''; 
 
     if (imageFiles.length > 0 && startLength === 0) {
         currentIndex = 0;
         loadAndInitCropper(currentIndex);
-    } else if (imageFiles.length > 0) {
-        updateUI();
     } else {
         updateUI();
     }
+
+    if (isFolder) {
+        showTemporaryAlert(`📁 ${validImageFiles.length}枚の画像を読み込みました`);
+    }
+}
+
+// ファイル選択時
+imageInput.addEventListener('change', (e) => {
+    handleFilesAdd(e.target.files, false);
+    e.target.value = ''; // 同じファイルを再選択できるようにリセット
+});
+
+fileSelectButton.addEventListener('click', () => {
+    imageInput.click();
+});
+
+// フォルダ選択ボタンクリックで隠しinputを発火
+folderSelectButton.addEventListener('click', () => {
+    folderInput.click();
+});
+
+// フォルダ選択時
+folderInput.addEventListener('change', (e) => {
+    handleFilesAdd(e.target.files, true);
+    e.target.value = ''; // 同じフォルダを再選択できるようにリセット
 });
 
 // --- 2. トリミング完了ボタン ---
