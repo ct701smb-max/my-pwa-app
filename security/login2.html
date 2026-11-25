@@ -20,6 +20,9 @@
         <p>Passwordをご入力の上、「Enter」ボタンをクリックしてください。</p>
         <button type="button" class="source-view-btn" id="btn-show-source">📄 ソースコードを見る</button>
         <input type="password" name="pass2" id="password-input" placeholder="Password" autocomplete="off">
+        <label class="show-password-label">
+          <input type="checkbox" id="toggle-password"> パスワードを表示する
+        </label>
         <input type="submit" value="Enter">
       </form>
     </div>
@@ -152,6 +155,12 @@
     const ubongoStage = document.getElementById('ubongo-stage');
     const msg = document.getElementById('status-message');
     const passInput = document.getElementById('password-input');
+    const togglePassword = document.getElementById('toggle-password');
+
+    // パスワード表示・非表示切り替え
+    togglePassword.addEventListener('change', function() {
+      passInput.type = this.checked ? 'text' : 'password';
+    });
 
     document.getElementById('login-form').addEventListener('submit', function(e) {
       e.preventDefault();
