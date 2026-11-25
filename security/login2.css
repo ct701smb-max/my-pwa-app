@@ -110,10 +110,10 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      color: #fff;
-      font-size: 15px;
+      color: #ccc;
+      font-size: 13px;
       cursor: pointer;
-      margin: 4px auto 8px auto;
+      margin: 2px auto 6px auto;
     }
 
     .show-password-label input[type="checkbox"] {
@@ -123,34 +123,11 @@
       cursor: pointer;
     }
 
-    #password-input {
-      border: 0;
-      background: none;
-      display: block;
-      margin: 18px auto 20px auto;
-      border: 2px solid #006400;
-      padding: 15px 10px;
-      width: 220px;
-      max-width: 85%;
-      outline: none;
-      border-radius: 24px;
-      transition: 0.25s;
-      text-align: center;
-      font-size: 20px;
-      color: #fff;
-    }
-
-    #password-input:focus {
-      width: 280px;
-      max-width: 92%;
-      background-color: #353535;
-    }
-
     input[type="submit"] {
       border: 0;
       background: none;
       display: block;
-      margin: 20px auto;
+      margin: 16px auto 20px auto;
       border: 2px solid #f0f8ff;
       padding: 12px 10px;
       width: 220px;

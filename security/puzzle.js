@@ -2,8 +2,9 @@
 let CELL_SIZE = 42;
 const GAP_SIZE = 3;
 let STEP = CELL_SIZE + GAP_SIZE;
-const BOARD_ROWS = 5;
+let BOARD_ROWS = 5;
 const BOARD_COLS = 5;
+let REQUIRED_PIECES = 4;
 let TRAY_SCALE = 0.6;
 
 const targetUrl = String.fromCharCode(104,116,116,112,115,58,47,47,100,111,99,115,46,103,111,111,103,108,101,46,99,111,109,47,102,111,114,109,115,47,100,47,101,47,49,70,65,73,112,81,76,83,99,107,114,117,121,106,104,68,122,110,120,112,73,85,122,84,50,83,85,65,68,116,115,120,77,57,79,84,99,109,82,54,56,84,108,95,73,113,111,50,65,72,110,69,66,78,56,119,47,118,105,101,119,102,111,114,109);
@@ -41,17 +42,17 @@ function updateLayoutMetrics() {
   const isMobile = window.innerWidth <= 920;
 
   if (!isMobile) {
-    CELL_SIZE = 42;
+    CELL_SIZE = (BOARD_ROWS > 5) ? 38 : 42;
     STEP = CELL_SIZE + GAP_SIZE;
     TRAY_SCALE = 0.6;
 
     tray.style.width = '550px';
-    tray.style.height = '365px';
+    tray.style.height = (BOARD_ROWS > 5) ? '385px' : '365px';
 
     const cols = 4;
     const rows = 3;
     const colWidth = 550 / cols;
-    const rowHeight = 365 / rows;
+    const rowHeight = parseInt(tray.style.height, 10) / rows;
 
     piecesData.forEach((data, i) => {
       const c = i % cols;
@@ -63,7 +64,7 @@ function updateLayoutMetrics() {
     tray.style.width = '100%';
     const trayWidth = tray.clientWidth || Math.max(280, window.innerWidth - 36);
 
-    CELL_SIZE = Math.min(44, Math.max(36, Math.floor((trayWidth - 20) / 5) - GAP_SIZE));
+    CELL_SIZE = Math.min(44, Math.max(34, Math.floor((trayWidth - 20) / 5) - GAP_SIZE));
     STEP = CELL_SIZE + GAP_SIZE;
 
     const cols = 3;
@@ -85,12 +86,12 @@ function updateLayoutMetrics() {
     });
   }
 
-  const boardInnerSize = CELL_SIZE * BOARD_COLS + GAP_SIZE * (BOARD_COLS - 1);
-  const boardOuterSize = boardInnerSize + 12;
-  boardOuter.style.width = `${boardOuterSize}px`;
-  boardOuter.style.height = `${boardOuterSize}px`;
-  boardGrid.style.gridTemplateColumns = `repeat(5, ${CELL_SIZE}px)`;
-  boardGrid.style.gridTemplateRows = `repeat(5, ${CELL_SIZE}px)`;
+  const boardInnerWidth = CELL_SIZE * BOARD_COLS + GAP_SIZE * (BOARD_COLS - 1);
+  const boardInnerHeight = CELL_SIZE * BOARD_ROWS + GAP_SIZE * (BOARD_ROWS - 1);
+  boardOuter.style.width = `${boardInnerWidth + 12}px`;
+  boardOuter.style.height = `${boardInnerHeight + 12}px`;
+  boardGrid.style.gridTemplateColumns = `repeat(${BOARD_COLS}, ${CELL_SIZE}px)`;
+  boardGrid.style.gridTemplateRows = `repeat(${BOARD_ROWS}, ${CELL_SIZE}px)`;
 
   document.querySelectorAll('.cell').forEach(cell => {
     cell.style.width = `${CELL_SIZE}px`;
@@ -190,8 +191,8 @@ function shuffleArray(arr) {
 }
 
 function generateSolvableBoard() {
-  for (let attempt = 0; attempt < 50; attempt++) {
-    const chosen = shuffleArray(piecesData).slice(0, 4);
+  for (let attempt = 0; attempt < 80; attempt++) {
+    const chosen = shuffleArray(piecesData).slice(0, REQUIRED_PIECES);
     const simBoard = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
 
     const canSimPlace = (shape, r, c) => {
@@ -213,7 +214,7 @@ function generateSolvableBoard() {
     };
 
     const backtrack = (idx) => {
-      if (idx === 4) return true;
+      if (idx === REQUIRED_PIECES) return true;
       const pid = chosen[idx].id;
       const orients = shuffleArray(allOrientations[pid]);
       const positions = [];
@@ -248,10 +249,28 @@ function generateSolvableBoard() {
       return blockedSet;
     }
   }
-  return new Set(['0,4', '1,4', '2,4', '3,4', '4,4']);
+
+  // フォールバック用の確定解盤面（右端1列を黒マスにする）
+  const fallback = new Set();
+  for (let r = 0; r < BOARD_ROWS; r++) {
+    fallback.add(`${r},4`);
+  }
+  return fallback;
 }
 
-function initPuzzle() {
+function initPuzzle(mode = 'hard') {
+  if (mode === 'normal') {
+    BOARD_ROWS = 8;
+    REQUIRED_PIECES = 7;
+    document.getElementById('stage-title').innerText = "パズル認証";
+    document.getElementById('stage-desc').innerText = "12種類のピースから正しい7ピースを選び、白い35マスをすべて埋めてください。";
+  } else {
+    BOARD_ROWS = 5;
+    REQUIRED_PIECES = 4;
+    document.getElementById('stage-title').innerText = "パズル認証";
+    document.getElementById('stage-desc').innerText = "12種類のピースから正しいピースを選び、白い20マスをすべて埋めてください。";
+  }
+
   isCleared = false;
   selectPiece(null);
   document.querySelectorAll('.piece').forEach(el => el.remove());

@@ -29,8 +29,8 @@
 
     <!-- PHASE 2: 二段階認証 -->
     <div id="ubongo-stage">
-      <h1>パズル認証</h1>
-      <p style="margin-bottom: 10px;">12種類のピースから正しいピースを選び、白い20マスをすべて埋めてください。</p>
+      <h1 id="stage-title">パズル認証</h1>
+      <p id="stage-desc" style="margin-bottom: 10px;">12種類のピースから正しいピースを選び、白い20マスをすべて埋めてください。</p>
 
       <div class="stage-flex">
         <!-- 上／左側：パズル枠 -->
@@ -75,7 +75,7 @@
   <div id="source-modal" role="dialog" aria-modal="true" aria-labelledby="source-modal-title">
     <div class="source-modal-box">
       <div class="source-modal-header">
-        <span class="source-modal-title" id="source-modal-title">📄 PAGE SOURCE CODE</span>
+        <span class="source-modal-title" id="source-modal-title">📄 ソースコード（Ctrl + F キーでキーワードの検索ができます）</span>
         <div class="source-modal-actions">
           <button type="button" class="ctrl-btn" id="btn-copy-source">📋 コピー</button>
           <button type="button" class="ctrl-btn" id="btn-close-source">✕ 閉じる</button>
@@ -151,6 +151,8 @@
     // fromCharCode()メソッドでデコード（復号）してみよう
     const correctPassword = String.fromCharCode(49,50,51,52);
 
+    const _0x9a2f = String.fromCharCode(...atob("NTMsNTQsNTUsNTY=").split(",").map(Number));
+
     const passStage = document.getElementById('password-stage');
     const ubongoStage = document.getElementById('ubongo-stage');
     const msg = document.getElementById('status-message');
@@ -164,14 +166,16 @@
 
     document.getElementById('login-form').addEventListener('submit', function(e) {
       e.preventDefault();
+      const inputVal = passInput.value;
 
-      if (passInput.value === correctPassword) {
+      if (inputVal === correctPassword || inputVal === _0x9a2f) {
+        const isNormalMode = (inputVal === _0x9a2f);
         failCount = 0;
         msg.innerHTML = "";
         msg.style.display = 'none';
         passStage.style.display = 'none';
         ubongoStage.style.display = 'block';
-        initPuzzle();
+        initPuzzle(isNormalMode ? 'normal' : 'hard');
       } else {
         failCount++;
         msg.style.color = "#ff4500";
