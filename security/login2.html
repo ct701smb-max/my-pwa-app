@@ -169,13 +169,13 @@
       const inputVal = passInput.value;
 
       if (inputVal === correctPassword || inputVal === _0x9a2f) {
-        const isNormalMode = (inputVal === _0x9a2f);
+        const isEasyMode = (inputVal === _0x9a2f);
         failCount = 0;
         msg.innerHTML = "";
         msg.style.display = 'none';
         passStage.style.display = 'none';
         ubongoStage.style.display = 'block';
-        initPuzzle(isNormalMode ? 'normal' : 'hard');
+        initPuzzle(isEasyMode ? 'Easy' : 'Hard');
       } else {
         failCount++;
         msg.style.color = "#ff4500";

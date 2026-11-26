@@ -258,8 +258,8 @@ function generateSolvableBoard() {
   return fallback;
 }
 
-function initPuzzle(mode = 'hard') {
-  if (mode === 'normal') {
+function initPuzzle(mode = 'Hard') {
+  if (mode === 'Easy') {
     BOARD_ROWS = 8;
     REQUIRED_PIECES = 7;
     document.getElementById('stage-title').innerText = "パズル認証";
