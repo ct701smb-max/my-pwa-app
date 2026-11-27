@@ -432,15 +432,15 @@ function autoSolvePuzzle() {
 
 function initPuzzle(mode = 'Hard') {
   if (mode === 'Easy') {
-    BOARD_ROWS = 8;
-    REQUIRED_PIECES = 7;
+    BOARD_ROWS = 9;
+    REQUIRED_PIECES = 8;
     document.getElementById('stage-title').innerText = "パズル認証";
-    document.getElementById('stage-desc').innerText = "12種類のピースから正しい7ピースを選び、白い35マスをすべて埋めてください。";
+    document.getElementById('stage-desc').innerText = "12種類のピースから正しい8ピースを選び、白い40マスをすべて埋めてください。";
   } else {
     BOARD_ROWS = 5;
     REQUIRED_PIECES = 4;
     document.getElementById('stage-title').innerText = "パズル認証";
-    document.getElementById('stage-desc').innerText = "12種類のピースから正しいピースを選び、白い20マスをすべて埋めてください。";
+    document.getElementById('stage-desc').innerText = "12種類のピースから正しい4ピースを選び、白い20マスをすべて埋めてください。";
   }
 
   isCleared = false;
