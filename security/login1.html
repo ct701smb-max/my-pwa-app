@@ -148,7 +148,7 @@ function findUser(searchId, searchPassword) {
   // 該当データが存在しなかったら、「該当者なし」と表示して終了
   if (targetData == null) {
     failCount++;
-    if (failCount >= 3) {
+    if (failCount >= 5) {
       searchResult.innerHTML = 'IDまたはパスワードが違います<br><a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" class="gemini-link-btn">✨ Geminiにソースコードを解読してもらう</a>';
     } else {
       searchResult.textContent = 'IDまたはパスワードが違います';
