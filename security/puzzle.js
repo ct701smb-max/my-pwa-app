@@ -17,11 +17,14 @@ const boardGrid = document.getElementById('board-grid');
 const tray = document.getElementById('tray');
 const btnRotate = document.getElementById('btn-rotate');
 const btnFlip = document.getElementById('btn-flip');
+const btnAutoSolve = document.getElementById('btn-auto-solve');
 
 let boardState = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
 let selectedPiece = null;
 let isCleared = false;
+let isAutoSolving = false;
 let pieceInstances = [];
+let currentSolution = [];
 
 const piecesData = [
   { id: 'p1',  colorClass: 'p1',  shape: [[1,1,1,1,1]] },             // I
@@ -126,7 +129,7 @@ window.addEventListener('resize', () => {
 });
 
 function selectPiece(piece) {
-  if (isCleared) return;
+  if (isCleared || isAutoSolving) return;
   if (selectedPiece && selectedPiece !== piece) {
     selectedPiece.element.classList.remove('selected');
   }
@@ -143,14 +146,38 @@ function selectPiece(piece) {
 
 btnRotate.addEventListener('click', (e) => {
   e.stopPropagation();
-  if (selectedPiece && !isCleared) {
+  if (selectedPiece && !isCleared && !isAutoSolving) {
     selectedPiece.rotate();
   }
 });
 
 btnFlip.addEventListener('click', (e) => {
   e.stopPropagation();
-  if (selectedPiece && !isCleared) {
+  if (selectedPiece && !isCleared && !isAutoSolving) {
+    selectedPiece.flip();
+  }
+});
+
+if (btnAutoSolve) {
+  btnAutoSolve.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!isCleared && !isAutoSolving) {
+      autoSolvePuzzle();
+    }
+  });
+}
+
+// キーボードショートカット（R: 回転 / F: 反転）
+document.addEventListener('keydown', (e) => {
+  if (ubongoStageEl.style.display !== 'block' || isCleared || isAutoSolving || !selectedPiece) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  const key = e.key.toLowerCase();
+  if (key === 'r') {
+    e.preventDefault();
+    selectedPiece.rotate();
+  } else if (key === 'f') {
+    e.preventDefault();
     selectedPiece.flip();
   }
 });
@@ -194,6 +221,7 @@ function generateSolvableBoard() {
   for (let attempt = 0; attempt < 80; attempt++) {
     const chosen = shuffleArray(piecesData).slice(0, REQUIRED_PIECES);
     const simBoard = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
+    const solutionSteps = [];
 
     const canSimPlace = (shape, r, c) => {
       if (r + shape.length > BOARD_ROWS || c + shape[0].length > BOARD_COLS) return false;
@@ -229,7 +257,14 @@ function generateSolvableBoard() {
         for (const [r, c] of shuffledPos) {
           if (canSimPlace(shape, r, c)) {
             simPlace(shape, r, c, pid);
+            solutionSteps.push({
+              id: pid,
+              shape: shape.map(row => [...row]),
+              r,
+              c
+            });
             if (backtrack(idx + 1)) return true;
+            solutionSteps.pop();
             simPlace(shape, r, c, null);
           }
         }
@@ -238,6 +273,7 @@ function generateSolvableBoard() {
     };
 
     if (backtrack(0)) {
+      currentSolution = solutionSteps;
       const blockedSet = new Set();
       for (let r = 0; r < BOARD_ROWS; r++) {
         for (let c = 0; c < BOARD_COLS; c++) {
@@ -255,7 +291,143 @@ function generateSolvableBoard() {
   for (let r = 0; r < BOARD_ROWS; r++) {
     fallback.add(`${r},4`);
   }
+  currentSolution = [];
   return fallback;
+}
+
+// 現在の空きマスから残りの解を探索（プレイヤーの途中配置を活かせる場合用）
+function findRemainingSolution() {
+  const simBoard = boardState.map(row => [...row]);
+  const unusedPieces = pieceInstances.filter(p => p.placedR === null);
+
+  let emptyCount = 0;
+  for (let r = 0; r < BOARD_ROWS; r++) {
+    for (let c = 0; c < BOARD_COLS; c++) {
+      if (simBoard[r][c] === null) emptyCount++;
+    }
+  }
+
+  if (emptyCount === 0) return [];
+  if (emptyCount % 5 !== 0) return null;
+  const needed = emptyCount / 5;
+  if (unusedPieces.length < needed) return null;
+
+  const canSimPlace = (shape, r, c) => {
+    if (r + shape.length > BOARD_ROWS || c + shape[0].length > BOARD_COLS) return false;
+    for (let dr = 0; dr < shape.length; dr++) {
+      for (let dc = 0; dc < shape[0].length; dc++) {
+        if (shape[dr][dc] === 1 && simBoard[r + dr][c + dc] !== null) return false;
+      }
+    }
+    return true;
+  };
+
+  const simPlace = (shape, r, c, val) => {
+    for (let dr = 0; dr < shape.length; dr++) {
+      for (let dc = 0; dc < shape[0].length; dc++) {
+        if (shape[dr][dc] === 1) simBoard[r + dr][c + dc] = val;
+      }
+    }
+  };
+
+  const steps = [];
+  const usedIds = new Set();
+
+  const solve = () => {
+    let targetR = -1;
+    let targetC = -1;
+    for (let r = 0; r < BOARD_ROWS; r++) {
+      for (let c = 0; c < BOARD_COLS; c++) {
+        if (simBoard[r][c] === null) {
+          targetR = r;
+          targetC = c;
+          break;
+        }
+      }
+      if (targetR !== -1) break;
+    }
+
+    if (targetR === -1) return true;
+
+    for (const p of unusedPieces) {
+      if (usedIds.has(p.id)) continue;
+      for (const shape of allOrientations[p.id]) {
+        const firstCol = shape[0].indexOf(1);
+        const placeC = targetC - firstCol;
+        if (placeC < 0) continue;
+
+        if (canSimPlace(shape, targetR, placeC)) {
+          simPlace(shape, targetR, placeC, p.id);
+          usedIds.add(p.id);
+          steps.push({
+            id: p.id,
+            shape: shape.map(row => [...row]),
+            r: targetR,
+            c: placeC
+          });
+
+          if (solve()) return true;
+
+          steps.pop();
+          usedIds.delete(p.id);
+          simPlace(shape, targetR, placeC, null);
+        }
+      }
+    }
+    return false;
+  };
+
+  return solve() ? steps : null;
+}
+
+function autoSolvePuzzle() {
+  if (isCleared || isAutoSolving) return;
+  isAutoSolving = true;
+  selectPiece(null);
+  btnRotate.disabled = true;
+  btnFlip.disabled = true;
+  if (btnAutoSolve) btnAutoSolve.disabled = true;
+
+  let plan = findRemainingSolution();
+
+  // 途中配置から解けない状態なら、一旦すべてトレイに戻して初期正解パターンを使用
+  if (!plan) {
+    pieceInstances.forEach(p => {
+      if (p.placedR !== null) {
+        p.resetPosition();
+      }
+    });
+    plan = currentSolution.length > 0 ? currentSolution : findRemainingSolution();
+  }
+
+  if (!plan || plan.length === 0) {
+    isAutoSolving = false;
+    if (btnAutoSolve) btnAutoSolve.disabled = false;
+    checkClear();
+    return;
+  }
+
+  plan.forEach((step, idx) => {
+    setTimeout(() => {
+      const piece = pieceInstances.find(p => p.id === step.id);
+      if (piece) {
+        if (piece.placedR !== null) piece.removeFromBoard();
+        piece.shape = step.shape.map(row => [...row]);
+        piece.render();
+        piece.placeOnBoard(
+          step.r,
+          step.c,
+          boardOuter.getBoundingClientRect(),
+          tray.getBoundingClientRect()
+        );
+      }
+
+      if (idx === plan.length - 1) {
+        isAutoSolving = false;
+        checkClear();
+      }
+    }, idx * 240);
+  });
 }
 
 function initPuzzle(mode = 'Hard') {
@@ -272,6 +444,8 @@ function initPuzzle(mode = 'Hard') {
   }
 
   isCleared = false;
+  isAutoSolving = false;
+  if (btnAutoSolve) btnAutoSolve.disabled = false;
   selectPiece(null);
   document.querySelectorAll('.piece').forEach(el => el.remove());
   pieceInstances = [];
@@ -294,7 +468,7 @@ function initPuzzle(mode = 'Hard') {
         boardState[r][c] = 'BLOCKED';
       } else {
         cell.addEventListener('click', () => {
-          if (!selectedPiece || isCleared) return;
+          if (!selectedPiece || isCleared || isAutoSolving) return;
           tryTapPlace(selectedPiece, r, c);
         });
       }
@@ -428,13 +602,13 @@ class Piece {
 
     this.element.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      if (isCleared) return;
+      if (isCleared || isAutoSolving) return;
       selectPiece(this);
       this.flip();
     });
 
     this.element.addEventListener('pointerdown', (e) => {
-      if (e.button === 2 || isCleared) return;
+      if (e.button === 2 || isCleared || isAutoSolving) return;
 
       wasAlreadySelected = (selectedPiece === this);
       selectPiece(this);
@@ -453,7 +627,7 @@ class Piece {
     });
 
     this.element.addEventListener('pointermove', (e) => {
-      if (!isDragging || isCleared) return;
+      if (!isDragging || isCleared || isAutoSolving) return;
 
       const dx = e.clientX - startPointerX;
       const dy = e.clientY - startPointerY;
@@ -498,7 +672,7 @@ class Piece {
       isDragging = false;
       this.element.releasePointerCapture(e.pointerId);
 
-      if (isCleared) return;
+      if (isCleared || isAutoSolving) return;
 
       if (!hasDragged && e.button === 0) {
         if (wasAlreadySelected) {
