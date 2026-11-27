@@ -278,3 +278,22 @@ form input[type="submit"]:hover {
   background: #ff69b4;
   border-radius: 4px;
 }
+
+.gemini-link-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #4285f4, #9b72cb);
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 20px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.gemini-link-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}

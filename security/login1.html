@@ -14,7 +14,7 @@
 <body>
 <form name="login_form" onsubmit="return false;">
   <div class="login_form_top">
-    <h1><a href="../../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> LOGIN</h1>
+    <h1><a href="../index.html" class="btn-real-dent" aria-label="ホーム"><i class="fa fa-home" aria-hidden="true"></i></a> LOGIN</h1>
     <p>UserID、Passwordをご入力の上、「LOGIN」ボタンをクリックしてください。</p>
     <button type="button" class="source-view-btn" id="btn-show-source">📄 ソースコードを見る</button>
   </div>
@@ -128,6 +128,9 @@ showPasswordCheck.addEventListener('change', () => {
   }
 });
 
+// ログイン失敗回数のカウンター
+let failCount = 0;
+
 // ボタン押下で作動
 button.addEventListener('click', () => {
   const searchId = document.querySelector('#search-id').value;
@@ -144,15 +147,26 @@ function findUser(searchId, searchPassword) {
   
   // 該当データが存在しなかったら、「該当者なし」と表示して終了
   if (targetData == null) {
-    searchResult.textContent = 'IDまたはパスワードが違います';
+    failCount++;
+    if (failCount >= 3) {
+      searchResult.innerHTML = 'IDまたはパスワードが違います<br><a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" class="gemini-link-btn">✨ Geminiにソースコードを解読してもらう</a>';
+    } else {
+      searchResult.textContent = 'IDまたはパスワードが違います';
+    }
     return;
   }
   
+  // ログイン成功時は失敗回数をリセット
+  failCount = 0;
+  button.disabled = true;
+
   // 該当データの名前を表示する
   searchResult.textContent = targetData.name + 'がログインしました。';
 
-  // 遷移先ページのアドレス
-  window.open('login2.html', '');
+  // 1秒間メッセージを表示してから同じタブで遷移
+  setTimeout(() => {
+    window.location.href = 'login2.html';
+  }, 1000);
 }
 </script>
 </body>
